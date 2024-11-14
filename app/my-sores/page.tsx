@@ -1,5 +1,5 @@
 import MySoresLayout from './my-sores-layout';
 
-export const MySoresPage = () => {
+export default async function MySoresPage() {
   return <MySoresLayout />;
-};
+}

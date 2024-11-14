@@ -140,8 +140,8 @@ export type Database = {
           healed: string | null
           id: string
           user_id: string | null
-          x: number | null
-          y: number | null
+          x: number
+          y: number
           zone: string | null
         }
         Insert: {
@@ -150,8 +150,8 @@ export type Database = {
           healed?: string | null
           id?: string
           user_id?: string | null
-          x?: number | null
-          y?: number | null
+          x?: number
+          y?: number 
           zone?: string | null
         }
         Update: {
@@ -160,8 +160,8 @@ export type Database = {
           healed?: string | null
           id?: string
           user_id?: string | null
-          x?: number | null
-          y?: number | null
+          x?: number
+          y?: number 
           zone?: string | null
         }
         Relationships: [

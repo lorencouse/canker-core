@@ -13,7 +13,7 @@ const Images: React.FC<ImagesProps> = ({
   img,
   handleClickImage,
   stageWidth,
-  stageHeight
+  stageHeight,
 }) => {
   const [image] = useImage(img);
 

@@ -33,7 +33,7 @@ export const calculateCoordination = (e: any) => {
 
   return {
     x: xPercent,
-    y: yPercent
+    y: yPercent,
   };
 };
 
@@ -47,14 +47,14 @@ export const handleZoomStage =
       const { x: pointerX, y: pointerY } = stage.getPointerPosition();
       const mousePointTo = {
         x: (pointerX - stage.x()) / oldScale,
-        y: (pointerY - stage.y()) / oldScale
+        y: (pointerY - stage.y()) / oldScale,
       };
       const newScale =
         event.evt.deltaY > 0 ? oldScale * scaleBy : oldScale / scaleBy;
       stage.scale({ x: newScale, y: newScale });
       const newPos = {
         x: pointerX - mousePointTo.x * newScale,
-        y: pointerY - mousePointTo.y * newScale
+        y: pointerY - mousePointTo.y * newScale,
       };
       stage.position(newPos);
       stage.batchDraw();
@@ -86,12 +86,12 @@ export const handlePinchZoom =
       const { x: pointerX, y: pointerY } = stage.getPointerPosition();
       const mousePointTo = {
         x: (pointerX - stage.x()) / stage.scaleX(),
-        y: (pointerY - stage.y()) / stage.scaleY()
+        y: (pointerY - stage.y()) / stage.scaleY(),
       };
 
       const newPos = {
         x: pointerX - mousePointTo.x * newScale,
-        y: pointerY - mousePointTo.y * newScale
+        y: pointerY - mousePointTo.y * newScale,
       };
 
       stage.position(newPos);
@@ -110,12 +110,12 @@ export const handleZoom = (
 
     const center = {
       x: stage.width() / 2,
-      y: stage.height() / 2
+      y: stage.height() / 2,
     };
 
     const newPos = {
       x: center.x - (center.x - stage.x()) * (newScale / oldScale),
-      y: center.y - (center.y - stage.y()) * (newScale / oldScale)
+      y: center.y - (center.y - stage.y()) * (newScale / oldScale),
     };
 
     new Konva.Tween({
@@ -125,7 +125,7 @@ export const handleZoom = (
       scaleY: newScale,
       x: newPos.x,
       y: newPos.y,
-      easing: Konva.Easings.EaseInOut
+      easing: Konva.Easings.EaseInOut,
     }).play();
   }
 };

@@ -38,7 +38,7 @@ const ImagePointGrid: React.FC = () => {
         return (
           <Label
             key={index + 1}
-            id={index + 1}
+            id={(index + 1).toString()}
             x={cur.x}
             y={cur.y}
             onClick={handleClickLabel}
@@ -97,14 +97,14 @@ const ImagePointGrid: React.FC = () => {
       const { x: pointerX, y: pointerY } = stage.getPointerPosition();
       const mousePointTo = {
         x: (pointerX - stage.x()) / oldScale,
-        y: (pointerY - stage.y()) / oldScale,
+        y: (pointerY - stage.y()) / oldScale
       };
       const newScale =
         event.evt.deltaY > 0 ? oldScale * scaleBy : oldScale / scaleBy;
       stage.scale({ x: newScale, y: newScale });
       const newPos = {
         x: pointerX - mousePointTo.x * newScale,
-        y: pointerY - mousePointTo.y * newScale,
+        y: pointerY - mousePointTo.y * newScale
       };
       stage.position(newPos);
       stage.batchDraw();
@@ -132,7 +132,12 @@ const ImagePointGrid: React.FC = () => {
     >
       <Layer>
         <Group>
-          <Images img={image} handleClickImage={() => {}} />
+          <Images
+            img={image}
+            handleClickImage={() => {}}
+            stageHeight={stageHeight}
+            stageWidth={stageWidth}
+          />
           {circleList.length > 0 && circleList.map((curCircle) => curCircle)}
         </Group>
       </Layer>

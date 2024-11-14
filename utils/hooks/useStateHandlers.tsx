@@ -4,9 +4,9 @@ import {
   handlePinchZoom,
   handleResetZoom,
   handleZoomStage
-} from '@/utils/StageUtils';
+} from '@/utils/mouth-diagram/stageUtils';
 
-export const useStageHandlers = (stageRef, containerRef) => {
+export const useStageHandlers = (stageRef: any, containerRef: any) => {
   useEffect(() => {
     const handleResize = () => {
       if (stageRef.current) {

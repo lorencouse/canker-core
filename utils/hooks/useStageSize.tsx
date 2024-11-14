@@ -10,7 +10,7 @@ export const useStageSize = (containerRef: RefObject<HTMLDivElement>) => {
       if (containerRef.current) {
         setStageSize({
           width: containerRef.current.offsetWidth,
-          height: containerRef.current.offsetHeight
+          height: containerRef.current.offsetHeight,
         });
       }
     };
