@@ -1,28 +1,23 @@
 import { Sore } from '@/types';
 import type React from 'react';
 import { Circle, Group } from 'react-konva';
-
-// import { useUIContext } from '@/Context/UiContext';
+import { useSoreContext } from '@/context/SoreContext';
+import { calculateCoordination } from '@/utils/mouth-diagram/stageUtils';
 
 interface SoreCircleProps {
   sore: Sore;
-  mode: 'add' | 'edit' | 'update' | 'view';
-  handleDragLabelCoordination: (e: any) => void;
-  handleClickLabel: (e: any) => void;
   stageWidth: number;
   stageHeight: number;
-  selectedSoreId: string;
 }
 
 const SoreCircle: React.FC<SoreCircleProps> = ({
   sore,
-  mode,
-  handleDragLabelCoordination,
-  handleClickLabel,
   stageWidth,
-  stageHeight,
-  selectedSoreId
+  stageHeight
 }) => {
+  const { sores, setSores, setSelectedSore, selectedSore, mode } =
+    useSoreContext();
+
   const getColor = (painLevel: number) => {
     const lightness = 100 - painLevel * 7;
     return `hsl(0, 100%, ${lightness}%)`;
@@ -31,24 +26,42 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
   const latestSize = sore.size ? sore.size : 3;
   const latestPain = sore.pain ? sore.pain : 3;
 
-  const selectedSore: Sore | null = null;
+  const handleDragLabelCoordination = (e: any) => {
+    if (mode === 'add' || mode === 'edit' || mode === 'update') {
+      const { x, y } = calculateCoordination(e);
+      const target = e.target as any;
+      const id = target.id() || target.findAncestor('Group')?.attrs.id;
+      const updatedSores: Sore[] = sores.map((sore) =>
+        sore.id === id ? { ...sore, x, y } : sore
+      );
+
+      setSores(updatedSores);
+      const updatedSore = updatedSores.find((sore) => sore.id === id);
+      setSelectedSore(updatedSore || null);
+    }
+  };
+
+  const handleClickLabel = (e: any) => {
+    const id = e.target.id() || e.target.findAncestor('Group')?.attrs.id;
+    setSelectedSore(sores.find((sore) => sore.id === id) || null);
+  };
 
   return (
     <Group
       id={`${sore.id}`}
       x={(sore.x * stageWidth) / 100}
       y={(sore.y * stageHeight) / 100}
-      draggable={mode === 'add' || mode === 'edit'}
+      draggable={mode !== 'view'}
       onDragEnd={handleDragLabelCoordination}
       onClick={handleClickLabel}
     >
       <Circle
         radius={latestSize}
         fill={getColor(latestPain)}
-        shadowBlur={sore.id === selectedSoreId ? 10 : 0}
+        shadowBlur={sore.id === selectedSore?.id ? 10 : 0}
         shadowColor="white"
-        stroke={sore.id === selectedSoreId ? 'white' : 'black'}
-        strokeWidth={sore.id === selectedSoreId ? 2 : 1}
+        stroke={sore.id === selectedSore?.id ? 'white' : 'black'}
+        strokeWidth={sore.id === selectedSore?.id ? 2 : 1}
       />
     </Group>
   );
