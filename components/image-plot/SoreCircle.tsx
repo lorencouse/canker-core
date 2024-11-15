@@ -16,7 +16,6 @@ interface SoreCircleProps {
 
 const SoreCircle: React.FC<SoreCircleProps> = ({
   sore,
-  
   mode,
   handleDragLabelCoordination,
   handleClickLabel,
@@ -29,10 +28,8 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
     return `hsl(0, 100%, ${lightness}%)`;
   };
 
-  // const latestSize = sore.size[sore.size.length - 1];
-  // const latestPain = sore.pain[sore.pain.length - 1];
-  const latestSize = 5;
-  const latestPain = 5;
+  const latestSize = sore.size ? sore.size : 3;
+  const latestPain = sore.pain ? sore.pain : 3;
 
   const selectedSore: Sore | null = null;
 

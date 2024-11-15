@@ -9,7 +9,7 @@ const ImagePlotButton = ({
     <button
       onClick={onClick}
       type="button"
-      className="m-2 rounded-xl bg-foreground/70 px-4 py-2 text-background"
+      className="m-2 rounded-xl bg-black/70 px-4 py-2 text-white"
     >
       {label}
     </button>

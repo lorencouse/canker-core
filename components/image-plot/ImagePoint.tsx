@@ -1,8 +1,8 @@
 import type React from 'react';
 import { useState, useRef } from 'react';
 import { Stage, Layer, Group } from 'react-konva';
-import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import { Redirect } from 'next';
 
 import { useStageSize } from '@/utils/hooks/useStageSize';
 import {
@@ -20,6 +20,7 @@ import calcView from '@/utils/calcView';
 
 import ImagePlotButton from './ImagePlotButton';
 import Images from './Images';
+import { useSoreContext } from '@/context/SoreContext';
 
 interface ImagePointProps {
   mode: 'add' | 'edit' | 'update' | 'view';
@@ -27,17 +28,15 @@ interface ImagePointProps {
 }
 
 const ImagePoint: React.FC<ImagePointProps> = ({ mode, setMode }) => {
-  const [sores, setSores] = useState<Sore[]>([]);
-  const [selectedSore, setSelectedSore] = useState<Sore | null>(null);
+  const { sores, setSores, setSelectedSore, selectedSore } = useSoreContext();
   const [isGums, setIsGums] = useState(false);
-  const [image, setImage] = useState('/assets/images/cat.jpeg');
+  const [image, setImage] = useState('/mouth.png');
   const stageRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { width: stageWidth, height: stageHeight } = useStageSize(containerRef);
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD format
-  const [logCompleted, setLogCompleted] = useState(true);
-  const navigate = useNavigate();
-  const originalSores = useRef<Sore[]>([]); // Store original sores for cancellation
+  
+  // Store original sores for cancellation
+  const originalSores = useRef<Sore[]>([]); 
 
   useStageHandlers(stageRef, containerRef);
 
@@ -67,13 +66,12 @@ const ImagePoint: React.FC<ImagePointProps> = ({ mode, setMode }) => {
     if (mode === 'add') {
       const newSore: Sore = {
         id: uuidv4(),
-        created_at: new Date().toISOString(),
-        healed: null,
-        zone: calcView(x, y),
-        gums: isGums,
+        sore_id: uuidv4(),
+        updated: new Date().toISOString(),
+        size: 3,
+        pain: 3,
         x,
-        y,
-        user_id: null
+        y
       };
 
       const newSores = [...sores, newSore];
@@ -115,9 +113,7 @@ const ImagePoint: React.FC<ImagePointProps> = ({ mode, setMode }) => {
   const handleToggleGums = () => {
     const newIsGums = !isGums;
     setIsGums(newIsGums);
-    setImage(
-      newIsGums ? '/assets/images/gums.png' : '/assets/images/mouth.png'
-    );
+    setImage(newIsGums ? '/gums.png' : '/mouth.png');
   };
 
   const updateSore = (updatedSore: Sore) => {
@@ -132,11 +128,6 @@ const ImagePoint: React.FC<ImagePointProps> = ({ mode, setMode }) => {
       className="border-1 border-grey relative h-full w-full rounded-2xl"
       style={{ height: '0', paddingBottom: '100%', position: 'relative' }}
     >
-      {logCompleted ? (
-        <p>Log completed</p>
-      ) : (
-        <p className="text-red-500">Log not completed</p>
-      )}
       <Stage
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
         width={stageWidth}

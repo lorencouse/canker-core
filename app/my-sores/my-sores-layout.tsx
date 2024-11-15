@@ -3,20 +3,28 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import ImagePoint from '@/components/image-plot/ImagePoint';
+import SoreSliders from '@/components/image-plot/SoreSliders';
+import type { Sore } from '@/types';
+import { SoreProvider } from '@/context/SoreContext';
 
 export const MySoresLayout = () => {
   const [mode, setMode] = useState<'add' | 'edit' | 'update' | 'view'>('view');
+
   return (
-    <div>
-      <h1>Welcome to MySoresLayout!</h1>
-      <ImagePoint mode={mode} setMode={setMode} />
-      <div className="flex gap-2 mt-4">
-        <Button onClick={() => setMode('view')}>View</Button>
-        <Button onClick={() => setMode('add')}>Add</Button>
-        <Button onClick={() => setMode('edit')}>Edit</Button>
-        <Button onClick={() => setMode('update')}>Update</Button>
+    <SoreProvider>
+      <div>
+        <h1>My Sores</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <ImagePoint mode={mode} setMode={setMode} />
+          </div>
+          <div>
+            {mode !== 'view' && <SoreSliders />}
+
+          </div>
+        </div>
       </div>
-    </div>
+    </SoreProvider>
   );
 };
 
