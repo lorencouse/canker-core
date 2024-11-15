@@ -45,10 +45,8 @@ const SoreSliders: React.FC = () => {
 
   useEffect(() => {
     if (selectedSore) {
-      const selectedSoreSize = selectedSore.size ?? 3;
-      const selectedPainLevel = selectedSore.pain ?? 3;
-      setSoreSize(selectedSoreSize);
-      setPainLevel(selectedPainLevel);
+      setSoreSize(selectedSore.size ?? 3);
+      setPainLevel(selectedSore.pain ?? 3);
     }
   }, [selectedSore]);
 
