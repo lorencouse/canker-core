@@ -23,7 +23,7 @@ export default function Navlinks({ user }: NavlinksProps) {
         </Link>
         <nav className="ml-6 space-x-2 lg:block">
           <Link href="/" className={s.link}>
-            Pricing
+            Home
           </Link>
           <Link href="/my-sores" className={s.link}>
             Sores

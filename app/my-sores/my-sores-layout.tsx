@@ -6,18 +6,19 @@ import ImagePoint from '@/components/image-plot/ImagePoint';
 import SoreSliders from '@/components/image-plot/SoreSliders';
 import type { Sore } from '@/types';
 import { SoreProvider } from '@/context/SoreContext';
+import { SoreDetails } from '@/components/SoreDetails';
 
 export const MySoresLayout = () => {
   return (
     <SoreProvider>
       <div>
-        <h1>My Sores</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <ImagePoint />
           </div>
           <div>
             <SoreSliders />
+            <SoreDetails />
           </div>
         </div>
       </div>

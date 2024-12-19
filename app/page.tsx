@@ -23,8 +23,8 @@ export default async function HomePage() {
       <div className="hero-left flex items-center align-middle ">
         <div className="hero-text text-center bg-white text-black p-10 rounded-lg m-12 max-w-sm">
           <h1>Canker Core</h1>
-          <p className="my-7 text-lg">
-            Track, Treat, and Manage <br /> Your Canker Sores.
+          <p className="my-7 text-lg font-semibold">
+            Manage, Track, and Treat <br /> Your Canker Sores.
           </p>
           <Link href="/my-sores">
             <Button className="p-6 font-bold text-xl bg-secondary text-white rounded-lg">

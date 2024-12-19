@@ -28,7 +28,7 @@ const ImagePoint: React.FC = () => {
   const { sores, setSores, setSelectedSore, selectedSore, mode, setMode } =
     useSoreContext();
   const [isGums, setIsGums] = useState(false);
-  const [image, setImage] = useState('/mouth.png');
+  const [image, setImage] = useState('/images/diagram/mouth.png');
   const stageRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { width: stageWidth, height: stageHeight } = useStageSize(containerRef);
@@ -74,7 +74,9 @@ const ImagePoint: React.FC = () => {
   const handleToggleGums = () => {
     const newIsGums = !isGums;
     setIsGums(newIsGums);
-    setImage(newIsGums ? '/gums.png' : '/mouth.png');
+    setImage(
+      newIsGums ? '/images/diagram/gums.png' : '/images/diagram/mouth.png'
+    );
   };
 
   const updateSore = (updatedSore: Sore) => {
