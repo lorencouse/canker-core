@@ -12,8 +12,8 @@ export const MySoresLayout = () => {
   return (
     <SoreProvider>
       <div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto gap-x-20 md:px-10 px-0">
+          <div className="flex max-w-lg justify-between">
             <ImagePoint />
           </div>
           <div>
