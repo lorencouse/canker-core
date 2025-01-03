@@ -80,20 +80,9 @@ const ImagePoint: React.FC = () => {
     setImage(
       newIsGums ? '/images/diagram/gums.png' : '/images/diagram/mouth.png'
     );
-    const updatedSore: Sore = {
-    ...selectedSore,
-    id: selectedSore?.id ?? '', // Required field
-    user_id: selectedSore?.user_id ?? '', // Required field
-    gums: newIsGums, // Required field
-    zone: selectedSore?.zone ?? '', // Required field
-    dates: selectedSore?.dates ?? null,
-    size: selectedSore?.size ?? null,
-    pain: selectedSore?.pain ?? null,
-    healed: selectedSore?.healed ?? null,
-    x: selectedSore?.x ?? null,
-    y: selectedSore?.y ?? null
-    };
-    setSelectedSore(updatedSore);
+    if (selectedSore) {
+      setSelectedSore({ ...selectedSore, gums: newIsGums });
+    }
   };
 
   const updateSore = (updatedSore: Sore) => {
