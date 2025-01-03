@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Group } from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
 import { Redirect } from 'next';
@@ -74,12 +74,14 @@ const ImagePoint: React.FC = () => {
     }
   };
 
+  const setGumsMode = (gums: boolean) => {
+    setIsGums(gums);
+    setImage(gums ? '/images/diagram/gums.png' : '/images/diagram/mouth.png');
+  };
+
   const handleToggleGums = () => {
     const newIsGums = !isGums;
-    setIsGums(newIsGums);
-    setImage(
-      newIsGums ? '/images/diagram/gums.png' : '/images/diagram/mouth.png'
-    );
+    setGumsMode(newIsGums);
     if (selectedSore) {
       setSelectedSore({ ...selectedSore, gums: newIsGums });
     }
@@ -90,6 +92,12 @@ const ImagePoint: React.FC = () => {
       prevSores.map((s) => (s.id === updatedSore.id ? updatedSore : s))
     );
   };
+
+  useEffect(() => {
+    if (selectedSore) {
+      setGumsMode(selectedSore.gums || false);
+    }
+  }, [selectedSore]);
 
   return (
     <div

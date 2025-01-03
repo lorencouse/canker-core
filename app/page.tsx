@@ -11,7 +11,7 @@ import { Redirect } from 'next';
 import Link from 'next/link';
 
 export default async function HomePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const [user, products, subscription] = await Promise.all([
     getUser(supabase),
     getProducts(supabase),

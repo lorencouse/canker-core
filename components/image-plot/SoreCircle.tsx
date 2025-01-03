@@ -44,8 +44,7 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
 
   const handleClickLabel = (e: any) => {
     const id = e.target.id() || e.target.findAncestor('Group')?.attrs.id;
-    const newSelectedSore = sores.find((sore) => sore.id === id) || null;
-    setSelectedSore(newSelectedSore);
+    setSelectedSore(sores.find((sore) => sore.id === id) || null);
   };
 
   return (
