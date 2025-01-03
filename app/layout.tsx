@@ -6,8 +6,9 @@ import { PropsWithChildren, Suspense } from 'react';
 import { getURL } from '@/utils/helpers';
 import 'styles/main.css';
 
-const title = 'Next.js Subscription Starter';
-const description = 'Brought to you by Vercel, Stripe, and Supabase.';
+const title = 'Canker Core';
+const description =
+  'Track, treat and manage your mouth sores in one simple place.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(getURL()),

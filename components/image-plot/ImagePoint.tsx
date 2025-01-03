@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Stage, Layer, Group } from 'react-konva';
 import { v4 as uuidv4 } from 'uuid';
 import { Redirect } from 'next';
@@ -32,9 +32,6 @@ const ImagePoint: React.FC = () => {
   const stageRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { width: stageWidth, height: stageHeight } = useStageSize(containerRef);
-
-  // Store original sores for cancellation
-  // const originalSores = useRef<Sore[]>(sores);
 
   useStageHandlers(stageRef, containerRef);
 
@@ -93,11 +90,11 @@ const ImagePoint: React.FC = () => {
     );
   };
 
-  useEffect(() => {
-    if (selectedSore) {
-      setGumsMode(selectedSore.gums || false);
-    }
-  }, [selectedSore]);
+  // useEffect(() => {
+  //   if (selectedSore) {
+  //     setGumsMode(selectedSore.gums || false);
+  //   }
+  // }, [selectedSore]);
 
   return (
     <div
@@ -133,6 +130,7 @@ const ImagePoint: React.FC = () => {
                 sore={sore}
                 stageWidth={stageWidth}
                 stageHeight={stageHeight}
+                setGumsMode={setGumsMode}
               />
             ))}
           </Group>

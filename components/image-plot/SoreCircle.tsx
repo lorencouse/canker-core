@@ -9,12 +9,14 @@ interface SoreCircleProps {
   sore: Sore;
   stageWidth: number;
   stageHeight: number;
+  setGumsMode: (isGums: boolean) => void;
 }
 
 const SoreCircle: React.FC<SoreCircleProps> = ({
   sore,
   stageWidth,
-  stageHeight
+  stageHeight,
+  setGumsMode
 }) => {
   const { sores, setSores, setSelectedSore, selectedSore, mode } =
     useSoreContext();
@@ -44,7 +46,9 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
 
   const handleClickLabel = (e: any) => {
     const id = e.target.id() || e.target.findAncestor('Group')?.attrs.id;
+    const currentSore = sores.find((sore) => sore.id === id) || null;
     setSelectedSore(sores.find((sore) => sore.id === id) || null);
+    setGumsMode(currentSore?.gums || false);
   };
 
   return (
