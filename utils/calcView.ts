@@ -1,7 +1,7 @@
 // import { useCankerSores } from "../context/CankerSoresContext";
 
 const calcView = (x: number, y: number) => {
-  const dimensions = 600;
+  const dimensions = 100;
   if (y < dimensions / 2) {
     if (x < dimensions * 0.33) {
       return 'Left Cheek';

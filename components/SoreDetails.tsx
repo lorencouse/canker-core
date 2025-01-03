@@ -66,26 +66,66 @@ const SoreDetails: React.FC = () => {
           <hr />
           <div className="flex flex-row">
             <ul className="m-5 w-3/4">
-              <ListItem label="Last Updated: " data={selectedSore.updated} />
+              <ListItem
+                label="Last Updated: "
+                data={
+                  selectedSore.dates
+                    ? selectedSore.dates[selectedSore.dates?.length - 1]
+                    : 'N/A'
+                }
+              />
 
               <ListItem
                 label="Sore Size: "
-                data={selectedSore.size?.toString() ?? 'N/A'}
+                data={
+                  selectedSore.size
+                    ? selectedSore.size[
+                        selectedSore.size.length - 1
+                      ]?.toString()
+                    : 'N/A'
+                }
               />
               <ListItem
                 label="Pain Level: "
-                data={selectedSore.pain?.toString() ?? 'N/A'}
+                data={
+                  selectedSore.pain
+                    ? selectedSore.pain[
+                        selectedSore.pain.length - 1
+                      ]?.toString()
+                    : 'N/A'
+                }
               />
-              <ListItem label="X: " data={Math.round(selectedSore.x)} />
-              <ListItem label="Y: " data={Math.round(selectedSore.y)} />
+              <ListItem
+                label="X: "
+                data={selectedSore.x ? Math.round(selectedSore.x) : 0}
+              />
+              <ListItem
+                label="Y: "
+                data={selectedSore.y ? Math.round(selectedSore.y) : 0}
+              />
+              <ListItem
+                label="On: "
+                data={selectedSore.gums ? 'Gums' : 'Mouth'}
+              />
+              <ListItem label="Zone: " data={selectedSore.zone} />
             </ul>
             <div className="flex flex-grow flex-col items-center justify-center p-5">
               <div
                 className="sore-preview"
                 style={{
-                width: (selectedSore.size ?? 0) * 2,
-                height: (selectedSore.size ?? 0) * 2,
-                backgroundColor: getColor(selectedSore.pain ?? 0),
+                  width:
+                    (selectedSore.size
+                      ? selectedSore.size[selectedSore.size?.length - 1]
+                      : 0) * 2,
+                  height:
+                    (selectedSore.size
+                      ? selectedSore.size[selectedSore.size?.length - 1]
+                      : 0) * 2,
+                  backgroundColor: getColor(
+                    selectedSore.pain
+                      ? selectedSore.pain[selectedSore.pain?.length - 1]
+                      : 0
+                  ),
                   borderRadius: '50%',
                   boxShadow: '0 0 10px foreground',
                   border: '2px solid foreground'

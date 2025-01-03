@@ -44,12 +44,15 @@ const ImagePoint: React.FC = () => {
     if (mode === 'add') {
       const newSore: Sore = {
         id: uuidv4(),
-        sore_id: uuidv4(),
-        updated: new Date().toISOString(),
-        size: 3,
-        pain: 3,
+        user_id: '1',
+        healed: null,
+        dates: [new Date().toISOString()],
+        size: [3],
+        pain: [3],
         x,
-        y
+        y,
+        gums: isGums,
+        zone: calcView(x, y)
       };
 
       const newSores = [...sores, newSore];
@@ -59,10 +62,10 @@ const ImagePoint: React.FC = () => {
       // Find the nearest sore
       const nearestSore = sores.reduce((nearest, current) => {
         const distanceToCurrent = Math.sqrt(
-          (current.x - x) ** 2 + (current.y - y) ** 2
+          (current.x || 0 - x) ** 2 + (current.y || 0 - y) ** 2
         );
         const distanceToNearest = Math.sqrt(
-          (nearest.x - x) ** 2 + (nearest.y - y) ** 2
+          (nearest.x || 0 - x) ** 2 + (nearest.y || 0 - y) ** 2
         );
         return distanceToCurrent < distanceToNearest ? current : nearest;
       }, sores[0]);
@@ -77,6 +80,20 @@ const ImagePoint: React.FC = () => {
     setImage(
       newIsGums ? '/images/diagram/gums.png' : '/images/diagram/mouth.png'
     );
+    const updatedSore: Sore = {
+    ...selectedSore,
+    id: selectedSore?.id ?? '', // Required field
+    user_id: selectedSore?.user_id ?? '', // Required field
+    gums: newIsGums, // Required field
+    zone: selectedSore?.zone ?? '', // Required field
+    dates: selectedSore?.dates ?? null,
+    size: selectedSore?.size ?? null,
+    pain: selectedSore?.pain ?? null,
+    healed: selectedSore?.healed ?? null,
+    x: selectedSore?.x ?? null,
+    y: selectedSore?.y ?? null
+    };
+    setSelectedSore(updatedSore);
   };
 
   const updateSore = (updatedSore: Sore) => {

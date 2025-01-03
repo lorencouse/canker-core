@@ -7,8 +7,12 @@ import { useSoreContext } from '@/context/SoreContext';
 const SoreSliders: React.FC = () => {
   const { selectedSore, setSelectedSore, sores, setSores } = useSoreContext();
 
-  const initialSoreSize = selectedSore?.size ?? 3;
-  const initialPainLevel = selectedSore?.pain ?? 3;
+const initialSoreSize = selectedSore?.size
+? selectedSore.size[selectedSore.size.length - 1]
+: 3;
+const initialPainLevel = selectedSore?.pain
+? selectedSore.pain[selectedSore.pain.length - 1]
+: 3;
 
   const [soreSize, setSoreSize] = useState<number>(initialSoreSize);
   const [painLevel, setPainLevel] = useState<number>(initialPainLevel);
@@ -17,7 +21,10 @@ const SoreSliders: React.FC = () => {
     setSoreSize(newValue);
 
     if (selectedSore) {
-      const updatedSore = { ...selectedSore, size: newValue };
+      const updatedSore = {
+        ...selectedSore,
+        size: [...(selectedSore.size ?? []), newValue]
+      };
       setSelectedSore(updatedSore);
 
       // Update the sores array
@@ -32,7 +39,10 @@ const SoreSliders: React.FC = () => {
     setPainLevel(newValue);
 
     if (selectedSore) {
-      const updatedSore = { ...selectedSore, pain: newValue };
+      const updatedSore = {
+        ...selectedSore,
+        pain: [...(selectedSore.pain ?? []), newValue]
+      };
       setSelectedSore(updatedSore);
 
       // Update the sores array
@@ -43,11 +53,17 @@ const SoreSliders: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (selectedSore) {
-      setSoreSize(selectedSore.size ?? 3);
-      setPainLevel(selectedSore.pain ?? 3);
-    }
+useEffect(() => {
+if (selectedSore) {
+    const lastSize = selectedSore.size?.length
+    ? selectedSore.size[selectedSore.size.length - 1]
+    : 3;
+    const lastPain = selectedSore.pain?.length
+    ? selectedSore.pain[selectedSore.pain.length - 1]
+    : 3;
+    setSoreSize(lastSize);
+    setPainLevel(lastPain);
+}
   }, [selectedSore]);
 
   return (

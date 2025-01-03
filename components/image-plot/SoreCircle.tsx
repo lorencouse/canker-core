@@ -3,6 +3,7 @@ import type React from 'react';
 import { Circle, Group } from 'react-konva';
 import { useSoreContext } from '@/context/SoreContext';
 import { calculateCoordination } from '@/utils/mouth-diagram/stageUtils';
+import calcView from '@/utils/calcView';
 
 interface SoreCircleProps {
   sore: Sore;
@@ -23,8 +24,8 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
     return `hsl(0, 100%, ${lightness}%)`;
   };
 
-  const latestSize = sore.size ? sore.size : 3;
-  const latestPain = sore.pain ? sore.pain : 3;
+  const latestSize = sore?.size ? sore.size[sore.size.length - 1] : 3;
+  const latestPain = sore?.pain ? sore.pain[sore.pain.length - 1] : 3;
 
   const handleDragLabelCoordination = (e: any) => {
     if (mode === 'add' || mode === 'edit' || mode === 'update') {
@@ -32,7 +33,7 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
       const target = e.target as any;
       const id = target.id() || target.findAncestor('Group')?.attrs.id;
       const updatedSores: Sore[] = sores.map((sore) =>
-        sore.id === id ? { ...sore, x, y } : sore
+        sore.id === id ? { ...sore, x, y, zone: calcView(x, y) } : sore
       );
 
       setSores(updatedSores);
@@ -49,8 +50,8 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
   return (
     <Group
       id={`${sore.id}`}
-      x={(sore.x * stageWidth) / 100}
-      y={(sore.y * stageHeight) / 100}
+      x={((sore.x ? sore.x : 0) * stageWidth) / 100}
+      y={((sore.y ? sore.y : 0) * stageHeight) / 100}
       draggable={mode !== 'view'}
       onDragEnd={handleDragLabelCoordination}
       onClick={handleClickLabel}

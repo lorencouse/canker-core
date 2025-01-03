@@ -101,67 +101,41 @@ export type Database = {
         }
         Relationships: []
       }
-      sore_updates: {
-        Row: {
-          id: string
-          pain: number
-          size: number | null
-          sore_id: string
-          updated: string
-          x: number
-          y: number
-        }
-        Insert: {
-          id: string
-          pain: number
-          size?: number | null
-          sore_id: string
-          updated: string
-          x: number
-          y: number
-        }
-        Update: {
-          id?: string
-          pain?: number
-          size?: number | null
-          sore_id?: string
-          updated?: string
-          x?: number
-          y?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sore_updates_sore_id_fkey"
-            columns: ["sore_id"]
-            isOneToOne: false
-            referencedRelation: "sores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       sores: {
         Row: {
-          created_at: string
+          dates: string[] | null
           gums: boolean
           healed: string | null
           id: string
+          pain: number[] | null
+          size: number[] | null
           user_id: string
+          x: number | null
+          y: number | null
           zone: string
         }
         Insert: {
-          created_at: string
+          dates?: string[] | null
           gums: boolean
           healed?: string | null
           id: string
+          pain?: number[] | null
+          size?: number[] | null
           user_id: string
+          x?: number | null
+          y?: number | null
           zone: string
         }
         Update: {
-          created_at?: string
+          dates?: string[] | null
           gums?: boolean
           healed?: string | null
           id?: string
+          pain?: number[] | null
+          size?: number[] | null
           user_id?: string
+          x?: number | null
+          y?: number | null
           zone?: string
         }
         Relationships: [
