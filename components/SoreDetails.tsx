@@ -108,6 +108,7 @@ const SoreDetails: React.FC = () => {
                 data={selectedSore.gums ? 'Gums' : 'Mouth'}
               />
               <ListItem label="Zone: " data={selectedSore.zone} />
+              <ListItem label="Zone: " data={selectedSore.user_id} />
             </ul>
             <div className="flex flex-grow flex-col items-center justify-center p-5">
               <div

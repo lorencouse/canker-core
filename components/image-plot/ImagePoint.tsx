@@ -16,7 +16,7 @@ import {
 import SoreCircle from './SoreCircle';
 
 import { useStageHandlers } from '@/utils/hooks/useStateHandlers';
-import type { Sore } from '@/types';
+import type { Sore, User } from '@/types';
 import calcView from '@/utils/calcView';
 
 import ImagePlotButton from './ImagePlotButton';
@@ -24,7 +24,11 @@ import Images from './Images';
 import { useSoreContext } from '@/context/SoreContext';
 import BottomButtons from './buttons/BottomButtons';
 
-const ImagePoint: React.FC = () => {
+interface ImagePointProps {
+  user: User;
+}
+
+const ImagePoint: React.FC<ImagePointProps> = ({ user }) => {
   const { sores, setSores, setSelectedSore, selectedSore, mode, setMode } =
     useSoreContext();
   const [isGums, setIsGums] = useState(false);
@@ -41,7 +45,7 @@ const ImagePoint: React.FC = () => {
     if (mode === 'add') {
       const newSore: Sore = {
         id: uuidv4(),
-        user_id: '1',
+        user_id: user.id || '',
         healed: null,
         dates: [new Date().toISOString()],
         size: [3],
