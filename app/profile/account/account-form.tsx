@@ -2,14 +2,12 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 // import { CalendarIcon, CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
-import { Calendar as CalendarIcon, Check, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import {
   Command,
   CommandEmpty,
@@ -108,7 +106,7 @@ export function AccountForm() {
             </FormItem>
           )}
         />
-        <FormField
+        {/* <FormField
           control={form.control}
           name="dob"
           render={({ field }) => (
@@ -211,7 +209,7 @@ export function AccountForm() {
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
         <Button type="submit">Update account</Button>
       </form>
     </Form>
