@@ -4,7 +4,7 @@ import { Circle, Group } from 'react-konva';
 import { useSoreContext } from '@/context/SoreContext';
 import { calculateCoordination } from '@/utils/mouth-diagram/stageUtils';
 import calcView from '@/utils/calcView';
-
+import { getColor } from '@/utils/getColor';
 interface SoreCircleProps {
   sore: Sore;
   stageWidth: number;
@@ -20,11 +20,6 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
 }) => {
   const { sores, setSores, setSelectedSore, selectedSore, mode } =
     useSoreContext();
-
-  const getColor = (painLevel: number) => {
-    const lightness = 100 - painLevel * 7;
-    return `hsl(0, 100%, ${lightness}%)`;
-  };
 
   const latestSize = sore?.size ? sore.size[sore.size.length - 1] : 3;
   const latestPain = sore?.pain ? sore.pain[sore.pain.length - 1] : 3;
