@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import ImagePoint from '@/components/image-plot/ImagePoint';
-import SoreSliders from '@/components/image-plot/SoreSliders';
 import { SoreProvider } from '@/context/SoreContext';
 import { SoreDetails } from '@/components/SoreDetails';
 import { User, Sore } from '@/types';
@@ -23,7 +22,7 @@ export const MySoresLayout = ({
             <ImagePoint user={user} />
           </div>
           <div>
-            <SoreSliders />
+            
             <SoreDetails />
           </div>
         </div>

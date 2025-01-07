@@ -3,16 +3,18 @@ import { useSoreContext } from '@/context/SoreContext';
 import { handleResetZoom } from '@/utils/mouth-diagram/stageUtils';
 import ImagePlotButton from '../ImagePlotButton';
 import { Sore } from '@/types';
+import { upsertSores, deleteSore } from '@/app/actions/soreActions';
 
-const BottomButtons = ({
-  stageRef
-}: {
-  stageRef: any;
-  // originalSores: Sore[];
-}) => {
+const BottomButtons = ({ stageRef }: { stageRef: any }) => {
   const { sores, setSores, setSelectedSore, selectedSore, setMode, mode } =
     useSoreContext();
-  const [originalSores, setOriginalSores] = useState<Sore[]>([]);
+  const [originalSores, setOriginalSores] = useState<Sore[]>(sores);
+
+  const handleFinish = async () => {
+    await upsertSores(sores);
+    setMode('view');
+    setSelectedSore(null);
+  };
 
   const handleCancel = () => {
     setSores(originalSores);
@@ -21,8 +23,9 @@ const BottomButtons = ({
     handleResetZoom(stageRef);
   };
 
-  const handleDeleteButton = () => {
+  const handleDeleteButton = async () => {
     if (selectedSore) {
+      await deleteSore(selectedSore.id);
       const updatedSores = sores.filter((s) => s.id !== selectedSore.id);
       setSores(updatedSores);
       setSelectedSore(null);
@@ -70,7 +73,7 @@ const BottomButtons = ({
         {(mode === 'edit' || mode === 'add') && (
           <>
             <ImagePlotButton onClick={handleCancel} label="Cancel" />
-            <ImagePlotButton onClick={() => setMode('view')} label="Finish" />
+            <ImagePlotButton onClick={handleFinish} label="Finish" />
           </>
         )}
         {mode === 'update' && (

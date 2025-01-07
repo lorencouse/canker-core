@@ -23,7 +23,9 @@ const SoreSliders: React.FC = () => {
     if (selectedSore) {
       const updatedSore = {
         ...selectedSore,
-        size: [...(selectedSore.size ?? []), newValue]
+        size: selectedSore.size 
+          ? [...selectedSore.size.slice(0, -1), newValue]
+          : [newValue]
       };
       setSelectedSore(updatedSore);
 
@@ -41,7 +43,9 @@ const SoreSliders: React.FC = () => {
     if (selectedSore) {
       const updatedSore = {
         ...selectedSore,
-        pain: [...(selectedSore.pain ?? []), newValue]
+        pain: selectedSore.pain 
+          ? [...selectedSore.pain.slice(0, -1), newValue]
+          : [newValue]
       };
       setSelectedSore(updatedSore);
 
