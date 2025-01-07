@@ -27,8 +27,8 @@ const transformData = (sores: Sore[]) => {
           dataMap[dateString] = { date: dateString, sores: [] };
         }
         dataMap[dateString].sores.push({
-        id: sore.id,
-        size: sore.size?.[index] ?? 0
+          id: sore.id,
+          size: sore.size?.[index] ?? 0
         });
       });
     }
@@ -42,7 +42,7 @@ const BarChartComponent = () => {
   const chartData = transformData(sores);
 
   return (
-    <Card>
+    <Card className="bg-background text-foreground">
       <CardHeader>
         <CardTitle>Sore History</CardTitle>
         <CardDescription>
@@ -75,15 +75,15 @@ const BarChartComponent = () => {
               content={
                 <ChartTooltipContent
                   hideLabel
-                  className="w-[180px]"
+                  className="w-[180px] bg-background text-foreground"
                   formatter={(value, name, item, index) => (
                     <>
                       <div
-                        className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-[--color-bg]"
+                        className="h-2.5 w-2.5 shrink-0 rounded-[2px] "
                         style={
                           {
                             '--color-bg': `${getColor(sores[index]?.pain?.[sores[index]?.pain?.length - 1] ?? 0)}`,
-                            border: '1px solid black'
+                            border: '1px solid foreground'
                           } as React.CSSProperties
                         }
                       />
@@ -105,7 +105,9 @@ const BarChartComponent = () => {
                 key={index}
                 dataKey={`sores[${index}].size`}
                 stackId="a"
-                fill={getColor(sores[index]?.pain?.[sores[index]?.pain?.length - 1] ?? 0)}
+                fill={getColor(
+                  sores[index]?.pain?.[sores[index]?.pain?.length - 1] ?? 0
+                )}
                 stroke="white"
                 strokeWidth={1}
                 label={`Sore ${index + 1}`}

@@ -7,6 +7,7 @@ import Logo from '@/components/icons/Logo';
 import { usePathname, useRouter } from 'next/navigation';
 import { getRedirectMethod } from '@/utils/auth-helpers/settings';
 import s from './Navbar.module.css';
+import ModeToggle from '@/components/mode-toggle';
 
 interface NavlinksProps {
   user?: any;
@@ -29,13 +30,13 @@ export default function Navlinks({ user }: NavlinksProps) {
             Sores
           </Link>
           {user && (
-            <Link href="/account" className={s.link}>
-              Account
+            <Link href="/profile" className={s.link}>
+              Profile
             </Link>
           )}
         </nav>
       </div>
-      <div className="flex justify-end space-x-8">
+      <div className="flex justify-end space-x-8 items-center">
         {user ? (
           <form onSubmit={(e) => handleRequest(e, SignOut, router)}>
             <input type="hidden" name="pathName" value={usePathname()} />
@@ -48,6 +49,7 @@ export default function Navlinks({ user }: NavlinksProps) {
             Sign In
           </Link>
         )}
+        <ModeToggle />
       </div>
     </div>
   );

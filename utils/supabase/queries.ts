@@ -37,3 +37,15 @@ export const getUserDetails = cache(async (supabase: SupabaseClient) => {
     .single();
   return userDetails;
 });
+
+// export const getUserDetails = cache(async () => {
+//   const supabase = await createClient();
+//   const user = await getUser(supabase);
+
+//   const { data: userDetails } = await supabase
+//     .from('users')
+//     .select('*')
+//     .eq('id', user.id)
+//     .single();
+//   return userDetails;
+// });

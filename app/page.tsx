@@ -21,7 +21,7 @@ export default async function HomePage() {
   return (
     <div className="home-hero flex flex-row flex-wrap justify-around items-center bg-primary">
       <div className="hero-left flex items-center align-middle ">
-        <div className="hero-text text-center bg-white text-black p-10 rounded-lg m-12 max-w-sm">
+        <div className="hero-text text-center bg-background text-foreground p-10 rounded-lg m-12 max-w-sm">
           <h1>Canker Core</h1>
           <p className="my-7 text-lg font-semibold">
             Manage, Track, and Treat <br /> Your Canker Sores.

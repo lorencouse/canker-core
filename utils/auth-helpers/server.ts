@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getURL, getErrorRedirect, getStatusRedirect } from 'utils/helpers';
 import { getAuthTypes } from 'utils/auth-helpers/settings';
+import { User } from '@/types';
 
 function isValidEmail(email: string) {
   var regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -333,4 +334,33 @@ export async function updateName(formData: FormData) {
       'Your name could not be updated.'
     );
   }
+}
+
+export async function updateUserProfile(formData: Partial<User>): Promise<{
+  data: User | null;
+  message: string;
+}> {
+  const supabase = await createClient();
+  const user = await supabase.auth.getUser();
+
+  if (!user.data.user) {
+    return { data: null, message: 'User not authenticated' };
+  }
+
+  const { error, data } = await supabase
+    .from('users')
+    .update({
+      username: formData.username,
+      full_name: formData.full_name,
+      bio: formData.bio
+      // Add other fields as needed
+    })
+    .eq('id', user.data.user.id)
+    .select();
+
+  if (error) {
+    return { data: null, message: error.message };
+  }
+
+  return { data: null, message: 'Success!' };
 }
