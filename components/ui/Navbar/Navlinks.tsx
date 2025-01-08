@@ -26,13 +26,18 @@ export default function Navlinks({ user }: NavlinksProps) {
           <Link href="/" className={s.link}>
             Home
           </Link>
-          <Link href="/my-sores" className={s.link}>
-            Sores
-          </Link>
           {user && (
-            <Link href="/profile" className={s.link}>
-              Profile
-            </Link>
+            <>
+              <Link href="/my-sores" className={s.link}>
+                Sores
+              </Link>
+              <Link href="/history" className={s.link}>
+                History
+              </Link>
+              <Link href="/profile" className={s.link}>
+                Profile
+              </Link>
+            </>
           )}
         </nav>
       </div>

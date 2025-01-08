@@ -20,9 +20,9 @@ import { User } from '@/types';
 import { updateUserProfile } from '@/utils/auth-helpers/server';
 
 const profileFormSchema = z.object({
-  username: z.string().min(2).max(30),
-  email: z.string().email(),
-  full_name: z.string().min(2).max(50),
+  username: z.string().min(4).max(30).optional(),
+  email: z.string().email().optional(),
+  full_name: z.string().min(2).max(50).optional(),
   bio: z.string().max(160).optional(),
   phone: z.string().optional()
   // language: z.string().optional()
@@ -91,7 +91,7 @@ export function ContactInfoForm({ userProfile }: { userProfile: User | null }) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input {...field} disabled />
+                <Input {...field} />
               </FormControl>
               <FormDescription>Your primary email address.</FormDescription>
               <FormMessage />

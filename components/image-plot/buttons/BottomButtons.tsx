@@ -3,7 +3,7 @@ import { useSoreContext } from '@/context/SoreContext';
 import { handleResetZoom } from '@/utils/mouth-diagram/stageUtils';
 import ImagePlotButton from '../ImagePlotButton';
 import { Sore } from '@/types';
-import { upsertSores, deleteSore } from '@/app/actions/soreActions';
+import { upsertSores, deleteSore } from '@/utils/actions/soreActions';
 
 const BottomButtons = ({ stageRef }: { stageRef: any }) => {
   const { sores, setSores, setSelectedSore, selectedSore, setMode, mode } =

@@ -24,7 +24,7 @@ export const MySoresLayout = ({
           </div>
           <div>
             <SoreDetails />
-            <BarChartComponent />
+            <BarChartComponent sores={soresData} />
           </div>
         </div>
       </div>

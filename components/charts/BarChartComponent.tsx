@@ -37,8 +37,7 @@ const transformData = (sores: Sore[]) => {
   return Object.values(dataMap);
 };
 
-const BarChartComponent = () => {
-  const { sores } = useSoreContext();
+const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
   const chartData = transformData(sores);
 
   return (
