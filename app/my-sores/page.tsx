@@ -7,7 +7,7 @@ export default async function MySoresPage() {
   const user = await getUserDetails(supabase);
 
   if (!user) {
-    redirect('/login');
+    redirect('/signin/password_signin');
   }
 
   const { data: soresData, error } = await supabase
