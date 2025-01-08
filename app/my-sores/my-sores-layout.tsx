@@ -6,7 +6,6 @@ import ImagePoint from '@/components/image-plot/ImagePoint';
 import { SoreProvider } from '@/context/SoreContext';
 import { SoreDetails } from '@/components/SoreDetails';
 import { User, Sore } from '@/types';
-import BarChartComponent from '@/components/charts/BarChartComponent';
 
 export const MySoresLayout = ({
   user,
@@ -24,7 +23,7 @@ export const MySoresLayout = ({
           </div>
           <div>
             <SoreDetails />
-            <BarChartComponent sores={soresData} />
+            {/* <BarChartComponent sores={soresData} /> */}
           </div>
         </div>
       </div>

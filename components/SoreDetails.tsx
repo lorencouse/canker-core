@@ -69,34 +69,42 @@ const SoreDetails: React.FC = () => {
             </div>
             <hr />
             <div className="flex flex-row">
-              <ul className="m-5 w-3/4">
+                <ul className="m-5 w-3/4">
+                <ListItem
+                  label="Created: "
+                  data={
+                  selectedSore.dates
+                    ? new Date(selectedSore.dates[0]).toLocaleString()
+                    : 'N/A'
+                  }
+                />
                 <ListItem
                   label="Last Updated: "
                   data={
-                    selectedSore.dates
-                      ? selectedSore.dates[selectedSore.dates?.length - 1]
-                      : 'N/A'
+                  selectedSore.dates
+                    ? new Date(selectedSore.dates[selectedSore.dates.length - 1]).toLocaleString()
+                    : 'N/A'
                   }
                 />
 
                 <ListItem
                   label="Sore Size: "
                   data={
-                    selectedSore.size
-                      ? selectedSore.size[
-                          selectedSore.size.length - 1
-                        ]?.toString()
-                      : 'N/A'
+                  selectedSore.size
+                    ? selectedSore.size[
+                      selectedSore.size.length - 1
+                    ]?.toString()
+                    : 'N/A'
                   }
                 />
                 <ListItem
                   label="Pain Level: "
                   data={
-                    selectedSore.pain
-                      ? selectedSore.pain[
-                          selectedSore.pain.length - 1
-                        ]?.toString()
-                      : 'N/A'
+                  selectedSore.pain
+                    ? selectedSore.pain[
+                      selectedSore.pain.length - 1
+                    ]?.toString()
+                    : 'N/A'
                   }
                 />
                 <ListItem
@@ -113,7 +121,7 @@ const SoreDetails: React.FC = () => {
                 />
                 <ListItem label="Zone: " data={selectedSore.zone} />
                 <ListItem label="User ID: " data={selectedSore.user_id} />
-              </ul>
+                </ul>
               <div className="flex flex-grow flex-col items-center justify-center p-5">
                 <div
                   className="sore-preview"

@@ -111,7 +111,7 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
                 strokeWidth={1}
                 label={`Sore ${index + 1}`}
                 radius={5}
-                maxBarSize={50}
+                maxBarSize={45}
               >
                 <LabelList
                   dataKey={() => `Sore ${index + 1}`}
