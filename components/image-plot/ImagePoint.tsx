@@ -72,7 +72,13 @@ const ImagePoint: React.FC<ImagePointProps> = ({ user }) => {
       let shortestDistance = Infinity;
 
       sores.forEach((sore) => {
-        if (sore.x === undefined || sore.y === undefined) return;
+        if (
+          sore.x === undefined ||
+          sore.y === undefined ||
+          sore.x === null ||
+          sore.y === null
+        )
+          return;
 
         const distance = Math.sqrt(
           Math.pow(sore.x - x, 2) + Math.pow(sore.y - y, 2)
