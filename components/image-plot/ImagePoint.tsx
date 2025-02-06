@@ -59,19 +59,37 @@ const ImagePoint: React.FC<ImagePointProps> = ({ user }) => {
       const newSores = [...sores, newSore];
       setSores(newSores);
       setSelectedSore(newSore);
-    } else if (mode === 'edit' || mode === 'view') {
-      // Find the nearest sore
-      const nearestSore = sores.reduce((nearest, current) => {
-        const distanceToCurrent = Math.sqrt(
-          (current.x || 0 - x) ** 2 + (current.y || 0 - y) ** 2
-        );
-        const distanceToNearest = Math.sqrt(
-          (nearest.x || 0 - x) ** 2 + (nearest.y || 0 - y) ** 2
-        );
-        return distanceToCurrent < distanceToNearest ? current : nearest;
-      }, sores[0]);
+    } else {
+      // Handle empty sores array
+      if (sores.length === 0) {
+        setSelectedSore(null);
+        return;
+      }
 
-      setSelectedSore(nearestSore);
+      // Find the nearest sore using a threshold distance
+      const CLICK_THRESHOLD = 5;
+      let nearestSore = null;
+      let shortestDistance = Infinity;
+
+      sores.forEach((sore) => {
+        if (sore.x === undefined || sore.y === undefined) return;
+
+        const distance = Math.sqrt(
+          Math.pow(sore.x - x, 2) + Math.pow(sore.y - y, 2)
+        );
+
+        if (distance < shortestDistance) {
+          shortestDistance = distance;
+          nearestSore = sore;
+        }
+      });
+
+      // Only select the sore if it's within the threshold distance
+      if (nearestSore && shortestDistance <= CLICK_THRESHOLD) {
+        setSelectedSore(nearestSore);
+      } else {
+        setSelectedSore(null);
+      }
     }
   };
 
@@ -116,7 +134,6 @@ const ImagePoint: React.FC<ImagePointProps> = ({ user }) => {
             <Images
               img={image}
               handleClickImage={handleClickImage}
-              
               stageWidth={stageWidth}
               stageHeight={stageHeight}
             />
