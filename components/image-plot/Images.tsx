@@ -13,7 +13,7 @@ const Images: React.FC<ImagesProps> = ({
   img,
   handleClickImage,
   stageWidth,
-  stageHeight,
+  stageHeight
 }) => {
   const [image] = useImage(img);
 
@@ -29,6 +29,7 @@ const Images: React.FC<ImagesProps> = ({
       x={(stageWidth - image.width * scale) / 2}
       y={(stageHeight - image.height * scale) / 2}
       onClick={handleClickImage}
+      onTap={handleClickImage}
     />
   );
 };

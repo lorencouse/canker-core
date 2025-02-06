@@ -15,7 +15,7 @@ import {
 } from '@/utils/mouth-diagram/stageUtils';
 import SoreCircle from './SoreCircle';
 
-import { useStageHandlers } from '@/utils/hooks/useStateHandlers';
+import { useStageHandlers } from '@/utils/hooks/useStageHandlers';
 import type { Sore, User } from '@/types';
 import calcView from '@/utils/calcView';
 
@@ -94,12 +94,6 @@ const ImagePoint: React.FC<ImagePointProps> = ({ user }) => {
     );
   };
 
-  // useEffect(() => {
-  //   if (selectedSore) {
-  //     setGumsMode(selectedSore.gums || false);
-  //   }
-  // }, [selectedSore]);
-
   return (
     <div
       ref={containerRef}
@@ -114,17 +108,15 @@ const ImagePoint: React.FC<ImagePointProps> = ({ user }) => {
         onWheel={(e) => {
           handleZoomStage(stageRef)(e);
         }}
+        onTouchMove={handlePinchZoom(stageRef)}
         ref={stageRef}
-        onTouchMove={(e) => {
-          handlePinchZoom(stageRef)(e);
-        }}
       >
         <Layer>
           <Group>
             <Images
               img={image}
               handleClickImage={handleClickImage}
-              // handleTouchImage={handleClickImage}
+              
               stageWidth={stageWidth}
               stageHeight={stageHeight}
             />

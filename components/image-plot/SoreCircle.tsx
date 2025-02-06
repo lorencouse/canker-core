@@ -54,6 +54,7 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
       draggable={mode !== 'view'}
       onDragEnd={handleDragLabelCoordination}
       onClick={handleClickLabel}
+      onTap={handleClickLabel}
     >
       <Circle
         radius={latestSize}

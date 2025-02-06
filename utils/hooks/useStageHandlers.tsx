@@ -7,6 +7,9 @@ import {
 } from '@/utils/mouth-diagram/stageUtils';
 
 export const useStageHandlers = (stageRef: any, containerRef: any) => {
+  let lastCenter: { x: number; y: number } | null = null;
+  let lastDist = 0;
+
   useEffect(() => {
     const handleResize = () => {
       if (stageRef.current) {
@@ -35,6 +38,32 @@ export const useStageHandlers = (stageRef: any, containerRef: any) => {
       if (stage) {
         stage.off('touchmove', handleTouchMove);
       }
+    };
+  }, [stageRef]);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        stage.draggable(false);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      lastCenter = null;
+      lastDist = 0;
+      stage.draggable(true);
+    };
+
+    stage.on('touchstart', handleTouchStart);
+    stage.on('touchend touchcancel', handleTouchEnd);
+
+    return () => {
+      stage.off('touchstart', handleTouchStart);
+      stage.off('touchend touchcancel', handleTouchEnd);
     };
   }, [stageRef]);
 
