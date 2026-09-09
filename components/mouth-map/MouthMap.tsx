@@ -1,0 +1,333 @@
+'use client';
+
+import type React from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+
+import { useSoreContext } from '@/context/SoreContext';
+import type { Sore, User } from '@/types';
+import {
+  MOUTH_VIEWS,
+  VIEW_BOX,
+  VIEW_LABELS,
+  fromPercent,
+  radiusFor,
+  toPercent,
+  viewBoxAttr,
+  zoneAt,
+  type MouthView,
+  type Point
+} from '@/utils/mouth-map/geometry';
+import { cn } from '@/utils/cn';
+
+import { MapDefs, ViewArtwork } from './artwork';
+import MapControls from './MapControls';
+import SoreMarker from './SoreMarker';
+
+/**
+ * The mouth map: three flat views (Front, Cheeks, Lips) behind a segmented
+ * control, drawn as SVG so it scales, prints, and follows the theme.
+ *
+ * Interaction model
+ *   view mode   tap a sore to select it; drag to pan; wheel / pinch to zoom
+ *   add mode    tap tissue to place a sore (taps off the tissue do nothing)
+ *   edit mode   drag a sore to move it; its zone follows
+ *
+ * Coordinates are kept in drawing units (the SVG viewBox) while interacting
+ * and converted to percentages only when written to a sore.
+ */
+
+const MIN_SCALE = 1;
+const MAX_SCALE = 5;
+/** Pointer travel before a press counts as a drag rather than a tap. */
+const DRAG_THRESHOLD = 4;
+
+type Camera = { k: number; tx: number; ty: number };
+const HOME: Camera = { k: 1, tx: 0, ty: 0 };
+
+export default function MouthMap({ user }: { user: User }) {
+  const { sores, setSores, selectedSore, setSelectedSore, mode } = useSoreContext();
+  const [view, setView] = useState<MouthView>('front');
+  const [camera, setCamera] = useState<Camera>(HOME);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const idPrefix = useId().replace(/:/g, '');
+
+  // Selecting a sore elsewhere (the details card's arrows) brings its view up.
+  useEffect(() => {
+    if (selectedSore?.view && selectedSore.view !== view) setView(selectedSore.view);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSore?.id]);
+
+  /* ---- coordinate conversion ------------------------------------------- */
+
+  /** Client pixels -> drawing units, accounting for the camera. */
+  const toDrawing = useCallback(
+    (clientX: number, clientY: number): Point => {
+      const svg = svgRef.current!;
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return { x: 0, y: 0 };
+      const pt = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
+      return { x: (pt.x - camera.tx) / camera.k, y: (pt.y - camera.ty) / camera.k };
+    },
+    [camera]
+  );
+
+  /** Drawing units per client pixel, for converting pan deltas. */
+  const unitsPerPixel = () => {
+    const svg = svgRef.current;
+    if (!svg) return 1;
+    return VIEW_BOX.width / svg.getBoundingClientRect().width;
+  };
+
+  /* ---- zoom ------------------------------------------------------------- */
+
+  const zoomAbout = useCallback((factor: number, anchor: Point) => {
+    setCamera((c) => {
+      const k = Math.min(MAX_SCALE, Math.max(MIN_SCALE, c.k * factor));
+      if (k === c.k) return c;
+      // Keep the drawing point under `anchor` fixed on screen.
+      const ratio = k / c.k;
+      return {
+        k,
+        tx: anchor.x - (anchor.x - c.tx) * ratio,
+        ty: anchor.y - (anchor.y - c.ty) * ratio
+      };
+    });
+  }, []);
+
+  const zoomCentre = (factor: number) =>
+    zoomAbout(factor, { x: VIEW_BOX.width / 2, y: VIEW_BOX.height / 2 });
+  const resetCamera = () => setCamera(HOME);
+
+  // Wheel zoom needs a non-passive listener to stop the page scrolling.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return;
+      const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
+      zoomAbout(e.deltaY > 0 ? 0.9 : 1.1, pt);
+    };
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', onWheel);
+  }, [zoomAbout]);
+
+  /* ---- pointer handling: pan, pinch, tap -------------------------------- */
+
+  type Gesture = {
+    pointers: Map<number, { x: number; y: number }>;
+    startCamera: Camera;
+    moved: boolean;
+    pinchDist: number | null;
+    // The sore being dragged, if the press started on one in an editing mode.
+    dragging: Sore | null;
+  };
+  const gesture = useRef<Gesture | null>(null);
+
+  const onPointerDown = (e: React.PointerEvent<SVGSVGElement>, sore: Sore | null = null) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    svg.setPointerCapture(e.pointerId);
+    const g = gesture.current ?? {
+      pointers: new Map(),
+      startCamera: camera,
+      moved: false,
+      pinchDist: null,
+      dragging: null
+    };
+    g.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (g.pointers.size === 1 && sore && mode !== 'view') g.dragging = sore;
+    if (g.pointers.size === 2) {
+      const [a, b] = Array.from(g.pointers.values());
+      g.pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
+      g.dragging = null;
+    }
+    gesture.current = g;
+  };
+
+  const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const g = gesture.current;
+    if (!g || !g.pointers.has(e.pointerId)) return;
+    const prev = g.pointers.get(e.pointerId)!;
+    g.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (g.pointers.size === 2 && g.pinchDist) {
+      const [a, b] = Array.from(g.pointers.values());
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      const svg = svgRef.current!;
+      const ctm = svg.getScreenCTM();
+      if (ctm) {
+        const mid = new DOMPoint((a.x + b.x) / 2, (a.y + b.y) / 2).matrixTransform(ctm.inverse());
+        zoomAbout(dist / g.pinchDist, mid);
+      }
+      g.pinchDist = dist;
+      g.moved = true;
+      return;
+    }
+
+    const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+    if (!g.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+    g.moved = true;
+
+    if (g.dragging) {
+      const p = toDrawing(e.clientX, e.clientY);
+      const pct = toPercent(p);
+      const zone = zoneAt(view, p);
+      if (!zone) return; // Do not let a sore leave the tissue.
+      const moved = { ...g.dragging, x: pct.x, y: pct.y, zone };
+      g.dragging = moved;
+      setSores((prev) => prev.map((s) => (s.id === moved.id ? moved : s)));
+      setSelectedSore(moved);
+      return;
+    }
+
+    const u = unitsPerPixel();
+    setCamera((c) => ({ ...c, tx: c.tx + dx * u, ty: c.ty + dy * u }));
+  };
+
+  const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    const g = gesture.current;
+    if (!g) return;
+    const wasTap = !g.moved && g.pointers.size === 1;
+    g.pointers.delete(e.pointerId);
+    if (g.pointers.size > 0) {
+      g.pinchDist = null;
+      return;
+    }
+    gesture.current = null;
+    if (!wasTap) return;
+
+    // A tap. On a sore, the marker's own handler already selected it.
+    if ((e.target as Element).closest('[data-sore]')) return;
+
+    const p = toDrawing(e.clientX, e.clientY);
+    if (mode === 'add') {
+      const zone = zoneAt(view, p);
+      if (!zone) return;
+      const pct = toPercent(p);
+      const sore: Sore = {
+        id: uuidv4(),
+        user_id: user.id ?? '',
+        healed: null,
+        dates: [new Date().toISOString()],
+        size: [3],
+        pain: [3],
+        x: pct.x,
+        y: pct.y,
+        view,
+        zone
+      };
+      setSores((prev) => [...prev, sore]);
+      setSelectedSore(sore);
+    } else {
+      setSelectedSore(null);
+    }
+  };
+
+  const selectSore = (sore: Sore) => {
+    setSelectedSore(sore);
+  };
+
+  const visible = sores.filter((s) => s.view === view && s.x !== null && s.y !== null);
+
+  return (
+    <div className="space-y-3">
+      <div
+        role="tablist"
+        aria-label="Part of the mouth"
+        className="flex gap-1 rounded-lg bg-muted p-1"
+      >
+        {MOUTH_VIEWS.map((v) => {
+          const count = sores.filter((s) => s.view === v).length;
+          return (
+            <button
+              key={v}
+              role="tab"
+              type="button"
+              aria-selected={view === v}
+              onClick={() => {
+                setView(v);
+                resetCamera();
+              }}
+              className={cn(
+                'flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md text-sm font-medium transition-colors',
+                view === v
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {VIEW_LABELS[v]}
+              {count > 0 && (
+                <span className="tabular rounded-full bg-secondary px-1.5 text-[11px] leading-4 text-secondary-foreground">
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="relative overflow-hidden rounded-lg border border-border bg-card">
+        <svg
+          ref={svgRef}
+          viewBox={viewBoxAttr}
+          className={cn(
+            'block w-full select-none',
+            mode === 'add' ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'
+          )}
+          style={{ touchAction: 'none' }}
+          onPointerDown={(e) => onPointerDown(e)}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          aria-label={`${VIEW_LABELS[view]} view of the mouth with ${visible.length} sore${visible.length === 1 ? '' : 's'} marked`}
+        >
+          <MapDefs p={idPrefix} />
+          <g transform={`translate(${camera.tx} ${camera.ty}) scale(${camera.k})`}>
+            <ViewArtwork view={view} p={idPrefix} />
+            {visible.map((sore) => {
+              const p = fromPercent({ x: sore.x!, y: sore.y! });
+              const size = sore.size?.length ? sore.size[sore.size.length - 1] : 3;
+              const pain = sore.pain?.length ? sore.pain[sore.pain.length - 1] : 3;
+              return (
+                <SoreMarker
+                  key={sore.id}
+                  x={p.x}
+                  y={p.y}
+                  radius={radiusFor(size, view)}
+                  pain={pain}
+                  selected={sore.id === selectedSore?.id}
+                  draggable={mode !== 'view'}
+                  filterId={`${idPrefix}soft`}
+                  onPointerDown={(e) => {
+                    selectSore(sore);
+                    onPointerDown(e as unknown as React.PointerEvent<SVGSVGElement>, sore);
+                  }}
+                />
+              );
+            })}
+          </g>
+        </svg>
+
+        {mode === 'add' && (
+          <p className="pointer-events-none absolute left-3 top-3 rounded-md border border-border/60 bg-card/85 px-2.5 py-1.5 text-xs text-foreground shadow-sm backdrop-blur">
+            Tap where the sore is. Switch tabs for cheeks or lips.
+          </p>
+        )}
+
+        <div className="absolute right-3 top-3 flex flex-col gap-1.5">
+          <MapControls.Button onClick={() => zoomCentre(1.25)} label="+" aria-label="Zoom in" />
+          <MapControls.Button onClick={() => zoomCentre(0.8)} label="−" aria-label="Zoom out" />
+        </div>
+
+        <MapControls onReset={resetCamera} />
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Shown as in a mirror: your left is on the left.
+      </p>
+    </div>
+  );
+}

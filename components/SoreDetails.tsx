@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSoreContext } from '@/context/SoreContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import SoreSliders from './image-plot/SoreSliders';
+import SoreSliders from './mouth-map/SoreSliders';
 
 /** Last entry of a reading series, which is the current value. */
 const latest = (series: number[] | null | undefined) =>
@@ -115,7 +115,7 @@ const SoreDetails: React.FC = () => {
               />
               <Reading
                 label="Location"
-                value={`${selectedSore.zone} · ${selectedSore.gums ? 'gums' : 'mouth'}`}
+                value={selectedSore.zone}
               />
               <Reading label="Readings" value={dates.length} />
               <Reading

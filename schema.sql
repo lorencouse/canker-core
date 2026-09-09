@@ -155,11 +155,14 @@ create index if not exists subscriptions_user_id_idx on subscriptions (user_id);
 --                                so the pg driver does not coerce them to Date objects
 --                                and change the shape the components already expect.
 --   size / pain  double precision[]  — slider values, appended one entry per update.
+--   view / x / y                     — the mouth-map view and the position within it,
+--                                      as percentages of the view's drawing box.
 create table if not exists sores (
   id text primary key,
   user_id text not null references "user" ("id") on delete cascade,
   zone text not null,
-  gums boolean not null default false,
+  -- Which flat view of the mouth map the sore was plotted on: front | cheeks | lips.
+  view text not null default 'front',
   x double precision,
   y double precision,
   dates text[],

@@ -63,6 +63,27 @@
     --sev-ink-lo: 212 30% 16%;
     --sev-ink-hi: 0 0% 100%;
 
+    /*
+     * Mouth-map tissue. Low-chroma rose-grey: reads as mouth, but stays far
+     * enough from the severity ramp that a sore is always the saturated mark.
+     */
+    --mm-ink: 350 20% 23% / 0.55;
+    --mm-ink-soft: 350 20% 23% / 0.22;
+    --mm-label: 350 6% 40%;
+    --mm-tissue: 355 21% 89%;
+    --mm-tissue-deep: 353 17% 81%;
+    --mm-tissue-light: 0 22% 94%;
+    --mm-gum: 353 19% 83%;
+    --mm-gum-deep: 352 15% 75%;
+    --mm-tongue: 355 21% 86%;
+    --mm-tongue-light: 0 27% 91%;
+    --mm-tongue-deep: 354 16% 78%;
+    --mm-palate: 0 23% 91%;
+    --mm-throat: 354 17% 79%;
+    --mm-tooth: 43 33% 96%;
+    --mm-tooth-shade: 41 24% 87%;
+    --mm-tooth-line: 30 14% 41% / 0.45;
+
     /* Chart series reference the ramp so history matches the map */
     --chart-1: var(--sev-3);
     --chart-2: var(--sev-5);
@@ -114,6 +135,23 @@
     /* Every dark-mode fill is deep enough to need white. */
     --sev-ink-lo: 0 0% 100%;
     --sev-ink-hi: 0 0% 100%;
+
+    --mm-ink: 350 30% 91% / 0.5;
+    --mm-ink-soft: 350 30% 91% / 0.18;
+    --mm-label: 347 5% 64%;
+    --mm-tissue: 338 8% 27%;
+    --mm-tissue-deep: 340 8% 21%;
+    --mm-tissue-light: 342 8% 33%;
+    --mm-gum: 346 9% 28%;
+    --mm-gum-deep: 342 9% 22%;
+    --mm-tongue: 342 8% 30%;
+    --mm-tongue-light: 344 8% 35%;
+    --mm-tongue-deep: 333 9% 23%;
+    --mm-palate: 340 7% 31%;
+    --mm-throat: 340 7% 21%;
+    --mm-tooth: 36 13% 78%;
+    --mm-tooth-shade: 34 8% 64%;
+    --mm-tooth-line: 0 0% 0% / 0.35;
   }
 }
 
@@ -171,24 +209,18 @@
 }
 
 @layer components {
-  /*
-   * The mouth diagram ships as a saturated illustration, but red has to mean
-   * severity and nothing else here - a red sore on red tissue cannot be read.
-   * Draining the artwork to neutral turns it into an anatomical substrate and
-   * leaves the severity dots as the only colour on the map.
-   */
-  .mouth-substrate {
-    filter: grayscale(1) brightness(1.22) contrast(0.72);
-    opacity: 0.85;
+  /* Labels drawn inside the mouth-map SVG. */
+  .mouth-map-label {
+    font-family: var(--font-display), system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    fill: hsl(var(--mm-label));
   }
-
-  /*
-   * Fully inverted in dark mode so the artwork's white surround drops to black
-   * and blends into the card, leaving the diagram reading as a negative.
-   */
-  .dark .mouth-substrate {
-    filter: grayscale(1) invert(1) brightness(0.82) contrast(0.9);
-    opacity: 0.85;
+  .mouth-map-small {
+    font-family: var(--font-sans), system-ui, sans-serif;
+    font-size: 10px;
+    fill: hsl(var(--mm-label));
   }
 
   /* Body copy tops out well under 80 characters. */

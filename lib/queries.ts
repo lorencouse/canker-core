@@ -17,6 +17,7 @@ import { headers } from 'next/headers';
 import { query, queryOne } from '@/lib/db/pool';
 import { auth } from '@/lib/auth';
 import type { Price, Product, ProductWithPrices, Sore, SubscriptionWithPrice, User } from '@/types';
+import { isMouthView, zoneFor } from '@/utils/mouth-map/geometry';
 
 /** The signed-in user, or null. Replaces `supabase.auth.getUser()`. */
 export const getUser = cache(async (): Promise<User | null> => {
@@ -80,13 +81,23 @@ export const getProducts = cache(async (): Promise<ProductWithPrices[]> => {
 
 /** Every sore belonging to a user. */
 export const getSores = cache(async (userId: string): Promise<Sore[]> => {
-  return query<Sore>(
-    `select id, user_id, zone, gums, x, y, dates, pain, size, healed
+  const rows = await query<Sore>(
+    `select id, user_id, zone, view, x, y, dates, pain, size, healed
      from sores
      where user_id = $1
      order by dates[1] desc nulls last`,
     [userId]
   );
+  // The zone is a function of position; recomputing on read means rows
+  // carried over from the old diagram pick up correct labels for free.
+  return rows.map((sore) => ({
+    ...sore,
+    view: isMouthView(sore.view) ? sore.view : 'front',
+    zone:
+      sore.x === null || sore.y === null
+        ? sore.zone
+        : zoneFor(isMouthView(sore.view) ? sore.view : 'front', sore.x, sore.y)
+  }));
 });
 
 /** A single price, used when starting Stripe checkout. */

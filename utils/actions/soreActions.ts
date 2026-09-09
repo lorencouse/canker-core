@@ -34,11 +34,11 @@ export async function upsertSores(sores: Sore[]): Promise<void> {
     await client.query('BEGIN');
     for (const sore of sores) {
       await client.query(
-        `insert into sores (id, user_id, zone, gums, x, y, dates, pain, size, healed)
+        `insert into sores (id, user_id, zone, view, x, y, dates, pain, size, healed)
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          on conflict (id) do update set
            zone   = excluded.zone,
-           gums   = excluded.gums,
+           view   = excluded.view,
            x      = excluded.x,
            y      = excluded.y,
            dates  = excluded.dates,
@@ -51,7 +51,7 @@ export async function upsertSores(sores: Sore[]): Promise<void> {
           // Ignore any user_id supplied by the client.
           userId,
           sore.zone,
-          sore.gums,
+          sore.view,
           sore.x,
           sore.y,
           sore.dates,

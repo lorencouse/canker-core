@@ -65,9 +65,7 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                     </span>
                   )}
                 </TableCell>
-                <TableCell>
-                  {sore.zone} · {sore.gums ? 'gums' : 'mouth'}
-                </TableCell>
+                <TableCell>{sore.zone}</TableCell>
               </TableRow>
             );
           })}

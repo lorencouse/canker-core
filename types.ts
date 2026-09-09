@@ -1,3 +1,5 @@
+import type { MouthView } from '@/utils/mouth-map/geometry';
+
 /**
  * Application types.
  *
@@ -21,8 +23,11 @@ export interface User {
 export interface Sore {
   id: string;
   user_id: string;
+  /** Derived from view + x/y; stored so history queries can show it. */
   zone: string;
-  gums: boolean;
+  /** Which flat view of the mouth the sore was plotted on. */
+  view: MouthView;
+  /** Percent of the view's drawing box, 0-100. */
   x: number | null;
   y: number | null;
   /** ISO timestamp strings, one appended per update. */

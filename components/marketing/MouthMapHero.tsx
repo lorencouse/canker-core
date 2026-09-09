@@ -1,14 +1,18 @@
-import Image from 'next/image';
+import { MapDefs, ViewArtwork } from '@/components/mouth-map/artwork';
+import {
+  fromPercent,
+  radiusFor,
+  viewBoxAttr
+} from '@/utils/mouth-map/geometry';
 
 /**
  * The hero is the product's actual mechanism rather than a picture of it: the
- * mouth map with sores plotted on it, each tied by a leader line to the
- * measurement it carries. Coordinates are percentages of the map, matching how
- * sores are stored.
+ * Front view of the mouth map with sores plotted on it, each tied by a leader
+ * line to the measurement it carries. Coordinates are percentages of the view,
+ * matching how sores are stored.
  *
- * Colours reference the --sev-* custom properties rather than the helper in
- * utils/getColor, because this renders on the server where the active theme is
- * not yet known; CSS resolves the right ramp on its own.
+ * Colours reference the --sev-* custom properties because this renders on the
+ * server where the active theme is not yet known; CSS resolves the ramp.
  */
 type PlottedSore = {
   id: string;
@@ -24,33 +28,44 @@ type PlottedSore = {
 };
 
 const SORES: PlottedSore[] = [
-  { id: 'a', x: 38, y: 33, size: 4, pain: 7, day: 4, side: 'left' },
-  { id: 'b', x: 64, y: 46, size: 2, pain: 3, day: 2, side: 'right' },
-  { id: 'c', x: 45, y: 70, size: 5, pain: 9, day: 1, side: 'left' }
+  { id: 'a', x: 40, y: 22, size: 4, pain: 7, day: 4, side: 'left' },
+  { id: 'b', x: 67, y: 62, size: 2, pain: 3, day: 2, side: 'right' },
+  { id: 'c', x: 38, y: 82, size: 5, pain: 9, day: 1, side: 'left' }
 ];
 
 /** Where a chip's leader line terminates, in map percentages. */
-const anchorFor = (sore: PlottedSore) => (sore.side === 'left' ? 20 : 80);
+const anchorFor = (sore: PlottedSore) => (sore.side === 'left' ? 14 : 86);
 
 export default function MouthMapHero() {
   return (
     <figure className="m-0">
-      <div className="relative mx-auto aspect-square w-full max-w-[30rem] overflow-hidden rounded-lg border border-border bg-card">
-        <Image
-          src="/images/diagram/mouth.png"
-          alt="A diagram of an open mouth, used to mark where each sore is."
-          fill
-          priority
-          sizes="(max-width: 768px) 100vw, 30rem"
-          className="mouth-substrate object-contain"
-        />
+      <div className="relative mx-auto aspect-[390/400] w-full max-w-[30rem] overflow-hidden rounded-lg border border-border bg-card">
+        <svg
+          viewBox={viewBoxAttr}
+          className="block h-full w-full"
+          role="img"
+          aria-label="The front view of the mouth map with three sores marked."
+        >
+          <MapDefs p="hero" />
+          <ViewArtwork view="front" p="hero" />
+          {SORES.map((sore) => {
+            const p = fromPercent({ x: sore.x, y: sore.y });
+            const r = radiusFor(sore.size, 'front');
+            return (
+              <g key={sore.id}>
+                <circle cx={p.x} cy={p.y} r={r + 2} fill={`hsl(var(--sev-${sore.pain}))`} opacity="0.28" filter="url(#herosoft)" />
+                <circle cx={p.x} cy={p.y} r={r} fill={`hsl(var(--sev-${sore.pain}))`} stroke="hsl(var(--foreground) / 0.45)" strokeWidth="1" />
+              </g>
+            );
+          })}
+        </svg>
 
-        {/* Leader lines, drawn beneath the dots. */}
+        {/* Leader lines, drawn over the map but beneath the chips. */}
         <svg
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full"
+          className="absolute inset-0 hidden h-full w-full sm:block"
         >
           {SORES.map((sore) => (
             <line
@@ -67,21 +82,6 @@ export default function MouthMapHero() {
             />
           ))}
         </svg>
-
-        {SORES.map((sore) => (
-          <span
-            key={sore.id}
-            aria-hidden="true"
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full ring-1 ring-foreground/25"
-            style={{
-              left: `${sore.x}%`,
-              top: `${sore.y}%`,
-              width: `${sore.size * 1.3}%`,
-              height: `${sore.size * 1.3}%`,
-              backgroundColor: `hsl(var(--sev-${sore.pain}))`
-            }}
-          />
-        ))}
 
         {/* Readouts, hidden on narrow screens where the list below takes over. */}
         {SORES.map((sore) => (

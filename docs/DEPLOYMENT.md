@@ -231,7 +231,9 @@ ssh deploy@46.224.227.119 \
 There is no migration framework. `schema.sql` is the source of truth and is
 written to be re-runnable (`create table if not exists`, guarded `create type`).
 For a change: edit `schema.sql`, then apply the corresponding `alter table`
-against production by hand. Keep the two in step.
+against production by hand. Keep the two in step. One-off data migrations that
+go with a schema change live in `migrations/` as dated SQL files; run them once,
+in order, after deploying the code that expects them.
 
 ### Deploys
 
