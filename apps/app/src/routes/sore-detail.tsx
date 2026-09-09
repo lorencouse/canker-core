@@ -52,10 +52,10 @@ function SoreDetailPage() {
   const update = useUpdateSore();
   const [editDate, setEditDate] = useState<DateKey | null>(null);
 
-  if (q.isLoading && !q.data) return <PageLoading />;
   if (q.error && !q.data)
     return <ErrorState error={q.error} retry={() => void q.refetch()} />;
-  const data = q.data!;
+  if (!q.data) return <PageLoading />;
+  const data = q.data;
   const sore = joinSoreLogs(data.sores, data.soreLogs).find((s) => s.id === soreId);
   if (!sore) return <NotFound />;
 

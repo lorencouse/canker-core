@@ -27,7 +27,13 @@ export const authedRoute = createRoute({
   id: 'authed',
   beforeLoad: ({ context, location }) => {
     if (!context.auth.user) {
-      throw redirect({ to: '/login', search: { redirect: location.href } });
+      // `replace` so the guarded page does not sit in history waiting to
+      // bounce the user straight back here on the next Back press.
+      throw redirect({
+        to: '/login',
+        search: { redirect: location.href },
+        replace: true
+      });
     }
   },
   component: AppShell
@@ -37,6 +43,10 @@ export const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   beforeLoad: ({ context }) => {
-    throw redirect({ to: context.auth.user ? '/today' : '/login', search: {} });
+    throw redirect({
+      to: context.auth.user ? '/today' : '/login',
+      search: {},
+      replace: true
+    });
   }
 });

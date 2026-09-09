@@ -2,6 +2,9 @@ import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import {
+  addDays,
+  formatShort,
+  LONG_SORE_DAYS,
   painAnchor,
   SURFACE_LABELS,
   type DateKey,
@@ -23,7 +26,10 @@ export function SoreCard({ sore, date }: { sore: SoreWithLogs; date: DateKey }) 
   const prev = previousLog(sore.logs, date);
   const shown = todays ?? prev;
   const day = soreDay(sore, date);
-  const isLong = day > 14;
+  const isLong = day > LONG_SORE_DAYS;
+  // `prev` is the most recent earlier log, which is only actually yesterday
+  // when nothing was skipped. Say which day it copies otherwise.
+  const prevIsYesterday = prev?.log_date === addDays(date, -1);
 
   function sameAsBefore() {
     if (!prev) return;
@@ -45,7 +51,15 @@ export function SoreCard({ sore, date }: { sore: SoreWithLogs; date: DateKey }) 
             params={{ soreId: sore.id }}
             className="group flex min-w-0 items-center gap-2.5"
           >
-            <PainDot pain={shown?.pain ?? 0} />
+            {shown ? (
+              <PainDot pain={shown.pain} />
+            ) : (
+              <span
+                aria-label="Not logged yet"
+                role="img"
+                className="bg-muted-foreground/30 ring-card inline-block size-3.5 shrink-0 rounded-full ring-2"
+              />
+            )}
             <div className="min-w-0">
               <p className="truncate font-semibold group-hover:underline">
                 {SURFACE_LABELS[sore.surface]}
@@ -96,7 +110,7 @@ export function SoreCard({ sore, date }: { sore: SoreWithLogs; date: DateKey }) 
         <div className="flex gap-2">
           {!todays && prev ? (
             <Button variant="outline" className="flex-1" onClick={sameAsBefore}>
-              Same as {date === today ? 'yesterday' : 'before'}
+              Same as {prevIsYesterday ? 'yesterday' : formatShort(prev.log_date)}
             </Button>
           ) : (
             <Button variant="outline" className="flex-1" onClick={() => setOpen(true)}>

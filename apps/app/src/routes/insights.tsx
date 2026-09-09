@@ -32,12 +32,12 @@ function fmt(n: number | null, suffix = ''): string {
 }
 
 function InsightsPage() {
-  const { insights, isLoading, error } = useInsights();
+  const { insights, error } = useInsights();
   const today = useToday();
 
-  if (isLoading && !insights) return <PageLoading />;
   if (error && !insights) return <ErrorState error={error} />;
-  const ins = insights!;
+  if (!insights) return <PageLoading />;
+  const ins = insights;
   const s = ins.summary;
 
   if (s.total_sores === 0) {

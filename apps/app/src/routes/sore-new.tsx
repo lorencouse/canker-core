@@ -18,8 +18,7 @@ import {
 import { Button, Input, Label, LevelSlider, MouthMap, Textarea } from '@canker/ui';
 import { authedRoute } from '@/router-base';
 import { useCreateSore, useDataset, useToday } from '@/lib/data';
-import { soresOn } from '@/lib/derive';
-import { painOn } from '@/lib/derive';
+import { healedBy, painOn, soresOn } from '@/lib/derive';
 import { PageHeader } from '@/components/page-header';
 
 export const soreNewRoute = createRoute({
@@ -60,7 +59,7 @@ function NewSorePage() {
         x: s.x,
         y: s.y,
         pain: painOn(s.logs, onset),
-        healed: s.healed_date !== null
+        healed: healedBy(s, onset)
       }))
     : [];
 

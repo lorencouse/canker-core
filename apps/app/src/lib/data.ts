@@ -11,23 +11,6 @@ import {
   type UserDataset
 } from '@canker/core';
 import {
-  archiveFactor,
-  createFactor,
-  createSore,
-  deleteAllUserData,
-  deleteSore,
-  deleteSoreLog,
-  fetchProfile,
-  fetchUserDataset,
-  markSoreHealed,
-  reopenSore,
-  setEntryFactor,
-  updateProfile,
-  updateSore,
-  upsertDailyEntry,
-  upsertSoreLog
-} from '@canker/db';
-import {
   useMutation,
   useQuery,
   useQueryClient,
@@ -35,7 +18,7 @@ import {
 } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useUser } from './auth';
-import { supabase } from './supabase';
+import { backend } from './backend';
 
 /**
  * All server state for the signed-in user lives in two queries: the profile
@@ -53,7 +36,7 @@ export function useProfile() {
   const user = useUser();
   return useQuery({
     queryKey: keys.profile(user.id),
-    queryFn: () => fetchProfile(supabase, user.id)
+    queryFn: () => backend.fetchProfile(user.id)
   });
 }
 
@@ -61,7 +44,7 @@ export function useDataset() {
   const user = useUser();
   return useQuery({
     queryKey: keys.dataset(user.id),
-    queryFn: () => fetchUserDataset(supabase, user.id)
+    queryFn: () => backend.fetchUserDataset(user.id)
   });
 }
 
@@ -88,6 +71,25 @@ function patchDataset(
   qc.setQueryData<UserDataset>(keys.dataset(userId), (old) => fn(old ?? EMPTY));
 }
 
+/**
+ * Optimistic updates hand back the pre-mutation cache so `onError` can put it
+ * straight back. Without this a failed write leaves the invented row on screen
+ * until the next successful refetch, which offline may be a long time away.
+ */
+interface DatasetRollback {
+  previous: UserDataset | undefined;
+}
+
+function snapshotDataset(qc: QueryClient, userId: string): DatasetRollback {
+  return { previous: qc.getQueryData<UserDataset>(keys.dataset(userId)) };
+}
+
+function rollbackDataset(qc: QueryClient, userId: string, ctx?: DatasetRollback) {
+  if (!ctx) return;
+  if (ctx.previous === undefined) qc.removeQueries({ queryKey: keys.dataset(userId) });
+  else qc.setQueryData<UserDataset>(keys.dataset(userId), ctx.previous);
+}
+
 function tempId() {
   return `temp-${crypto.randomUUID()}`;
 }
@@ -100,9 +102,10 @@ export function useCreateSore() {
   const user = useUser();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: NewSoreInput) => createSore(supabase, user.id, input),
+    mutationFn: (input: NewSoreInput) => backend.createSore(user.id, input),
     onMutate: async (input) => {
       await qc.cancelQueries({ queryKey: keys.dataset(user.id) });
+      const rollback = snapshotDataset(qc, user.id);
       const soreId = tempId();
       patchDataset(qc, user.id, (d) => ({
         ...d,
@@ -133,7 +136,9 @@ export function useCreateSore() {
           }
         ]
       }));
+      return rollback;
     },
+    onError: (_err, _vars, ctx) => rollbackDataset(qc, user.id, ctx),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }
@@ -143,14 +148,17 @@ export function useUpdateSore() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ soreId, input }: { soreId: string; input: UpdateSoreInput }) =>
-      updateSore(supabase, soreId, input),
+      backend.updateSore(soreId, input),
     onMutate: async ({ soreId, input }) => {
       await qc.cancelQueries({ queryKey: keys.dataset(user.id) });
+      const rollback = snapshotDataset(qc, user.id);
       patchDataset(qc, user.id, (d) => ({
         ...d,
         sores: d.sores.map((s) => (s.id === soreId ? { ...s, ...input } : s))
       }));
+      return rollback;
     },
+    onError: (_err, _vars, ctx) => rollbackDataset(qc, user.id, ctx),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }
@@ -167,17 +175,20 @@ export function useSetHealed() {
       healedDate: DateKey | null;
     }) =>
       healedDate
-        ? markSoreHealed(supabase, soreId, healedDate)
-        : reopenSore(supabase, soreId),
+        ? backend.markSoreHealed(soreId, healedDate)
+        : backend.reopenSore(soreId),
     onMutate: async ({ soreId, healedDate }) => {
       await qc.cancelQueries({ queryKey: keys.dataset(user.id) });
+      const rollback = snapshotDataset(qc, user.id);
       patchDataset(qc, user.id, (d) => ({
         ...d,
         sores: d.sores.map((s) =>
           s.id === soreId ? { ...s, healed_date: healedDate } : s
         )
       }));
+      return rollback;
     },
+    onError: (_err, _vars, ctx) => rollbackDataset(qc, user.id, ctx),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }
@@ -186,16 +197,19 @@ export function useDeleteSore() {
   const user = useUser();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (soreId: string) => deleteSore(supabase, soreId),
+    mutationFn: (soreId: string) => backend.deleteSore(soreId),
     onMutate: async (soreId) => {
       await qc.cancelQueries({ queryKey: keys.dataset(user.id) });
+      const rollback = snapshotDataset(qc, user.id);
       patchDataset(qc, user.id, (d) => ({
         ...d,
         sores: d.sores.filter((s) => s.id !== soreId),
         soreLogs: d.soreLogs.filter((l) => l.sore_id !== soreId),
         entryFactors: d.entryFactors.filter((ef) => ef.sore_id !== soreId)
       }));
+      return rollback;
     },
+    onError: (_err, _vars, ctx) => rollbackDataset(qc, user.id, ctx),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }
@@ -208,9 +222,10 @@ export function useUpsertSoreLog() {
   const user = useUser();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: SoreLogInput) => upsertSoreLog(supabase, user.id, input),
+    mutationFn: (input: SoreLogInput) => backend.upsertSoreLog(user.id, input),
     onMutate: async (input) => {
       await qc.cancelQueries({ queryKey: keys.dataset(user.id) });
+      const rollback = snapshotDataset(qc, user.id);
       patchDataset(qc, user.id, (d) => {
         const existing = d.soreLogs.find(
           (l) => l.sore_id === input.sore_id && l.log_date === input.log_date
@@ -232,7 +247,9 @@ export function useUpsertSoreLog() {
             : [...d.soreLogs, next]
         };
       });
+      return rollback;
     },
+    onError: (_err, _vars, ctx) => rollbackDataset(qc, user.id, ctx),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }
@@ -241,14 +258,17 @@ export function useDeleteSoreLog() {
   const user = useUser();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (logId: string) => deleteSoreLog(supabase, logId),
+    mutationFn: (logId: string) => backend.deleteSoreLog(logId),
     onMutate: async (logId) => {
       await qc.cancelQueries({ queryKey: keys.dataset(user.id) });
+      const rollback = snapshotDataset(qc, user.id);
       patchDataset(qc, user.id, (d) => ({
         ...d,
         soreLogs: d.soreLogs.filter((l) => l.id !== logId)
       }));
+      return rollback;
     },
+    onError: (_err, _vars, ctx) => rollbackDataset(qc, user.id, ctx),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }
@@ -261,9 +281,10 @@ export function useUpsertDailyEntry() {
   const user = useUser();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: DailyEntryInput) => upsertDailyEntry(supabase, user.id, input),
+    mutationFn: (input: DailyEntryInput) => backend.upsertDailyEntry(user.id, input),
     onMutate: async (input) => {
       await qc.cancelQueries({ queryKey: keys.dataset(user.id) });
+      const rollback = snapshotDataset(qc, user.id);
       patchDataset(qc, user.id, (d) => {
         const existing = d.dailyEntries.find((e) => e.entry_date === input.entry_date);
         const next = {
@@ -290,7 +311,9 @@ export function useUpsertDailyEntry() {
             : [...d.dailyEntries, next]
         };
       });
+      return rollback;
     },
+    onError: (_err, _vars, ctx) => rollbackDataset(qc, user.id, ctx),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }
@@ -304,9 +327,10 @@ export function useToggleFactor() {
       factor_id: string;
       on: boolean;
       sore_id?: string | null;
-    }) => setEntryFactor(supabase, user.id, args),
+    }) => backend.setEntryFactor(user.id, args),
     onMutate: async (args) => {
       await qc.cancelQueries({ queryKey: keys.dataset(user.id) });
+      const rollback = snapshotDataset(qc, user.id);
       patchDataset(qc, user.id, (d) => {
         let entries = d.dailyEntries;
         let entry = entries.find((e) => e.entry_date === args.entry_date);
@@ -351,7 +375,9 @@ export function useToggleFactor() {
             : without
         };
       });
+      return rollback;
     },
+    onError: (_err, _vars, ctx) => rollbackDataset(qc, user.id, ctx),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }
@@ -360,7 +386,7 @@ export function useCreateFactor() {
   const user = useUser();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: NewFactorInput) => createFactor(supabase, user.id, input),
+    mutationFn: (input: NewFactorInput) => backend.createFactor(user.id, input),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }
@@ -370,7 +396,7 @@ export function useArchiveFactor() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ factorId, archived }: { factorId: string; archived: boolean }) =>
-      archiveFactor(supabase, factorId, archived),
+      backend.archiveFactor(factorId, archived),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }
@@ -383,12 +409,20 @@ export function useUpdateProfile() {
   const user = useUser();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: ProfileUpdateInput) => updateProfile(supabase, user.id, input),
+    mutationFn: (input: ProfileUpdateInput) => backend.updateProfile(user.id, input),
     onMutate: async (input) => {
       await qc.cancelQueries({ queryKey: keys.profile(user.id) });
+      const previous = qc.getQueryData<Profile | null>(keys.profile(user.id));
       qc.setQueryData<Profile | null>(keys.profile(user.id), (old) =>
         old ? { ...old, ...input } : old
       );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (!ctx) return;
+      if (ctx.previous === undefined)
+        qc.removeQueries({ queryKey: keys.profile(user.id) });
+      else qc.setQueryData<Profile | null>(keys.profile(user.id), ctx.previous);
     },
     onSettled: () => qc.invalidateQueries({ queryKey: keys.profile(user.id) })
   });
@@ -398,7 +432,7 @@ export function useDeleteAllData() {
   const user = useUser();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => deleteAllUserData(supabase, user.id),
+    mutationFn: () => backend.deleteAllUserData(user.id),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.dataset(user.id) })
   });
 }

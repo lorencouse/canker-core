@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import {
   FACTOR_KIND_LABELS,
   FACTOR_KINDS,
@@ -108,6 +108,11 @@ function AddFactorDialog({
   const [name, setName] = useState('');
   const [kind, setKind] = useState<FactorKind>('food');
   const [error, setError] = useState<string | null>(null);
+
+  // The dialog stays mounted so it can animate out; clear last time's error.
+  useEffect(() => {
+    if (open) setError(null);
+  }, [open]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();

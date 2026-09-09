@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "turbo run dev --parallel",
     "dev:app": "pnpm --filter @canker/app dev",
+    "dev:demo": "pnpm --filter @canker/app dev:demo",
     "dev:web": "pnpm --filter @canker/web dev",
     "build": "turbo run build",
     "lint": "turbo run lint",

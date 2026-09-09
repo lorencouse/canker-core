@@ -1,4 +1,5 @@
 import {
+  addDays,
   daysBetween,
   joinSoreLogs,
   latestLog,
@@ -18,6 +19,7 @@ export function activeSores(data: UserDataset): SoreWithLogs[] {
   ).sort((a, b) => (a.onset_date < b.onset_date ? -1 : 1));
 }
 
+/** Sores that existed on `date`, including the day one healed. */
 export function soresOn(data: UserDataset, date: DateKey): SoreWithLogs[] {
   return joinSoreLogs(
     data.sores.filter(
@@ -25,6 +27,19 @@ export function soresOn(data: UserDataset, date: DateKey): SoreWithLogs[] {
     ),
     data.soreLogs
   );
+}
+
+/** Sores that existed on `date` and are still unhealed. */
+export function activeSoresOn(data: UserDataset, date: DateKey): SoreWithLogs[] {
+  return joinSoreLogs(
+    data.sores.filter((s) => s.onset_date <= date && s.healed_date === null),
+    data.soreLogs
+  );
+}
+
+/** Whether a sore should read as healed when looking at `date`. */
+export function healedBy(sore: { healed_date: DateKey | null }, date: DateKey): boolean {
+  return sore.healed_date !== null && sore.healed_date <= date;
 }
 
 export function soreDay(sore: { onset_date: DateKey }, date: DateKey): number {
@@ -84,7 +99,7 @@ export function factorsByUsage(data: UserDataset): Factor[] {
 
 /** Whether every active sore has a log for the date. */
 export function checkInComplete(data: UserDataset, date: DateKey): boolean {
-  const active = soresOn(data, date).filter((s) => s.healed_date === null);
+  const active = activeSoresOn(data, date);
   return active.length > 0 && active.every((s) => logOn(s.logs, date));
 }
 
@@ -98,9 +113,7 @@ export function currentFlareDay(data: UserDataset, today: DateKey): number | nul
     );
     if (!any) break;
     count++;
-    const prev = new Date(day + 'T00:00:00Z');
-    prev.setUTCDate(prev.getUTCDate() - 1);
-    day = prev.toISOString().slice(0, 10);
+    day = addDays(day, -1);
     if (count > 3650) break;
   }
   return count || null;

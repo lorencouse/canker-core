@@ -9,26 +9,27 @@ import {
 } from './geometry';
 
 /**
- * Styles for the map, embedded in each SVG so the map is self-contained and
- * themes through the same CSS variables as the rest of the UI. `--mm-k` is the
- * inverse zoom factor (set by MouthMap) so strokes and labels keep their
- * on-screen size when zoomed.
+ * @deprecated The mouth-map styles now ship in `@canker/ui/styles.css` (scoped
+ * under `.mm-root`, which every mouth-map SVG root carries) and are no longer
+ * injected into each rendered SVG. This constant is kept only so external
+ * consumers that inlined it keep compiling; it is not used by any component.
+ * If you edit these rules, edit `src/styles.css` — that copy is the live one.
  */
 export const MOUTH_MAP_STYLES = `
 .mm-root { display: block; font-family: var(--font-sans, system-ui, sans-serif); }
-.mm-surface { fill: var(--muted); stroke: var(--border); stroke-width: calc(1.5px * var(--mm-k, 1)); stroke-linejoin: round; transition: fill 150ms ease, stroke 150ms ease; outline: none; }
-.mm-surface.mm-panel { fill: var(--card); }
+:where(.mm-root) .mm-surface { fill: var(--muted); stroke: var(--border); stroke-width: calc(1.5px * var(--mm-k, 1)); stroke-linejoin: round; transition: fill 150ms ease, stroke 150ms ease; outline: none; }
+:where(.mm-root) .mm-surface.mm-panel { fill: var(--card); }
 .mm-root[data-interactive="true"] .mm-surface { cursor: pointer; }
 .mm-root[data-mode="place"] .mm-surface { cursor: crosshair; }
 .mm-root[data-interactive="true"] .mm-surface:hover { fill: var(--accent-soft); }
-.mm-surface[data-selected="true"] { fill: var(--accent-soft); stroke: var(--accent); }
-.mm-surface:focus-visible { stroke: var(--ring); stroke-width: calc(2.5px * var(--mm-k, 1)); }
-.mm-label { fill: var(--muted-foreground); font-size: calc(9px * var(--mm-k, 1)); font-weight: 500; letter-spacing: 0.02em; text-anchor: middle; dominant-baseline: middle; pointer-events: none; user-select: none; }
-.mm-pin { cursor: pointer; outline: none; }
-.mm-pin-focus { stroke: none; fill: none; }
-.mm-pin:focus-visible .mm-pin-focus { stroke: var(--ring); }
-.mm-zoom { transition: transform 300ms cubic-bezier(0.2, 0, 0, 1); transform-origin: 0 0; transform-box: view-box; }
-@media (prefers-reduced-motion: reduce) { .mm-zoom { transition: none; } }
+:where(.mm-root) .mm-surface[data-selected="true"] { fill: var(--accent-soft); stroke: var(--accent); }
+:where(.mm-root) .mm-surface:focus-visible { stroke: var(--ring); stroke-width: calc(2.5px * var(--mm-k, 1)); }
+:where(.mm-root) .mm-label { fill: var(--muted-foreground); font-size: calc(9px * var(--mm-k, 1)); font-weight: 500; letter-spacing: 0.02em; text-anchor: middle; dominant-baseline: middle; pointer-events: none; user-select: none; }
+:where(.mm-root) .mm-pin { cursor: pointer; outline: none; }
+:where(.mm-root) .mm-pin-focus { stroke: none; fill: none; }
+:where(.mm-root) .mm-pin:focus-visible .mm-pin-focus { stroke: var(--ring); }
+:where(.mm-root) .mm-zoom { transition: transform 300ms cubic-bezier(0.2, 0, 0, 1); transform-origin: 0 0; transform-box: view-box; }
+@media (prefers-reduced-motion: reduce) { :where(.mm-root) .mm-zoom { transition: none; } }
 `;
 
 /** Larger areas drawn as "panels" (card fill); everything else is a "band" (muted fill). */

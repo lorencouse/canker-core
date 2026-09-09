@@ -13,8 +13,14 @@ function App() {
   const auth = useAuth();
 
   // Route guards read auth from context; re-run them whenever it changes.
+  // `router.invalidate()` re-runs every matched `beforeLoad`, so signing in on
+  // /login and signing out on /settings both redirect without the screen
+  // navigating itself.
   useEffect(() => {
-    if (auth.session !== undefined) void router.invalidate();
+    if (auth.session === undefined) return;
+    // Cached rows belong to whoever was signed in; never show them to nobody.
+    if (auth.session === null) queryClient.clear();
+    void router.invalidate();
   }, [auth.session]);
 
   if (auth.session === undefined) return <Splash />;

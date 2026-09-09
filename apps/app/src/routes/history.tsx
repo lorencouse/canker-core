@@ -41,7 +41,10 @@ export const historyRoute = createRoute({
   getParentRoute: () => authedRoute,
   path: '/history',
   validateSearch: (s: Record<string, unknown>): { range?: Range } => ({
-    range: s.range === '3m' || s.range === '1y' || s.range === 'all' ? s.range : undefined
+    range:
+      s.range === '3m' || s.range === '6m' || s.range === '1y' || s.range === 'all'
+        ? s.range
+        : undefined
   }),
   component: HistoryPage
 });
@@ -54,10 +57,10 @@ function HistoryPage() {
   const q = useDataset();
   const [backfill, setBackfill] = useState<DateKey>(addDays(today, -1));
 
-  if (q.isLoading && !q.data) return <PageLoading />;
   if (q.error && !q.data)
     return <ErrorState error={q.error} retry={() => void q.refetch()} />;
-  const data = q.data!;
+  if (!q.data) return <PageLoading />;
+  const data = q.data;
 
   const sores = joinSoreLogs(data.sores, data.soreLogs).sort((a, b) =>
     a.onset_date > b.onset_date ? -1 : 1

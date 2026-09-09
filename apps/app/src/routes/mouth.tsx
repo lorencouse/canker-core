@@ -20,7 +20,7 @@ import {
 } from '@canker/ui';
 import { authedRoute } from '@/router-base';
 import { useDataset, useToday } from '@/lib/data';
-import { painOn, soreDay, soresOn } from '@/lib/derive';
+import { healedBy, painOn, soreDay, soresOn } from '@/lib/derive';
 import { PageHeader } from '@/components/page-header';
 import { ErrorState, PageLoading } from '@/components/loading';
 
@@ -52,21 +52,21 @@ function MouthPage() {
   );
   const span = Math.max(1, daysBetween(first, today));
 
-  if (q.isLoading && !data) return <PageLoading />;
   if (q.error && !data)
     return <ErrorState error={q.error} retry={() => void q.refetch()} />;
+  if (!data) return <PageLoading />;
 
-  const onDate = soresOn(data!, date);
+  const onDate = soresOn(data, date);
   const pins = onDate.map((s) => ({
     id: s.id,
     surface: s.surface,
     x: s.x,
     y: s.y,
     pain: painOn(s.logs, date),
-    healed: s.healed_date !== null && s.healed_date < date
+    healed: healedBy(s, date)
   }));
-  const allPins = data!.sores.map((s) => {
-    const logs = data!.soreLogs.filter((l) => l.sore_id === s.id);
+  const allPins = data.sores.map((s) => {
+    const logs = data.soreLogs.filter((l) => l.sore_id === s.id);
     return {
       id: s.id,
       surface: s.surface,
@@ -89,7 +89,7 @@ function MouthPage() {
         title="Mouth"
         subtitle={
           view === 'heat'
-            ? `Every sore you've logged · ${data!.sores.length} total`
+            ? `Every sore you've logged · ${data.sores.length} total`
             : date === today
               ? 'As of today'
               : `As of ${formatLong(date)}`
@@ -187,10 +187,7 @@ function MouthPage() {
       {sel ? (
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
-            <PainDot
-              pain={painOn(sel.logs, date) ?? 0}
-              healed={sel.healed_date !== null && sel.healed_date < date}
-            />
+            <PainDot pain={painOn(sel.logs, date) ?? 0} healed={healedBy(sel, date)} />
             <div className="min-w-0 flex-1">
               <p className="font-semibold">{SURFACE_LABELS[sel.surface]}</p>
               <p className="text-muted-foreground text-xs">
@@ -198,7 +195,7 @@ function MouthPage() {
                 {formatLong(sel.onset_date)}
               </p>
             </div>
-            {sel.healed_date ? (
+            {healedBy(sel, date) ? (
               <Badge variant="heal">Healed</Badge>
             ) : (
               <Badge>Active</Badge>

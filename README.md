@@ -40,6 +40,14 @@ pnpm dev:app                 # tracker on http://localhost:5173
 pnpm dev:web                 # marketing on http://localhost:3000
 ```
 
+No Docker or Supabase credentials? Run `pnpm dev:demo` instead of `pnpm dev:app`
+(or set `VITE_DEMO_MODE=true` in `.env`). Demo mode signs you in as a local
+demo user and serves an in-memory dataset that mirrors the seed — seven sores
+over five months, 150 days of check-ins, the full preset factor catalogue — so
+every screen is populated and every edit works. Changes are kept in
+`localStorage` and never leave the browser; the banner at the top of the app
+has a Reset button that restores the generated data.
+
 Other useful scripts: `pnpm test` (core), `pnpm typecheck`, `pnpm build`,
 `pnpm supabase:types` (regenerate `packages/db/src/database.types.ts`).
 

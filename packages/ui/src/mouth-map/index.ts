@@ -8,6 +8,7 @@ export {
   viewBoxToSurface
 } from './geometry';
 export type { MappedSurface, SurfaceBBox, SurfaceGeometry } from './geometry';
+// MOUTH_MAP_STYLES is deprecated: the styles now live in `@canker/ui/styles.css`.
 export { MouthOutline, MOUTH_MAP_STYLES } from './outline';
 export type { MouthOutlineProps } from './outline';
 export { MouthMap } from './mouth-map';

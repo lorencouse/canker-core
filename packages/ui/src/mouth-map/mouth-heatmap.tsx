@@ -2,7 +2,7 @@ import { painBucket, type SoreSurface } from '@canker/core';
 
 import { cn } from '../lib/cn';
 import { isMappedSurface, surfaceToViewBox, VIEWBOX_SIZE } from './geometry';
-import { MOUTH_MAP_STYLES, MouthOutline } from './outline';
+import { MouthOutline } from './outline';
 
 export interface MouthHeatmapSore {
   id: string;
@@ -46,7 +46,6 @@ export function MouthHeatmap({
         `Mouth heatmap, ${visible.length} ${visible.length === 1 ? 'sore' : 'sores'}`
       }
     >
-      <style>{MOUTH_MAP_STYLES}</style>
       <MouthOutline showLabels={showLabels} />
       <g data-slot="mouth-heat" style={{ pointerEvents: 'none' }}>
         {visible.map((sore) => {

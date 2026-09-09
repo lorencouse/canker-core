@@ -1,4 +1,4 @@
-import { createRoute, useNavigate } from '@tanstack/react-router';
+import { createRoute } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { FACTOR_KIND_LABELS, profileUpdateSchema } from '@canker/core';
 import {
@@ -46,7 +46,6 @@ function timezones(): string[] {
 function SettingsPage() {
   const user = useUser();
   const { signOut } = useAuth();
-  const navigate = useNavigate();
   const profile = useProfile();
   const dataset = useDataset();
   const update = useUpdateProfile();
@@ -83,8 +82,12 @@ function SettingsPage() {
       const a = document.createElement('a');
       a.href = url;
       a.download = `canker-core-export-${new Date().toISOString().slice(0, 10)}.json`;
+      // Firefox only fires the download for an anchor that is in the document,
+      // and revoking synchronously can cancel it, so clean up on the next tick.
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
     } finally {
       setExporting(false);
     }
@@ -277,12 +280,9 @@ function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Button
-        variant="outline"
-        onClick={() => {
-          void signOut().then(() => navigate({ to: '/login', search: {} }));
-        }}
-      >
+      {/* No navigate here: dropping the session re-runs the auth guard, which
+          redirects to /login. Racing it would bounce through a stale guard. */}
+      <Button variant="outline" onClick={() => void signOut()}>
         Sign out
       </Button>
 

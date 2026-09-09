@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { Button } from '@canker/ui';
 import { rootRoute } from '@/router-base';
 import { useAuth } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
 import { AuthLayout, FormError } from '@/components/auth-layout';
 import { Splash } from '@/components/splash';
 
@@ -27,14 +26,17 @@ function CallbackPage() {
       void navigate({ to: '/today', search: {}, replace: true });
       return;
     }
+    // The client runs with `detectSessionInUrl`, so it has already consumed
+    // the `code` param and the PKCE verifier. A second exchangeCodeForSession
+    // here would always fail with "code verifier should be non-empty", so we
+    // only watch for an error handed back by the provider and otherwise wait
+    // for the auth listener to report the session.
     const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const desc = params.get('error_description');
-    if (desc) setError(desc);
-    else if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) setError(error.message);
-      });
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const desc = params.get('error_description') ?? hash.get('error_description');
+    if (desc) {
+      setError(desc);
+      return;
     }
     const t = setTimeout(
       () => setError((e) => e ?? 'Sign-in took too long. Try again.'),

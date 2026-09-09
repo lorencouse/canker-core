@@ -12,7 +12,7 @@ import {
   viewBoxToSurface,
   type MappedSurface
 } from './geometry';
-import { MOUTH_MAP_STYLES, MouthOutline } from './outline';
+import { MouthOutline } from './outline';
 
 export interface MouthMapSore {
   id: string;
@@ -75,6 +75,33 @@ function zoomFor(surface: SoreSurface | null | undefined): Zoom {
   };
 }
 
+/**
+ * Pointer (client) coordinates -> root viewBox coordinates.
+ *
+ * Returns null when the environment cannot supply a usable screen matrix: SSR
+ * hydration before layout, a detached/`display:none` SVG, and test environments
+ * such as jsdom all give either no `getScreenCTM` at all or a degenerate matrix.
+ * The inverse is done by hand (an SVGMatrix is a plain 2D affine matrix) so we
+ * do not depend on `DOMPoint` / `SVGMatrix.inverse`, which are not universally
+ * present and which throw on a non-invertible matrix.
+ */
+function clientToViewBox(
+  svg: SVGSVGElement,
+  clientX: number,
+  clientY: number
+): { x: number; y: number } | null {
+  const ctm = typeof svg.getScreenCTM === 'function' ? svg.getScreenCTM() : null;
+  if (!ctm) return null;
+  const { a, b, c, d, e, f } = ctm;
+  const det = a * d - b * c;
+  if (!det || !Number.isFinite(det)) return null;
+  const dx = clientX - e;
+  const dy = clientY - f;
+  const x = (d * dx - c * dy) / det;
+  const y = (a * dy - b * dx) / det;
+  return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
+}
+
 function pinFill(sore: MouthMapSore): string {
   if (sore.healed) return 'var(--heal)';
   if (sore.pain == null) return 'var(--muted-foreground)';
@@ -132,10 +159,14 @@ export function MouthMap({
     onSelectSurface?.(surface);
     if (mode !== 'place' || !onPlace) return;
     const svg = svgRef.current;
-    const ctm = svg?.getScreenCTM();
-    if (!svg || !ctm) return;
     // Pointer -> root viewBox coordinates, then undo our own zoom transform.
-    const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
+    const p = svg ? clientToViewBox(svg, e.clientX, e.clientY) : null;
+    if (!p) {
+      // No usable layout information: drop the pin in the middle of the surface
+      // rather than silently swallowing the tap.
+      onPlace(surface, 0.5, 0.5);
+      return;
+    }
     const vx = (p.x - zoom.tx) / zoom.s;
     const vy = (p.y - zoom.ty) / zoom.s;
     const { x, y } = viewBoxToSurface(surface, vx, vy);
@@ -168,7 +199,6 @@ export function MouthMap({
         ariaLabel ?? (mode === 'place' ? 'Mouth map: tap where the sore is' : 'Mouth map')
       }
     >
-      <style>{MOUTH_MAP_STYLES}</style>
       <g className="mm-zoom" style={groupStyle}>
         <MouthOutline
           interactive

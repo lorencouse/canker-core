@@ -7,7 +7,7 @@ import {
   VIEWBOX_SIZE,
   type MappedSurface
 } from './geometry';
-import { MOUTH_MAP_STYLES, MouthOutline } from './outline';
+import { MouthOutline } from './outline';
 
 export interface MouthMapThumbSore {
   surface: SoreSurface;
@@ -63,7 +63,6 @@ export function MouthMapThumb({
       aria-label={label}
       aria-hidden={label ? undefined : true}
     >
-      <style>{MOUTH_MAP_STYLES}</style>
       <MouthOutline selectedSurface={surface} />
       {pos && fill ? (
         <circle

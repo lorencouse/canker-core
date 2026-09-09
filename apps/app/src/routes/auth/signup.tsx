@@ -1,28 +1,32 @@
-import { createRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
+import { createRoute, Link, redirect } from '@tanstack/react-router';
 import { useState, type FormEvent } from 'react';
 import { emailSchema, passwordSchema } from '@canker/core';
 import { Button, Input, Label, Separator } from '@canker/ui';
 import { rootRoute } from '@/router-base';
 import { authRedirectUrl, supabase } from '@/lib/supabase';
+import { env } from '@/lib/env';
 import { AuthLayout, FormError, FormNotice } from '@/components/auth-layout';
+import { DemoSignedInNotice } from '@/components/demo-mode';
 import { OAuthButtons } from '@/components/oauth-buttons';
 
 export const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/signup',
   beforeLoad: ({ context }) => {
-    if (context.auth.user) throw redirect({ to: '/today', search: {} });
+    if (context.auth.user) throw redirect({ to: '/today', search: {}, replace: true });
   },
   component: SignupPage
 });
 
 function SignupPage() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Demo mode has no accounts; the guard above normally redirects first.
+  if (env.demo) return <DemoSignedInNotice />;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -41,13 +45,15 @@ function SignupPage() {
         options: { emailRedirectTo: authRedirectUrl() }
       });
       if (error) return setError(error.message);
-      if (data.session) {
-        await navigate({ to: '/onboarding' });
-      } else {
+      if (!data.session) {
         setNotice(
           'Almost there. Confirm your email from the link we just sent, then sign in.'
         );
       }
+      // With a session the auth listener updates the router context, this
+      // route's `beforeLoad` redirects to /today, and the first-run gate in
+      // AppShell sends the new account on to /onboarding. Navigating here as
+      // well would race that redirect with a stale context.
     } finally {
       setBusy(false);
     }

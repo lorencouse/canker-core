@@ -5,7 +5,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, EmptyState } from '@c
 import { authedRoute } from '@/router-base';
 import { useDataset, useToday } from '@/lib/data';
 import { useInsights } from '@/lib/insights';
-import { checkInComplete, currentFlareDay, soresOn } from '@/lib/derive';
+import { activeSoresOn, checkInComplete, currentFlareDay } from '@/lib/derive';
 import { PageHeader } from '@/components/page-header';
 import { ErrorState, PageLoading } from '@/components/loading';
 import { SoreCard } from '@/components/sore-card';
@@ -31,15 +31,14 @@ function TodayPage() {
   const q = useDataset();
   const { insights } = useInsights();
 
-  if (q.isLoading && !q.data) return <PageLoading />;
+  // A paused offline query is neither loading nor errored, so key the skeleton
+  // off the absence of data instead; `q.data!` would be a crash there.
   if (q.error && !q.data)
     return <ErrorState error={q.error} retry={() => void q.refetch()} />;
-  const data = q.data!;
+  if (!q.data) return <PageLoading />;
+  const data = q.data;
 
-  const sores = soresOn(data, date).filter(
-    (s) => s.healed_date === null || s.healed_date === date
-  );
-  const active = sores.filter((s) => s.healed_date === null);
+  const active = activeSoresOn(data, date);
   const done = checkInComplete(data, date);
   const flareDay = isToday ? currentFlareDay(data, today) : null;
   const alerts = (insights?.alerts ?? []).filter((a) => a.kind !== 'no_log_today');

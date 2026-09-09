@@ -1,32 +1,46 @@
-import { createRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
+import { createRoute, Link, redirect } from '@tanstack/react-router';
 import { useState, type FormEvent } from 'react';
 import { emailSchema } from '@canker/core';
 import { Button, Input, Label, Separator } from '@canker/ui';
 import { rootRoute } from '@/router-base';
 import { authRedirectUrl, supabase } from '@/lib/supabase';
+import { env } from '@/lib/env';
 import { AuthLayout, FormError, FormNotice } from '@/components/auth-layout';
+import { DemoSignedInNotice } from '@/components/demo-mode';
 import { OAuthButtons } from '@/components/oauth-buttons';
+
+/** Only ever bounce back to a path inside this app, never to another origin. */
+function isInternalPath(value: string): boolean {
+  return value.startsWith('/') && !value.startsWith('//');
+}
 
 export const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   validateSearch: (s: Record<string, unknown>): { redirect?: string } =>
-    typeof s.redirect === 'string' ? { redirect: s.redirect } : {},
+    typeof s.redirect === 'string' && isInternalPath(s.redirect)
+      ? { redirect: s.redirect }
+      : {},
   beforeLoad: ({ context, search }) => {
-    if (context.auth.user) throw redirect({ to: search.redirect ?? '/today' });
+    if (!context.auth.user) return;
+    // `redirect` is a full href (pathname + search); `to` only takes a path,
+    // so it has to go through `href` or the query string ends up in the path.
+    if (search.redirect) throw redirect({ href: search.redirect, replace: true });
+    throw redirect({ to: '/today', search: {}, replace: true });
   },
   component: LoginPage
 });
 
 function LoginPage() {
-  const { redirect: back } = loginRoute.useSearch();
-  const navigate = useNavigate();
   const [mode, setMode] = useState<'password' | 'magic'>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Demo mode has no accounts; the guard above normally redirects first.
+  if (env.demo) return <DemoSignedInNotice />;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -43,7 +57,9 @@ function LoginPage() {
           password
         });
         if (error) return setError(error.message);
-        await navigate({ to: back ?? '/today' });
+        // The auth listener updates the router context, which re-runs this
+        // route's `beforeLoad` and performs the redirect. Navigating here too
+        // would race that with a stale context and bounce through /today.
       } else {
         const { error } = await supabase.auth.signInWithOtp({
           email: parsed.data,

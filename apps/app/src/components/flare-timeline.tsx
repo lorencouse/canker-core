@@ -9,6 +9,15 @@ import {
   type SoreWithLogs
 } from '@canker/core';
 
+/** Full class strings so Tailwind can see them at scan time. */
+const BAR_BG: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: 'bg-pain-1',
+  2: 'bg-pain-2',
+  3: 'bg-pain-3',
+  4: 'bg-pain-4',
+  5: 'bg-pain-5'
+};
+
 /**
  * Gantt-style timeline: one row per sore, bar from onset to healed (or today),
  * coloured by the sore's peak pain. Overlap and duration are what people want
@@ -63,7 +72,7 @@ export function FlareTimeline({
             <span className="truncate">{SURFACE_SHORT_LABELS[s.surface]}</span>
             <span className="bg-muted relative block h-3 rounded-full">
               <span
-                className={`absolute inset-y-0 rounded-full bg-pain-${painBucket(peak)} ${active ? 'ring-accent/40 ring-2' : ''}`}
+                className={`absolute inset-y-0 rounded-full ${BAR_BG[painBucket(peak)]} ${active ? 'ring-accent/40 ring-2' : ''}`}
                 style={{ left, width }}
                 title={`${formatShort(s.onset_date)} – ${s.healed_date ? formatShort(s.healed_date) : 'now'}`}
               />
