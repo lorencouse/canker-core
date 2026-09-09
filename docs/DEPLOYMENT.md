@@ -32,6 +32,74 @@ to run, monitor, or pay for.
 
 ---
 
+## Deployed resources
+
+Created on the Coolify VPS (`46.224.227.119`), project **Canker Core**:
+
+| Resource | UUID / value |
+|---|---|
+| Project | `0y1yh6n2gespythamcoewcod` |
+| Environment | `production` |
+| Postgres 16 | `zp1hiabzhkgj4kwo2r9qa0qi` (internal host, port 5432, db/user `canker`) |
+| Application | `se1yk2uuejhylof4isj4x5wq` |
+| Image | `localhost:5000/canker-core:<git-sha>` |
+| Staging URL | `https://canker.46.224.227.119.sslip.io` |
+
+`sslip.io` resolves any `<anything>.<ip>.sslip.io` to that IP, so Traefik issues a
+real certificate without touching DNS. Handy for verifying before cutover.
+
+---
+
+## Building and shipping an image
+
+The VPS runs at its CPU limit (load ~4 on 4 vCPUs, with kouzr's containers
+already saturating it), so **images are built locally and shipped**, never built
+on the server. This mirrors how kouzr deploys — its images come from the same
+`kouzr-registry` container.
+
+```bash
+SHA=$(git rev-parse --short HEAD)
+
+# 1. Build for the VPS architecture (arm64; an Apple Silicon Mac matches natively)
+docker build --platform linux/arm64 \
+  --build-arg NEXT_PUBLIC_SITE_URL="" \
+  --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="" \
+  -t canker-core:$SHA .
+
+# 2. Stream it to the VPS.
+#    Note: pushing to localhost:5000 through an SSH tunnel does NOT work when
+#    Docker runs in a VM (colima) — the daemon's "localhost" is the VM's, not
+#    your Mac's. Streaming over SSH sidesteps that entirely.
+docker save canker-core:$SHA | gzip -1 | ssh coolify "gunzip | docker load"
+
+# 3. Push into the on-box registry from the VPS
+ssh coolify "docker tag canker-core:$SHA localhost:5000/canker-core:$SHA \
+  && docker push -q localhost:5000/canker-core:$SHA"
+
+# 4. Point the app at the new tag and redeploy (Coolify UI, or the API)
+```
+
+The registry is bound to `127.0.0.1:5000` and is not reachable from the
+internet.
+
+---
+
+## Changing the public domain
+
+The image is domain-agnostic: `SITE_URL` and `BETTER_AUTH_URL` are plain runtime
+variables, and the browser auth client uses its own origin. Cutover is therefore
+**an environment change and a restart — no rebuild**:
+
+1. Point DNS for `cankercore.com` at `46.224.227.119` (currently it resolves to
+   Vercel at `76.76.21.21`).
+2. In Coolify, set the application's domain to `https://cankercore.com`, and
+   update `SITE_URL` and `BETTER_AUTH_URL` to match.
+3. Redeploy (restart). Traefik requests the certificate automatically.
+4. Update the OAuth callback URLs with GitHub and Google, and the Stripe webhook
+   endpoint.
+
+---
+
 ## First-time setup
 
 ### 1. Create the Postgres service
@@ -49,6 +117,8 @@ Use the **internal** hostname, not a public one — the database should never be
 exposed to the internet.
 
 ### 2. Apply the schema
+
+Already done for the current deployment; these are the steps to repeat it.
 
 Connect to the database and run `schema.sql`. From your machine, via the Coolify
 terminal for the Postgres service, or over an SSH tunnel:
