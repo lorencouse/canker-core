@@ -6,7 +6,7 @@ import {
   manageSubscriptionStatusChange,
   deleteProductRecord,
   deletePriceRecord
-} from '@/utils/supabase/admin';
+} from '@/lib/billing/sync';
 
 const relevantEvents = new Set([
   'product.created',

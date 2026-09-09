@@ -10,17 +10,8 @@
     "stripe:login": "stripe login",
     "stripe:listen": "stripe listen --forward-to=localhost:3000/api/webhooks",
     "stripe:fixtures": "stripe fixtures fixtures/stripe-fixtures.json",
-    "supabase:start": "npx supabase start",
-    "supabase:stop": "npx supabase stop",
-    "supabase:status": "npx supabase status",
-    "supabase:restart": "npm run supabase:stop && npm run supabase:start",
-    "supabase:reset": "npx supabase db reset",
-    "supabase:link": "npx supabase link",
-    "supabase:generate-types": "npx supabase gen types typescript --local --schema public > types_db.ts",
-    "supabase:generate-migration": "npx supabase db diff | npx supabase migration new",
-    "supabase:generate-seed": "npx supabase db dump --data-only -f supabase/seed.sql",
-    "supabase:push": "npx supabase db push",
-    "supabase:pull": "npx supabase db pull"
+    "db:schema": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f schema.sql",
+    "db:migrate-from-supabase": "node scripts/migrate-from-supabase.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -36,8 +27,7 @@
     "@radix-ui/react-switch": "^1.1.2",
     "@radix-ui/react-toast": "^1.2.4",
     "@stripe/stripe-js": "2.4.0",
-    "@supabase/ssr": "^0.1.0",
-    "@supabase/supabase-js": "^2.46.1",
+    "better-auth": "^1.7.3",
     "canvas": "^2.11.2",
     "canvas-node": "^0.3.23",
     "class-variance-authority": "^0.7.0",
@@ -49,6 +39,8 @@
     "lucide-react": "0.469.0",
     "next": "15.1.11",
     "next-themes": "^0.4.4",
+    "nodemailer": "^10.0.1",
+    "pg": "^8.23.0",
     "react": "^19.0.0",
     "react-day-picker": "^9.5.0",
     "react-dom": "^19.0.0",
@@ -66,6 +58,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.17.6",
+    "@types/nodemailer": "^8.0.1",
+    "@types/pg": "^8.23.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
@@ -77,7 +71,6 @@
     "postcss": "^8.4.49",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.5.14",
-    "supabase": "^2.2.0",
     "typescript": "^5.6.3"
   }
 }

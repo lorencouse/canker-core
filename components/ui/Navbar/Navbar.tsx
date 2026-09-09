@@ -1,13 +1,10 @@
-import { createClient } from '@/utils/supabase/server';
+import { getUser } from '@/lib/queries';
 import s from './Navbar.module.css';
 import Navlinks from './Navlinks';
 
 export default async function Navbar() {
-  const supabase = await createClient();
+  const user = await getUser();
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
   return (
     <nav className={s.root}>
       <a href="#skip" className="sr-only focus:not-sr-only">

@@ -1,10 +1,10 @@
 'use client';
 
-import { createClient } from '@/utils/supabase/client';
-import { type Provider } from '@supabase/supabase-js';
-import { getURL } from '@/utils/helpers';
+import { authClient } from '@/lib/auth-client';
 import { redirectToPath } from './server';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+
+export type OAuthProvider = 'github' | 'google';
 
 export async function handleRequest(
   e: React.FormEvent<HTMLFormElement>,
@@ -19,26 +19,29 @@ export async function handleRequest(
 
   if (router) {
     // If client-side router is provided, use it to redirect
-    return router.push(redirectUrl);
+    router.push(redirectUrl);
+    // The session cookie is set on the auth response, so the server components
+    // for the destination must be re-fetched rather than served from the
+    // client-side router cache.
+    return router.refresh();
   } else {
     // Otherwise, redirect server-side
     return await redirectToPath(redirectUrl);
   }
 }
 
+/**
+ * Start an OAuth redirect. Better Auth handles the callback at
+ * /api/auth/callback/<provider>, so there is no app-level callback route.
+ */
 export async function signInWithOAuth(e: React.FormEvent<HTMLFormElement>) {
-  // Prevent default form submission refresh
   e.preventDefault();
   const formData = new FormData(e.currentTarget);
-  const provider = String(formData.get('provider')).trim() as Provider;
+  const provider = String(formData.get('provider')).trim() as OAuthProvider;
 
-  // Create client-side supabase client and call signInWithOAuth
-  const supabase = await createClient();
-  const redirectURL = getURL('/auth/callback');
-  await supabase.auth.signInWithOAuth({
-    provider: provider,
-    options: {
-      redirectTo: redirectURL
-    }
+  await authClient.signIn.social({
+    provider,
+    callbackURL: '/profile',
+    errorCallbackURL: '/signin'
   });
 }

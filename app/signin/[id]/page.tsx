@@ -1,5 +1,5 @@
 import Logo from '@/components/icons/Logo';
-import { createClient } from '@/utils/supabase/server';
+import { getUser } from '@/lib/queries';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
@@ -29,7 +29,7 @@ export default async function SignIn({
   searchParams
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ disable_button: boolean }>;
+  searchParams: Promise<{ disable_button: boolean; token?: string; error?: string }>;
 }) {
   const { allowOauth, allowEmail, allowPassword } = getAuthTypes();
   const viewTypes = getViewTypes();
@@ -38,7 +38,10 @@ export default async function SignIn({
   // Declare 'viewProp' and initialize with the default value
   let viewProp: string;
   let paramsId = (await params).id;
-  let disableButton = (await searchParams).disable_button;
+  const resolvedSearchParams = await searchParams;
+  let disableButton = resolvedSearchParams.disable_button;
+  // Better Auth appends the one-time reset token to the callback URL.
+  const resetToken = resolvedSearchParams.token ?? '';
 
   // Assign url id to 'viewProp' if it's a valid string and ViewTypes includes it
   if (typeof paramsId === 'string' && viewTypes.includes(paramsId)) {
@@ -52,16 +55,14 @@ export default async function SignIn({
   }
 
   // Check if the user is already logged in and redirect to the account page if so
-  const supabase = await createClient();
-
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
   if (user && viewProp !== 'update_password') {
     return redirect('/');
-  } else if (!user && viewProp === 'update_password') {
-    return redirect('/signin');
+  } else if (!user && viewProp === 'update_password' && !resetToken) {
+    // Reaching this view without a session *and* without a reset token means the
+    // link was never valid or has already been consumed.
+    return redirect('/signin/forgot_password');
   }
 
   return (
@@ -104,7 +105,10 @@ export default async function SignIn({
               />
             )}
             {viewProp === 'update_password' && (
-              <UpdatePassword redirectMethod={redirectMethod} />
+              <UpdatePassword
+                redirectMethod={redirectMethod}
+                token={resetToken}
+              />
             )}
             {viewProp === 'signup' && (
               <SignUp allowEmail={allowEmail} redirectMethod={redirectMethod} />

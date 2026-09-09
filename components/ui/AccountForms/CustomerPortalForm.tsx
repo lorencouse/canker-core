@@ -13,22 +13,10 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Tables } from '@/types_db';
-
-type Subscription = Tables<'subscriptions'>;
-type Price = Tables<'prices'>;
-type Product = Tables<'products'>;
-
-type SubscriptionWithPriceAndProduct = Subscription & {
-  prices:
-    | (Price & {
-        products: Product | null;
-      })
-    | null;
-};
+import type { Price, Product, SubscriptionWithPrice } from '@/types';
 
 interface Props {
-  subscription: SubscriptionWithPriceAndProduct | null;
+  subscription: SubscriptionWithPrice | null;
 }
 
 export default function CustomerPortalForm({ subscription }: Props) {

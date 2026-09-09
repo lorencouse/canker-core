@@ -9,10 +9,13 @@ import { Loader2 } from 'lucide-react';
 
 interface UpdatePasswordProps {
   redirectMethod: string;
+  /** One-time reset token from the password-reset email, when present. */
+  token?: string;
 }
 
 export default function UpdatePassword({
-  redirectMethod
+  redirectMethod,
+  token
 }: UpdatePasswordProps) {
   const router = redirectMethod === 'client' ? useRouter() : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +33,7 @@ export default function UpdatePassword({
         className="mb-4"
         onSubmit={(e) => handleSubmit(e)}
       >
+        <input type="hidden" name="token" value={token ?? ''} />
         <div className="grid gap-2">
           <div className="grid gap-1">
             <label htmlFor="password">New Password</label>
@@ -38,7 +42,7 @@ export default function UpdatePassword({
               placeholder="Password"
               type="password"
               name="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               className="w-full p-3 rounded-md bg-zinc-800"
             />
             <label htmlFor="passwordConfirm">Confirm New Password</label>
@@ -47,7 +51,7 @@ export default function UpdatePassword({
               placeholder="Password"
               type="password"
               name="passwordConfirm"
-              autoComplete="current-password"
+              autoComplete="new-password"
               className="w-full p-3 rounded-md bg-zinc-800"
             />
           </div>

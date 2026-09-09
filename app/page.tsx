@@ -1,23 +1,8 @@
-import Pricing from '@/components/ui/Pricing/Pricing';
-import { createClient } from '@/utils/supabase/server';
-import {
-  getProducts,
-  getSubscription,
-  getUser
-} from '@/utils/supabase/queries';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Redirect } from 'next';
 import Link from 'next/link';
 
 export default async function HomePage() {
-  const supabase = await createClient();
-  const [user, products, subscription] = await Promise.all([
-    getUser(supabase),
-    getProducts(supabase),
-    getSubscription(supabase)
-  ]);
-
   return (
     <div className="home-hero flex flex-row flex-wrap justify-around items-center bg-primary">
       <div className="hero-left flex items-center align-middle ">

@@ -3,13 +3,11 @@
 import { Separator } from '@/components/ui/separator';
 import { ContactInfoForm } from './contact-info-form';
 import { User } from '@/types';
-import { getUserDetails } from '@/utils/supabase/queries';
+import { getUserDetails } from '@/lib/queries';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/utils/supabase/server';
 
 export default async function ContactInfoPage() {
-  const supabase = await createClient();
-  const profile: User | null = await getUserDetails(supabase);
+  const profile: User | null = await getUserDetails();
 
   if (!profile) {
     redirect('/signin/password_signin');

@@ -1,15 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { signInWithOAuth } from '@/utils/auth-helpers/client';
-import { type Provider } from '@supabase/supabase-js';
+import { signInWithOAuth, type OAuthProvider } from '@/utils/auth-helpers/client';
 import { Github } from 'lucide-react';
 import { Google } from '@/components/icons/Google';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 type OAuthProviders = {
-  name: Provider;
+  name: OAuthProvider;
   displayName: string;
   icon: JSX.Element;
 };

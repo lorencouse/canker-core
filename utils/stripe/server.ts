@@ -2,16 +2,14 @@
 
 import Stripe from 'stripe';
 import { stripe } from '@/utils/stripe/config';
-import { createClient } from '@/utils/supabase/server';
-import { createOrRetrieveCustomer } from '@/utils/supabase/admin';
+import { createOrRetrieveCustomer } from '@/lib/billing/sync';
+import { getUser } from '@/lib/queries';
 import {
   getURL,
   getErrorRedirect,
   calculateTrialEndUnixTimestamp
 } from '@/utils/helpers';
-import { Tables } from '@/types_db';
-
-type Price = Tables<'prices'>;
+import { Price } from '@/types';
 
 type CheckoutResponse = {
   errorRedirect?: string;
@@ -23,15 +21,9 @@ export async function checkoutWithStripe(
   redirectPath: string = '/account'
 ): Promise<CheckoutResponse> {
   try {
-    // Get the user from Supabase auth
-    const supabase = await createClient();
-    const {
-      error,
-      data: { user }
-    } = await supabase.auth.getUser();
+    const user = await getUser();
 
-    if (error || !user) {
-      console.error(error);
+    if (!user) {
       throw new Error('Could not get user session.');
     }
 
@@ -121,16 +113,9 @@ export async function checkoutWithStripe(
 
 export async function createStripePortal(currentPath: string) {
   try {
-    const supabase = await createClient();
-    const {
-      error,
-      data: { user }
-    } = await supabase.auth.getUser();
+    const user = await getUser();
 
     if (!user) {
-      if (error) {
-        console.error(error);
-      }
       throw new Error('Could not get user session.');
     }
 
