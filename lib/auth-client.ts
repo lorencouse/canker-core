@@ -10,8 +10,9 @@
 import { createAuthClient } from 'better-auth/react';
 import { magicLinkClient } from 'better-auth/client/plugins';
 
+// No baseURL: the client defaults to the origin it was served from, so the same
+// image works on the staging domain and on cankercore.com without a rebuild.
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_SITE_URL,
   plugins: [magicLinkClient()]
 });
 

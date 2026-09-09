@@ -20,7 +20,9 @@ import { getURL } from '@/utils/helpers';
 export const auth = betterAuth({
   database: pool,
 
-  baseURL: getURL().replace(/\/$/, ''),
+  // BETTER_AUTH_URL / SITE_URL are runtime values, so the public URL can change
+  // without rebuilding the image.
+  baseURL: (process.env.BETTER_AUTH_URL || getURL()).replace(/\/$/, ''),
 
   secret: process.env.BETTER_AUTH_SECRET,
 

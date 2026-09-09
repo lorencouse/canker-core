@@ -2,16 +2,20 @@ import type { Price } from '@/types';
 
 
 export const getURL = (path: string = '') => {
-  // Check if NEXT_PUBLIC_SITE_URL is set and non-empty. Set this to your site URL in production env.
+  // SITE_URL is checked first and is deliberately *not* a NEXT_PUBLIC_ variable:
+  // Next.js inlines NEXT_PUBLIC_* at build time, so a baked-in value cannot be
+  // changed without rebuilding the image. Reading a plain env var lets the
+  // server pick up a new domain at cutover with only a restart.
+  //
+  // Client components fall through to the inlined NEXT_PUBLIC_SITE_URL, since
+  // SITE_URL is not exposed to the browser.
   let url =
-    process?.env?.NEXT_PUBLIC_SITE_URL &&
-    process.env.NEXT_PUBLIC_SITE_URL.trim() !== ''
-      ? process.env.NEXT_PUBLIC_SITE_URL
-      : // If not set, check for NEXT_PUBLIC_VERCEL_URL, which is automatically set by Vercel.
-        process?.env?.NEXT_PUBLIC_VERCEL_URL &&
-          process.env.NEXT_PUBLIC_VERCEL_URL.trim() !== ''
-        ? process.env.NEXT_PUBLIC_VERCEL_URL
-        : // If neither is set, default to localhost for local development.
+    process?.env?.SITE_URL && process.env.SITE_URL.trim() !== ''
+      ? process.env.SITE_URL
+      : process?.env?.NEXT_PUBLIC_SITE_URL &&
+          process.env.NEXT_PUBLIC_SITE_URL.trim() !== ''
+        ? process.env.NEXT_PUBLIC_SITE_URL
+        : // Default to localhost for local development.
           'http://localhost:3000/';
 
   // Trim the URL and remove trailing slash if exists.

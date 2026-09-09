@@ -44,3 +44,6 @@ certificates
 
 # supabase credential backup kept for the one-off data migration
 .env.local.supabase-backup
+
+# typescript incremental build cache
+*.tsbuildinfo

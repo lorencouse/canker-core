@@ -28,8 +28,6 @@
     "@radix-ui/react-toast": "^1.2.4",
     "@stripe/stripe-js": "2.4.0",
     "better-auth": "^1.7.3",
-    "canvas": "^2.11.2",
-    "canvas-node": "^0.3.23",
     "class-variance-authority": "^0.7.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
