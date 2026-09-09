@@ -1,156 +1,155 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { useSoreContext } from '@/context/SoreContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import SoreSliders from './image-plot/SoreSliders';
 
-function ListItem({ label, data }: { label: string; data: string | number }) {
+/** Last entry of a reading series, which is the current value. */
+const latest = (series: number[] | null | undefined) =>
+  series && series.length ? series[series.length - 1] : null;
+
+function Reading({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <li className="mb-2 text-left">
-      <span className="item-label font-bold">{label}</span> {data}
-    </li>
+    <div>
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="tabular mt-0.5 font-medium">{value}</dd>
+    </div>
   );
 }
 
 const SoreDetails: React.FC = () => {
   const { selectedSore, setSelectedSore, sores, mode } = useSoreContext();
   const [soreIndex, setSoreIndex] = useState(0);
-  const getColor = (painLevel: number) => {
-    const lightness = 100 - painLevel * 7;
-    return `hsl(0, 100%, ${lightness}%)`;
-  };
 
   useEffect(() => {
-    const currentIndex = sores.findIndex(
-      (sore) => sore.id === selectedSore?.id
-    );
-    setSoreIndex(currentIndex);
+    setSoreIndex(sores.findIndex((sore) => sore.id === selectedSore?.id));
   }, [selectedSore, sores]);
 
-  const handlePreviousSoreClick = () => {
-    if (soreIndex > 0) {
-      setSelectedSore(sores[soreIndex - 1]);
-    } else {
-      setSelectedSore(sores[sores.length - 1]);
-    }
+  const step = (delta: number) => {
+    if (!sores.length) return;
+    const next = (soreIndex + delta + sores.length) % sores.length;
+    setSelectedSore(sores[next]);
   };
 
-  const handleNextSoreClick = () => {
-    if (soreIndex < sores.length - 1) {
-      setSelectedSore(sores[soreIndex + 1]);
-    } else {
-      setSelectedSore(sores[0]);
-    }
-  };
+  const size = latest(selectedSore?.size);
+  const pain = latest(selectedSore?.pain);
+  const dates = selectedSore?.dates ?? [];
+
+  const firstSeen = dates.length ? new Date(dates[0]) : null;
+  const lastUpdated = dates.length ? new Date(dates[dates.length - 1]) : null;
+
+  // Day 1 is the day it was first marked, matching how people count a sore.
+  const dayNumber = useMemo(() => {
+    if (!firstSeen) return null;
+    const ms = Date.now() - firstSeen.getTime();
+    return Math.max(1, Math.floor(ms / 86_400_000) + 1);
+  }, [firstSeen]);
+
+  if (!selectedSore) {
+    return (
+      <Card>
+        <CardContent className="py-10 text-center">
+          <p className="font-medium">No sore selected</p>
+          <p className="prose-measure mx-auto mt-1 text-sm text-muted-foreground">
+            Tap a sore on the map to see its readings, or use Add to mark a new
+            one.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <>
+    <div className="space-y-4">
       {mode !== 'view' && <SoreSliders />}
 
-      <div className="sore-details">
-        {selectedSore && (
-          <div className="sore-details-container border-grey my-4 w-full rounded-lg border-2 border-solid">
-            <div
-              className="sore-details-header flex flex-row justify-between rounded-t-lg bg-background text-foreground"
-              onClick={handlePreviousSoreClick}
-            >
-              <div className="previous-sore cursor-pointer rounded-tl-lg border-r-2 border-gray-200 p-6 hover:bg-muted">
-                <span> {'<'} </span>
-              </div>
-              <h3 className="border-grey m-5 text-2xl font-bold">
-                Sore {soreIndex + 1}
-              </h3>
-              <div
-                className="next-sore border-l-2 border-gray-200 p-6"
-                onClick={handleNextSoreClick}
-              >
-                <span> {'>'} </span>
-              </div>
-            </div>
-            <hr />
-            <div className="flex flex-row">
-                <ul className="m-5 w-3/4">
-                <ListItem
-                  label="Created: "
-                  data={
-                  selectedSore.dates
-                    ? new Date(selectedSore.dates[0]).toLocaleString()
-                    : 'N/A'
-                  }
-                />
-                <ListItem
-                  label="Last Updated: "
-                  data={
-                  selectedSore.dates
-                    ? new Date(selectedSore.dates[selectedSore.dates.length - 1]).toLocaleString()
-                    : 'N/A'
-                  }
-                />
+      <Card>
+        <div className="flex items-center justify-between border-b border-border px-3 py-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => step(-1)}
+            disabled={sores.length < 2}
+            aria-label="Previous sore"
+          >
+            <ChevronLeft />
+          </Button>
+          <div className="text-center">
+            <p className="font-display font-semibold">
+              Sore {soreIndex + 1}
+              <span className="font-normal text-muted-foreground">
+                {' '}
+                of {sores.length}
+              </span>
+            </p>
+            {dayNumber !== null && (
+              <p className="tabular text-xs text-muted-foreground">
+                Day {dayNumber}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => step(1)}
+            disabled={sores.length < 2}
+            aria-label="Next sore"
+          >
+            <ChevronRight />
+          </Button>
+        </div>
 
-                <ListItem
-                  label="Sore Size: "
-                  data={
-                  selectedSore.size
-                    ? selectedSore.size[
-                      selectedSore.size.length - 1
-                    ]?.toString()
-                    : 'N/A'
-                  }
-                />
-                <ListItem
-                  label="Pain Level: "
-                  data={
-                  selectedSore.pain
-                    ? selectedSore.pain[
-                      selectedSore.pain.length - 1
-                    ]?.toString()
-                    : 'N/A'
-                  }
-                />
-                <ListItem
-                  label="X: "
-                  data={selectedSore.x ? Math.round(selectedSore.x) : 0}
-                />
-                <ListItem
-                  label="Y: "
-                  data={selectedSore.y ? Math.round(selectedSore.y) : 0}
-                />
-                <ListItem
-                  label="On: "
-                  data={selectedSore.gums ? 'Gums' : 'Mouth'}
-                />
-                <ListItem label="Zone: " data={selectedSore.zone} />
-                <ListItem label="User ID: " data={selectedSore.user_id} />
-                </ul>
-              <div className="flex flex-grow flex-col items-center justify-center p-5">
-                <div
-                  className="sore-preview"
+        <CardContent className="pt-6">
+          <div className="flex flex-col-reverse items-start gap-6 sm:flex-row sm:justify-between">
+            <dl className="grid flex-1 grid-cols-2 gap-x-6 gap-y-4">
+              <Reading
+                label="Size"
+                value={size === null ? '—' : `${size} mm`}
+              />
+              <Reading
+                label="Pain"
+                value={pain === null ? '—' : `${pain} of 10`}
+              />
+              <Reading
+                label="Location"
+                value={`${selectedSore.zone} · ${selectedSore.gums ? 'gums' : 'mouth'}`}
+              />
+              <Reading label="Readings" value={dates.length} />
+              <Reading
+                label="First marked"
+                value={firstSeen ? firstSeen.toLocaleDateString() : '—'}
+              />
+              <Reading
+                label="Last updated"
+                value={lastUpdated ? lastUpdated.toLocaleDateString() : '—'}
+              />
+            </dl>
+
+            {/*
+              Sized in CSS millimetres so the swatch really is close to life
+              size, which is the point of showing it at all.
+            */}
+            <div className="flex w-full shrink-0 flex-col items-center gap-2 sm:w-24">
+              <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-border bg-muted/40">
+                <span
+                  className="rounded-full ring-1 ring-foreground/20"
                   style={{
-                    width:
-                      (selectedSore.size
-                        ? selectedSore.size[selectedSore.size?.length - 1]
-                        : 0) * 2,
-                    height:
-                      (selectedSore.size
-                        ? selectedSore.size[selectedSore.size?.length - 1]
-                        : 0) * 2,
-                    backgroundColor: getColor(
-                      selectedSore.pain
-                        ? selectedSore.pain[selectedSore.pain?.length - 1]
-                        : 0
-                    ),
-                    borderRadius: '50%',
-                    boxShadow: '0 0 10px foreground',
-                    border: '2px solid foreground'
+                    width: `${size ?? 0}mm`,
+                    height: `${size ?? 0}mm`,
+                    backgroundColor: `hsl(var(--sev-${pain ?? 1}))`
                   }}
                 />
               </div>
+              <span className="text-xs text-muted-foreground">Actual size</span>
             </div>
           </div>
-        )}
-      </div>
-    </>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
-export { SoreDetails, ListItem };
+export { SoreDetails };

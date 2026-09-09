@@ -4,13 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { cn } from '@/utils/cn';
-import { buttonVariants } from '@/components/ui/button';
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
-  items: {
-    href: string;
-    title: string;
-  }[];
+  items: { href: string; title: string }[];
 }
 
 export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
@@ -18,26 +14,27 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
 
   return (
     <nav
-      className={cn(
-        'flex  flex-wrap space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1 py-4 rounded-md gap-y-4',
-        className
-      )}
+      className={cn('flex gap-1 overflow-x-auto lg:flex-col', className)}
       {...props}
     >
-      <span className="w-full">Update your profile:</span>
-      {items.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={cn(
-            buttonVariants({ variant: 'ghost' }),
-            pathname === item.href ? 'bg-foreground text-background ' : '',
-            'justify-start outline outline-1 gap-2 hover:underline'
-          )}
-        >
-          {item.title}
-        </Link>
-      ))}
+      {items.map((item) => {
+        const active = pathname === item.href;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+              'whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors',
+              active
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            )}
+          >
+            {item.title}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

@@ -1,11 +1,14 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { signInWithOAuth, type OAuthProvider } from '@/utils/auth-helpers/client';
-import { Github } from 'lucide-react';
-import { Google } from '@/components/icons/Google';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Github, Loader2 } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Google } from '@/components/icons/Google';
+import {
+  signInWithOAuth,
+  type OAuthProvider
+} from '@/utils/auth-helpers/client';
 
 type OAuthProviders = {
   name: OAuthProvider;
@@ -13,49 +16,44 @@ type OAuthProviders = {
   icon: JSX.Element;
 };
 
-export default function OauthSignIn() {
-  const oAuthProviders: OAuthProviders[] = [
-    {
-      name: 'github',
-      displayName: 'GitHub',
-      icon: <Github className="h-5 w-5" />
-    },
-    {
-      name: 'google',
-      displayName: 'Google',
-      icon: <Google />
-    }
-    /* Add desired OAuth providers here */
-  ];
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const oAuthProviders: OAuthProviders[] = [
+  { name: 'google', displayName: 'Google', icon: <Google /> },
+  { name: 'github', displayName: 'GitHub', icon: <Github /> }
+];
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    setIsSubmitting(true); // Disable the button while the request is being handled
+export default function OauthSignIn() {
+  // Track which provider is in flight so only that button shows a spinner.
+  const [pending, setPending] = useState<OAuthProvider | null>(null);
+
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+    provider: OAuthProvider
+  ) => {
+    setPending(provider);
     await signInWithOAuth(e);
-    setIsSubmitting(false);
+    setPending(null);
   };
 
   return (
-    <div className="m-4">
+    <div className="grid gap-2">
       {oAuthProviders.map((provider) => (
         <form
           key={provider.name}
-          className="pb-2"
-          onSubmit={(e) => handleSubmit(e)}
+          onSubmit={(e) => handleSubmit(e, provider.name)}
         >
           <input type="hidden" name="provider" value={provider.name} />
           <Button
             variant="outline"
             type="submit"
-            className="w-full rounded-md shadow-lg"
-            disabled={isSubmitting}
-            // loading={isSubmitting}
+            className="w-full"
+            disabled={pending !== null}
           >
-            {isSubmitting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            <span className="mr-2">{provider.icon}</span>
-            <span>{provider.displayName}</span>
+            {pending === provider.name ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              provider.icon
+            )}
+            Continue with {provider.displayName}
           </Button>
         </form>
       ))}

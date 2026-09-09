@@ -1,120 +1,139 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Menu, X } from 'lucide-react';
+
+import Logo from '@/components/icons/Logo';
+import ModeToggle from '@/components/mode-toggle';
+import { Button } from '@/components/ui/button';
 import { SignOut } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
-import Logo from '@/components/icons/Logo';
-import { usePathname, useRouter } from 'next/navigation';
 import { getRedirectMethod } from '@/utils/auth-helpers/settings';
-import s from './Navbar.module.css';
-import ModeToggle from '@/components/mode-toggle';
+import { cn } from '@/utils/cn';
 
-interface NavlinksProps {
-  user?: any;
-}
+const signedInLinks = [
+  { href: '/my-sores', label: 'Map' },
+  { href: '/history', label: 'History' },
+  { href: '/profile', label: 'Settings' }
+];
 
-import { Menu } from 'lucide-react'; // Add this import
-import { useState } from 'react';
+const signedOutLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' }
+];
 
-export default function Navlinks({ user }: NavlinksProps) {
-  const router = getRedirectMethod() === 'client' ? useRouter() : null;
-  const [isOpen, setIsOpen] = useState(false);
+export default function Navlinks({ signedIn }: { signedIn: boolean }) {
+  const pathname = usePathname();
+  const clientRouter = useRouter();
+  const router = getRedirectMethod() === 'client' ? clientRouter : null;
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Any navigation closes the mobile sheet, including a back/forward step.
+  useEffect(() => setMenuOpen(false), [pathname]);
+
+  const links = signedIn ? signedInLinks : signedOutLinks;
+
+  const navLink = (href: string, label: string, onNavigate?: () => void) => {
+    const active = pathname === href;
+    return (
+      <Link
+        key={href}
+        href={href}
+        onClick={onNavigate}
+        aria-current={active ? 'page' : undefined}
+        className={cn(
+          'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          active
+            ? 'bg-accent text-accent-foreground'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+        )}
+      >
+        {label}
+      </Link>
+    );
+  };
+
+  const signOutForm = (className?: string) => (
+    <form
+      onSubmit={(e) => handleRequest(e, SignOut, router)}
+      className={className}
+    >
+      <input type="hidden" name="pathName" value={pathname} />
+      <Button type="submit" variant="ghost" size="sm">
+        Sign out
+      </Button>
+    </form>
+  );
 
   return (
-    <div className="relative flex flex-row justify-between py-4 align-center">
-      <div className="flex items-center flex-1">
-        <Link href="/" className={s.logo} aria-label="Logo">
-          <Logo />
-        </Link>
-
-        {/* Hamburger button */}
-        <button
-          className="lg:hidden ml-4 p-2"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle menu"
+    <nav className="flex h-16 items-center justify-between gap-4">
+      <div className="flex items-center gap-6">
+        <Link
+          href={signedIn ? '/my-sores' : '/'}
+          className="flex items-center gap-2.5 rounded-md text-foreground"
         >
-          <Menu size={24} />
-        </button>
-
-        {/* Navigation links - desktop */}
-        <nav className="hidden lg:flex ml-6 space-x-2">
-          <Link href="/" className={s.link}>
-            Home
-          </Link>
-          {user && (
-            <>
-              <Link href="/my-sores" className={s.link}>
-                Sores
-              </Link>
-              <Link href="/history" className={s.link}>
-                History
-              </Link>
-              <Link href="/profile" className={s.link}>
-                Profile
-              </Link>
-            </>
-          )}
-        </nav>
-      </div>
-
-      {/* Mobile menu */}
-      <nav
-        className={`${
-          isOpen ? 'flex' : 'hidden'
-        } lg:hidden absolute top-full left-0 flex-col bg-background border-b border-zinc-200 dark:border-zinc-800 py-4 px-6 space-y-4 w-full`}
-        onClick={() => setTimeout(() => setIsOpen(false), 1000)}
-      >
-        <Link href="/" className={s.link}>
-          Home
+          <Logo size={28} />
+          <span className="font-display text-base font-semibold tracking-tight">
+            Canker Core
+          </span>
         </Link>
-        {user && (
-          <>
-            <Link href="/my-sores" className={s.link}>
-              Sores
-            </Link>
-            <Link href="/history" className={s.link}>
-              History
-            </Link>
-            <Link href="/profile" className={s.link}>
-              Profile
-            </Link>
-          </>
-        )}
-        {user ? (
-          <form onSubmit={(e) => handleRequest(e, SignOut, router)}>
-            <input type="hidden" name="pathName" value={usePathname()} />
-            <button type="submit" className={s.link}>
-              Sign out
-            </button>
-          </form>
-        ) : (
-          <Link href="/signin" className={s.link}>
-            Sign In
-          </Link>
-        )}
-      </nav>
 
-      {/* Desktop auth buttons and theme toggle */}
-      <div className="hidden lg:flex justify-end space-x-8 items-center">
-        {user ? (
-          <form onSubmit={(e) => handleRequest(e, SignOut, router)}>
-            <input type="hidden" name="pathName" value={usePathname()} />
-            <button type="submit" className={s.link}>
-              Sign out
-            </button>
-          </form>
-        ) : (
-          <Link href="/signin" className={s.link}>
-            Sign In
-          </Link>
-        )}
-        <ModeToggle />
+        <div className="hidden items-center gap-1 md:flex">
+          {links.map(({ href, label }) => navLink(href, label))}
+        </div>
       </div>
 
-      {/* Mobile theme toggle */}
-      <div className="lg:hidden flex items-center">
+      <div className="flex items-center gap-2">
+        <div className="hidden items-center gap-2 md:flex">
+          {signedIn ? (
+            signOutForm()
+          ) : (
+            <Button asChild size="sm">
+              <Link href="/signin">Sign in</Link>
+            </Button>
+          )}
+        </div>
+
         <ModeToggle />
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          aria-expanded={menuOpen}
+          aria-controls="mobile-nav"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          {menuOpen ? <X /> : <Menu />}
+          <span className="sr-only">
+            {menuOpen ? 'Close menu' : 'Open menu'}
+          </span>
+        </Button>
       </div>
-    </div>
+
+      {menuOpen && (
+        <div
+          id="mobile-nav"
+          className="absolute inset-x-0 top-16 flex flex-col gap-1 border-b border-border bg-background p-4 md:hidden"
+        >
+          {links.map(({ href, label }) =>
+            navLink(href, label, () => setMenuOpen(false))
+          )}
+          <div className="mt-2 border-t border-border pt-3">
+            {signedIn ? (
+              signOutForm('flex')
+            ) : (
+              <Button asChild className="w-full">
+                <Link href="/signin" onClick={() => setMenuOpen(false)}>
+                  Sign in
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </nav>
   );
 }

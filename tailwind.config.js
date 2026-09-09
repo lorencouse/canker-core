@@ -1,5 +1,3 @@
-const { fontFamily } = require('tailwindcss/defaultTheme');
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ['class', '[data-theme="dark"]'],
@@ -11,19 +9,22 @@ module.exports = {
   theme: {
     container: {
       center: true,
-      padding: '2rem',
-      screens: {
-        '2xl': '1400px'
-      }
+      padding: { DEFAULT: '1.25rem', md: '2rem' },
+      screens: { '2xl': '1200px' }
     },
     extend: {
-      textShadow: {
-        DEFAULT: '2px 2px 4px rgba(0, 0, 0, 0.5)'
+      fontFamily: {
+        // Archivo for headings: a squarish grotesque with a signage feel,
+        // which suits a product built around a map.
+        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
+        // Source Sans 3 for body and data: humanist, real tabular numerals.
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif']
       },
-      textOverlineOffset: {
-        0: '0px',
-        1: '1px',
-        2: '2px'
+      fontSize: {
+        display: ['clamp(2.5rem, 6vw, 3.75rem)', { lineHeight: '1.04', letterSpacing: '-0.03em' }],
+        title: ['clamp(1.75rem, 3.5vw, 2.5rem)', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
+        section: ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.015em' }],
+        subhead: ['1.125rem', { lineHeight: '1.35', letterSpacing: '-0.01em' }]
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -32,11 +33,11 @@ module.exports = {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: 'var(--primary)',
+          DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))'
         },
         secondary: {
-          DEFAULT: 'var(--secondary)',
+          DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))'
         },
         destructive: {
@@ -58,19 +59,34 @@ module.exports = {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'
+        },
+        // Pain level 1-10. Data only - never use these for chrome.
+        severity: {
+          1: 'hsl(var(--sev-1))',
+          2: 'hsl(var(--sev-2))',
+          3: 'hsl(var(--sev-3))',
+          4: 'hsl(var(--sev-4))',
+          5: 'hsl(var(--sev-5))',
+          6: 'hsl(var(--sev-6))',
+          7: 'hsl(var(--sev-7))',
+          8: 'hsl(var(--sev-8))',
+          9: 'hsl(var(--sev-9))',
+          10: 'hsl(var(--sev-10))'
         }
       },
-      userSelect: {
-        none: 'none'
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)'
       },
       keyframes: {
         'accordion-down': {
-          from: { height: 0 },
+          from: { height: '0' },
           to: { height: 'var(--radix-accordion-content-height)' }
         },
         'accordion-up': {
           from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: 0 }
+          to: { height: '0' }
         }
       },
       animation: {

@@ -1,7 +1,9 @@
+import { cookies } from 'next/headers';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+
 import Logo from '@/components/icons/Logo';
 import { getUser } from '@/lib/queries';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import {
   getAuthTypes,
   getViewTypes,
@@ -12,7 +14,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
@@ -24,26 +25,52 @@ import ForgotPassword from '@/components/ui/AuthForms/ForgotPassword';
 import UpdatePassword from '@/components/ui/AuthForms/UpdatePassword';
 import SignUp from '@/components/ui/AuthForms/Signup';
 
+/** Heading and supporting line for each view, kept in one place. */
+const COPY: Record<string, { title: string; description: string }> = {
+  password_signin: {
+    title: 'Sign in',
+    description: 'Pick up where you left off with your mouth map.'
+  },
+  email_signin: {
+    title: 'Sign in',
+    description: 'We’ll email you a link instead of asking for a password.'
+  },
+  forgot_password: {
+    title: 'Reset your password',
+    description: 'Tell us your email and we’ll send a reset link.'
+  },
+  update_password: {
+    title: 'Choose a new password',
+    description: 'This replaces the password on your account.'
+  },
+  signup: {
+    title: 'Create your account',
+    description: 'Start tracking the sore you have right now.'
+  }
+};
+
 export default async function SignIn({
   params,
   searchParams
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ disable_button: boolean; token?: string; error?: string }>;
+  searchParams: Promise<{
+    disable_button: boolean;
+    token?: string;
+    error?: string;
+  }>;
 }) {
   const { allowOauth, allowEmail, allowPassword } = getAuthTypes();
   const viewTypes = getViewTypes();
   const redirectMethod = getRedirectMethod();
 
-  // Declare 'viewProp' and initialize with the default value
-  let viewProp: string;
-  let paramsId = (await params).id;
+  const paramsId = (await params).id;
   const resolvedSearchParams = await searchParams;
-  let disableButton = resolvedSearchParams.disable_button;
+  const disableButton = resolvedSearchParams.disable_button;
   // Better Auth appends the one-time reset token to the callback URL.
   const resetToken = resolvedSearchParams.token ?? '';
 
-  // Assign url id to 'viewProp' if it's a valid string and ViewTypes includes it
+  let viewProp: string;
   if (typeof paramsId === 'string' && viewTypes.includes(paramsId)) {
     viewProp = paramsId;
   } else {
@@ -54,34 +81,39 @@ export default async function SignIn({
     return redirect(`/signin/${viewProp}`);
   }
 
-  // Check if the user is already logged in and redirect to the account page if so
   const user = await getUser();
 
   if (user && viewProp !== 'update_password') {
-    return redirect('/');
+    return redirect('/my-sores');
   } else if (!user && viewProp === 'update_password' && !resetToken) {
-    // Reaching this view without a session *and* without a reset token means the
-    // link was never valid or has already been consumed.
+    // Reaching this view without a session *and* without a reset token means
+    // the link was never valid or has already been consumed.
     return redirect('/signin/forgot_password');
   }
 
+  const copy = COPY[viewProp] ?? COPY.password_signin;
+  const showOauth =
+    allowOauth &&
+    viewProp !== 'update_password' &&
+    viewProp !== 'forgot_password';
+
   return (
-    <div className="flex justify-center height-screen-helper">
-      <div className="flex flex-col justify-between max-w-lg p-3 m-auto w-80 ">
-        <div className="flex justify-center pb-12 ">
-          <Logo width="110px" height="110px" />
-        </div>
+    <div className="container flex min-h-[calc(100vh-8rem)] items-center justify-center py-12">
+      <div className="w-full max-w-sm">
+        <Link
+          href="/"
+          className="mb-8 flex items-center justify-center gap-2.5 text-foreground"
+        >
+          <Logo size={32} />
+          <span className="font-display text-lg font-semibold tracking-tight">
+            Canker Core
+          </span>
+        </Link>
+
         <Card>
           <CardHeader>
-            <CardTitle>
-              {viewProp === 'forgot_password'
-                ? 'Reset Password'
-                : viewProp === 'update_password'
-                  ? 'Update Password'
-                  : viewProp === 'signup'
-                    ? 'Sign Up'
-                    : 'Sign In'}
-            </CardTitle>
+            <CardTitle className="text-section">{copy.title}</CardTitle>
+            <CardDescription>{copy.description}</CardDescription>
           </CardHeader>
           <CardContent>
             {viewProp === 'password_signin' && (
@@ -113,14 +145,15 @@ export default async function SignIn({
             {viewProp === 'signup' && (
               <SignUp allowEmail={allowEmail} redirectMethod={redirectMethod} />
             )}
-            {viewProp !== 'update_password' &&
-              viewProp !== 'signup' &&
-              allowOauth && (
-                <>
-                  <Separator text="Third-party sign-in" />
+
+            {showOauth && (
+              <div className="mt-6">
+                <Separator text="or" />
+                <div className="mt-4">
                   <OauthSignIn />
-                </>
-              )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

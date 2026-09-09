@@ -1,36 +1,37 @@
-"use client"
+'use client';
 
-import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 
 export default function ModeToggle() {
-    const { theme, setTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-    // After mounting, we have access to the theme
-    useEffect(() => setMounted(true), []);
+  useEffect(() => setMounted(true), []);
 
-    if (!mounted) {
-        // Render nothing on the server and until the theme is mounted
-        return null;
-    }
+  const isDark = mounted && resolvedTheme === 'dark';
 
-    return (
-        <div>
-            {theme === "dark" ? (
-                <Button variant="ghost" className="hover:scale-105 border-foreground bg-background" size="icon" onClick={() => setTheme("light")}>
-                    <Sun className="w-5 h-5" />
-                    <span className="sr-only">Toggle theme</span>
-                </Button>
-            ) : (
-                <Button variant="ghost" size="icon" className="hover:scale-105 border-foreground bg-background" onClick={() => setTheme("dark")}>
-                    <Moon className="w-5 h-5" />
-                    <span className="sr-only">Toggle theme</span>
-                </Button>
-            )}
-        </div>
-    );
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      // Rendered from the first paint so the header does not reflow once the
+      // theme resolves; the icon simply swaps in.
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+    >
+      {mounted ? (
+        isDark ? (
+          <Sun className="h-5 w-5" />
+        ) : (
+          <Moon className="h-5 w-5" />
+        )
+      ) : (
+        <span className="h-5 w-5" />
+      )}
+    </Button>
+  );
 }

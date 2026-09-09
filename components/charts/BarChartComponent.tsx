@@ -1,5 +1,8 @@
 'use client';
-import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList } from 'recharts';
+
+import { useMemo } from 'react';
+import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts';
+
 import {
   Card,
   CardContent,
@@ -7,123 +10,153 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent
-} from '@/components/ui/chart';
+import { ChartContainer, type ChartConfig } from '@/components/ui/chart';
 import { Sore } from '@/types';
-import { useSoreContext } from '@/context/SoreContext';
-import { getColor } from '@/utils/getColor';
+import { getSeverityColor } from '@/utils/getColor';
+import { useIsDark } from '@/utils/hooks/useIsDark';
 
-const transformData = (sores: Sore[]) => {
-  const dataMap: { [key: string]: any } = {};
-
-  sores.forEach((sore) => {
-    if (sore.dates && sore.dates.length > 0) {
-      sore.dates.forEach((date, index) => {
-        const dateString = new Date(date).toISOString().split('T')[0];
-        if (!dataMap[dateString]) {
-          dataMap[dateString] = { date: dateString, sores: [] };
-        }
-        dataMap[dateString].sores.push({
-          id: sore.id,
-          size: sore.size?.[index] ?? 0
-        });
-      });
-    }
-  });
-
-  return Object.values(dataMap);
+/**
+ * Local YYYY-MM-DD. Grouping on the UTC day instead would push an evening
+ * reading into the next bar, and disagree with the dates shown in the table.
+ */
+const dayKey = (iso: string) => {
+  const date = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 };
 
+type Row = { day: string } & Record<string, number | string>;
+
+/**
+ * One series per sore, keyed by its id, with a row per day.
+ *
+ * Keying by id matters: readings are appended per sore, so the nth reading of
+ * one sore has nothing to do with the nth reading of another, and lining them
+ * up by position produces series that jump between sores.
+ */
+function buildChart(sores: Sore[]) {
+  const byDay = new Map<string, Row>();
+  // Per sore, per day: the size and pain recorded that day.
+  const painByDay = new Map<string, Map<string, number>>();
+
+  sores.forEach((sore) => {
+    const pains = new Map<string, number>();
+
+    sore.dates?.forEach((date, index) => {
+      const day = dayKey(date);
+      const size = sore.size?.[index];
+      if (size === undefined) return;
+
+      if (!byDay.has(day)) byDay.set(day, { day });
+      byDay.get(day)![sore.id] = size;
+      pains.set(day, sore.pain?.[index] ?? 1);
+    });
+
+    painByDay.set(sore.id, pains);
+  });
+
+  const rows = Array.from(byDay.values()).sort((a, b) =>
+    a.day.localeCompare(b.day)
+  );
+
+  // Only sores that actually contributed a reading get a series.
+  const soreIds = sores
+    .map((sore) => sore.id)
+    .filter((id) => rows.some((row) => row[id] !== undefined));
+
+  return { rows, soreIds, painByDay };
+}
+
 const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
-  const chartData = transformData(sores);
+  const isDark = useIsDark();
+  const { rows, soreIds, painByDay } = useMemo(
+    () => buildChart(sores),
+    [sores]
+  );
+
+  const config = useMemo<ChartConfig>(
+    () =>
+      Object.fromEntries(
+        soreIds.map((id, index) => [id, { label: `Sore ${index + 1}` }])
+      ),
+    [soreIds]
+  );
 
   return (
-    <Card className="bg-background text-foreground">
+    <Card>
       <CardHeader>
-        <CardTitle>Sore History</CardTitle>
+        <CardTitle className="text-subhead">Size over time</CardTitle>
         <CardDescription>
-          Tooltip with custom formatter and total.
+          One bar per sore per day, in millimetres. Colour is that day&rsquo;s
+          pain level.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={{}}>
-          <BarChart data={chartData}>
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                return `${date.getMonth() + 1}-${date.getDate()}`;
-              }}
-              label={{ value: 'Date', position: 'insideBottom', offset: -5 }}
-            />
-            <YAxis
-              label={{
-                value: 'Sore Sizes',
-                angle: -90,
-                position: 'left',
-                offset: -15
-              }}
-            />
-            <Tooltip
-              content={
-                <ChartTooltipContent
-                  hideLabel
-                  className="w-[180px] bg-background text-foreground"
-                  formatter={(value, name, item, index) => (
-                    <>
-                      <div
-                        className="h-2.5 w-2.5 shrink-0 rounded-[2px] "
-                        style={
-                          {
-                            '--color-bg': `${getColor(sores[index]?.pain?.[sores[index]?.pain?.length - 1] ?? 0)}`,
-                            border: '1px solid foreground'
-                          } as React.CSSProperties
-                        }
-                      />
-                      {`Sore ${index + 1}`}
-                      <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
-                        Size:{value}
-                        <span className="font-normal text-muted-foreground">
-                          mm
-                        </span>
-                      </div>
-                    </>
-                  )}
-                />
-              }
-              cursor={false}
-            />
-            {chartData[0]?.sores.map((_: any, index: number) => (
-              <Bar
-                key={index}
-                dataKey={`sores[${index}].size`}
-                stackId="a"
-                fill={getColor(
-                  sores[index]?.pain?.[sores[index]?.pain?.length - 1] ?? 0
-                )}
-                stroke="white"
-                strokeWidth={1}
-                label={`Sore ${index + 1}`}
-                radius={5}
-                maxBarSize={45}
-              >
-                <LabelList
-                  dataKey={() => `Sore ${index + 1}`}
-                  position="center"
-                  offset={8}
-                  className="fill-[white]"
-                  fontSize={14}
-                />
-              </Bar>
-            ))}
-          </BarChart>
-        </ChartContainer>
+        {rows.length === 0 ? (
+          <p className="py-12 text-center text-muted-foreground">
+            No readings yet.
+          </p>
+        ) : (
+          <ChartContainer config={config} className="h-[280px] w-full">
+            <BarChart data={rows} margin={{ left: 4, right: 4, top: 8 }}>
+              <CartesianGrid
+                vertical={false}
+                stroke="hsl(var(--border))"
+                strokeDasharray="3 3"
+              />
+              <XAxis
+                dataKey="day"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={12}
+                // Formatted straight off the YYYY-MM-DD key. Re-parsing it
+                // would read as UTC midnight and then print in local time,
+                // shifting every label a day earlier west of Greenwich.
+                tickFormatter={(value: string) => {
+                  const [, month, day] = value.split('-');
+                  return `${Number(month)}/${Number(day)}`;
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                width={34}
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={12}
+                tickFormatter={(value: number) => `${value}`}
+                label={{
+                  value: 'mm',
+                  position: 'insideTopLeft',
+                  fill: 'hsl(var(--muted-foreground))',
+                  fontSize: 12
+                }}
+              />
+              {soreIds.map((id) => (
+                <Bar
+                  key={id}
+                  dataKey={id}
+                  radius={3}
+                  maxBarSize={28}
+                  // recharts' animation layer does not render under React 19;
+                  // without this the bar groups come out empty.
+                  isAnimationActive={false}
+                >
+                  {rows.map((row) => (
+                    <Cell
+                      key={`${id}-${row.day}`}
+                      fill={getSeverityColor(
+                        painByDay.get(id)?.get(row.day) ?? 1,
+                        isDark
+                      )}
+                    />
+                  ))}
+                </Bar>
+              ))}
+            </BarChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   );

@@ -9,6 +9,16 @@ const nextConfig = {
   // into the server build breaks their dynamic requires.
   serverExternalPackages: ['pg', 'nodemailer'],
 
+  // Turbopack (`next dev --turbo`) does not read the webpack config below, so
+  // the same `canvas` alias has to be declared for it separately.
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        canvas: './utils/empty-module.js'
+      }
+    }
+  },
+
   webpack: (config) => {
     // konva/lib/index-node.js pulls in the `canvas` native module for
     // server-side rendering. Every konva component here is client-only

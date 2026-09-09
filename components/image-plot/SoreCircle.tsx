@@ -4,7 +4,8 @@ import { Circle, Group } from 'react-konva';
 import { useSoreContext } from '@/context/SoreContext';
 import { calculateCoordination } from '@/utils/mouth-diagram/stageUtils';
 import calcView from '@/utils/calcView';
-import { getColor } from '@/utils/getColor';
+import { getSeverityColor } from '@/utils/getColor';
+import { useIsDark } from '@/utils/hooks/useIsDark';
 interface SoreCircleProps {
   sore: Sore;
   stageWidth: number;
@@ -20,9 +21,21 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
 }) => {
   const { sores, setSores, setSelectedSore, selectedSore, mode } =
     useSoreContext();
+  const isDark = useIsDark();
+  const isSelected = sore.id === selectedSore?.id;
 
   const latestSize = sore?.size ? sore.size[sore.size.length - 1] : 3;
   const latestPain = sore?.pain ? sore.pain[sore.pain.length - 1] : 3;
+
+  /*
+   * Sizes are recorded in millimetres, so they have to be scaled to the stage
+   * rather than used as raw pixels - at 1px per mm a 2mm sore is invisible.
+   * The mouth opening spans roughly 55% of the diagram and is about 50mm
+   * across, which gives the mm-per-pixel factor below. Radius is half the
+   * recorded width, and every sore keeps a floor so it stays tappable.
+   */
+  const pixelsPerMm = (stageWidth * 0.55) / 50;
+  const radius = Math.max(4, (latestSize / 2) * pixelsPerMm);
 
   const handleDragLabelCoordination = (e: any) => {
     if (mode === 'add' || mode === 'edit' || mode === 'update') {
@@ -57,12 +70,25 @@ const SoreCircle: React.FC<SoreCircleProps> = ({
       onTap={handleClickLabel}
     >
       <Circle
-        radius={latestSize}
-        fill={getColor(latestPain)}
-        shadowBlur={sore.id === selectedSore?.id ? 10 : 0}
-        shadowColor="white"
-        stroke={sore.id === selectedSore?.id ? 'white' : 'black'}
-        strokeWidth={sore.id === selectedSore?.id ? 2 : 1}
+        radius={radius}
+        fill={getSeverityColor(latestPain, isDark)}
+        stroke={
+          isSelected
+            ? isDark
+              ? '#ffffff'
+              : '#1c2733'
+            : isDark
+              ? 'rgba(255,255,255,0.45)'
+              : 'rgba(28,39,51,0.45)'
+        }
+        strokeWidth={isSelected ? 2 : 1}
+        {...(isSelected
+          ? {
+              shadowBlur: 12,
+              shadowColor: isDark ? '#ffffff' : '#000000',
+              shadowOpacity: 0.5
+            }
+          : {})}
       />
     </Group>
   );

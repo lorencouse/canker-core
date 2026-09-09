@@ -1,17 +1,9 @@
-interface SeparatorProps {
-  text: string;
-}
-
-export default function Separator({ text }: SeparatorProps) {
+export default function Separator({ text }: { text: string }) {
   return (
-    <div className="relative">
-      <div className="relative flex items-center py-1">
-        <div className="grow border-t border-zinc-700"></div>
-        <span className="mx-3 shrink text-sm leading-8 text-zinc-500">
-          {text}
-        </span>
-        <div className="grow border-t border-zinc-700"></div>
-      </div>
+    <div className="flex items-center gap-3 py-1">
+      <span className="h-px grow bg-border" />
+      <span className="text-xs text-muted-foreground">{text}</span>
+      <span className="h-px grow bg-border" />
     </div>
   );
 }

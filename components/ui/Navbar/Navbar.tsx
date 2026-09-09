@@ -1,18 +1,14 @@
 import { getUser } from '@/lib/queries';
-import s from './Navbar.module.css';
 import Navlinks from './Navlinks';
 
 export default async function Navbar() {
   const user = await getUser();
 
   return (
-    <nav className={s.root}>
-      <a href="#skip" className="sr-only focus:not-sr-only">
-        Skip to content
-      </a>
-      <div className="max-w-6xl px-6 mx-auto">
-        <Navlinks user={user} />
+    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
+      <div className="container">
+        <Navlinks signedIn={Boolean(user)} />
       </div>
-    </nav>
+    </header>
   );
 }

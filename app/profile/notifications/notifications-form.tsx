@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/Toasts/use-toast';
 
 const notificationsFormSchema = z.object({
   type: z.enum(['all', 'mentions', 'none'], {
@@ -51,8 +51,10 @@ export function NotificationsForm() {
     toast({
       title: 'You submitted the following values:',
       description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
+        <pre className="mt-2 w-[340px] overflow-x-auto rounded-md bg-muted p-4">
+          <code className="text-foreground">
+            {JSON.stringify(data, null, 2)}
+          </code>
         </pre>
       )
     });

@@ -2,130 +2,213 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Canker Core design tokens.
+ *
+ * Two rules govern colour here:
+ *   1. Red is data, never decoration. The --sev-* ramp encodes pain level and
+ *      is the only place a saturated red is allowed to appear.
+ *   2. Everything else is cool slate + a single teal action colour, chosen so
+ *      severity dots read at maximum contrast against the chrome around them.
+ */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Ground and ink */
+    --background: 210 20% 97%;
+    --foreground: 212 30% 16%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 212 30% 16%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: #ffce2a;
-    --primary-foreground: 0 0% 98%;
-    --secondary: #bd2413;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --popover-foreground: 212 30% 16%;
+
+    /* Teal: the one action colour */
+    --primary: 187 60% 26%;
+    --primary-foreground: 190 40% 97%;
+
+    /* Quiet structural fills */
+    --secondary: 210 18% 93%;
+    --secondary-foreground: 212 30% 20%;
+    --muted: 210 18% 94%;
+    --muted-foreground: 212 12% 45%;
+    --accent: 187 35% 92%;
+    --accent-foreground: 187 60% 20%;
+
+    /* Severity red doubles as destructive */
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 212 18% 88%;
+    --input: 212 18% 86%;
+    --ring: 187 60% 32%;
+
+    --radius: 0.625rem;
+
+    /*
+     * Pain 1-10. Lightness falls and saturation climbs, so a worse sore is
+     * always the darker, more insistent mark on a light ground.
+     */
+    --sev-1: 0 62% 88%;
+    --sev-2: 0 64% 82%;
+    --sev-3: 0 66% 77%;
+    --sev-4: 0 68% 71%;
+    --sev-5: 0 70% 66%;
+    --sev-6: 0 71% 60%;
+    --sev-7: 0 73% 55%;
+    --sev-8: 0 75% 49%;
+    --sev-9: 0 76% 44%;
+    --sev-10: 0 78% 38%;
+
+    /* Ink on a severity fill: dark for pale levels, white for deep ones. */
+    --sev-ink-lo: 212 30% 16%;
+    --sev-ink-hi: 0 0% 100%;
+
+    /* Chart series reference the ramp so history matches the map */
+    --chart-1: var(--sev-3);
+    --chart-2: var(--sev-5);
+    --chart-3: var(--sev-7);
+    --chart-4: var(--sev-9);
+    --chart-5: 187 60% 26%;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: #ffce2a;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: #bd2413;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: 212 28% 10%;
+    --foreground: 210 20% 94%;
+    --card: 212 25% 14%;
+    --card-foreground: 210 20% 94%;
+    --popover: 212 25% 14%;
+    --popover-foreground: 210 20% 94%;
+
+    --primary: 187 48% 56%;
+    --primary-foreground: 212 40% 10%;
+
+    --secondary: 212 20% 20%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 212 20% 18%;
+    --muted-foreground: 212 12% 62%;
+    --accent: 187 30% 22%;
+    --accent-foreground: 187 45% 82%;
+
+    --destructive: 0 68% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 212 18% 22%;
+    --input: 212 18% 26%;
+    --ring: 187 48% 52%;
+
+    /*
+     * Inverted direction: on a dark ground a low-pain sore should recede into
+     * the background, so it starts dull and desaturated and climbs to hot red.
+     */
+    --sev-1: 0 30% 34%;
+    --sev-2: 0 38% 37%;
+    --sev-3: 0 45% 40%;
+    --sev-4: 0 52% 43%;
+    --sev-5: 0 58% 46%;
+    --sev-6: 0 64% 49%;
+    --sev-7: 0 70% 52%;
+    --sev-8: 0 76% 55%;
+    --sev-9: 0 82% 58%;
+    --sev-10: 0 88% 62%;
+
+    /* Every dark-mode fill is deep enough to need white. */
+    --sev-ink-lo: 0 0% 100%;
+    --sev-ink-hi: 0 0% 100%;
   }
 }
-*,
-*:before,
-*:after {
-  box-sizing: inherit;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    height: 100%;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    position: relative;
+    min-height: 100%;
+    margin: 0;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /*
+   * Headings carry the display face. Sizes live on the components rather than
+   * on the bare elements, so a heading can be demoted without fighting a
+   * global @apply.
+   */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display font-semibold tracking-tight;
+    text-wrap: balance;
+  }
+
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Every figure in this product is a measurement; align them all. */
+  table,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
-*:focus:not(ol) {
-  @apply outline-none ring-2 ring-pink-500 ring-opacity-50;
+@layer components {
+  /*
+   * The mouth diagram ships as a saturated illustration, but red has to mean
+   * severity and nothing else here - a red sore on red tissue cannot be read.
+   * Draining the artwork to neutral turns it into an anatomical substrate and
+   * leaves the severity dots as the only colour on the map.
+   */
+  .mouth-substrate {
+    filter: grayscale(1) brightness(1.22) contrast(0.72);
+    opacity: 0.85;
+  }
+
+  /*
+   * Fully inverted in dark mode so the artwork's white surround drops to black
+   * and blends into the card, leaving the diagram reading as a negative.
+   */
+  .dark .mouth-substrate {
+    filter: grayscale(1) invert(1) brightness(0.82) contrast(0.9);
+    opacity: 0.85;
+  }
+
+  /* Body copy tops out well under 80 characters. */
+  .prose-measure {
+    max-width: 68ch;
+    @apply leading-relaxed;
+  }
+
+  .height-screen-helper {
+    min-height: calc(100vh - 4rem);
+  }
 }
 
-html {
-  height: 100%;
-  box-sizing: border-box;
-  touch-action: manipulation;
-  font-feature-settings:
-    'case' 1,
-    'rlig' 1,
-    'calt' 0;
-}
-
-html,
-body {
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Helvetica Neue',
-    'Helvetica', sans-serif;
-  text-rendering: optimizeLegibility;
-  -moz-osx-font-smoothing: grayscale;
-  @apply text-white bg-zinc-800 antialiased;
-}
-
-body {
-  position: relative;
-  min-height: 100%;
-  margin: 0;
-}
-
-a {
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-}
-
-p a {
-  @apply hover:underline;
-}
-
-h1 {
-  @apply text-5xl font-bold;
-}
-
-h2 {
-  @apply text-4xl font-bold;
-}
-
-h3 {
-  @apply text-3xl font-bold;
-}
-
-h4 {
-  @apply text-2xl font-bold;
-}
-
-.animated {
-  -webkit-animation-duration: 1s;
-  animation-duration: 1s;
-  -webkit-animation-duration: 1s;
-  animation-duration: 1s;
-  -webkit-animation-fill-mode: both;
-  animation-fill-mode: both;
-}
-
-.height-screen-helper {
-  min-height: calc(100vh - 80px);
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

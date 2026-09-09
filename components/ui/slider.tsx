@@ -5,10 +5,21 @@ import * as SliderPrimitive from '@radix-ui/react-slider';
 
 import { cn } from '@/utils/cn';
 
+type SliderProps = React.ComponentPropsWithoutRef<
+  typeof SliderPrimitive.Root
+> & {
+  /**
+   * 'severity' paints the filled track red, and is only correct for controls
+   * that actually measure pain. Anything else stays on the neutral action
+   * colour so red keeps meaning one thing across the product.
+   */
+  tone?: 'default' | 'severity';
+};
+
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(({ className, ...props }, ref) => (
+  SliderProps
+>(({ className, tone = 'default', ...props }, ref) => (
   <SliderPrimitive.Root
     ref={ref}
     className={cn(
@@ -17,10 +28,20 @@ const Slider = React.forwardRef<
     )}
     {...props}
   >
-    <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-      <SliderPrimitive.Range className="absolute h-full bg-red-500 dark:bg-zinc-50" />
+    <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-muted">
+      <SliderPrimitive.Range
+        className={cn(
+          'absolute h-full',
+          tone === 'severity' ? 'bg-destructive' : 'bg-primary'
+        )}
+      />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-zinc-900 bg-white ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:border-zinc-50 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:focus-visible:ring-zinc-300" />
+    <SliderPrimitive.Thumb
+      className={cn(
+        'block h-5 w-5 rounded-full border-2 bg-card ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+        tone === 'severity' ? 'border-destructive' : 'border-primary'
+      )}
+    />
   </SliderPrimitive.Root>
 ));
 Slider.displayName = SliderPrimitive.Root.displayName;

@@ -1,8 +1,8 @@
 import React from 'react';
+
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -10,44 +10,70 @@ import {
 } from '@/components/ui/table';
 import { Sore } from '@/types';
 
+const latest = (series: number[] | null) =>
+  series && series.length ? series[series.length - 1] : null;
+
 const SoresTable = ({ sores }: { sores: Sore[] }) => {
-  if (!sores) {
-    return <p>No sores found.</p>;
-  }
+  if (!sores.length) return null;
 
   return (
-    <Table>
-      <TableHeader className="bg-gray-100 font-bold ">
-        <TableRow>
-          <TableCell>Created</TableCell>
-          <TableCell>Healed</TableCell>
-          <TableCell>Pain Levels</TableCell>
-          <TableCell>Sizes</TableCell>
-          <TableCell>Location</TableCell>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sores.map((sore) => (
-          <TableRow key={sore.id}>
-            <TableCell>
-              {sore.dates
-                ? new Date(sore.dates[0]).toLocaleDateString()
-                : 'N/A'}
-            </TableCell>
-            <TableCell>
-              {sore.healed
-                ? new Date(sore.healed).toLocaleDateString()
-                : 'Active'}
-            </TableCell>
-            <TableCell>{sore.pain ? sore.pain.join(', ') : ''}</TableCell>
-            <TableCell>{sore.size ? sore.size.join(', ') : ''}</TableCell>
-            <TableCell>
-              {sore.zone} on {sore.gums ? 'gums' : 'mouth'}
-            </TableCell>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>First marked</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Size</TableHead>
+            <TableHead className="text-right">Pain</TableHead>
+            <TableHead>Location</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {sores.map((sore) => {
+            const size = latest(sore.size);
+            const pain = latest(sore.pain);
+
+            return (
+              <TableRow key={sore.id}>
+                <TableCell>
+                  {sore.dates?.length
+                    ? new Date(sore.dates[0]).toLocaleDateString()
+                    : '—'}
+                </TableCell>
+                <TableCell>
+                  {sore.healed ? (
+                    <span className="text-muted-foreground">
+                      Healed {new Date(sore.healed).toLocaleDateString()}
+                    </span>
+                  ) : (
+                    'Open'
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  {size === null ? '—' : `${size} mm`}
+                </TableCell>
+                <TableCell className="text-right">
+                  {pain === null ? (
+                    '—'
+                  ) : (
+                    <span className="inline-flex items-center gap-2">
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-foreground/20"
+                        style={{ backgroundColor: `hsl(var(--sev-${pain}))` }}
+                      />
+                      {pain}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {sore.zone} · {sore.gums ? 'gums' : 'mouth'}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 

@@ -1,19 +1,21 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { signUp } from '@/utils/auth-helpers/server';
 import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import AuthField from './AuthField';
+import AuthLinks from './AuthLinks';
+import { signUp } from '@/utils/auth-helpers/server';
 
 interface SignUpProps {
   allowEmail: boolean;
   redirectMethod: string;
 }
 
-export default function SignUp({ allowEmail, redirectMethod }: SignUpProps) {
+export default function SignUp({ allowEmail }: SignUpProps) {
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{
@@ -39,20 +41,15 @@ export default function SignUp({ allowEmail, redirectMethod }: SignUpProps) {
 
     const formData = new FormData(e.currentTarget);
     try {
-      const result = await signUp(formData);
+      await signUp(formData);
       setMessage({
         type: 'success',
-        content: 'Sign up successful'
+        content: 'Account created. Check your email to confirm it.'
       });
-      // if (redirectMethod === 'client' && result.redirectPath) {
-      //   setTimeout(() => {
-      //     router.push(result.redirectPath);
-      //   }, 3000);
-      // }
-    } catch (err) {
+    } catch {
       setMessage({
         type: 'error',
-        content: 'An unexpected error occurred. Please try again.'
+        content: "That didn't go through. Check the details and try again."
       });
     } finally {
       setIsSubmitting(false);
@@ -60,7 +57,7 @@ export default function SignUp({ allowEmail, redirectMethod }: SignUpProps) {
   };
 
   return (
-    <div className="m-8">
+    <div>
       {message && (
         <Alert
           variant={message.type === 'error' ? 'destructive' : 'default'}
@@ -69,56 +66,44 @@ export default function SignUp({ allowEmail, redirectMethod }: SignUpProps) {
           <AlertDescription>{message.content}</AlertDescription>
         </Alert>
       )}
-      <form noValidate={true} className="mb-4" onSubmit={handleSubmit}>
-        <div className="grid gap-2">
-          <div className="grid gap-1">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              placeholder="name@example.com"
-              type="email"
-              name="email"
-              autoCapitalize="none"
-              autoComplete="email"
-              autoCorrect="off"
-              className="w-full p-3 rounded-md bg-background border-2 border-muted-foreground"
-            />
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              placeholder="Password"
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              className="w-full p-3 rounded-md bg-background border-2 border-muted-foreground"
-            />
-          </div>
-          <Button
-            variant="outline"
-            type="submit"
-            className="mt-1"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            Sign up
-          </Button>
-        </div>
+      <form noValidate onSubmit={handleSubmit} className="grid gap-4">
+        <AuthField
+          id="email"
+          name="email"
+          label="Email"
+          type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+        />
+        <AuthField
+          id="password"
+          name="password"
+          label="Password"
+          type="password"
+          autoComplete="new-password"
+          hint="At least 8 characters."
+        />
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="animate-spin" />}
+          {isSubmitting ? 'Creating account' : 'Create account'}
+        </Button>
       </form>
-      <p>Already have an account?</p>
-      <p>
-        <Link href="/sign-in/password_signin" className="font-light text-sm">
-          Sign in with email and password
-        </Link>
-      </p>
-      {allowEmail && (
-        <p>
-          <Link href="/sign-in/email_signin" className="font-light text-sm">
-            Sign in via magic link
-          </Link>
-        </p>
-      )}
+      <AuthLinks
+        links={[
+          {
+            href: '/signin/password_signin',
+            label: 'Already have an account? Sign in'
+          },
+          ...(allowEmail
+            ? [
+                {
+                  href: '/signin/email_signin',
+                  label: 'Email me a sign-in link'
+                }
+              ]
+            : [])
+        ]}
+      />
     </div>
   );
 }

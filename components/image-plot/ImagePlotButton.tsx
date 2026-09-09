@@ -1,19 +1,21 @@
+import { Button } from '@/components/ui/button';
+
+/**
+ * A control that floats over the mouth map. It uses the translucent 'overlay'
+ * variant so the diagram stays readable underneath.
+ */
 const ImagePlotButton = ({
   onClick,
   label,
+  variant = 'overlay'
 }: {
   onClick: () => void;
   label: string;
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      type="button"
-      className="m-2 rounded-xl bg-black/70 px-4 py-2 text-white"
-    >
-      {label}
-    </button>
-  );
-};
+  variant?: 'overlay' | 'default' | 'destructive';
+}) => (
+  <Button type="button" onClick={onClick} variant={variant} size="xs">
+    {label}
+  </Button>
+);
 
 export default ImagePlotButton;

@@ -1,14 +1,15 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { requestPasswordUpdate } from '@/utils/auth-helpers/server';
-import { handleRequest } from '@/utils/auth-helpers/client';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
-// Define prop type with allowEmail boolean
+import { Button } from '@/components/ui/button';
+import AuthField from './AuthField';
+import AuthLinks from './AuthLinks';
+import { requestPasswordUpdate } from '@/utils/auth-helpers/server';
+import { handleRequest } from '@/utils/auth-helpers/client';
+
 interface ForgotPasswordProps {
   allowEmail: boolean;
   redirectMethod: string;
@@ -20,66 +21,46 @@ export default function ForgotPassword({
   redirectMethod,
   disableButton
 }: ForgotPasswordProps) {
-  const router = redirectMethod === 'client' ? useRouter() : null;
+  const clientRouter = useRouter();
+  const router = redirectMethod === 'client' ? clientRouter : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    setIsSubmitting(true); // Disable the button while the request is being handled
+    setIsSubmitting(true);
     await handleRequest(e, requestPasswordUpdate, router);
     setIsSubmitting(false);
   };
 
   return (
-    <div className="m-8">
-      <form
-        noValidate={true}
-        className="mb-4"
-        onSubmit={(e) => handleSubmit(e)}
-      >
-        <div className="grid gap-2">
-          <div className="grid gap-1">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              placeholder="name@example.com"
-              type="email"
-              name="email"
-              autoCapitalize="none"
-              autoComplete="email"
-              autoCorrect="off"
-              className="w-full p-3 rounded-md bg-background border-2 border-muted-foreground"
-            />
-          </div>
-          <Button
-            variant="outline"
-            type="submit"
-            className="mt-1"
-            disabled={disableButton}
-          >
-            {isSubmitting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            Send Email
-          </Button>
-        </div>
+    <div>
+      <form noValidate onSubmit={handleSubmit} className="grid gap-4">
+        <AuthField
+          id="email"
+          name="email"
+          label="Email"
+          type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+          hint="We'll send a link to choose a new password."
+        />
+        <Button type="submit" disabled={disableButton || isSubmitting}>
+          {isSubmitting && <Loader2 className="animate-spin" />}
+          {isSubmitting ? 'Sending' : 'Send reset link'}
+        </Button>
       </form>
-      <p>
-        <Link href="/signin/password_signin" className="font-light text-sm">
-          Sign in with email and password
-        </Link>
-      </p>
-      {allowEmail && (
-        <p>
-          <Link href="/signin/email_signin" className="font-light text-sm">
-            Sign in via magic link
-          </Link>
-        </p>
-      )}
-      <p>
-        <Link href="/signin/signup" className="font-light text-sm">
-          Don't have an account? Sign up
-        </Link>
-      </p>
+      <AuthLinks
+        links={[
+          { href: '/signin/password_signin', label: 'Back to sign in' },
+          ...(allowEmail
+            ? [
+                {
+                  href: '/signin/email_signin',
+                  label: 'Email me a sign-in link instead'
+                }
+              ]
+            : [])
+        ]}
+      />
     </div>
   );
 }

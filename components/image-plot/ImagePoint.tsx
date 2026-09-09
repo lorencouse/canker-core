@@ -124,37 +124,43 @@ const ImagePoint: React.FC<ImagePointProps> = ({ user }) => {
       className="border-1 border-grey relative h-full w-full rounded-2xl"
       style={{ height: '0', paddingBottom: '100%', position: 'relative' }}
     >
-      <Stage
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-        width={stageWidth}
-        height={stageHeight}
-        draggable
-        onWheel={(e) => {
-          handleZoomStage(stageRef)(e);
-        }}
-        onTouchMove={handlePinchZoom(stageRef)}
-        ref={stageRef}
-      >
-        <Layer>
-          <Group>
-            <Images
-              img={image}
-              handleClickImage={handleClickImage}
-              stageWidth={stageWidth}
-              stageHeight={stageHeight}
-            />
-            {sores.map((sore) => (
-              <SoreCircle
-                key={sore.id}
-                sore={sore}
+      {/*
+        Konva draws through a buffer canvas sized from the stage, so mounting
+        at 0x0 before the container is measured throws on the first paint.
+      */}
+      {stageWidth > 0 && stageHeight > 0 && (
+        <Stage
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          width={stageWidth}
+          height={stageHeight}
+          draggable
+          onWheel={(e) => {
+            handleZoomStage(stageRef)(e);
+          }}
+          onTouchMove={handlePinchZoom(stageRef)}
+          ref={stageRef}
+        >
+          <Layer>
+            <Group>
+              <Images
+                img={image}
+                handleClickImage={handleClickImage}
                 stageWidth={stageWidth}
                 stageHeight={stageHeight}
-                setGumsMode={setGumsMode}
               />
-            ))}
-          </Group>
-        </Layer>
-      </Stage>
+              {sores.map((sore) => (
+                <SoreCircle
+                  key={sore.id}
+                  sore={sore}
+                  stageWidth={stageWidth}
+                  stageHeight={stageHeight}
+                  setGumsMode={setGumsMode}
+                />
+              ))}
+            </Group>
+          </Layer>
+        </Stage>
+      )}
       <div className="absolute right-0 top-0 flex flex-col">
         <ImagePlotButton onClick={() => handleZoom(stageRef, 1.25)} label="+" />
         <ImagePlotButton onClick={() => handleZoom(stageRef, 0.75)} label="-" />

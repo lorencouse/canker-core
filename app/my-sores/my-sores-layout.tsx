@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import ImagePoint from '@/components/image-plot/ImagePoint';
-import { SoreProvider } from '@/context/SoreContext';
+import { SoreProvider, useSoreContext } from '@/context/SoreContext';
 import { SoreDetails } from '@/components/SoreDetails';
+import SeverityKey from '@/components/SeverityKey';
 import { User, Sore } from '@/types';
 
 export const MySoresLayout = ({
@@ -13,22 +12,28 @@ export const MySoresLayout = ({
 }: {
   user: User;
   soresData: Sore[];
-}) => {
-  return (
-    <SoreProvider initialSores={soresData}>
-      <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto gap-x-20 md:px-10 px-0">
-          <div className="flex max-w-lg justify-between">
-            <ImagePoint user={user} />
-          </div>
-          <div>
-            <SoreDetails />
-            {/* <BarChartComponent sores={soresData} /> */}
+}) => (
+  <SoreProvider initialSores={soresData}>
+    <div className="container py-8">
+      <header className="mb-6">
+        <h1 className="text-title">Your mouth map</h1>
+        <p className="prose-measure mt-2 text-muted-foreground">
+          Tap a sore to see its readings. Use Add to mark a new one, or Edit to
+          log today&rsquo;s size and pain.
+        </p>
+      </header>
+
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
+        <div>
+          <ImagePoint user={user} />
+          <div className="mt-4">
+            <SeverityKey />
           </div>
         </div>
+        <SoreDetails />
       </div>
-    </SoreProvider>
-  );
-};
+    </div>
+  </SoreProvider>
+);
 
 export default MySoresLayout;

@@ -158,7 +158,7 @@ export function ContactInfoForm({ userProfile }: { userProfile: User | null }) {
         <Button type="submit" disabled={loading}>
           {buttonText}
         </Button>
-        {error && <span className="text-red-500">{error}</span>}
+        {error && <span className="text-sm text-destructive">{error}</span>}
       </form>
     </Form>
   );

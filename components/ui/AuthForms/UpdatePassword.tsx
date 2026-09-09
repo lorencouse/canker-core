@@ -1,11 +1,13 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { updatePassword } from '@/utils/auth-helpers/server';
-import { handleRequest } from '@/utils/auth-helpers/client';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import AuthField from './AuthField';
+import { updatePassword } from '@/utils/auth-helpers/server';
+import { handleRequest } from '@/utils/auth-helpers/client';
 
 interface UpdatePasswordProps {
   redirectMethod: string;
@@ -17,57 +19,37 @@ export default function UpdatePassword({
   redirectMethod,
   token
 }: UpdatePasswordProps) {
-  const router = redirectMethod === 'client' ? useRouter() : null;
+  const clientRouter = useRouter();
+  const router = redirectMethod === 'client' ? clientRouter : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    setIsSubmitting(true); // Disable the button while the request is being handled
+    setIsSubmitting(true);
     await handleRequest(e, updatePassword, router);
     setIsSubmitting(false);
   };
 
   return (
-    <div className="m-8">
-      <form
-        noValidate={true}
-        className="mb-4"
-        onSubmit={(e) => handleSubmit(e)}
-      >
-        <input type="hidden" name="token" value={token ?? ''} />
-        <div className="grid gap-2">
-          <div className="grid gap-1">
-            <label htmlFor="password">New Password</label>
-            <input
-              id="password"
-              placeholder="Password"
-              type="password"
-              name="password"
-              autoComplete="new-password"
-              className="w-full p-3 rounded-md bg-zinc-800"
-            />
-            <label htmlFor="passwordConfirm">Confirm New Password</label>
-            <input
-              id="passwordConfirm"
-              placeholder="Password"
-              type="password"
-              name="passwordConfirm"
-              autoComplete="new-password"
-              className="w-full p-3 rounded-md bg-zinc-800"
-            />
-          </div>
-          <Button
-            variant="outline"
-            type="submit"
-            className="mt-1"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            Update Password
-          </Button>
-        </div>
-      </form>
-    </div>
+    <form noValidate onSubmit={handleSubmit} className="grid gap-4">
+      <input type="hidden" name="token" value={token ?? ''} />
+      <AuthField
+        id="password"
+        name="password"
+        label="New password"
+        type="password"
+        autoComplete="new-password"
+      />
+      <AuthField
+        id="passwordConfirm"
+        name="passwordConfirm"
+        label="Confirm new password"
+        type="password"
+        autoComplete="new-password"
+      />
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting && <Loader2 className="animate-spin" />}
+        {isSubmitting ? 'Saving' : 'Save new password'}
+      </Button>
+    </form>
   );
 }
