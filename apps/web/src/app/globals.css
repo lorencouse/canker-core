@@ -1,0 +1,155 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #f6f7fa;
+  --card: #ffffff;
+  --muted: #ebeef4;
+  --foreground: #1a1e2a;
+  --muted-foreground: #7b829a;
+  --secondary-foreground: #4a5164;
+  --border: #d6dae5;
+  --accent: #b3264f;
+  --accent-foreground: #ffffff;
+  --accent-soft: #f7e1e8;
+  --heal: #2e7d8c;
+  --heal-foreground: #ffffff;
+  --heal-soft: #ddeef1;
+  --warn: #c77a12;
+  --pain-1: #f9d9df;
+  --pain-2: #f0a3b3;
+  --pain-3: #db5e7c;
+  --pain-4: #b3264f;
+  --pain-5: #6e1230;
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: #12151d;
+  --card: #1a1e29;
+  --muted: #232837;
+  --foreground: #eef0f6;
+  --muted-foreground: #7e859a;
+  --secondary-foreground: #b5bbcb;
+  --border: #313749;
+  --accent: #e4547c;
+  --accent-foreground: #12151d;
+  --accent-soft: #3a1a27;
+  --heal: #5fb3c2;
+  --heal-foreground: #12151d;
+  --heal-soft: #16333a;
+  --warn: #e0a040;
+  --pain-1: #3a1f27;
+  --pain-2: #6e2a3d;
+  --pain-3: #a83a5a;
+  --pain-4: #e4547c;
+  --pain-5: #f6a3ba;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-heal: var(--heal);
+  --color-heal-foreground: var(--heal-foreground);
+  --color-heal-soft: var(--heal-soft);
+  --color-warn: var(--warn);
+  --color-pain-1: var(--pain-1);
+  --color-pain-2: var(--pain-2);
+  --color-pain-3: var(--pain-3);
+  --color-pain-4: var(--pain-4);
+  --color-pain-5: var(--pain-5);
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background-color: var(--color-accent-soft);
+    color: var(--color-foreground);
+  }
+
+  summary {
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Long-form reading measure used by guides and legal pages. */
+@utility measure {
+  max-width: 65ch;
+}

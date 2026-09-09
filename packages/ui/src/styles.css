@@ -1,0 +1,174 @@
+/*
+ * @canker/ui design tokens — Tailwind v4 + shadcn "new-york" v4 conventions.
+ * Apps import this file once (`@import "@canker/ui/styles.css"`) and add
+ * `@source "../../packages/ui/src"` so utilities used in this package are generated.
+ * Fonts (IBM Plex Sans, Bricolage Grotesque, IBM Plex Mono) are loaded by the apps.
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+
+  --background: #f6f7fa;
+  --foreground: #1a1e2a;
+  --card: #ffffff;
+  --card-foreground: #1a1e2a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1e2a;
+  --muted: #ebeef4;
+  --muted-foreground: #7b829a;
+  --secondary: #ebeef4;
+  --secondary-foreground: #4a5164;
+
+  --accent: #b3264f;
+  --accent-foreground: #ffffff;
+  --accent-soft: #f7e1e8;
+  --primary: #b3264f;
+  --primary-foreground: #ffffff;
+
+  --heal: #2e7d8c;
+  --heal-foreground: #ffffff;
+  --heal-soft: #ddeef1;
+  --warn: #c77a12;
+  --warn-foreground: #ffffff;
+  --warn-soft: #fbeeda;
+  --destructive: #b3261e;
+  --destructive-foreground: #ffffff;
+
+  --border: #d6dae5;
+  --input: #d6dae5;
+  --ring: #b3264f;
+
+  --pain-1: #f9d9df;
+  --pain-2: #f0a3b3;
+  --pain-3: #db5e7c;
+  --pain-4: #b3264f;
+  --pain-5: #6e1230;
+  --pain-1-foreground: #1a1e2a;
+  --pain-2-foreground: #1a1e2a;
+  --pain-3-foreground: #ffffff;
+  --pain-4-foreground: #ffffff;
+  --pain-5-foreground: #ffffff;
+}
+
+.dark {
+  --background: #12151d;
+  --foreground: #eef0f6;
+  --card: #1a1e29;
+  --card-foreground: #eef0f6;
+  --popover: #1a1e29;
+  --popover-foreground: #eef0f6;
+  --muted: #232837;
+  --muted-foreground: #7e859a;
+  --secondary: #232837;
+  --secondary-foreground: #b5bbcb;
+
+  --accent: #e4547c;
+  --accent-foreground: #12151d;
+  --accent-soft: #3a1a27;
+  --primary: #e4547c;
+  --primary-foreground: #12151d;
+
+  --heal: #5fb3c2;
+  --heal-foreground: #12151d;
+  --heal-soft: #16333a;
+  --warn: #e0a040;
+  --warn-foreground: #12151d;
+  --warn-soft: #3a2c14;
+  --destructive: #f2745f;
+  --destructive-foreground: #12151d;
+
+  --border: #313749;
+  --input: #313749;
+  --ring: #e4547c;
+
+  --pain-1: #3a1f27;
+  --pain-2: #6e2a3d;
+  --pain-3: #a83a5a;
+  --pain-4: #e4547c;
+  --pain-5: #f6a3ba;
+  --pain-1-foreground: #eef0f6;
+  --pain-2-foreground: #eef0f6;
+  --pain-3-foreground: #ffffff;
+  --pain-4-foreground: #12151d;
+  --pain-5-foreground: #12151d;
+}
+
+@theme inline {
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', var(--font-sans);
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-heal: var(--heal);
+  --color-heal-foreground: var(--heal-foreground);
+  --color-heal-soft: var(--heal-soft);
+  --color-warn: var(--warn);
+  --color-warn-foreground: var(--warn-foreground);
+  --color-warn-soft: var(--warn-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-pain-1: var(--pain-1);
+  --color-pain-2: var(--pain-2);
+  --color-pain-3: var(--pain-3);
+  --color-pain-4: var(--pain-4);
+  --color-pain-5: var(--pain-5);
+  --color-pain-1-foreground: var(--pain-1-foreground);
+  --color-pain-2-foreground: var(--pain-2-foreground);
+  --color-pain-3-foreground: var(--pain-3-foreground);
+  --color-pain-4-foreground: var(--pain-4-foreground);
+  --color-pain-5-foreground: var(--pain-5-foreground);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    text-wrap: balance;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

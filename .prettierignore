@@ -1,13 +1,12 @@
-# Build artifacts
-.next/
-.turbo/
-_next/
-__tmp__/
-dist/
-node_modules/
-target/
-compiled/
-
+node_modules
+dist
+.next
+.turbo
+out
+coverage
 pnpm-lock.yaml
-
-types_db.ts
+legacy
+supabase/migrations
+packages/db/src/database.types.ts
+apps/mobile/ios
+apps/mobile/android

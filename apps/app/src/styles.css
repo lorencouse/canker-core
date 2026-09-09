@@ -1,0 +1,31 @@
+@import '@canker/ui/styles.css';
+
+/* Tailwind only scans this app by default; include the shared UI package. */
+@source '../../../packages/ui/src';
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Native-feeling pressed state for large touch targets. */
+@media (hover: none) {
+  .press:active {
+    transform: scale(0.985);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
