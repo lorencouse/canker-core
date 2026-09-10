@@ -3,13 +3,7 @@
 import { useMemo } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+import Instrument from '@/components/insights/Instrument';
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart';
 import { Sore } from '@/types';
 import { getSeverityColor } from '@/utils/getColor';
@@ -80,16 +74,11 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
   );
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-subhead">Size over time</CardTitle>
-        <CardDescription>
-          One bar per sore per day, in millimetres. Colour is that day&rsquo;s
-          pain level.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {rows.length === 0 ? (
+    <Instrument
+      title="Size over time"
+      caption="One bar per sore per day, in millimetres. Colour is that day’s pain level."
+    >
+      {rows.length === 0 ? (
           <p className="py-12 text-center text-muted-foreground">
             No readings yet.
           </p>
@@ -158,9 +147,8 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
               ))}
             </BarChart>
           </ChartContainer>
-        )}
-      </CardContent>
-    </Card>
+      )}
+    </Instrument>
   );
 };
 

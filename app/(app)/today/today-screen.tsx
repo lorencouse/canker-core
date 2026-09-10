@@ -8,7 +8,6 @@ import { Check, Loader2 } from 'lucide-react';
 import DayLogForm from '@/components/today/DayLogForm';
 import SoreCheckInCard from '@/components/today/SoreCheckInCard';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import type { DayLog, Sore } from '@/types';
 import { answerLine } from '@/utils/course';
@@ -146,19 +145,17 @@ export default function TodayScreen({
             )}
           </div>
           {open.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <p className="font-medium">Nothing open right now.</p>
-                <p className="prose-measure mx-auto mt-1 text-sm text-muted-foreground">
-                  A good day. If a new one appears, mark it on the map. Logging
-                  what you ate or how you slept is still worth doing — it is how
-                  patterns show up on the days between sores.
-                </p>
-                <Button asChild variant="outline" className="mt-4">
-                  <Link href="/my-sores">Open the mouth map</Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="surface-worksheet px-4 py-8 text-center">
+              <p className="font-medium">Nothing open right now.</p>
+              <p className="prose-measure mx-auto mt-1 text-sm text-muted-foreground">
+                A good day. If a new one appears, mark it on the map. Logging
+                what you ate or how you slept is still worth doing — it is how
+                patterns show up on the days between sores.
+              </p>
+              <Button asChild variant="outline" className="mt-4">
+                <Link href="/my-sores">Open the mouth map</Link>
+              </Button>
+            </div>
           ) : (
             open.map((sore) => (
               <SoreCheckInCard

@@ -41,7 +41,17 @@ export default function SoreCheckInCard({
   const day = dayNumberOf(sore);
 
   return (
-    <div className="app-card space-y-4 p-4">
+    /*
+     * The only structural use of the severity ramp in the app: a stack of
+     * check-in cards is scanned before it is read, and the left edge sorts
+     * them by how bad each one is before your eye reaches a number. It says
+     * the same thing as the pain dot beside the slider, which is the point —
+     * a redundant encoding is what makes a scan possible.
+     */
+    <div
+      className="surface-worksheet space-y-4 border-l-[3px] p-4"
+      style={{ borderLeftColor: `hsl(var(--sev-${pain}))` }}
+    >
       <div className="flex items-start gap-3">
         {/* The sigil says which view and where; naming the view in text as
             well would be the same fact twice. */}

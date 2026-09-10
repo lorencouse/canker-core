@@ -31,7 +31,7 @@ export default function DayLogForm({
   };
 
   return (
-    <div className="app-card space-y-5 p-4">
+    <div className="surface-worksheet space-y-5 p-4">
       <ChipGroup
         label="Anything that might have set one off?"
         options={TRIGGERS}

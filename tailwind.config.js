@@ -77,7 +77,15 @@ module.exports = {
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)'
+        sm: 'calc(var(--radius) - 4px)',
+        /*
+         * Radius carries information here rather than being one house value.
+         * A worksheet is the softest thing on screen because you handle it; a
+         * data cell is the hardest because it is a measurement and should not
+         * look tappable. Chips and toggles stay fully round.
+         */
+        worksheet: '0.875rem',
+        cell: '2px'
       },
       keyframes: {
         'accordion-down': {

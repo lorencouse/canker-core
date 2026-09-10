@@ -10,7 +10,6 @@ import {
   SoreReadings
 } from '@/components/SoreDetails';
 import SeverityKey from '@/components/SeverityKey';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Sheet,
   SheetBody,
@@ -79,12 +78,14 @@ function MySoresScreen({ user }: { user: User }) {
           <div className="space-y-4">
             {mode !== 'view' && selectedSore && <SoreSliders />}
             {selectedSore ? (
-              <Card>
+              /* A readout, so it recedes: the map beside it is the subject
+                 of this screen and should stay the raised thing. */
+              <div className="surface-instrument">
                 <SoreNavigator className="border-b border-border px-2 py-1.5" />
-                <CardContent className="pt-5">
+                <div className="p-4 sm:p-5">
                   <SoreReadings />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ) : (
               <SoreEmptyState />
             )}

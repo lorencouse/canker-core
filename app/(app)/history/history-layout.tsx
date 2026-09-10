@@ -3,10 +3,10 @@ import Link from 'next/link';
 
 import BarChartComponent from '@/components/charts/BarChartComponent';
 import SoresTable from '@/components/charts/SoresTable';
+import Instrument from '@/components/insights/Instrument';
 import StatTiles from '@/components/insights/StatTiles';
 import TriggerTally from '@/components/insights/TriggerTally';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DayLog, Sore, User } from '@/types';
 
 /**
@@ -41,18 +41,16 @@ const SoreHistoryLayout = ({
       </header>
 
       {sores.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center px-4 py-14 text-center">
-            <h2 className="text-subhead">Your history starts with one mark</h2>
-            <p className="prose-measure mt-2 text-muted-foreground">
-              Once you log a sore on the mouth map, its size and pain over time
-              show up here.
-            </p>
-            <Button asChild size="touch" className="mt-6 w-full sm:w-auto">
-              <Link href="/my-sores">Open the mouth map</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="surface-worksheet flex flex-col items-center px-4 py-14 text-center">
+          <h2 className="text-subhead">Your history starts with one mark</h2>
+          <p className="prose-measure mt-2 text-muted-foreground">
+            Once you log a sore on the mouth map, its size and pain over time
+            show up here.
+          </p>
+          <Button asChild size="touch" className="mt-6 w-full sm:w-auto">
+            <Link href="/my-sores">Open the mouth map</Link>
+          </Button>
+        </div>
       ) : (
         <div className="space-y-4 xl:space-y-8">
           <StatTiles sores={sores} />
@@ -60,14 +58,9 @@ const SoreHistoryLayout = ({
             <BarChartComponent sores={sores} />
             <TriggerTally sores={sores} logs={dayLogs} />
           </div>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-subhead">Every sore</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SoresTable sores={sores} />
-            </CardContent>
-          </Card>
+          <Instrument title="Every sore">
+            <SoresTable sores={sores} />
+          </Instrument>
         </div>
       )}
     </div>

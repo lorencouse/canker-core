@@ -70,7 +70,7 @@ export default function CourseStrip({
           }
           className={cn(
             cell,
-            'rounded-[2px]',
+            'rounded-cell',
             day.pain === null && 'border border-dashed border-border',
             // The healed day closes the course, so it reads as neutral ink
             // rather than as one more day of pain.

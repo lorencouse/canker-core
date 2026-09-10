@@ -90,15 +90,17 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
   return (
     <>
       {/* Phone: one card per sore. */}
-      <ul className="space-y-2 sm:hidden">
+      {/* Rows, not a stack of little cards: they sit on an instrument, and
+          bordering each one would be a card inside a card. */}
+      <ul className="-my-3 divide-y divide-border sm:hidden">
         {sores.map((sore) => {
           const last = latestReading(sore);
           const expanded = openId === sore.id;
           return (
-            <li key={sore.id} className="rounded-lg border border-border">
+            <li key={sore.id}>
               <button
                 type="button"
-                className="w-full p-3 text-left"
+                className="w-full py-3 text-left"
                 aria-expanded={expanded}
                 onClick={() => toggle(sore.id)}
               >
@@ -125,7 +127,7 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                 <CourseStrip sore={sore} className="mt-2.5" />
               </button>
               {expanded && (
-                <div className="border-t border-border p-3">
+                <div className="pb-3">
                   <SoreDetail sore={sore} />
                 </div>
               )}

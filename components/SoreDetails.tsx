@@ -6,7 +6,6 @@ import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 
 import { useSoreContext } from '@/context/SoreContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import CourseStrip from '@/components/sore/CourseStrip';
 import SoreSigil from '@/components/sore/SoreSigil';
 import type { Sore } from '@/types';
@@ -193,15 +192,13 @@ export function SoreReadings() {
 /** Shown in the desktop column when nothing is selected. */
 export function SoreEmptyState() {
   return (
-    <Card>
-      <CardContent className="py-12 text-center">
-        <p className="font-medium">No sore selected</p>
-        <p className="prose-measure mx-auto mt-1 text-sm text-muted-foreground">
-          Tap a sore on the map to see its readings, or use Add to mark a new
-          one.
-        </p>
-      </CardContent>
-    </Card>
+    <div className="surface-worksheet px-4 py-12 text-center">
+      <p className="font-medium">No sore selected</p>
+      <p className="prose-measure mx-auto mt-1 text-sm text-muted-foreground">
+        Tap a sore on the map to see its readings, or use Add to mark a new
+        one.
+      </p>
+    </div>
   );
 }
 
