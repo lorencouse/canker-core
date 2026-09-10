@@ -49,6 +49,14 @@ export default function TodayScreen({
   );
   const [logDirty, setLogDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  /*
+   * The app's one deliberate flourish. Save used to produce a toast and
+   * nothing else, which said "we heard you" but not what changed; this pops
+   * today's cell into each course instead, so the press shows its own
+   * consequence. It lasts as long as the animation and then stops existing,
+   * because a class left on would replay on every re-render.
+   */
+  const [justSaved, setJustSaved] = useState(false);
 
   const open = useMemo(() => sores.filter((s) => !s.healed_at), [sores]);
   const unlogged = open.filter((s) => !hasReadingOn(s, new Date())).length;
@@ -92,6 +100,8 @@ export default function TodayScreen({
       setChanged(new Set());
       setLogDirty(false);
       notify('success');
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 400);
       toast({ title: 'Saved today’s check-in.' });
       router.refresh();
     } finally {
@@ -171,6 +181,7 @@ export default function TodayScreen({
                 sore={sore}
                 onChange={updateSore}
                 onHeal={() => heal(sore)}
+                justSaved={justSaved}
               />
             ))}
           </section>

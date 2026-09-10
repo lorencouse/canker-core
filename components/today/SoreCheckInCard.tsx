@@ -29,11 +29,14 @@ import {
 export default function SoreCheckInCard({
   sore,
   onChange,
-  onHeal
+  onHeal,
+  justSaved = false
 }: {
   sore: Sore;
   onChange: (next: Sore) => void;
   onHeal: () => void;
+  /** True for a moment after a successful save. */
+  justSaved?: boolean;
 }) {
   const logged = hasReadingOn(sore, new Date());
   const size = currentSize(sore);
@@ -81,7 +84,7 @@ export default function SoreCheckInCard({
 
       {/* Sits right under "Day 6", where the row of six cells explains
           itself without a label. */}
-      <CourseStrip sore={sore} />
+      <CourseStrip sore={sore} animateLast={justSaved} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">

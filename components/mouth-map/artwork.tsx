@@ -247,8 +247,8 @@ export function ViewArtwork({ view, p }: P & { view: MouthView }) {
     case 'lips':
       return (
         <>
-          <LipInner p={p} {...LIPS.upper} upper name="Upper lip · inside" />
-          <LipInner p={p} {...LIPS.lower} upper={false} name="Lower lip · inside" />
+          <LipInner p={p} {...LIPS.upper} upper name="Inside the upper lip" />
+          <LipInner p={p} {...LIPS.lower} upper={false} name="Inside the lower lip" />
         </>
       );
   }

@@ -24,7 +24,14 @@ module.exports = {
         display: ['clamp(2.5rem, 6vw, 3.75rem)', { lineHeight: '1.04', letterSpacing: '-0.03em' }],
         title: ['clamp(1.75rem, 3.5vw, 2.5rem)', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
         section: ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.015em' }],
-        subhead: ['1.125rem', { lineHeight: '1.35', letterSpacing: '-0.01em' }]
+        subhead: ['1.125rem', { lineHeight: '1.35', letterSpacing: '-0.01em' }],
+        /*
+         * A headline figure. Almost every large glyph in this product is a
+         * number, and the scale had nothing between a 1.125rem subhead and
+         * a 1.5rem section heading — so the figures that are the point of
+         * the Insights screen were competing with their own labels.
+         */
+        figure: ['1.75rem', { lineHeight: '1.05', letterSpacing: '-0.02em' }]
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -88,6 +95,17 @@ module.exports = {
         cell: '2px'
       },
       keyframes: {
+        /*
+         * A reading arriving in a course. The app's only non-hover motion:
+         * it answers a press of Save by showing the day that press recorded,
+         * rather than announcing it in a toast alone. The reduced-motion
+         * block in main.css turns it off.
+         */
+        commit: {
+          '0%': { transform: 'scale(0.3)', opacity: '0' },
+          '60%': { transform: 'scale(1.15)', opacity: '1' },
+          '100%': { transform: 'scale(1)', opacity: '1' }
+        },
         'accordion-down': {
           from: { height: '0' },
           to: { height: 'var(--radix-accordion-content-height)' }
@@ -98,6 +116,7 @@ module.exports = {
         }
       },
       animation: {
+        commit: 'commit 360ms cubic-bezier(0.34, 1.3, 0.64, 1)',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out'
       }
