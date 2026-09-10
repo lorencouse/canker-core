@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Canker Core</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f5f7f9;
+        --fg: #1e2a33;
+        --muted: #64748b;
+        --line: #dbe1e8;
+        --card: #ffffff;
+        --accent: #1a6a72;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #131a21;
+          --fg: #e6ecf2;
+          --muted: #93a1b0;
+          --line: #2a343d;
+          --card: #1b242c;
+          --accent: #58b6c0;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: calc(env(safe-area-inset-top) + 2rem) 1.5rem
+          calc(env(safe-area-inset-bottom) + 2rem);
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          400 16px/1.5 system-ui,
+          -apple-system,
+          sans-serif;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      main {
+        max-width: 22rem;
+        text-align: center;
+      }
+      .mark {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 1.5rem;
+        display: grid;
+        place-items: center;
+        border-radius: 16px;
+        background: var(--card);
+        border: 1px solid var(--line);
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 1.375rem;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+      button {
+        margin-top: 1.75rem;
+        min-height: 48px;
+        width: 100%;
+        border: 0;
+        border-radius: 12px;
+        background: var(--accent);
+        color: var(--bg);
+        font:
+          600 16px system-ui,
+          sans-serif;
+        cursor: pointer;
+      }
+      button:active {
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <circle
+            cx="12"
+            cy="12"
+            r="9"
+            stroke="var(--accent)"
+            stroke-width="2"
+          />
+          <circle cx="12" cy="12" r="3.5" fill="var(--accent)" />
+        </svg>
+      </div>
+      <h1>Canker Core is offline</h1>
+      <p>
+        Your map lives on your account, so it needs a connection to load. Your
+        readings are safe — nothing was lost.
+      </p>
+      <button type="button" onclick="location.reload()">Try again</button>
+    </main>
+  </body>
+</html>

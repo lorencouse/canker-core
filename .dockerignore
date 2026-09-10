@@ -8,3 +8,10 @@ cypress
 .DS_Store
 *.md
 !README.md
+
+# Native app projects. The server image serves the web app; the iOS and
+# Android shells are built on a developer machine and never run here.
+ios
+android
+native
+capacitor.config.ts

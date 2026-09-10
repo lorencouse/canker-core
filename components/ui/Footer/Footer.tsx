@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import Logo from '@/components/icons/Logo';
 import GitHub from '@/components/icons/GitHub';
+import ExternalLink from './ExternalLink';
 
 const productLinks = [
   { href: '/', label: 'Home' },
@@ -17,7 +18,7 @@ const legalLinks = [
 
 export default function Footer() {
   return (
-    <footer className="mt-24 border-t border-border bg-background">
+    <footer className="mt-16 border-t border-border bg-background sm:mt-24">
       <div className="container grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-2">
           <Link
@@ -39,25 +40,25 @@ export default function Footer() {
         <FooterColumn title="Legal" links={legalLinks} />
       </div>
 
-      <div className="border-t border-border">
+      <div className="safe-b border-t border-border">
         <div className="container flex flex-col items-center justify-between gap-4 py-6 text-sm text-muted-foreground sm:flex-row">
           <span>
             © {new Date().getFullYear()} Canker Core. Not medical advice.
           </span>
           <div className="flex items-center gap-4">
-            <a
+            <ExternalLink
               href="https://www.lorencouse.com"
               className="rounded-md transition-colors hover:text-foreground"
             >
               Built by Loren Couse
-            </a>
-            <a
+            </ExternalLink>
+            <ExternalLink
               href="https://github.com/couselm"
               aria-label="Canker Core on GitHub"
-              className="rounded-md transition-colors hover:text-foreground"
+              className="flex size-11 items-center justify-center rounded-md transition-colors hover:text-foreground sm:size-auto"
             >
               <GitHub />
-            </a>
+            </ExternalLink>
           </div>
         </div>
       </div>

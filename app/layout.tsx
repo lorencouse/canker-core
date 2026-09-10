@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Archivo, Source_Sans_3 } from 'next/font/google';
 import { PropsWithChildren, Suspense } from 'react';
 
-import Footer from '@/components/ui/Footer';
-import Navbar from '@/components/ui/Navbar';
+import NativeBridge from '@/components/native/NativeBridge';
 import { Toaster } from '@/components/ui/Toasts/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { getURL } from '@/utils/helpers';
@@ -31,24 +30,56 @@ export const metadata: Metadata = {
   },
   description:
     'Mark where a canker sore is on a mouth map, log its size and pain each day, and see whether it is actually healing.',
-  icons: { icon: '/favicon.ico' }
+  applicationName: 'Canker Core',
+  appleWebApp: {
+    capable: true,
+    title: 'Canker Core',
+    // Translucent, so the page paints under the status bar the same way it
+    // does in the Capacitor shell. One layout serves both.
+    statusBarStyle: 'black-translucent'
+  },
+  formatDetection: {
+    // Otherwise iOS turns every "Day 7" and reading count into a phone link.
+    telephone: false,
+    date: false
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/icons/apple-touch-icon.png'
+  }
 };
 
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#f5f7f9' },
     { media: '(prefers-color-scheme: dark)', color: '#131a21' }
-  ]
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  // The app draws its own safe-area padding, so the viewport should extend
+  // into the notch rather than being letterboxed away from it.
+  viewportFit: 'cover'
+  // Page zoom is deliberately left enabled. Locking it would be the usual
+  // way to stop a pinch on the mouth map from zooming the whole page, but
+  // this is a health app and people need to be able to enlarge it — so the
+  // map claims its own gestures with touch-action instead, and the native
+  // webview disables page zoom at its own layer.
 };
 
-export default async function RootLayout({ children }: PropsWithChildren) {
+/**
+ * The root layout carries only what every surface needs: fonts, theme, the
+ * native bridge, toasts. Chrome belongs to the route groups — the marketing
+ * site gets a navbar and footer, the app gets a tab bar, and sign-in gets
+ * neither.
+ */
+export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html
       lang="en"
       suppressHydrationWarning
       className={`${display.variable} ${sans.variable}`}
     >
-      <body className="flex min-h-screen flex-col bg-background font-sans text-foreground">
+      <body className="bg-background font-sans text-foreground">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -61,26 +92,14 @@ export default async function RootLayout({ children }: PropsWithChildren) {
           >
             Skip to content
           </a>
-          <Navbar />
-          <main id="main" className="flex-1">
-            <Suspense fallback={<LoadingScreen />}>{children}</Suspense>
-          </main>
-          <Footer />
+          {children}
+          <NativeBridge />
+          {/* Toaster reads search params, which needs a boundary. */}
           <Suspense>
             <Toaster />
           </Suspense>
         </ThemeProvider>
       </body>
     </html>
-  );
-}
-
-function LoadingScreen() {
-  return (
-    <div className="container space-y-4 py-16" aria-busy="true">
-      <div className="h-8 w-56 animate-pulse rounded-md bg-muted" />
-      <div className="h-40 w-full animate-pulse rounded-lg bg-muted" />
-      <div className="h-40 w-full animate-pulse rounded-lg bg-muted" />
-    </div>
   );
 }

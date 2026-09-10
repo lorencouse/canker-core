@@ -228,10 +228,6 @@
     max-width: 68ch;
     @apply leading-relaxed;
   }
-
-  .height-screen-helper {
-    min-height: calc(100vh - 4rem);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -242,5 +238,153 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+ * App-shell layer.
+ *
+ * Everything below exists because Canker Core also ships as a Capacitor app.
+ * A page that merely reflows at 390px still reads as a website; these rules
+ * are the difference between that and something that feels installed:
+ * fixed chrome that respects the notch, a viewport that does not jump when
+ * the URL bar hides, and touch targets sized for a thumb rather than a mouse.
+ * ==========================================================================
+ */
+
+@layer base {
+  :root {
+    /*
+     * Safe areas. Read through variables rather than calling env() at every
+     * use site, so the native shell can widen them (Android gesture bar) and
+     * the browser can zero them without every component knowing the
+     * difference.
+     */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+
+    /* Fixed chrome heights, so scroll containers can pad themselves. */
+    --app-bar-h: 3.5rem;
+    --tab-bar-h: 3.75rem;
+
+    /*
+     * Set by the Keyboard plugin while the soft keyboard is up. Sheets and
+     * the tab bar lift by this much instead of being covered.
+     */
+    --keyboard-h: 0px;
+  }
+
+  /*
+   * A coarse pointer gets bigger everything. This is the single lever that
+   * makes the same components work under a thumb and under a cursor, and it
+   * keys off the input device rather than the viewport — a small laptop
+   * window should not get phone-sized controls.
+   */
+  @media (pointer: coarse) {
+    :root {
+      --app-bar-h: 3.5rem;
+      --tab-bar-h: 4rem;
+    }
+  }
+
+  html {
+    /* dvh tracks the collapsing URL bar; vh does not. */
+    height: 100dvh;
+    /* No rubber-band past the ends of the document inside a webview. */
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    min-height: 100dvh;
+    /* A native app does not let you select its chrome by long-pressing it. */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /*
+   * ...but real content is still selectable. Copying a reading out of the
+   * table is a legitimate thing to want.
+   */
+  p,
+  li,
+  dd,
+  td,
+  th,
+  h1,
+  h2,
+  h3,
+  h4,
+  input,
+  textarea,
+  [data-selectable] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /*
+   * iOS zooms the page when a focused field is under 16px. Every input in the
+   * app is therefore at least 16px on touch devices, whatever the design size.
+   */
+  @media (pointer: coarse) {
+    input,
+    select,
+    textarea {
+      font-size: max(16px, 1rem);
+    }
+  }
+}
+
+@layer components {
+  /*
+   * The scrolling body of an app screen. Chrome is fixed above and below it,
+   * so the padding here is what keeps the first and last rows clear of it.
+   */
+  .app-scroll {
+    padding-top: calc(var(--app-bar-h) + var(--safe-top));
+    padding-bottom: calc(var(--tab-bar-h) + var(--safe-bottom) + 1rem);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @screen lg {
+    .app-scroll {
+      /* Desktop puts navigation in the top bar only; no bottom tabs. */
+      padding-bottom: 2rem;
+    }
+  }
+
+  /* Fixed chrome that sits inside the safe area rather than under it. */
+  .safe-t {
+    padding-top: var(--safe-top);
+  }
+  .safe-b {
+    padding-bottom: var(--safe-bottom);
+  }
+  .safe-x {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+
+  /*
+   * Minimum comfortable touch target. Applied to controls that are visually
+   * smaller than 44px, expanding the hit area without changing the drawing.
+   */
+  .tap-target {
+    position: relative;
+  }
+  .tap-target::after {
+    content: '';
+    position: absolute;
+    inset: 50% 50% 50% 50%;
+    min-width: 44px;
+    min-height: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Cards inside the app shell: flatter than marketing cards, no drop shadow. */
+  .app-card {
+    @apply rounded-xl border border-border bg-card;
   }
 }

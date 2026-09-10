@@ -84,7 +84,7 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="text-subhead">Size over time</CardTitle>
         <CardDescription>
           One bar per sore per day, in millimetres. Colour is that day&rsquo;s
@@ -97,8 +97,13 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
             No readings yet.
           </p>
         ) : (
-          <ChartContainer config={config} className="h-[280px] w-full">
-            <BarChart data={rows} margin={{ left: 4, right: 4, top: 8 }}>
+          // Shorter on a phone: the chart shares the screen with a header
+          // and the tab bar, and a 280px plot leaves nothing else visible.
+          <ChartContainer
+            config={config}
+            className="h-[220px] w-full sm:h-[280px]"
+          >
+            <BarChart data={rows} margin={{ left: 0, right: 4, top: 8 }}>
               <CartesianGrid
                 vertical={false}
                 stroke="hsl(var(--border))"

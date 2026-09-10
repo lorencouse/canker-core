@@ -10,68 +10,119 @@ import {
 } from '@/components/ui/table';
 import { Sore } from '@/types';
 
+/**
+ * Every sore on record.
+ *
+ * Two presentations of the same rows, not a table that scrolls sideways.
+ * Five columns cannot be read at 390px, and a horizontally scrolling table
+ * inside a vertically scrolling app is a gesture conflict as well as a
+ * legibility one — so below `sm` each sore becomes a card instead.
+ */
+
 const latest = (series: number[] | null) =>
   series && series.length ? series[series.length - 1] : null;
+
+const dateOf = (iso?: string) =>
+  iso ? new Date(iso).toLocaleDateString() : '—';
+
+function PainDot({ pain }: { pain: number }) {
+  return (
+    <span
+      className="size-2.5 shrink-0 rounded-full ring-1 ring-foreground/20"
+      style={{ backgroundColor: `hsl(var(--sev-${pain}))` }}
+      aria-hidden="true"
+    />
+  );
+}
 
 const SoresTable = ({ sores }: { sores: Sore[] }) => {
   if (!sores.length) return null;
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>First marked</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Size</TableHead>
-            <TableHead className="text-right">Pain</TableHead>
-            <TableHead>Location</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sores.map((sore) => {
-            const size = latest(sore.size);
-            const pain = latest(sore.pain);
+    <>
+      {/* Phone: one card per sore. */}
+      <ul className="space-y-2 sm:hidden">
+        {sores.map((sore) => {
+          const size = latest(sore.size);
+          const pain = latest(sore.pain);
 
-            return (
-              <TableRow key={sore.id}>
-                <TableCell>
-                  {sore.dates?.length
-                    ? new Date(sore.dates[0]).toLocaleDateString()
-                    : '—'}
-                </TableCell>
-                <TableCell>
-                  {sore.healed ? (
-                    <span className="text-muted-foreground">
-                      Healed {new Date(sore.healed).toLocaleDateString()}
-                    </span>
-                  ) : (
-                    'Open'
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
+          return (
+            <li key={sore.id} className="rounded-lg border border-border p-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="font-medium">{sore.zone}</span>
+                <span className="tabular text-xs text-muted-foreground">
+                  {dateOf(sore.dates?.[0])}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center gap-4 text-sm">
+                <span className="tabular">
                   {size === null ? '—' : `${size} mm`}
-                </TableCell>
-                <TableCell className="text-right">
-                  {pain === null ? (
-                    '—'
-                  ) : (
-                    <span className="inline-flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-foreground/20"
-                        style={{ backgroundColor: `hsl(var(--sev-${pain}))` }}
-                      />
-                      {pain}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>{sore.zone}</TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+                </span>
+                <span className="tabular inline-flex items-center gap-1.5">
+                  {pain !== null && <PainDot pain={pain} />}
+                  {pain === null ? '—' : `${pain}/10`}
+                </span>
+                <span className="ml-auto text-muted-foreground">
+                  {sore.healed
+                    ? `Healed ${new Date(sore.healed).toLocaleDateString()}`
+                    : 'Open'}
+                </span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* Tablet and up: the full table. */}
+      <div className="hidden sm:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>First marked</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Size</TableHead>
+              <TableHead className="text-right">Pain</TableHead>
+              <TableHead>Location</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sores.map((sore) => {
+              const size = latest(sore.size);
+              const pain = latest(sore.pain);
+
+              return (
+                <TableRow key={sore.id}>
+                  <TableCell>{dateOf(sore.dates?.[0])}</TableCell>
+                  <TableCell>
+                    {sore.healed ? (
+                      <span className="text-muted-foreground">
+                        Healed {new Date(sore.healed).toLocaleDateString()}
+                      </span>
+                    ) : (
+                      'Open'
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {size === null ? '—' : `${size} mm`}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {pain === null ? (
+                      '—'
+                    ) : (
+                      <span className="inline-flex items-center gap-2">
+                        <PainDot pain={pain} />
+                        {pain}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>{sore.zone}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 };
 

@@ -33,7 +33,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="container grid items-center gap-12 py-16 lg:grid-cols-2 lg:gap-16 lg:py-24">
+      <section className="container grid items-center gap-10 py-10 sm:py-16 lg:grid-cols-2 lg:gap-16 lg:py-24">
         <div>
           <h1 className="text-display">Know whether it&rsquo;s healing.</h1>
           <p className="prose-measure mt-6 text-lg text-muted-foreground">
@@ -41,13 +41,21 @@ export default async function HomePage() {
             its size and pain each day, and find out whether it is actually
             shrinking &mdash; and whether anything you tried made a difference.
           </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button asChild size="lg">
+          {/* Stacked and full-width on a phone: these are the only two
+              things to do on this screen, and a thumb should not have to
+              aim at a pill floating in the middle of a line. */}
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button asChild size="touch" className="sm:h-11 sm:px-8">
               <Link href={startHref}>
                 {user ? 'Open your map' : 'Start tracking'}
               </Link>
             </Button>
-            <Button asChild variant="ghost" size="lg">
+            <Button
+              asChild
+              variant="ghost"
+              size="touch"
+              className="sm:h-11 sm:px-8"
+            >
               <Link href="/about">How it works</Link>
             </Button>
           </div>
@@ -56,8 +64,8 @@ export default async function HomePage() {
         <MouthMapHero />
       </section>
 
-      <section className="container py-12">
-        <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
+      <section className="container py-8 sm:py-12">
+        <div className="rounded-xl border border-border bg-card p-5 sm:p-8">
           <h2 className="text-section">One scale, used everywhere</h2>
           <p className="prose-measure mt-2 text-muted-foreground">
             Pain is the only thing in Canker Core that gets a colour. The same
@@ -70,7 +78,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="container py-12 lg:py-16">
+      <section className="container py-8 sm:py-12 lg:py-16">
         <h2 className="text-title">A sore, from first twinge to gone</h2>
         <ol className="mt-10 grid gap-8 sm:grid-cols-3">
           {TIMELINE.map((step) => (
@@ -89,14 +97,18 @@ export default async function HomePage() {
       </section>
 
       <section className="container pb-8">
-        <div className="flex flex-col items-start justify-between gap-6 rounded-lg border border-border bg-card p-8 sm:flex-row sm:items-center">
+        <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-border bg-card p-6 sm:flex-row sm:items-center sm:p-8">
           <div>
             <h2 className="text-section">Start with the one you have now</h2>
             <p className="prose-measure mt-2 text-muted-foreground">
               It takes about fifteen seconds to log the first reading.
             </p>
           </div>
-          <Button asChild size="lg">
+          <Button
+            asChild
+            size="touch"
+            className="w-full sm:h-11 sm:w-auto sm:px-8"
+          >
             <Link href={startHref}>
               {user ? 'Open your map' : 'Start tracking'}
             </Link>

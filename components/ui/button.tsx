@@ -24,7 +24,14 @@ const buttonVariants = cva(
         sm: 'h-9 rounded-md px-3',
         lg: 'h-11 rounded-md px-8',
         icon: 'h-10 w-10',
-        xs: 'h-8 rounded-md px-2.5 text-xs'
+        xs: 'h-8 rounded-md px-2.5 text-xs',
+        /*
+         * Primary actions on a touch screen. 48px clears Apple's 44pt and
+         * Android's 48dp minimums with room for the finger to be imprecise,
+         * and steps back to a normal 40px control on a pointer device so a
+         * desktop form is not built out of slabs.
+         */
+        touch: 'h-12 rounded-lg px-4 text-[15px] lg:h-10 lg:text-sm'
       }
     },
     defaultVariants: {

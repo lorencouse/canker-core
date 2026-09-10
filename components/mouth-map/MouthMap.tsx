@@ -19,6 +19,7 @@ import {
   type Point
 } from '@/utils/mouth-map/geometry';
 import { cn } from '@/utils/cn';
+import { tap } from '@/utils/native';
 
 import { MapDefs, ViewArtwork } from './artwork';
 import MapControls from './MapControls';
@@ -46,7 +47,8 @@ type Camera = { k: number; tx: number; ty: number };
 const HOME: Camera = { k: 1, tx: 0, ty: 0 };
 
 export default function MouthMap({ user }: { user: User }) {
-  const { sores, setSores, selectedSore, setSelectedSore, mode } = useSoreContext();
+  const { sores, setSores, selectedSore, setSelectedSore, mode } =
+    useSoreContext();
   const [view, setView] = useState<MouthView>('front');
   const [camera, setCamera] = useState<Camera>(HOME);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -54,7 +56,8 @@ export default function MouthMap({ user }: { user: User }) {
 
   // Selecting a sore elsewhere (the details card's arrows) brings its view up.
   useEffect(() => {
-    if (selectedSore?.view && selectedSore.view !== view) setView(selectedSore.view);
+    if (selectedSore?.view && selectedSore.view !== view)
+      setView(selectedSore.view);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSore?.id]);
 
@@ -67,7 +70,10 @@ export default function MouthMap({ user }: { user: User }) {
       const ctm = svg.getScreenCTM();
       if (!ctm) return { x: 0, y: 0 };
       const pt = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
-      return { x: (pt.x - camera.tx) / camera.k, y: (pt.y - camera.ty) / camera.k };
+      return {
+        x: (pt.x - camera.tx) / camera.k,
+        y: (pt.y - camera.ty) / camera.k
+      };
     },
     [camera]
   );
@@ -107,7 +113,9 @@ export default function MouthMap({ user }: { user: User }) {
       e.preventDefault();
       const ctm = svg.getScreenCTM();
       if (!ctm) return;
-      const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
+      const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(
+        ctm.inverse()
+      );
       zoomAbout(e.deltaY > 0 ? 0.9 : 1.1, pt);
     };
     svg.addEventListener('wheel', onWheel, { passive: false });
@@ -126,7 +134,10 @@ export default function MouthMap({ user }: { user: User }) {
   };
   const gesture = useRef<Gesture | null>(null);
 
-  const onPointerDown = (e: React.PointerEvent<SVGSVGElement>, sore: Sore | null = null) => {
+  const onPointerDown = (
+    e: React.PointerEvent<SVGSVGElement>,
+    sore: Sore | null = null
+  ) => {
     const svg = svgRef.current;
     if (!svg) return;
     svg.setPointerCapture(e.pointerId);
@@ -159,7 +170,10 @@ export default function MouthMap({ user }: { user: User }) {
       const svg = svgRef.current!;
       const ctm = svg.getScreenCTM();
       if (ctm) {
-        const mid = new DOMPoint((a.x + b.x) / 2, (a.y + b.y) / 2).matrixTransform(ctm.inverse());
+        const mid = new DOMPoint(
+          (a.x + b.x) / 2,
+          (a.y + b.y) / 2
+        ).matrixTransform(ctm.inverse());
         zoomAbout(dist / g.pinchDist, mid);
       }
       g.pinchDist = dist;
@@ -167,7 +181,8 @@ export default function MouthMap({ user }: { user: User }) {
       return;
     }
 
-    const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+    const dx = e.clientX - prev.x,
+      dy = e.clientY - prev.y;
     if (!g.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
     g.moved = true;
 
@@ -221,6 +236,8 @@ export default function MouthMap({ user }: { user: User }) {
       };
       setSores((prev) => [...prev, sore]);
       setSelectedSore(sore);
+      // A placed sore is a committed act, unlike a pan or a zoom.
+      tap('medium');
     } else {
       setSelectedSore(null);
     }
@@ -230,14 +247,21 @@ export default function MouthMap({ user }: { user: User }) {
     setSelectedSore(sore);
   };
 
-  const visible = sores.filter((s) => s.view === view && s.x !== null && s.y !== null);
+  const visible = sores.filter(
+    (s) => s.view === view && s.x !== null && s.y !== null
+  );
 
   return (
     <div className="space-y-3">
+      {/*
+        The view switch. A segmented control rather than a row of links: the
+        three views are one property of one object, and the iOS/Android
+        idiom for that is a single enclosed track.
+      */}
       <div
         role="tablist"
         aria-label="Part of the mouth"
-        className="flex gap-1 rounded-lg bg-muted p-1"
+        className="flex gap-1 rounded-xl bg-muted p-1"
       >
         {MOUTH_VIEWS.map((v) => {
           const count = sores.filter((s) => s.view === v).length;
@@ -248,11 +272,13 @@ export default function MouthMap({ user }: { user: User }) {
               type="button"
               aria-selected={view === v}
               onClick={() => {
+                if (v !== view) tap();
                 setView(v);
                 resetCamera();
               }}
               className={cn(
-                'flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md text-sm font-medium transition-colors',
+                // 44px tall on touch so a mis-aimed thumb still lands.
+                'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-colors lg:h-9',
                 view === v
                   ? 'bg-card text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -269,13 +295,15 @@ export default function MouthMap({ user }: { user: User }) {
         })}
       </div>
 
-      <div className="relative overflow-hidden rounded-lg border border-border bg-card">
+      <div className="app-card relative overflow-hidden">
         <svg
           ref={svgRef}
           viewBox={viewBoxAttr}
           className={cn(
             'block w-full select-none',
-            mode === 'add' ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'
+            mode === 'add'
+              ? 'cursor-crosshair'
+              : 'cursor-grab active:cursor-grabbing'
           )}
           style={{ touchAction: 'none' }}
           onPointerDown={(e) => onPointerDown(e)}
@@ -285,12 +313,18 @@ export default function MouthMap({ user }: { user: User }) {
           aria-label={`${VIEW_LABELS[view]} view of the mouth with ${visible.length} sore${visible.length === 1 ? '' : 's'} marked`}
         >
           <MapDefs p={idPrefix} />
-          <g transform={`translate(${camera.tx} ${camera.ty}) scale(${camera.k})`}>
+          <g
+            transform={`translate(${camera.tx} ${camera.ty}) scale(${camera.k})`}
+          >
             <ViewArtwork view={view} p={idPrefix} />
             {visible.map((sore) => {
               const p = fromPercent({ x: sore.x!, y: sore.y! });
-              const size = sore.size?.length ? sore.size[sore.size.length - 1] : 3;
-              const pain = sore.pain?.length ? sore.pain[sore.pain.length - 1] : 3;
+              const size = sore.size?.length
+                ? sore.size[sore.size.length - 1]
+                : 3;
+              const pain = sore.pain?.length
+                ? sore.pain[sore.pain.length - 1]
+                : 3;
               return (
                 <SoreMarker
                   key={sore.id}
@@ -303,7 +337,10 @@ export default function MouthMap({ user }: { user: User }) {
                   filterId={`${idPrefix}soft`}
                   onPointerDown={(e) => {
                     selectSore(sore);
-                    onPointerDown(e as unknown as React.PointerEvent<SVGSVGElement>, sore);
+                    onPointerDown(
+                      e as unknown as React.PointerEvent<SVGSVGElement>,
+                      sore
+                    );
                   }}
                 />
               );
@@ -312,17 +349,20 @@ export default function MouthMap({ user }: { user: User }) {
         </svg>
 
         {mode === 'add' && (
-          <p className="pointer-events-none absolute left-3 top-3 rounded-md border border-border/60 bg-card/85 px-2.5 py-1.5 text-xs text-foreground shadow-sm backdrop-blur">
+          // Along the bottom edge rather than the top: the top-right corner
+          // is the zoom stack, and on a phone the top of the map is where
+          // the front teeth are.
+          <p className="pointer-events-none absolute inset-x-2 bottom-2 rounded-lg border border-border/60 bg-card/90 px-3 py-2 text-center text-xs text-foreground shadow-sm backdrop-blur">
             Tap where the sore is. Switch tabs for cheeks or lips.
           </p>
         )}
 
-        <div className="absolute right-3 top-3 flex flex-col gap-1.5">
-          <MapControls.Button onClick={() => zoomCentre(1.25)} label="+" aria-label="Zoom in" />
-          <MapControls.Button onClick={() => zoomCentre(0.8)} label="−" aria-label="Zoom out" />
-        </div>
-
-        <MapControls onReset={resetCamera} />
+        <MapControls
+          onZoomIn={() => zoomCentre(1.25)}
+          onZoomOut={() => zoomCentre(0.8)}
+          onReset={resetCamera}
+          zoomed={camera.k > 1}
+        />
       </div>
 
       <p className="text-xs text-muted-foreground">

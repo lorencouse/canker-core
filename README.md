@@ -18,6 +18,7 @@ Canker Core is a web app for tracking and managing your mouth sores. It is built
 - Better Auth (email/password, magic link, GitHub + Google OAuth)
 - Tailwind CSS
 - ShadCN
+- Capacitor (iOS + Android shells)
 
 ## Local development
 
@@ -35,6 +36,20 @@ Leave `SMTP_*` blank locally — magic links and password-reset links are printe
 to the server console instead of being emailed.
 
 Generate an auth secret with `openssl rand -base64 32`.
+
+## Mobile
+
+The same app runs as a responsive website, an installable PWA, and native
+iOS/Android apps built with Capacitor. The native apps are a shell around
+the deployed site rather than a bundled copy of it.
+
+See [docs/MOBILE.md](docs/MOBILE.md) for the packaging, the app-shell
+layout, and the conventions any new screen should follow.
+
+```bash
+npm run cap:add:ios      # once per machine
+npm run cap:ios          # sync and open Xcode
+```
 
 ## Deployment
 

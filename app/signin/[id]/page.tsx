@@ -1,8 +1,6 @@
 import { cookies } from 'next/headers';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import Logo from '@/components/icons/Logo';
 import { getUser } from '@/lib/queries';
 import {
   getAuthTypes,
@@ -98,65 +96,54 @@ export default async function SignIn({
     viewProp !== 'forgot_password';
 
   return (
-    <div className="container flex min-h-[calc(100vh-8rem)] items-center justify-center py-12">
-      <div className="w-full max-w-sm">
-        <Link
-          href="/"
-          className="mb-8 flex items-center justify-center gap-2.5 text-foreground"
-        >
-          <Logo size={32} />
-          <span className="font-display text-lg font-semibold tracking-tight">
-            Canker Core
-          </span>
-        </Link>
+    /*
+      The wordmark and the centring live in the sign-in layout. On a phone
+      the card drops its border and sits directly on the background: a
+      floating panel inside a screen that contains nothing else reads as a
+      web form, where a full-bleed one reads as the app's first screen.
+    */
+    <Card className="border-0 bg-transparent shadow-none sm:border sm:bg-card">
+      <CardHeader>
+        <CardTitle className="text-section">{copy.title}</CardTitle>
+        <CardDescription>{copy.description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {viewProp === 'password_signin' && (
+          <PasswordSignIn
+            allowEmail={allowEmail}
+            redirectMethod={redirectMethod}
+          />
+        )}
+        {viewProp === 'email_signin' && (
+          <EmailSignIn
+            allowPassword={allowPassword}
+            redirectMethod={redirectMethod}
+            disableButton={disableButton}
+          />
+        )}
+        {viewProp === 'forgot_password' && (
+          <ForgotPassword
+            allowEmail={allowEmail}
+            redirectMethod={redirectMethod}
+            disableButton={disableButton}
+          />
+        )}
+        {viewProp === 'update_password' && (
+          <UpdatePassword redirectMethod={redirectMethod} token={resetToken} />
+        )}
+        {viewProp === 'signup' && (
+          <SignUp allowEmail={allowEmail} redirectMethod={redirectMethod} />
+        )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-section">{copy.title}</CardTitle>
-            <CardDescription>{copy.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {viewProp === 'password_signin' && (
-              <PasswordSignIn
-                allowEmail={allowEmail}
-                redirectMethod={redirectMethod}
-              />
-            )}
-            {viewProp === 'email_signin' && (
-              <EmailSignIn
-                allowPassword={allowPassword}
-                redirectMethod={redirectMethod}
-                disableButton={disableButton}
-              />
-            )}
-            {viewProp === 'forgot_password' && (
-              <ForgotPassword
-                allowEmail={allowEmail}
-                redirectMethod={redirectMethod}
-                disableButton={disableButton}
-              />
-            )}
-            {viewProp === 'update_password' && (
-              <UpdatePassword
-                redirectMethod={redirectMethod}
-                token={resetToken}
-              />
-            )}
-            {viewProp === 'signup' && (
-              <SignUp allowEmail={allowEmail} redirectMethod={redirectMethod} />
-            )}
-
-            {showOauth && (
-              <div className="mt-6">
-                <Separator text="or" />
-                <div className="mt-4">
-                  <OauthSignIn />
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+        {showOauth && (
+          <div className="mt-6">
+            <Separator text="or" />
+            <div className="mt-4">
+              <OauthSignIn />
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

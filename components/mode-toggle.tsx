@@ -18,6 +18,9 @@ export default function ModeToggle() {
     <Button
       variant="ghost"
       size="icon"
+      // The 40px icon button is under the 44px touch minimum; tap-target
+      // widens the hit area without making the header taller.
+      className="tap-target"
       // Rendered from the first paint so the header does not reflow once the
       // theme resolves; the icon simply swaps in.
       onClick={() => setTheme(isDark ? 'light' : 'dark')}

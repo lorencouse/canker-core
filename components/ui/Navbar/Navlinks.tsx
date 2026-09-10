@@ -44,7 +44,9 @@ export default function Navlinks({ signedIn }: { signedIn: boolean }) {
         onClick={onNavigate}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          // The desktop row is compact; the mobile sheet's rows are list
+          // items and need to be 44px tall, which the md: split gives them.
+          'flex items-center rounded-md px-3 py-3 text-sm font-medium transition-colors md:py-2',
           active
             ? 'bg-accent text-accent-foreground'
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -116,7 +118,7 @@ export default function Navlinks({ signedIn }: { signedIn: boolean }) {
       {menuOpen && (
         <div
           id="mobile-nav"
-          className="absolute inset-x-0 top-16 flex flex-col gap-1 border-b border-border bg-background p-4 md:hidden"
+          className="absolute inset-x-0 top-16 flex flex-col gap-1 border-b border-border bg-background p-4 shadow-lg md:hidden"
         >
           {links.map(({ href, label }) =>
             navLink(href, label, () => setMenuOpen(false))
@@ -125,7 +127,7 @@ export default function Navlinks({ signedIn }: { signedIn: boolean }) {
             {signedIn ? (
               signOutForm('flex')
             ) : (
-              <Button asChild className="w-full">
+              <Button asChild size="touch" className="w-full">
                 <Link href="/signin" onClick={() => setMenuOpen(false)}>
                   Sign in
                 </Link>

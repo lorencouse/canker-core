@@ -60,11 +60,13 @@ const SoreSliders: React.FC = () => {
   if (!selectedSore) return null;
 
   return (
-    <div className="space-y-5 rounded-lg border border-border bg-card p-5">
-      <div className="space-y-2">
-        <div className="flex items-baseline justify-between">
+    <div className="app-card space-y-5 p-4 sm:p-5">
+      <div className="space-y-1.5">
+        <div className="flex items-baseline justify-between gap-3">
           <Label htmlFor="sore-size">How wide is it?</Label>
-          <span className="tabular text-sm font-medium">{soreSize} mm</span>
+          {/* The reading, not a tooltip on the handle: it has to stay
+              legible while a thumb is covering the handle. */}
+          <span className="tabular text-base font-semibold">{soreSize} mm</span>
         </div>
         <Slider
           id="sore-size"
@@ -76,10 +78,18 @@ const SoreSliders: React.FC = () => {
         />
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-baseline justify-between">
+      <div className="space-y-1.5">
+        <div className="flex items-baseline justify-between gap-3">
           <Label htmlFor="sore-pain">How much does it hurt?</Label>
-          <span className="tabular text-sm font-medium">{painLevel} of 10</span>
+          <span className="tabular inline-flex items-center gap-2 text-base font-semibold">
+            {/* The same swatch the map will draw, so the number and the
+                mark you are about to see agree before you commit. */}
+            <span
+              className="size-3 rounded-full ring-1 ring-foreground/20"
+              style={{ backgroundColor: `hsl(var(--sev-${painLevel}))` }}
+            />
+            {painLevel} of 10
+          </span>
         </div>
         <Slider
           id="sore-pain"

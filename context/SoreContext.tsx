@@ -4,15 +4,27 @@ import { createContext, useContext, useState, useMemo } from 'react';
 
 import { Sore } from '@/types';
 
+/** 'add' places new sores, 'edit' drags existing ones, 'view' does neither. */
+type Mode = 'add' | 'edit' | 'view';
+
 interface SoreContextProps {
   selectedSore: Sore | null;
   setSelectedSore: React.Dispatch<React.SetStateAction<Sore | null>>;
   sores: Sore[];
   setSores: React.Dispatch<React.SetStateAction<Sore[]>>;
-  mode: 'add' | 'edit' | 'update' | 'view';
-  setMode: React.Dispatch<
-    React.SetStateAction<'add' | 'edit' | 'update' | 'view'>
-  >;
+  mode: Mode;
+  setMode: React.Dispatch<React.SetStateAction<Mode>>;
+  /**
+   * The sores as they were when the current editing session opened, so
+   * Cancel can put them back.
+   *
+   * This lives in the context rather than inside the action bar because the
+   * action bar is rendered in different places at different widths — under
+   * the map on a desktop, inside the detail sheet on a phone. Local state
+   * would give each of those its own idea of what Cancel undoes.
+   */
+  snapshot: Sore[] | null;
+  setSnapshot: React.Dispatch<React.SetStateAction<Sore[] | null>>;
 }
 
 interface SoreProviderProps {
@@ -28,7 +40,8 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
 }) => {
   const [selectedSore, setSelectedSore] = useState<Sore | null>(null);
   const [sores, setSores] = useState<Sore[]>(initialSores);
-  const [mode, setMode] = useState<'add' | 'edit' | 'update' | 'view'>('view');
+  const [mode, setMode] = useState<Mode>('view');
+  const [snapshot, setSnapshot] = useState<Sore[] | null>(null);
 
   const contextValue = useMemo(
     () => ({
@@ -37,9 +50,11 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
       sores,
       setSores,
       mode,
-      setMode
+      setMode,
+      snapshot,
+      setSnapshot
     }),
-    [selectedSore, sores, mode]
+    [selectedSore, sores, mode, snapshot]
   );
 
   return (
