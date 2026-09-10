@@ -81,7 +81,7 @@ header re-lays-out as the mobile address bar collapses, and it can be
 scrolled away mid-gesture on the mouth map. `.app-scroll` supplies the
 padding that keeps content clear of both bars.
 
-Navigation is a bottom tab bar under `lg`, and the same three destinations
+Navigation is a bottom tab bar under `lg`, and the same four destinations
 inline in the top bar from `lg` up. Sign out is in the top bar on desktop
 and at the foot of Settings on a phone — it is an action, not a destination,
 so it does not get a tab.

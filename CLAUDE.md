@@ -25,6 +25,11 @@ Schema changes have no migration framework: `schema.sql` is the re-runnable
 source of truth, and one-off data migrations live in `migrations/` as dated
 SQL. Take a `pg_dump` into the gitignored `backups/` before any of it.
 
+Data model: a `sores` row is a place in the mouth; its measurements are rows
+in `readings` (one per local day, with an optional note); `day_logs` holds
+per-day triggers and treatments from the fixed lists in `utils/day-log.ts`.
+The "one reading per day" rule lives in `utils/readings.ts`.
+
 ## Mobile
 
 The native apps wrap the deployed site rather than bundling it — server
