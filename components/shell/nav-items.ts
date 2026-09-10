@@ -1,13 +1,20 @@
-import { LineChart, Map, Settings } from 'lucide-react';
+import { CalendarCheck, LineChart, Map, Settings } from 'lucide-react';
 
 /**
- * The app's three destinations, in the order they appear in the tab bar.
+ * The app's four destinations, in the order they appear in the tab bar.
  *
- * Three is deliberate. A bottom bar stops being scannable past five, and
- * anything that is not somewhere you *go* — sign out, theme — belongs in
- * Settings rather than competing with them.
+ * Today comes first because it is the daily habit; the map is where a sore
+ * starts, and most days nothing starts. A bottom bar stops being scannable
+ * past five, and anything that is not somewhere you *go* — sign out, theme —
+ * belongs in Settings rather than competing with them.
  */
 export const APP_NAV = [
+  {
+    href: '/today',
+    label: 'Today',
+    description: 'Today’s check-in',
+    icon: CalendarCheck
+  },
   {
     href: '/my-sores',
     label: 'Map',

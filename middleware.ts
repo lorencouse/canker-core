@@ -16,7 +16,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  * helper, which pulls `jose` into the Edge bundle and triggers unsupported-API
  * warnings for a check this simple.
  */
-const PROTECTED_PATHS = ['/my-sores', '/history', '/profile'];
+const PROTECTED_PATHS = ['/today', '/my-sores', '/history', '/profile', '/api/export'];
 
 // Better Auth adds the __Secure- prefix when the base URL is https.
 const SESSION_COOKIES = [

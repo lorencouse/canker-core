@@ -49,7 +49,7 @@ export const getRedirectMethod = () => {
 };
 
 /** Where a fresh sign-in lands when nothing asked for somewhere specific. */
-export const DEFAULT_AFTER_SIGN_IN = '/my-sores';
+export const DEFAULT_AFTER_SIGN_IN = '/today';
 
 /**
  * A safe in-app path to return to after signing in. Anything that is not a

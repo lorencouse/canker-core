@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 
 import { isNative } from '@/utils/native';
+import { syncReminder } from '@/utils/reminders';
 
 /**
  * Wires the web app to the native shell.
@@ -14,7 +15,7 @@ import { isNative } from '@/utils/native';
  * tested on the web without a second code path.
  *
  * The four things a webview gets wrong by default, in order of how badly
- * they break the illusion:
+ * they break the illusion (plus the daily reminder, which only exists here):
  *   1. A status bar whose text stays dark when the app goes dark.
  *   2. Android's back button closing the whole app from any screen.
  *   3. A soft keyboard that covers whatever you were typing into.
@@ -113,6 +114,29 @@ export default function NativeBridge() {
     );
     return () => window.cancelAnimationFrame(id);
   }, []);
+
+  /* --- daily reminder ------------------------------------------------------ */
+  useEffect(() => {
+    if (!isNative()) return;
+    let remove: (() => void) | undefined;
+
+    // Re-assert the schedule on launch (an OS update or a reinstall can drop
+    // it) and open the check-in when the notification is tapped.
+    syncReminder().catch(() => {});
+    (async () => {
+      const { LocalNotifications } = await import('@capacitor/local-notifications');
+      const handle = await LocalNotifications.addListener(
+        'localNotificationActionPerformed',
+        ({ notification }) => {
+          const path = (notification.extra as { path?: string } | undefined)?.path;
+          if (path) router.push(path);
+        }
+      );
+      remove = () => handle.remove();
+    })();
+
+    return () => remove?.();
+  }, [router]);
 
   /* --- scroll restoration ------------------------------------------------- */
   useEffect(() => {

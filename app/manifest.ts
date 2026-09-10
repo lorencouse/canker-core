@@ -7,9 +7,9 @@ import type { MetadataRoute } from 'next';
  * same shell the Capacitor build wraps — so an Android user who taps
  * "Install" and one who downloads the app land on the identical layout.
  *
- * `start_url` is the map rather than the marketing home page: someone who
- * has installed the app has already been sold on it, and an install that
- * opens on a landing page feels like a bookmark.
+ * `start_url` is the daily check-in rather than the marketing home page:
+ * someone who has installed the app has already been sold on it, and an
+ * install that opens on a landing page feels like a bookmark.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -17,7 +17,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'Canker Core',
     description:
       'Mark where a mouth sore is, log its size and pain each day, and see whether it is healing.',
-    start_url: '/my-sores',
+    start_url: '/today',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
@@ -39,6 +39,11 @@ export default function manifest(): MetadataRoute.Manifest {
       }
     ],
     shortcuts: [
+      {
+        name: 'Today’s check-in',
+        short_name: 'Today',
+        url: '/today'
+      },
       {
         name: 'Your mouth map',
         short_name: 'Map',
