@@ -12,7 +12,8 @@
     "cap:android": "cap sync android && cap open android",
     "prettier-fix": "prettier --write .",
     "db:schema": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f schema.sql",
-    "db:migrate-from-supabase": "node scripts/migrate-from-supabase.mjs"
+    "db:migrate-from-supabase": "node scripts/migrate-from-supabase.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",
@@ -62,17 +63,18 @@
     "@types/node": "^20.17.6",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.23.1",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
-    "eslint-config-next": "14.1.0",
+    "eslint-config-next": "15.1.11",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-tailwindcss": "^3.17.5",
     "postcss": "^8.4.49",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.5.14",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.0"
   }
 }

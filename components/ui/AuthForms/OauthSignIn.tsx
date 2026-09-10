@@ -13,7 +13,7 @@ import {
 type OAuthProviders = {
   name: OAuthProvider;
   displayName: string;
-  icon: JSX.Element;
+  icon: React.ReactNode;
 };
 
 const oAuthProviders: OAuthProviders[] = [
@@ -21,7 +21,7 @@ const oAuthProviders: OAuthProviders[] = [
   { name: 'github', displayName: 'GitHub', icon: <Github /> }
 ];
 
-export default function OauthSignIn() {
+export default function OauthSignIn({ next }: { next: string }) {
   // Track which provider is in flight so only that button shows a spinner.
   const [pending, setPending] = useState<OAuthProvider | null>(null);
 
@@ -42,6 +42,7 @@ export default function OauthSignIn() {
           onSubmit={(e) => handleSubmit(e, provider.name)}
         >
           <input type="hidden" name="provider" value={provider.name} />
+          <input type="hidden" name="next" value={next} />
           <Button
             variant="outline"
             type="submit"

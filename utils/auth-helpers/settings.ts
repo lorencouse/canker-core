@@ -47,3 +47,19 @@ export const getDefaultSignInView = (preferredSignInView: string | null) => {
 export const getRedirectMethod = () => {
   return allowServerRedirect ? 'server' : 'client';
 };
+
+/** Where a fresh sign-in lands when nothing asked for somewhere specific. */
+export const DEFAULT_AFTER_SIGN_IN = '/my-sores';
+
+/**
+ * A safe in-app path to return to after signing in. Anything that is not a
+ * plain relative path — an absolute URL, a protocol-relative `//host`, an
+ * empty value — falls back to the map, so the parameter can never bounce a
+ * user off to another site.
+ */
+export function safeNext(raw: unknown): string {
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  if (!value.startsWith('/') || value.startsWith('//') || value.startsWith('/signin'))
+    return DEFAULT_AFTER_SIGN_IN;
+  return value;
+}

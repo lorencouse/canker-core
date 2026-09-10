@@ -14,12 +14,15 @@ interface EmailSignInProps {
   allowPassword: boolean;
   redirectMethod: string;
   disableButton?: boolean;
+  /** In-app path the magic link lands on. */
+  next: string;
 }
 
 export default function EmailSignIn({
   allowPassword,
   redirectMethod,
-  disableButton
+  disableButton,
+  next
 }: EmailSignInProps) {
   const clientRouter = useRouter();
   const router = redirectMethod === 'client' ? clientRouter : null;
@@ -34,6 +37,7 @@ export default function EmailSignIn({
   return (
     <div>
       <form noValidate onSubmit={handleSubmit} className="grid gap-4">
+        <input type="hidden" name="next" value={next} />
         <AuthField
           id="email"
           name="email"

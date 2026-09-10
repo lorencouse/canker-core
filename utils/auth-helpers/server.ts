@@ -6,6 +6,7 @@ import { APIError } from 'better-auth/api';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db/pool';
 import { getURL, getErrorRedirect, getStatusRedirect } from '@/utils/helpers';
+import { DEFAULT_AFTER_SIGN_IN, safeNext } from '@/utils/auth-helpers/settings';
 
 /**
  * Server-side auth actions.
@@ -67,7 +68,7 @@ export async function signInWithEmail(formData: FormData): Promise<string> {
 
   try {
     await auth.api.signInMagicLink({
-      body: { email, callbackURL: '/' },
+      body: { email, callbackURL: safeNext(formData.get('next')) },
       headers: await nextHeaders()
     });
   } catch (err) {
@@ -138,7 +139,7 @@ export async function signInWithPassword(formData: FormData): Promise<string> {
   }
 
   cookieStore.set('preferredSignInView', 'password_signin', { path: '/' });
-  return getStatusRedirect('/', 'Success!', 'You are now signed in.');
+  return getStatusRedirect(safeNext(formData.get('next')), 'Success!', 'You are now signed in.');
 }
 
 export async function signUp(formData: FormData): Promise<string> {
@@ -167,7 +168,7 @@ export async function signUp(formData: FormData): Promise<string> {
     return getErrorRedirect('/signin/signup', 'Sign up failed.', friendly);
   }
 
-  return getStatusRedirect('/', 'Success!', 'You are now signed in.');
+  return getStatusRedirect(DEFAULT_AFTER_SIGN_IN, 'Success!', 'You are now signed in.');
 }
 
 /**
@@ -218,7 +219,7 @@ export async function updatePassword(formData: FormData): Promise<string> {
     );
   }
 
-  return getStatusRedirect('/', 'Success!', 'Your password has been updated.');
+  return getStatusRedirect(DEFAULT_AFTER_SIGN_IN, 'Success!', 'Your password has been updated.');
 }
 
 export async function updateEmail(formData: FormData): Promise<string> {

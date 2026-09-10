@@ -35,6 +35,8 @@ export async function middleware(request: NextRequest) {
   const hasSession = SESSION_COOKIES.some((name) => request.cookies.has(name));
   if (!hasSession) {
     const signInUrl = new URL('/signin/password_signin', request.url);
+    // So that signing in lands back here rather than on the map.
+    signInUrl.searchParams.set('next', pathname + request.nextUrl.search);
     return NextResponse.redirect(signInUrl);
   }
 

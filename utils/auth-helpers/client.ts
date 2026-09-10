@@ -2,6 +2,7 @@
 
 import { authClient } from '@/lib/auth-client';
 import { redirectToPath } from './server';
+import { safeNext } from './settings';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 export type OAuthProvider = 'github' | 'google';
@@ -41,7 +42,7 @@ export async function signInWithOAuth(e: React.FormEvent<HTMLFormElement>) {
 
   await authClient.signIn.social({
     provider,
-    callbackURL: '/profile',
+    callbackURL: safeNext(formData.get('next')),
     errorCallbackURL: '/signin'
   });
 }

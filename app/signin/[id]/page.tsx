@@ -6,7 +6,8 @@ import {
   getAuthTypes,
   getViewTypes,
   getDefaultSignInView,
-  getRedirectMethod
+  getRedirectMethod,
+  safeNext
 } from '@/utils/auth-helpers/settings';
 import {
   Card,
@@ -56,6 +57,8 @@ export default async function SignIn({
     disable_button: boolean;
     token?: string;
     error?: string;
+    /** Where to go after signing in; set by the middleware. */
+    next?: string;
   }>;
 }) {
   const { allowOauth, allowEmail, allowPassword } = getAuthTypes();
@@ -67,6 +70,7 @@ export default async function SignIn({
   const disableButton = resolvedSearchParams.disable_button;
   // Better Auth appends the one-time reset token to the callback URL.
   const resetToken = resolvedSearchParams.token ?? '';
+  const next = safeNext(resolvedSearchParams.next);
 
   let viewProp: string;
   if (typeof paramsId === 'string' && viewTypes.includes(paramsId)) {
@@ -82,7 +86,7 @@ export default async function SignIn({
   const user = await getUser();
 
   if (user && viewProp !== 'update_password') {
-    return redirect('/my-sores');
+    return redirect(next);
   } else if (!user && viewProp === 'update_password' && !resetToken) {
     // Reaching this view without a session *and* without a reset token means
     // the link was never valid or has already been consumed.
@@ -112,6 +116,7 @@ export default async function SignIn({
           <PasswordSignIn
             allowEmail={allowEmail}
             redirectMethod={redirectMethod}
+            next={next}
           />
         )}
         {viewProp === 'email_signin' && (
@@ -119,6 +124,7 @@ export default async function SignIn({
             allowPassword={allowPassword}
             redirectMethod={redirectMethod}
             disableButton={disableButton}
+            next={next}
           />
         )}
         {viewProp === 'forgot_password' && (
@@ -139,7 +145,7 @@ export default async function SignIn({
           <div className="mt-6">
             <Separator text="or" />
             <div className="mt-4">
-              <OauthSignIn />
+              <OauthSignIn next={next} />
             </div>
           </div>
         )}

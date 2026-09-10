@@ -13,11 +13,14 @@ import { handleRequest } from '@/utils/auth-helpers/client';
 interface PasswordSignInProps {
   allowEmail: boolean;
   redirectMethod: string;
+  /** In-app path to land on afterwards. */
+  next: string;
 }
 
 export default function PasswordSignIn({
   allowEmail,
-  redirectMethod
+  redirectMethod,
+  next
 }: PasswordSignInProps) {
   const clientRouter = useRouter();
   const router = redirectMethod === 'client' ? clientRouter : null;
@@ -32,6 +35,7 @@ export default function PasswordSignIn({
   return (
     <div>
       <form noValidate onSubmit={handleSubmit} className="grid gap-4">
+        <input type="hidden" name="next" value={next} />
         <AuthField
           id="email"
           name="email"
