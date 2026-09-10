@@ -383,8 +383,34 @@
     transform: translate(-50%, -50%);
   }
 
-  /* Cards inside the app shell: flatter than marketing cards, no drop shadow. */
-  .app-card {
-    @apply rounded-xl border border-border bg-card;
+  /*
+   * Three surfaces, because a box on screen is doing one of three jobs and
+   * they should not look alike. One uniform card for readouts, inputs and
+   * artwork alike is what makes an app read as assembled rather than
+   * designed, and it wastes the cheapest signal available: a person can tell
+   * a thing they read from a thing they fill in before they focus on either.
+   *
+   *   instrument  a readout — figures, charts, tables. Recessed and
+   *               borderless, so numbers sit in the page rather than float
+   *               in a box. Nothing on an instrument is interactive.
+   *   worksheet   something you fill in — sliders, chips, forms. The raised
+   *               surface, and the only one that carries a border.
+   *   canvas      the mouth map: a worksheet whose content is a drawing, so
+   *               it clips its content instead of padding it.
+   *
+   * No static surface casts a shadow. In this app a shadow means floating —
+   * the bottom sheet, the sticky Save button, a chart tooltip — and if every
+   * card has one, none of them says anything.
+   */
+  .surface-instrument {
+    @apply rounded-lg bg-muted/50;
+  }
+
+  .surface-worksheet {
+    @apply rounded-worksheet border border-border bg-card;
+  }
+
+  .surface-canvas {
+    @apply relative overflow-hidden rounded-worksheet border border-border bg-card;
   }
 }

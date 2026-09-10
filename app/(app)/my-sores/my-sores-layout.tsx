@@ -10,7 +10,6 @@ import {
   SoreReadings
 } from '@/components/SoreDetails';
 import SeverityKey from '@/components/SeverityKey';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Sheet,
   SheetBody,
@@ -38,13 +37,19 @@ import { User, Sore } from '@/types';
 export const MySoresLayout = ({
   user,
   soresData,
-  initialSelectedId = null
+  initialSelectedId = null,
+  startInAddMode = false
 }: {
   user: User;
   soresData: Sore[];
   initialSelectedId?: string | null;
+  startInAddMode?: boolean;
 }) => (
-  <SoreProvider initialSores={soresData} initialSelectedId={initialSelectedId}>
+  <SoreProvider
+    initialSores={soresData}
+    initialSelectedId={initialSelectedId}
+    initialMode={startInAddMode ? 'add' : 'view'}
+  >
     <MySoresScreen user={user} />
   </SoreProvider>
 );
@@ -60,9 +65,9 @@ function MySoresScreen({ user }: { user: User }) {
         does not: the top bar already says Map, and a paragraph of
         instructions above the fold would push the map itself below it.
       */}
-      <header className="mb-6 hidden lg:block">
-        <h1 className="text-title">Your mouth map</h1>
-        <p className="prose-measure mt-2 text-muted-foreground">
+      <header className="mb-0 lg:mb-6">
+        <h1 className="text-title sr-only lg:not-sr-only">Your mouth map</h1>
+        <p className="prose-measure mt-2 hidden text-muted-foreground lg:block">
           Pick the part of your mouth, then tap a sore to see its readings. Use
           Add to mark a new one, or Edit to log today&rsquo;s size and pain.
         </p>
@@ -79,12 +84,14 @@ function MySoresScreen({ user }: { user: User }) {
           <div className="space-y-4">
             {mode !== 'view' && selectedSore && <SoreSliders />}
             {selectedSore ? (
-              <Card>
+              /* A readout, so it recedes: the map beside it is the subject
+                 of this screen and should stay the raised thing. */
+              <div className="surface-instrument">
                 <SoreNavigator className="border-b border-border px-2 py-1.5" />
-                <CardContent className="pt-5">
+                <div className="p-4 sm:p-5">
                   <SoreReadings />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ) : (
               <SoreEmptyState />
             )}

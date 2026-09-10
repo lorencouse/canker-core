@@ -59,10 +59,15 @@ export default function StatTiles({ sores }: { sores: Sore[] }) {
   return (
     <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {tiles.map((tile) => (
-        <div key={tile.label} className="app-card px-4 py-3">
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">{tile.label}</dt>
-          <dd className="tabular mt-1 truncate font-display text-xl font-semibold">{tile.value}</dd>
-          {tile.hint && <dd className="text-xs text-muted-foreground">{tile.hint}</dd>}
+        <div key={tile.label} className="surface-instrument px-4 py-3">
+          {/* Sentence case. A tracked-out caps label is chrome dressed as
+              information, and five of them in a row is a lot of shouting
+              for what are one-word nouns. */}
+          <dt className="text-xs text-muted-foreground">{tile.label}</dt>
+          <dd className="tabular mt-1.5 truncate font-display text-figure font-semibold">
+            {tile.value}
+          </dd>
+          {tile.hint && <dd className="mt-0.5 text-xs text-muted-foreground">{tile.hint}</dd>}
         </div>
       ))}
     </dl>

@@ -15,7 +15,7 @@ import { cn } from '@/utils/cn';
 
 const signedInLinks = [
   { href: '/my-sores', label: 'Map' },
-  { href: '/history', label: 'History' },
+  { href: '/insights', label: 'Insights' },
   { href: '/profile', label: 'Settings' }
 ];
 

@@ -55,7 +55,7 @@ const SoreSliders: React.FC = () => {
   const loggedToday = hasReadingOn(selectedSore, new Date());
 
   return (
-    <div className="app-card space-y-5 p-4 sm:p-5">
+    <div className="surface-worksheet space-y-5 p-4 sm:p-5">
       {/*
         Says which of the two things a slider move will do, because they look
         identical on the slider and are not: one adds a day to the history,

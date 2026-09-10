@@ -75,10 +75,13 @@ export default function SoreHistoryChart({ sore }: { sore: Sore }) {
             return (
               <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
                 <p className="font-medium">
-                  Day {row.n} <span className="text-muted-foreground">· {row.day}</span>
+                  Day {row.n}{' '}
+                  <span className="font-normal text-muted-foreground">
+                    {row.day}
+                  </span>
                 </p>
                 <p className="tabular mt-1">
-                  {row.size} mm · pain {row.pain} of 10
+                  {row.size} mm wide, pain {row.pain} of 10
                 </p>
                 {row.note && <p className="mt-1 max-w-56 text-muted-foreground">{row.note}</p>}
               </div>

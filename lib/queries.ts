@@ -30,6 +30,25 @@ export const getUser = cache(async (): Promise<User | null> => {
   };
 });
 
+/**
+ * Whether the first-run flow has been seen, read from the row rather than
+ * from the session.
+ *
+ * The session is cookie-cached for five minutes, which is precisely the
+ * window in which this changes: finishing onboarding and then being sent
+ * back to it because the cookie had not caught up is the one failure this
+ * flag exists to prevent. A primary-key lookup on a one-row-per-person
+ * table, deduped per render by cache(), is the cheaper mistake.
+ */
+export const getOnboardedAt = cache(async (userId: string): Promise<string | null> => {
+  const rows = await query<{ onboarded_at: string | null }>(
+    `select to_jsonb("onboardedAt") #>> '{}' as onboarded_at
+       from "user" where id = $1`,
+    [userId]
+  );
+  return rows[0]?.onboarded_at ?? null;
+});
+
 /** Profile for the signed-in user; the profile lives on the auth record. */
 export const getUserDetails = cache(async (): Promise<User | null> => getUser());
 

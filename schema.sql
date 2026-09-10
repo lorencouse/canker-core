@@ -25,7 +25,11 @@ create table if not exists "user" (
   "emailVerified" boolean not null default false,
   "image" text,
   "createdAt" timestamptz not null default now(),
-  "updatedAt" timestamptz not null default now()
+  "updatedAt" timestamptz not null default now(),
+  -- Not a Better Auth column: declared in lib/auth.ts as an additional field
+  -- so the app can read it off the session. Null means the first-run flow has
+  -- not been seen; set once, whether it was finished or skipped.
+  "onboardedAt" timestamptz
 );
 
 create table if not exists "session" (

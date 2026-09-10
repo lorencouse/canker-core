@@ -1,7 +1,9 @@
 import { PropsWithChildren, Suspense } from 'react';
+import { redirect } from 'next/navigation';
 
 import AppTopBar from '@/components/shell/AppTopBar';
 import TabBar from '@/components/shell/TabBar';
+import { getOnboardedAt, getUser } from '@/lib/queries';
 
 /**
  * The signed-in app.
@@ -14,7 +16,17 @@ import TabBar from '@/components/shell/TabBar';
  * There is no footer here. Marketing links inside a signed-in app are noise,
  * and on a phone they would sit directly under the tab bar.
  */
-export default function AppLayout({ children }: PropsWithChildren) {
+export default async function AppLayout({ children }: PropsWithChildren) {
+  /*
+   * Anyone who has not seen the first run goes through it before they see a
+   * tab bar. The check is here rather than in the middleware because the
+   * middleware runs on the Edge with only a cookie to go on, and this needs
+   * a column — and because every signed-in page is inside this layout, so
+   * there is exactly one place to enforce it.
+   */
+  const user = await getUser();
+  if (user && !(await getOnboardedAt(user.id))) redirect('/welcome');
+
   return (
     <div className="min-h-[100dvh]">
       <AppTopBar />

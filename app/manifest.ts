@@ -50,9 +50,9 @@ export default function manifest(): MetadataRoute.Manifest {
         url: '/my-sores'
       },
       {
-        name: 'History',
-        short_name: 'History',
-        url: '/history'
+        name: 'Patterns and history',
+        short_name: 'Insights',
+        url: '/insights'
       }
     ]
   };

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
+import Instrument from '@/components/insights/Instrument';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DayLog, Sore } from '@/types';
 import { treatmentDays, triggersBeforeSores, type Tally } from '@/utils/insights';
 
@@ -16,34 +16,23 @@ export default function TriggerTally({ sores, logs }: { sores: Sore[]; logs: Day
 
   if (logs.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-subhead">Patterns</CardTitle>
-          <CardDescription>
-            Log what you ate, how you slept and what you tried on the Today tab,
-            and this is where the repeat offenders show up.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild variant="outline" size="touch" className="w-full sm:w-auto">
-            <Link href="/today">Log today</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <Instrument
+        title="Patterns"
+        caption="Log what you ate, how you slept and what you tried on the Today tab, and this is where the repeat offenders show up."
+      >
+        <Button asChild variant="outline" size="touch" className="w-full sm:w-auto">
+          <Link href="/today">Log today</Link>
+        </Button>
+      </Instrument>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-subhead">Patterns</CardTitle>
-        <CardDescription>
-          Over {logs.length} logged day{logs.length === 1 ? '' : 's'}. A trigger that keeps
-          appearing in the run-up to a sore is worth a closer look; it is a
-          pattern, not a verdict.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-6 sm:grid-cols-2">
+    <Instrument
+      title="Patterns"
+      caption={`Over ${logs.length} logged day${logs.length === 1 ? '' : 's'}. A trigger that keeps appearing in the run-up to a sore is worth a closer look; it is a pattern, not a verdict.`}
+    >
+      <div className="grid gap-6 sm:grid-cols-2">
         <TallyList
           heading="In the 3 days before a sore"
           items={tally}
@@ -60,8 +49,8 @@ export default function TriggerTally({ sores, logs }: { sores: Sore[]; logs: Day
           unit={(n) => `${n} day${n === 1 ? '' : 's'}`}
           empty="No treatments logged yet."
         />
-      </CardContent>
-    </Card>
+      </div>
+    </Instrument>
   );
 }
 

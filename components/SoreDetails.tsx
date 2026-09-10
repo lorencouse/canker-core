@@ -6,9 +6,11 @@ import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 
 import { useSoreContext } from '@/context/SoreContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import CourseStrip from '@/components/sore/CourseStrip';
+import SoreSigil from '@/components/sore/SoreSigil';
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
+import { courseSentence } from '@/utils/course';
 import { isLongRunning } from '@/utils/insights';
 import { dayNumberOf, latestReading } from '@/utils/readings';
 
@@ -42,9 +44,7 @@ function useSoreFacts(sore: Sore | null) {
 function Reading({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </dt>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="tabular mt-0.5 truncate font-medium">{value}</dd>
     </div>
   );
@@ -81,23 +81,29 @@ export function SoreNavigator({ className }: { className?: string }) {
       >
         <ChevronLeft />
       </Button>
-      <div className="min-w-0 text-center">
-        {/* Named by where it is and how old it is: "Tongue · Day 4" tells
-            you which sore this is in a way "Sore 2 of 5" never could. */}
-        <p className="truncate font-display text-sm font-semibold">
-          {selectedSore?.zone ?? 'Sore'}
-          {dayNumber !== null && (
-            <span className="tabular font-normal text-muted-foreground">
-              {' · '}
-              {healed ? `healed after ${dayNumber} day${dayNumber === 1 ? '' : 's'}` : `Day ${dayNumber}`}
-            </span>
-          )}
-        </p>
-        {sores.length > 1 && (
-          <p className="tabular text-xs text-muted-foreground">
-            {index + 1} of {sores.length}
+      {/* Identified by its sigil and its age, which is how a person tells
+          one sore from another. "Sore 2 of 5" never did that. */}
+      <div className="flex min-w-0 items-center gap-2.5">
+        {selectedSore && <SoreSigil sore={selectedSore} size={28} />}
+        <div className="min-w-0 text-left">
+          <p className="truncate font-display text-sm font-semibold">
+            {selectedSore?.zone ?? 'Sore'}
           </p>
-        )}
+          <p className="tabular flex gap-3 text-xs text-muted-foreground">
+            {dayNumber !== null && (
+              <span>
+                {healed
+                  ? `Healed after ${dayNumber} day${dayNumber === 1 ? '' : 's'}`
+                  : `Day ${dayNumber}`}
+              </span>
+            )}
+            {sores.length > 1 && (
+              <span>
+                {index + 1} of {sores.length}
+              </span>
+            )}
+          </p>
+        </div>
       </div>
       <Button
         variant="ghost"
@@ -128,6 +134,12 @@ export function SoreReadings() {
 
   return (
     <div className="space-y-4">
+    {/* The course, then the answer it adds up to, then the figures behind
+        both. A person wants the verdict before the measurements. */}
+    <div className="space-y-2">
+      <CourseStrip sore={selectedSore} size="md" />
+      <p className="text-sm font-medium">{courseSentence(selectedSore)}</p>
+    </div>
     <div className="flex items-start gap-5">
       <dl className="grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3.5">
         <Reading label="Size" value={size === null ? '—' : `${size} mm`} />
@@ -180,15 +192,13 @@ export function SoreReadings() {
 /** Shown in the desktop column when nothing is selected. */
 export function SoreEmptyState() {
   return (
-    <Card>
-      <CardContent className="py-12 text-center">
-        <p className="font-medium">No sore selected</p>
-        <p className="prose-measure mx-auto mt-1 text-sm text-muted-foreground">
-          Tap a sore on the map to see its readings, or use Add to mark a new
-          one.
-        </p>
-      </CardContent>
-    </Card>
+    <div className="surface-worksheet px-4 py-12 text-center">
+      <p className="font-medium">No sore selected</p>
+      <p className="prose-measure mx-auto mt-1 text-sm text-muted-foreground">
+        Tap a sore on the map to see its readings, or use Add to mark a new
+        one.
+      </p>
+    </div>
   );
 }
 

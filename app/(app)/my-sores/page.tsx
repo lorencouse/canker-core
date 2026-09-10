@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 export default async function MySoresPage({
   searchParams
 }: {
-  searchParams: Promise<{ sore?: string }>;
+  searchParams: Promise<{ sore?: string; add?: string }>;
 }) {
   const user = await getUserDetails();
 
@@ -14,14 +14,16 @@ export default async function MySoresPage({
 
   const soresData = await getSores(user.id);
 
-  const { sore } = await searchParams;
+  const { sore, add } = await searchParams;
 
   return (
     <MySoresLayout
       user={user}
       soresData={soresData ?? []}
-      // From History's "Show on map": open with that sore selected.
+      // From Insights' "Show on map": open with that sore selected.
       initialSelectedId={sore ?? null}
+      // From the top bar's "New sore": land ready to place one.
+      startInAddMode={add !== undefined}
     />
   );
 }
