@@ -67,13 +67,21 @@ node scripts/generate-app-icons.mjs
 
 ## The layout
 
-Three shells, one per route group, all under the root layout:
+Four shells, one per route group, all under the root layout:
 
 | Group | Chrome | Where |
 | --- | --- | --- |
 | `app/(marketing)` | navbar + footer | home, about, legal |
-| `app/(app)` | top bar + bottom tabs | map, history, settings |
+| `app/(app)` | top bar + bottom tabs | today, map, insights, settings |
+| `app/(onboarding)` | none, just safe areas | the first-run flow |
 | `app/signin` | wordmark only | sign-in and password flows |
+
+The onboarding shell has no chrome on purpose: there is nowhere else to be
+until the flow is done, and a tab bar over four empty screens is a poor first
+impression. `app/(app)/layout.tsx` sends anyone whose `"onboardedAt"` is null
+there before they reach a tab, which is why the check lives in a layout and
+not in the middleware — the middleware runs on the Edge with only a cookie,
+and this needs a column.
 
 The signed-in app is the one with an app-shaped layout. Chrome is **fixed**
 top and bottom with the content scrolling between them, because a sticky

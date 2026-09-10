@@ -131,42 +131,50 @@ export default function TodayScreen({
       </header>
 
       <div className="space-y-6">
-        <section className="space-y-3" aria-labelledby="open-sores">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 id="open-sores" className="text-subhead">
-              Open sores
-            </h2>
-            {open.length > 0 && (
+        {/*
+          With nothing open there is no list to head, and the answer line has
+          already said so — a section called "Open sores" containing a card
+          that repeats "nothing open" is the same sentence three times. What
+          is left is the one action, and which verb it wants depends on
+          whether this person has ever logged anything: a first mark and a
+          next mark are different invitations, and the second should not
+          read as a nag on a day someone has earned.
+        */}
+        {open.length === 0 ? (
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+            <Button asChild variant="outline" size="touch" className="w-full sm:w-auto">
+              <Link href="/my-sores">
+                {sores.length === 0 ? 'Mark your first sore' : 'Mark a new sore'}
+              </Link>
+            </Button>
+            <p className="prose-measure text-sm text-muted-foreground">
+              {sores.length === 0
+                ? 'The map is where a sore starts. It takes about fifteen seconds.'
+                : 'Logging what you ate and how you slept is still worth doing — it is how patterns show up on the days between sores.'}
+            </p>
+          </div>
+        ) : (
+          <section className="space-y-3" aria-labelledby="open-sores">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 id="open-sores" className="text-subhead">
+                Open sores
+              </h2>
               <p className="tabular text-sm text-muted-foreground">
                 {unlogged === 0
                   ? 'All logged'
                   : `${unlogged} of ${open.length} left`}
               </p>
-            )}
-          </div>
-          {open.length === 0 ? (
-            <div className="surface-worksheet px-4 py-8 text-center">
-              <p className="font-medium">Nothing open right now.</p>
-              <p className="prose-measure mx-auto mt-1 text-sm text-muted-foreground">
-                A good day. If a new one appears, mark it on the map. Logging
-                what you ate or how you slept is still worth doing — it is how
-                patterns show up on the days between sores.
-              </p>
-              <Button asChild variant="outline" className="mt-4">
-                <Link href="/my-sores">Open the mouth map</Link>
-              </Button>
             </div>
-          ) : (
-            open.map((sore) => (
+            {open.map((sore) => (
               <SoreCheckInCard
                 key={sore.id}
                 sore={sore}
                 onChange={updateSore}
                 onHeal={() => heal(sore)}
               />
-            ))
-          )}
-        </section>
+            ))}
+          </section>
+        )}
 
         <section className="space-y-3" aria-labelledby="day-log">
           <h2 id="day-log" className="text-subhead">

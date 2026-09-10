@@ -30,9 +30,10 @@ const SoreHistoryLayout = ({
   return (
     <div className="mx-auto max-w-6xl px-4 py-4 lg:px-6 lg:py-8">
       <header className="mb-4 lg:mb-6">
-        {/* The top bar already names the screen on a phone; this heading is
-            the desktop one, where the bar carries the wordmark instead. */}
-        <h1 className="hidden text-title lg:block">History</h1>
+        {/* The top bar already names the screen on a phone, so the heading
+            is only drawn from lg up — but it stays in the document outline
+            at every width, because the bar's label is not a heading. */}
+        <h1 className="text-title sr-only lg:not-sr-only">History</h1>
         <p className="prose-measure text-muted-foreground lg:mt-2">
           {sores.length === 0
             ? 'Nothing logged yet.'

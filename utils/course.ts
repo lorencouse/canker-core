@@ -193,7 +193,10 @@ export function answerLine(sores: Sore[], now: Date = new Date()): Answer {
 
   return {
     headline: `${open.length} sores open.`,
-    note: `Longest is the ${longest.zone.toLowerCase()} one — ${lower(courseSentence(longest, now))}`
+    // "on the" rather than "the <zone> one", which reads fine for the tongue
+    // and not at all for the roof of mouth. Every zone name is a place, so
+    // the preposition that suits a place suits all of them.
+    note: `Longest is on the ${longest.zone.toLowerCase()} — ${lower(courseSentence(longest, now))}`
   };
 }
 

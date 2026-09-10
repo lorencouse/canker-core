@@ -38,11 +38,13 @@ export default function AppTopBar() {
       )}
     >
       <div className="mx-auto flex h-[var(--app-bar-h)] max-w-6xl items-center gap-3 px-4 lg:px-6">
-        {/* Phone: the screen's own name, which is the only thing a title
-            bar has to say when the tabs are visible two inches below. */}
-        <h1 className="flex-1 truncate font-display text-base font-semibold tracking-tight lg:hidden">
+        {/* Phone: the screen's own name, which is the only thing a title bar
+            has to say when the tabs are visible two inches below. Not a
+            heading — it labels the chrome, and each screen carries its own
+            h1 at every width. */}
+        <p className="flex-1 truncate font-display text-base font-semibold tracking-tight lg:hidden">
           {current?.label ?? 'Canker Core'}
-        </h1>
+        </p>
 
         {/* Desktop: wordmark plus inline navigation. */}
         <Link

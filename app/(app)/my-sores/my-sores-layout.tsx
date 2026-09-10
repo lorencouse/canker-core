@@ -59,9 +59,9 @@ function MySoresScreen({ user }: { user: User }) {
         does not: the top bar already says Map, and a paragraph of
         instructions above the fold would push the map itself below it.
       */}
-      <header className="mb-6 hidden lg:block">
-        <h1 className="text-title">Your mouth map</h1>
-        <p className="prose-measure mt-2 text-muted-foreground">
+      <header className="mb-0 lg:mb-6">
+        <h1 className="text-title sr-only lg:not-sr-only">Your mouth map</h1>
+        <p className="prose-measure mt-2 hidden text-muted-foreground lg:block">
           Pick the part of your mouth, then tap a sore to see its readings. Use
           Add to mark a new one, or Edit to log today&rsquo;s size and pain.
         </p>
