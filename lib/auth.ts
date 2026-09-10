@@ -74,9 +74,6 @@ export const auth = betterAuth({
     // they live directly on the auth user row, so the trigger and the mirror
     // table both go away.
     //
-    // billing_address / payment_method deliberately live on `customers` instead:
-    // Better Auth has no JSON field type, and storing them here would force them
-    // into text columns the Stripe sync would have to serialise by hand.
     additionalFields: {
       username: { type: 'string', required: false, input: true },
       bio: { type: 'string', required: false, input: true }

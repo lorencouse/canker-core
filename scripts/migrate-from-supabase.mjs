@@ -99,19 +99,17 @@ async function main() {
   console.log(`Destination: ${DATABASE_URL.replace(/:[^:@/]*@/, ':****@')}`);
   console.log(DRY_RUN ? '\nDRY RUN — nothing will be written.\n' : '');
 
-  const [authUsers, users, sores, customers, products, prices, subscriptions] = await Promise.all([
+  // The starter's Stripe tables (customers, products, prices, subscriptions)
+  // were dropped from the schema and are no longer copied.
+  const [authUsers, users, sores] = await Promise.all([
     fetchAuthUsers(),
     fetchTable('users'),
-    fetchTable('sores'),
-    fetchTable('customers'),
-    fetchTable('products'),
-    fetchTable('prices'),
-    fetchTable('subscriptions')
+    fetchTable('sores')
   ]);
 
   console.log('Read from Supabase:');
   console.log(`  auth.users     ${authUsers.size}`);
-  for (const [name, rows] of Object.entries({ users, sores, customers, products, prices, subscriptions })) {
+  for (const [name, rows] of Object.entries({ users, sores })) {
     console.log(`  ${name.padEnd(14)} ${rows.length}`);
   }
   console.log('');
@@ -186,108 +184,6 @@ async function main() {
       }
     }
     record('oauth accounts', identityCount);
-
-    // --- customers -------------------------------------------------------
-    // billing_address / payment_method lived on public.users in Supabase and
-    // move onto customers here.
-    const billingByUser = Object.fromEntries(
-      users.map((u) => [u.id, { billing_address: u.billing_address ?? null, payment_method: u.payment_method ?? null }])
-    );
-    let customerCount = 0;
-    for (const c of customers) {
-      if (!migratedIds.has(c.id)) {
-        warnings.push(`customer ${c.id} skipped — no matching migrated user.`);
-        continue;
-      }
-      const billing = billingByUser[c.id] ?? { billing_address: null, payment_method: null };
-      if (!DRY_RUN) {
-        await client.query(
-          `insert into customers (id, stripe_customer_id, billing_address, payment_method)
-           values ($1,$2,$3::jsonb,$4::jsonb)
-           on conflict (id) do update set
-             stripe_customer_id = excluded.stripe_customer_id,
-             billing_address = excluded.billing_address,
-             payment_method = excluded.payment_method`,
-          [
-            c.id,
-            c.stripe_customer_id ?? null,
-            billing.billing_address ? JSON.stringify(billing.billing_address) : null,
-            billing.payment_method ? JSON.stringify(billing.payment_method) : null
-          ]
-        );
-      }
-      customerCount++;
-    }
-    record('customers', customerCount);
-
-    // --- products --------------------------------------------------------
-    for (const p of products) {
-      if (!DRY_RUN) {
-        await client.query(
-          `insert into products (id, active, name, description, image, metadata)
-           values ($1,$2,$3,$4,$5,$6::jsonb)
-           on conflict (id) do update set
-             active = excluded.active, name = excluded.name,
-             description = excluded.description, image = excluded.image,
-             metadata = excluded.metadata`,
-          [p.id, p.active, p.name, p.description, p.image, JSON.stringify(p.metadata ?? {})]
-        );
-      }
-    }
-    record('products', products.length);
-
-    // --- prices ----------------------------------------------------------
-    for (const p of prices) {
-      if (!DRY_RUN) {
-        await client.query(
-          `insert into prices (id, product_id, active, description, unit_amount, currency,
-                               type, interval, interval_count, trial_period_days, metadata)
-           values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)
-           on conflict (id) do update set
-             product_id = excluded.product_id, active = excluded.active,
-             description = excluded.description, unit_amount = excluded.unit_amount,
-             currency = excluded.currency, type = excluded.type,
-             interval = excluded.interval, interval_count = excluded.interval_count,
-             trial_period_days = excluded.trial_period_days, metadata = excluded.metadata`,
-          [p.id, p.product_id, p.active, p.description, p.unit_amount, p.currency,
-           p.type, p.interval, p.interval_count, p.trial_period_days,
-           JSON.stringify(p.metadata ?? {})]
-        );
-      }
-    }
-    record('prices', prices.length);
-
-    // --- subscriptions ---------------------------------------------------
-    let subCount = 0;
-    for (const s of subscriptions) {
-      if (!migratedIds.has(s.user_id)) {
-        warnings.push(`subscription ${s.id} skipped — no matching migrated user.`);
-        continue;
-      }
-      if (!DRY_RUN) {
-        await client.query(
-          `insert into subscriptions (id, user_id, status, metadata, price_id, quantity,
-                                      cancel_at_period_end, created, current_period_start,
-                                      current_period_end, ended_at, cancel_at, canceled_at,
-                                      trial_start, trial_end)
-           values ($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-           on conflict (id) do update set
-             status = excluded.status, metadata = excluded.metadata,
-             price_id = excluded.price_id, quantity = excluded.quantity,
-             cancel_at_period_end = excluded.cancel_at_period_end,
-             current_period_start = excluded.current_period_start,
-             current_period_end = excluded.current_period_end,
-             ended_at = excluded.ended_at, cancel_at = excluded.cancel_at,
-             canceled_at = excluded.canceled_at, trial_start = excluded.trial_start,
-             trial_end = excluded.trial_end`,
-          [s.id, s.user_id, s.status, JSON.stringify(s.metadata ?? {}), s.price_id, s.quantity,
-           s.cancel_at_period_end, s.created, s.current_period_start, s.current_period_end,
-           s.ended_at, s.cancel_at, s.canceled_at, s.trial_start, s.trial_end]
-        );
-      }
-      subCount++;
-    }
-    record('subscriptions', subCount);
 
     // --- sores -----------------------------------------------------------
     let soreCount = 0;

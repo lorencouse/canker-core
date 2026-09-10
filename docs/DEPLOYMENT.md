@@ -63,7 +63,6 @@ SHA=$(git rev-parse --short HEAD)
 # 1. Build for the VPS architecture (arm64; an Apple Silicon Mac matches natively)
 docker build --platform linux/arm64 \
   --build-arg NEXT_PUBLIC_SITE_URL="" \
-  --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="" \
   -t canker-core:$SHA .
 
 # 2. Stream it to the VPS.
@@ -95,8 +94,7 @@ variables, and the browser auth client uses its own origin. Cutover is therefore
 2. In Coolify, set the application's domain to `https://cankercore.com`, and
    update `SITE_URL` and `BETTER_AUTH_URL` to match.
 3. Redeploy (restart). Traefik requests the certificate automatically.
-4. Update the OAuth callback URLs with GitHub and Google, and the Stripe webhook
-   endpoint.
+4. Update the OAuth callback URLs with GitHub and Google.
 
 ---
 
@@ -155,7 +153,6 @@ runtime.
 | Variable | Notes |
 |---|---|
 | `NEXT_PUBLIC_SITE_URL` | **Build-time.** Full public URL, no trailing slash |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | **Build-time.** Blank is fine until billing goes live |
 | `DATABASE_URL` | Internal connection string from step 1 |
 | `DATABASE_SSL` | `true` if the Postgres service terminates TLS |
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32`. Changing it logs everyone out |
@@ -164,7 +161,6 @@ runtime.
 | `SMTP_HOST` / `SMTP_PORT` | Defaults to `smtp.mail.me.com` / `587` |
 | `SMTP_USERNAME` / `SMTP_PASSWORD` | The mailbox that sends auth email |
 | `EMAIL_FROM` | e.g. `Canker Core <no-reply@cankercore.com>` |
-| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Only needed once billing is live |
 
 > Without `SMTP_USERNAME`/`SMTP_PASSWORD` the app logs auth emails to the
 > container log instead of sending them. Fine locally, **not** in production —
@@ -178,11 +174,6 @@ Register these with each provider:
 https://<your-domain>/api/auth/callback/github
 https://<your-domain>/api/auth/callback/google
 ```
-
-### 6. Stripe webhook
-
-Point the Stripe webhook at `https://<your-domain>/api/webhooks` and copy the
-signing secret into `STRIPE_WEBHOOK_SECRET`.
 
 ---
 

@@ -20,10 +20,8 @@ COPY . .
 # client bundle. Everything else (DATABASE_URL, secrets, SMTP) is read at runtime,
 # which is why lib/db/pool.ts must not connect at import time.
 ARG NEXT_PUBLIC_SITE_URL
-ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
-ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
