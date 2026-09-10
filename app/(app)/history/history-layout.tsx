@@ -3,19 +3,28 @@ import Link from 'next/link';
 
 import BarChartComponent from '@/components/charts/BarChartComponent';
 import SoresTable from '@/components/charts/SoresTable';
+import StatTiles from '@/components/insights/StatTiles';
+import TriggerTally from '@/components/insights/TriggerTally';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Sore } from '@/types';
+import type { DayLog, Sore, User } from '@/types';
 
 /**
- * History: the chart and the underlying readings.
+ * History: the headline figures, the chart, the patterns, and every sore.
  *
  * Stacked at every width below xl. The chart and the table are the same
  * data at two levels of detail, and reading one against the other means
  * scrolling between them rather than sitting them side by side in 400px
  * columns where neither is legible.
  */
-const SoreHistoryLayout = ({ user, sores }: { user: User; sores: Sore[] }) => {
+const SoreHistoryLayout = ({
+  sores,
+  dayLogs
+}: {
+  user: User;
+  sores: Sore[];
+  dayLogs: DayLog[];
+}) => {
   const active = sores.filter((sore) => !sore.healed_at).length;
 
   return (
@@ -45,11 +54,15 @@ const SoreHistoryLayout = ({ user, sores }: { user: User; sores: Sore[] }) => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2 xl:gap-8">
-          <BarChartComponent sores={sores} />
+        <div className="space-y-4 xl:space-y-8">
+          <StatTiles sores={sores} />
+          <div className="grid gap-4 xl:grid-cols-2 xl:gap-8">
+            <BarChartComponent sores={sores} />
+            <TriggerTally sores={sores} logs={dayLogs} />
+          </div>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-subhead">Every reading</CardTitle>
+              <CardTitle className="text-subhead">Every sore</CardTitle>
             </CardHeader>
             <CardContent>
               <SoresTable sores={sores} />

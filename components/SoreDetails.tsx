@@ -2,13 +2,14 @@
 
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 
 import { useSoreContext } from '@/context/SoreContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
+import { isLongRunning } from '@/utils/insights';
 import { dayNumberOf, latestReading } from '@/utils/readings';
 
 /**
@@ -80,17 +81,21 @@ export function SoreNavigator({ className }: { className?: string }) {
       >
         <ChevronLeft />
       </Button>
-      <div className="text-center">
-        <p className="font-display text-sm font-semibold">
-          Sore {index + 1}
-          <span className="font-normal text-muted-foreground">
-            {' '}
-            of {sores.length}
-          </span>
+      <div className="min-w-0 text-center">
+        {/* Named by where it is and how old it is: "Tongue · Day 4" tells
+            you which sore this is in a way "Sore 2 of 5" never could. */}
+        <p className="truncate font-display text-sm font-semibold">
+          {selectedSore?.zone ?? 'Sore'}
+          {dayNumber !== null && (
+            <span className="tabular font-normal text-muted-foreground">
+              {' · '}
+              {healed ? `healed after ${dayNumber} day${dayNumber === 1 ? '' : 's'}` : `Day ${dayNumber}`}
+            </span>
+          )}
         </p>
-        {dayNumber !== null && (
+        {sores.length > 1 && (
           <p className="tabular text-xs text-muted-foreground">
-            {healed ? `Healed after ${dayNumber} day${dayNumber === 1 ? '' : 's'}` : `Day ${dayNumber}`}
+            {index + 1} of {sores.length}
           </p>
         )}
       </div>
@@ -167,6 +172,7 @@ export function SoreReadings() {
         {note}
       </p>
     )}
+    {isLongRunning(selectedSore) && <LongSoreNote />}
     </div>
   );
 }
@@ -183,5 +189,22 @@ export function SoreEmptyState() {
         </p>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Shown once an open sore passes two weeks. Most canker sores heal inside
+ * that; one that does not is the textbook reason to have a dentist look.
+ * Neutral ink and an info icon, not red — red here means pain.
+ */
+export function LongSoreNote() {
+  return (
+    <p className="flex gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+      <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+      <span>
+        Over two weeks now. A sore that lasts this long is worth showing a
+        dentist or doctor, especially if it is not shrinking.
+      </span>
+    </p>
   );
 }

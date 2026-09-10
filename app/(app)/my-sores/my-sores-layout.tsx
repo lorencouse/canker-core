@@ -37,12 +37,14 @@ import { User, Sore } from '@/types';
  */
 export const MySoresLayout = ({
   user,
-  soresData
+  soresData,
+  initialSelectedId = null
 }: {
   user: User;
   soresData: Sore[];
+  initialSelectedId?: string | null;
 }) => (
-  <SoreProvider initialSores={soresData}>
+  <SoreProvider initialSores={soresData} initialSelectedId={initialSelectedId}>
     <MySoresScreen user={user} />
   </SoreProvider>
 );

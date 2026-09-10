@@ -39,17 +39,22 @@ interface SoreContextProps {
 interface SoreProviderProps {
   children: ReactNode;
   initialSores: Sore[];
+  /** Open with this sore selected (a link from History). */
+  initialSelectedId?: string | null;
 }
 
 const SoreContext = createContext<SoreContextProps | undefined>(undefined);
 
 export const SoreProvider: React.FC<SoreProviderProps> = ({
   children,
-  initialSores
+  initialSores,
+  initialSelectedId = null
 }) => {
-  const [selectedSore, setSelectedSore] = useState<Sore | null>(null);
+  const initial = initialSores.find((s) => s.id === initialSelectedId) ?? null;
+  const [selectedSore, setSelectedSore] = useState<Sore | null>(initial);
   const [sores, setSores] = useState<Sore[]>(initialSores);
-  const [showHealed, setShowHealed] = useState(false);
+  // A healed sore linked from History has to be visible to be selected.
+  const [showHealed, setShowHealed] = useState(Boolean(initial?.healed_at));
   const [mode, setMode] = useState<Mode>('view');
   const [snapshot, setSnapshot] = useState<Sore[] | null>(null);
 

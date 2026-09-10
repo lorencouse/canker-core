@@ -5,7 +5,9 @@ import { CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { LongSoreNote } from '@/components/SoreDetails';
 import type { Sore } from '@/types';
+import { isLongRunning } from '@/utils/insights';
 import { VIEW_LABELS } from '@/utils/mouth-map/geometry';
 import {
   currentPain,
@@ -112,6 +114,8 @@ export default function SoreCheckInCard({
           Same as last time
         </Button>
       )}
+
+      {isLongRunning(sore) && <LongSoreNote />}
     </div>
   );
 }
