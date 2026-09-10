@@ -73,8 +73,17 @@ CAPACITOR_SERVER_URL=http://192.168.0.50:3100 npm run cap:sync
 Icons are generated from the mark in `components/icons/Logo.tsx`:
 
 ```bash
-node scripts/generate-app-icons.mjs
+npm run cap:assets
 ```
+
+That draws `resources/icon.png` and the two splash sources, then slices them
+into the sizes each platform wants. The slices land inside `ios/` and
+`android/`, which are untracked — so this runs once per machine after
+`cap:add:*`, and again whenever the mark changes. Only `resources/` and the
+web icons under `public/icons/` are committed.
+
+Run it before any build you intend to ship: without it both apps carry
+Capacitor's default logo.
 
 ## The layout
 

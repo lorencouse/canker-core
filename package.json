@@ -8,6 +8,7 @@
     "cap:add:ios": "cap add ios",
     "cap:add:android": "cap add android",
     "cap:sync": "cap sync",
+    "cap:assets": "node scripts/generate-app-icons.mjs && capacitor-assets generate --ios --android --iconBackgroundColor '#131a21' --iconBackgroundColorDark '#131a21' --splashBackgroundColor '#131a21' --splashBackgroundColorDark '#131a21'",
     "cap:ios": "cap sync ios && cap open ios",
     "cap:android": "cap sync android && cap open android",
     "prettier-fix": "prettier --write .",
@@ -62,6 +63,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^7.6.9",
     "@types/node": "^20.17.6",
     "@types/nodemailer": "^8.0.1",

@@ -106,7 +106,22 @@
         Your map lives on your account, so it needs a connection to load. Your
         readings are safe — nothing was lost.
       </p>
-      <button type="button" onclick="location.reload()">Try again</button>
+      <!--
+        Not location.reload(). This page is served from the webview's own
+        localhost origin as the error page, so reloading re-fetches the error
+        page — and because localhost is not in server.allowNavigation, the
+        webview hands it to the system browser and the user loses the app.
+        Going to the site by name is the only way back in.
+
+        The URL is literal because this page has no way to read the
+        configured one: error pages are served without the Capacitor bridge,
+        so there is no plugin to ask. CAPACITOR_SERVER_URL only differs on a
+        dev build pointed at a LAN address, where the offline screen is not
+        what is being worked on.
+      -->
+      <button type="button" onclick="location.href = 'https://cankercore.com'">
+        Try again
+      </button>
     </main>
   </body>
 </html>

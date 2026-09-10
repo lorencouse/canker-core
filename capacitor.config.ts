@@ -35,6 +35,11 @@ const config: CapacitorConfig = {
       'github.com'
     ],
     androidScheme: 'https',
+    // Android blocks cleartext by default, which is right for the deployed
+    // https origin and fatal for the documented dev workflow of pointing
+    // CAPACITOR_SERVER_URL at a LAN address. Derived rather than a constant,
+    // so a production build can never carry the exemption.
+    cleartext: serverUrl.startsWith('http://'),
     // When server.url cannot be reached the webview would otherwise show its
     // own error page. Send it to the local shell instead — that is what the
     // bundle in webDir is for.

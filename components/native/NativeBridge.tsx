@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 
@@ -27,27 +27,33 @@ export default function NativeBridge() {
   const { resolvedTheme } = useTheme();
 
   /* --- status bar follows the theme ------------------------------------- */
+  // Read through a ref so applying the bar is not tied to the render that
+  // changed the theme: the splash screen needs to re-apply it later, long
+  // after this effect last ran.
+  const themeRef = useRef(resolvedTheme);
+  themeRef.current = resolvedTheme;
+
+  const applyStatusBar = useCallback(async () => {
+    const theme = themeRef.current;
+    if (!isNative() || !theme) return;
+
+    const { StatusBar, Style } = await import('@capacitor/status-bar');
+    // Overlay first, then style, and never the other way round. The bar
+    // overlays the webview so the page paints under it and the safe-area
+    // padding is what keeps content clear — but on Android that is set with
+    // the old setSystemUiVisibility flags, which reset the glyph appearance
+    // that setStyle asks WindowInsetsController for. Styling first leaves a
+    // light app with white-on-white glyphs.
+    await StatusBar.setOverlaysWebView({ overlay: true });
+    // Style names the *content*: Light means dark glyphs, for a light app.
+    await StatusBar.setStyle({
+      style: theme === 'dark' ? Style.Dark : Style.Light
+    });
+  }, []);
+
   useEffect(() => {
-    if (!isNative() || !resolvedTheme) return;
-    let cancelled = false;
-
-    (async () => {
-      const { StatusBar, Style } = await import('@capacitor/status-bar');
-      if (cancelled) return;
-      // Style names the *content*: Dark means dark glyphs, for a light app.
-      await StatusBar.setStyle({
-        style: resolvedTheme === 'dark' ? Style.Dark : Style.Light
-      });
-      // The bar overlays the webview, so the page paints under it and the
-      // safe-area padding is what keeps content clear. Any bar background
-      // colour would show as a band in the wrong shade during a theme change.
-      await StatusBar.setOverlaysWebView({ overlay: true });
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [resolvedTheme]);
+    void applyStatusBar();
+  }, [resolvedTheme, applyStatusBar]);
 
   /* --- hardware back button --------------------------------------------- */
   useEffect(() => {
@@ -102,18 +108,44 @@ export default function NativeBridge() {
   }, []);
 
   /* --- splash screen ------------------------------------------------------ */
+  // Fade length, shared by the hide call and the wait that follows it.
+  const FADE_MS = 200;
+  // Must match plugins.SplashScreen.launchShowDuration in capacitor.config.ts.
+  // The splash also times out on its own — the backstop for the offline
+  // shell, which has no bridge to dismiss it with — and that timeout tears
+  // the splash window down whether or not the app already hid it, taking the
+  // status bar appearance with it. So the bar is asserted once more after the
+  // timeout can no longer fire.
+  const LAUNCH_SHOW_MS = 5000;
+
   useEffect(() => {
     if (!isNative()) return;
-    // launchAutoHide is off, so the splash covers hydration instead of
-    // uncovering a half-built page. Two frames is enough for the first paint.
+    const timers: number[] = [];
+    // The splash covers hydration rather than uncovering a half-built page,
+    // so hide it here instead of letting it time out. Two frames is enough
+    // for the first paint. (It does also auto-hide, but only as the backstop
+    // for the offline shell, which cannot reach this code — see
+    // capacitor.config.ts.)
     const id = window.requestAnimationFrame(() =>
       window.requestAnimationFrame(async () => {
         const { SplashScreen } = await import('@capacitor/splash-screen');
-        await SplashScreen.hide({ fadeOutDuration: 200 });
+        await SplashScreen.hide({ fadeOutDuration: FADE_MS });
+        // Tearing the splash window down restores the flags it was shown
+        // with, dropping the status bar back to its cold-start style — so on
+        // a cold start the theme has to be asserted a second time. hide()
+        // resolves when the fade is asked for, not when it ends, hence the
+        // wait: re-styling mid-fade is what gets undone.
+        timers.push(
+          window.setTimeout(() => void applyStatusBar(), FADE_MS + 100),
+          window.setTimeout(() => void applyStatusBar(), LAUNCH_SHOW_MS + 150)
+        );
       })
     );
-    return () => window.cancelAnimationFrame(id);
-  }, []);
+    return () => {
+      window.cancelAnimationFrame(id);
+      timers.forEach((t) => window.clearTimeout(t));
+    };
+  }, [applyStatusBar]);
 
   /* --- daily reminder ------------------------------------------------------ */
   useEffect(() => {
@@ -124,11 +156,14 @@ export default function NativeBridge() {
     // it) and open the check-in when the notification is tapped.
     syncReminder().catch(() => {});
     (async () => {
-      const { LocalNotifications } = await import('@capacitor/local-notifications');
+      const { LocalNotifications } = await import(
+        '@capacitor/local-notifications'
+      );
       const handle = await LocalNotifications.addListener(
         'localNotificationActionPerformed',
         ({ notification }) => {
-          const path = (notification.extra as { path?: string } | undefined)?.path;
+          const path = (notification.extra as { path?: string } | undefined)
+            ?.path;
           if (path) router.push(path);
         }
       );
