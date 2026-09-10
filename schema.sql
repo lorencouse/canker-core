@@ -25,10 +25,7 @@ create table if not exists "user" (
   "emailVerified" boolean not null default false,
   "image" text,
   "createdAt" timestamptz not null default now(),
-  "updatedAt" timestamptz not null default now(),
-  -- Application profile fields (declared as user.additionalFields in lib/auth.ts).
-  "username" text,
-  "bio" text
+  "updatedAt" timestamptz not null default now()
 );
 
 create table if not exists "session" (

@@ -6,7 +6,6 @@ import { APIError } from 'better-auth/api';
 import { auth } from '@/lib/auth';
 import { query } from '@/lib/db/pool';
 import { getURL, getErrorRedirect, getStatusRedirect } from '@/utils/helpers';
-import { User } from '@/types';
 
 /**
  * Server-side auth actions.
@@ -272,49 +271,31 @@ export async function updateName(formData: FormData): Promise<string> {
   return getStatusRedirect('/profile', 'Success!', 'Your name has been updated.');
 }
 
-export async function updateUserProfile(formData: Partial<User>): Promise<{
-  data: User | null;
-  message: string;
-}> {
+/**
+ * Delete the signed-in user's account.
+ *
+ * Done in SQL rather than through Better Auth's deleteUser, which wants a
+ * password or a fresh session and would leave OAuth-only accounts with a
+ * confirmation-email dance. The foreign keys cascade, so the row's sessions,
+ * OAuth accounts and sores go with it in one statement. The session cookie
+ * is cleared afterwards so the browser does not keep presenting a token
+ * that no longer matches anything.
+ */
+export async function deleteAccount(): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await auth.api.getSession({ headers: await nextHeaders() });
+  if (!session?.user) return { ok: false, error: 'You are not signed in.' };
 
-  if (!session?.user) {
-    return { data: null, message: 'User not authenticated' };
+  try {
+    await query('delete from "user" where id = $1', [session.user.id]);
+  } catch (err) {
+    return { ok: false, error: messageOf(err, 'Your account could not be deleted. Try again.') };
   }
 
   try {
-    await auth.api.updateUser({
-      body: {
-        name: formData.full_name ?? undefined,
-        username: formData.username ?? undefined,
-        bio: formData.bio ?? undefined
-      },
-      headers: await nextHeaders()
-    });
-  } catch (err) {
-    return { data: null, message: messageOf(err, 'Your profile could not be updated.') };
+    await auth.api.signOut({ headers: await nextHeaders() });
+  } catch {
+    // The row is already gone; a stale cookie fails validation on its own.
   }
 
-  const [updated] = await query<{
-    id: string;
-    email: string;
-    name: string | null;
-    image: string | null;
-    username: string | null;
-    bio: string | null;
-  }>('select id, email, name, image, username, bio from "user" where id = $1', [session.user.id]);
-
-  return {
-    data: updated
-      ? {
-          id: updated.id,
-          email: updated.email,
-          full_name: updated.name,
-          avatar_url: updated.image,
-          username: updated.username,
-          bio: updated.bio
-        }
-      : null,
-    message: 'Success!'
-  };
+  return { ok: true };
 }

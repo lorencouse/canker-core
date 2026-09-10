@@ -29,9 +29,7 @@ export const getUser = cache(async (): Promise<User | null> => {
     id: u.id,
     email: u.email,
     full_name: u.name ?? null,
-    avatar_url: u.image ?? null,
-    username: (u as { username?: string | null }).username ?? null,
-    bio: (u as { bio?: string | null }).bio ?? null
+    avatar_url: u.image ?? null
   };
 });
 

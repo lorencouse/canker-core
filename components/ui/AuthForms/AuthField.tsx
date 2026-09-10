@@ -12,7 +12,8 @@ export default function AuthField({
   name,
   placeholder,
   autoComplete,
-  hint
+  hint,
+  defaultValue
 }: {
   id: string;
   label: string;
@@ -21,6 +22,7 @@ export default function AuthField({
   placeholder?: string;
   autoComplete?: string;
   hint?: string;
+  defaultValue?: string;
 }) {
   return (
     <div className="grid gap-1.5">
@@ -31,6 +33,7 @@ export default function AuthField({
         type={type}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        defaultValue={defaultValue}
         autoCapitalize="none"
         autoCorrect="off"
       />

@@ -5,14 +5,13 @@ import { SidebarNav } from './components/sidebar-nav';
 
 export const metadata: Metadata = {
   title: 'Settings',
-  description: 'Your account, contact details, and appearance preferences.'
+  description: 'Your profile, account and appearance preferences.'
 };
 
 const sidebarNavItems = [
-  { title: 'Contact', href: '/profile' },
+  { title: 'Profile', href: '/profile' },
   { title: 'Account', href: '/profile/account' },
-  { title: 'Appearance', href: '/profile/appearance' },
-  { title: 'Notifications', href: '/profile/notifications' }
+  { title: 'Appearance', href: '/profile/appearance' }
 ];
 
 /**
@@ -20,7 +19,7 @@ const sidebarNavItems = [
  *
  * The section nav is a sidebar on a desktop and a scrolling chip row on a
  * phone, pinned under the top bar. A phone settings screen is usually a
- * drill-down list, but four sections with two fields each is not worth an
+ * drill-down list, but three sections with a few fields each is not worth an
  * extra tap and a back button on every one of them.
  */
 export default async function SettingsLayout({
@@ -33,7 +32,7 @@ export default async function SettingsLayout({
       <header className="mb-4 hidden lg:mb-8 lg:block">
         <h1 className="text-title">Settings</h1>
         <p className="prose-measure mt-2 text-muted-foreground">
-          Your details, how the app looks, and what it emails you about.
+          Your details, your password and data, and how the app looks.
         </p>
       </header>
 

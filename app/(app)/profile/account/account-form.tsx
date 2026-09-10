@@ -1,219 +1,166 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-// import { CalendarIcon, CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
-import { format } from 'date-fns';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Download, Loader2 } from 'lucide-react';
 
-import { cn } from '@/utils/cn';
+import AuthField from '@/components/ui/AuthForms/AuthField';
 import { Button } from '@/components/ui/button';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem
-} from '@/components/ui/command';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/Toasts/use-toast';
+import { handleRequest } from '@/utils/auth-helpers/client';
+import { deleteAccount, updatePassword } from '@/utils/auth-helpers/server';
+import { getRedirectMethod } from '@/utils/auth-helpers/settings';
 
-const languages = [
-  { label: 'English', value: 'en' },
-  { label: 'French', value: 'fr' },
-  { label: 'German', value: 'de' },
-  { label: 'Spanish', value: 'es' },
-  { label: 'Portuguese', value: 'pt' },
-  { label: 'Russian', value: 'ru' },
-  { label: 'Japanese', value: 'ja' },
-  { label: 'Korean', value: 'ko' },
-  { label: 'Chinese', value: 'zh' }
-] as const;
-
-const accountFormSchema = z.object({
-  name: z
-    .string()
-    .min(2, {
-      message: 'Name must be at least 2 characters.'
-    })
-    .max(30, {
-      message: 'Name must not be longer than 30 characters.'
-    }),
-  dob: z.date({
-    required_error: 'A date of birth is required.'
-  }),
-  language: z.string({
-    required_error: 'Please select a language.'
-  })
-});
-
-type AccountFormValues = z.infer<typeof accountFormSchema>;
-
-// This can come from your database or API.
-const defaultValues: Partial<AccountFormValues> = {
-  // name: "Your name",
-  // dob: new Date("2023-01-23"),
-};
-
+/**
+ * Account: change password, export, delete.
+ *
+ * Three things a person does rarely and deliberately, so each sits in its
+ * own block with its own button rather than sharing a Save. Delete is last
+ * and behind a dialog: the privacy page promises a way to remove everything,
+ * and this is it, but it should never be reachable by a stray tap.
+ */
 export function AccountForm() {
-  const form = useForm<AccountFormValues>({
-    resolver: zodResolver(accountFormSchema),
-    defaultValues
-  });
+  const clientRouter = useRouter();
+  const router = getRedirectMethod() === 'client' ? clientRouter : null;
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  function onSubmit(data: AccountFormValues) {
-    toast({
-      title: 'You submitted the following values:',
-      description: (
-        <pre className="mt-2 w-[340px] overflow-x-auto rounded-md bg-muted p-4">
-          <code className="text-foreground">
-            {JSON.stringify(data, null, 2)}
-          </code>
-        </pre>
-      )
-    });
-  }
+  const submitPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    setSavingPassword(true);
+    try {
+      await handleRequest(e, updatePassword, router);
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const remove = async () => {
+    setDeleting(true);
+    const result = await deleteAccount();
+    if (!result.ok) {
+      setDeleting(false);
+      toast({ variant: 'destructive', title: result.error });
+      return;
+    }
+    // The session is gone; a hard navigation drops every cached
+    // server component that still believes someone is signed in.
+    window.location.assign('/');
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Your name" {...field} />
-              </FormControl>
-              <FormDescription>
-                This is the name that will be displayed on your profile and in
-                emails.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* <FormField
-          control={form.control}
-          name="dob"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Date of birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={'outline'}
-                      className={cn(
-                        'w-[240px] pl-3 text-left font-normal',
-                        !field.value && 'text-muted-foreground'
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, 'PPP')
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date('1900-01-01')
-                    }
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormDescription>
-                Your date of birth is used to calculate your age.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="language"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Language</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className={cn(
-                        'w-[200px] justify-between',
-                        !field.value && 'text-muted-foreground'
-                      )}
-                    >
-                      {field.value
-                        ? languages.find(
-                            (language) => language.value === field.value
-                          )?.label
-                        : 'Select language'}
-                      <ArrowUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Search language..." />
-                    <CommandEmpty>No language found.</CommandEmpty>
-                    <CommandGroup>
-                      {languages.map((language) => (
-                        <CommandItem
-                          value={language.label}
-                          key={language.value}
-                          onSelect={() => {
-                            form.setValue('language', language.value);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              language.value === field.value
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            )}
-                          />
-                          {language.label}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <FormDescription>
-                This is the language that will be used in the dashboard.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        /> */}
-        <Button type="submit">Update account</Button>
-      </form>
-    </Form>
+    <div className="space-y-8">
+      <section className="space-y-4">
+        <h3 className="font-medium">Password</h3>
+        <form noValidate onSubmit={submitPassword} className="grid gap-4">
+          <AuthField
+            id="currentPassword"
+            name="currentPassword"
+            label="Current password"
+            type="password"
+            autoComplete="current-password"
+            hint="Signed up with Google or GitHub, or a magic link? Use “Forgot password” on the sign-in page to set one."
+          />
+          <AuthField
+            id="password"
+            name="password"
+            label="New password"
+            type="password"
+            autoComplete="new-password"
+          />
+          <AuthField
+            id="passwordConfirm"
+            name="passwordConfirm"
+            label="Confirm new password"
+            type="password"
+            autoComplete="new-password"
+          />
+          <div>
+            <Button type="submit" disabled={savingPassword}>
+              {savingPassword && <Loader2 className="animate-spin" />}
+              Change password
+            </Button>
+          </div>
+        </form>
+      </section>
+
+      <Separator />
+
+      <section className="space-y-3">
+        <h3 className="font-medium">Your data</h3>
+        <p className="text-sm text-muted-foreground">
+          Every reading of every sore as a spreadsheet: one row per reading,
+          with where it was, how big, how much it hurt, and when it healed.
+          Handy for a dentist.
+        </p>
+        <Button asChild variant="outline">
+          {/* A plain link, not a fetch: the browser handles the download and
+              the file name comes from the response. */}
+          <a href="/api/export" download>
+            <Download aria-hidden="true" />
+            Download CSV
+          </a>
+        </Button>
+      </section>
+
+      <Separator />
+
+      <section className="space-y-3">
+        <h3 className="font-medium text-destructive">Delete account</h3>
+        <p className="text-sm text-muted-foreground">
+          Removes your account, every sore and every reading, immediately and
+          for good. Download your data first if you want to keep it.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setConfirmingDelete(true)}
+        >
+          Delete my account
+        </Button>
+      </section>
+
+      <Dialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete your account?</DialogTitle>
+            <DialogDescription>
+              This removes you and all of your readings right away. There is
+              no undo and nothing is kept.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="touch"
+              onClick={() => setConfirmingDelete(false)}
+              disabled={deleting}
+            >
+              Keep my account
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="touch"
+              onClick={remove}
+              disabled={deleting}
+            >
+              {deleting ? 'Deleting…' : 'Delete everything'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

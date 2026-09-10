@@ -16,8 +16,6 @@ export interface User {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
-  username: string | null;
-  bio: string | null;
 }
 
 export interface Sore {

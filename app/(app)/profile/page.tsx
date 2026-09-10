@@ -1,28 +1,24 @@
-// app/profile/page.tsx
-
-import { Separator } from '@/components/ui/separator';
-import { ContactInfoForm } from './contact-info-form';
-import { User } from '@/types';
-import { getUserDetails } from '@/lib/queries';
 import { redirect } from 'next/navigation';
 
-export default async function ContactInfoPage() {
-  const profile: User | null = await getUserDetails();
+import { Separator } from '@/components/ui/separator';
+import { getUserDetails } from '@/lib/queries';
+import { ProfileForm } from './profile-form';
 
-  if (!profile) {
-    redirect('/signin/password_signin');
-  }
+export default async function ProfilePage() {
+  const user = await getUserDetails();
+  if (!user) redirect('/signin/password_signin');
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-subhead">Contact Info</h2>
+        <h2 className="text-subhead">Profile</h2>
         <p className="text-sm text-muted-foreground">
-          This is how others will see your info on the site.
+          Your name and the email you sign in with. Nothing here is shown to
+          anyone else.
         </p>
       </div>
       <Separator />
-      <ContactInfoForm userProfile={profile} />
+      <ProfileForm user={user} />
     </div>
   );
 }

@@ -69,15 +69,6 @@ export const auth = betterAuth({
   },
 
   user: {
-    // Profile columns the app reads via getUserDetails(). Supabase kept these in
-    // a separate public.users table mirrored from auth.users by a trigger; here
-    // they live directly on the auth user row, so the trigger and the mirror
-    // table both go away.
-    //
-    additionalFields: {
-      username: { type: 'string', required: false, input: true },
-      bio: { type: 'string', required: false, input: true }
-    },
     changeEmail: {
       enabled: true,
       sendChangeEmailVerification: async ({ newEmail, url }: { newEmail: string; url: string }) => {

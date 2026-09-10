@@ -145,16 +145,14 @@ async function main() {
       const verified = Boolean(authUser?.email_confirmed_at);
       if (!DRY_RUN) {
         await client.query(
-          `insert into "user" (id, name, email, "emailVerified", image, username, bio, "createdAt", "updatedAt")
-           values ($1,$2,$3,$4,$5,$6,$7,$8, now())
+          `insert into "user" (id, name, email, "emailVerified", image, "createdAt", "updatedAt")
+           values ($1,$2,$3,$4,$5,$6, now())
            on conflict (id) do update set
              name = excluded.name,
              email = excluded.email,
              "emailVerified" = excluded."emailVerified",
-             image = excluded.image,
-             username = excluded.username,
-             bio = excluded.bio`,
-          [id, name, email, verified, avatar, u.username ?? null, u.bio ?? null,
+             image = excluded.image`,
+          [id, name, email, verified, avatar,
            authUser?.created_at ?? new Date().toISOString()]
         );
       }
