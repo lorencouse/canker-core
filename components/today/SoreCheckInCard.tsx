@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { LongSoreNote } from '@/components/SoreDetails';
+import CourseStrip from '@/components/sore/CourseStrip';
+import SoreSigil from '@/components/sore/SoreSigil';
 import type { Sore } from '@/types';
 import { isLongRunning } from '@/utils/insights';
-import { VIEW_LABELS } from '@/utils/mouth-map/geometry';
 import {
   currentPain,
   currentSize,
@@ -41,16 +42,18 @@ export default function SoreCheckInCard({
 
   return (
     <div className="app-card space-y-4 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-medium">{sore.zone}</p>
+      <div className="flex items-start gap-3">
+        {/* The sigil says which view and where; naming the view in text as
+            well would be the same fact twice. */}
+        <SoreSigil sore={sore} size={30} className="mt-px" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium">{sore.zone}</p>
           <p className="tabular text-xs text-muted-foreground">
-            {VIEW_LABELS[sore.view]} view · Day {day}
-            {' · '}
+            Day {day},{' '}
             {logged ? (
-              <span className="text-primary">Logged today</span>
+              <span className="text-primary">logged today</span>
             ) : (
-              'Not logged yet'
+              'not logged yet'
             )}
           </p>
         </div>
@@ -65,6 +68,10 @@ export default function SoreCheckInCard({
           Healed
         </Button>
       </div>
+
+      {/* Sits right under "Day 6", where the row of six cells explains
+          itself without a label. */}
+      <CourseStrip sore={sore} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">

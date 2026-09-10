@@ -13,6 +13,8 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import CourseStrip from '@/components/sore/CourseStrip';
+import SoreSigil from '@/components/sore/SoreSigil';
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
 import { dayNumberOf, latestReading } from '@/utils/readings';
@@ -61,10 +63,12 @@ function SoreDetail({ sore }: { sore: Sore }) {
       )}
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <span className="tabular">
-          {sore.readings.length} reading{sore.readings.length === 1 ? '' : 's'} ·{' '}
+          First marked {dateOf(sore.created_at)}. {sore.readings.length} reading
+          {sore.readings.length === 1 ? '' : 's'} over{' '}
           {sore.healed_at
-            ? `healed after ${dayNumberOf(sore)} day${dayNumberOf(sore) === 1 ? '' : 's'}`
-            : `day ${dayNumberOf(sore)}`}
+            ? `${dayNumberOf(sore)} day${dayNumberOf(sore) === 1 ? '' : 's'}, then healed`
+            : `${dayNumberOf(sore)} day${dayNumberOf(sore) === 1 ? '' : 's'} so far`}
+          .
         </span>
         <Button asChild variant="ghost" size="sm">
           <Link href={`/my-sores?sore=${sore.id}`}>
@@ -98,24 +102,27 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                 aria-expanded={expanded}
                 onClick={() => toggle(sore.id)}
               >
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-medium">{sore.zone}</span>
-                  <span className="tabular text-xs text-muted-foreground">{dateOf(sore.created_at)}</span>
-                </div>
-                <div className="mt-2 flex items-center gap-4 text-sm">
-                  <span className="tabular">{last ? `${last.size} mm` : '—'}</span>
-                  <span className="tabular inline-flex items-center gap-1.5">
+                <div className="flex items-center gap-3">
+                  <SoreSigil sore={sore} size={30} />
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{sore.zone}</span>
+                    <span className="tabular text-xs text-muted-foreground">
+                      {sore.healed_at
+                        ? `Healed ${dateOf(sore.healed_at)}`
+                        : `Open, day ${dayNumberOf(sore)}`}
+                    </span>
+                  </div>
+                  <span className="tabular text-sm">{last ? `${last.size} mm` : '—'}</span>
+                  <span className="tabular inline-flex items-center gap-1.5 text-sm">
                     {last && <PainDot pain={last.pain} />}
                     {last ? `${last.pain}/10` : '—'}
                   </span>
-                  <span className="ml-auto text-muted-foreground">
-                    {sore.healed_at ? `Healed ${dateOf(sore.healed_at)}` : 'Open'}
-                  </span>
                   <ChevronDown
                     aria-hidden="true"
-                    className={cn('size-4 text-muted-foreground transition-transform', expanded && 'rotate-180')}
+                    className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-180')}
                   />
                 </div>
+                <CourseStrip sore={sore} className="mt-2.5" />
               </button>
               {expanded && (
                 <div className="border-t border-border p-3">
@@ -132,11 +139,15 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>First marked</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Sore</TableHead>
+              {/* The strip carries how long, how consistently it was logged
+                  and how the pain moved, which is what three date and status
+                  columns were doing between them. The exact dates are in the
+                  expanded row. */}
+              <TableHead>Course</TableHead>
               <TableHead className="text-right">Size</TableHead>
               <TableHead className="text-right">Pain</TableHead>
-              <TableHead>Location</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="w-10">
                 <span className="sr-only">Details</span>
               </TableHead>
@@ -153,13 +164,16 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                     onClick={() => toggle(sore.id)}
                     aria-expanded={expanded}
                   >
-                    <TableCell>{dateOf(sore.created_at)}</TableCell>
                     <TableCell>
-                      {sore.healed_at ? (
-                        <span className="text-muted-foreground">Healed {dateOf(sore.healed_at)}</span>
-                      ) : (
-                        'Open'
-                      )}
+                      <span className="flex items-center gap-2.5">
+                        <SoreSigil sore={sore} size={26} />
+                        <span className="font-medium">{sore.zone}</span>
+                      </span>
+                    </TableCell>
+                    {/* Fixed width so a long course wraps into a block of
+                        rows instead of stretching the column. */}
+                    <TableCell className="w-40">
+                      <CourseStrip sore={sore} />
                     </TableCell>
                     <TableCell className="text-right">{last ? `${last.size} mm` : '—'}</TableCell>
                     <TableCell className="text-right">
@@ -172,7 +186,13 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                         '—'
                       )}
                     </TableCell>
-                    <TableCell>{sore.zone}</TableCell>
+                    <TableCell className="tabular">
+                      {sore.healed_at ? (
+                        <span className="text-muted-foreground">Healed {dateOf(sore.healed_at)}</span>
+                      ) : (
+                        `Open, day ${dayNumberOf(sore)}`
+                      )}
+                    </TableCell>
                     <TableCell>
                       <ChevronDown
                         aria-hidden="true"

@@ -86,9 +86,15 @@ export function withReading(
  * Whole days a sore has been (or was) open, counting the day it was first
  * marked as day 1, the way people count a sore. A healed sore's count stops
  * at the healed date instead of climbing forever.
+ *
+ * Counted in local calendar days, not in 24-hour periods: a sore marked at
+ * 23:00 and updated the next morning is on day 2, and it already has two
+ * readings, since a reading belongs to the day it was taken. Rounding rather
+ * than flooring keeps a 23- or 25-hour day from shifting the count.
  */
 export function dayNumberOf(sore: Sore, now: Date = new Date()): number {
-  const start = new Date(sore.created_at);
-  const end = sore.healed_at ? new Date(sore.healed_at) : now;
-  return Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1);
+  const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const start = midnight(new Date(sore.created_at));
+  const end = midnight(new Date(sore.healed_at ?? now));
+  return Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
 }

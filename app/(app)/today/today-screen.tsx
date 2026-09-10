@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import type { DayLog, Sore } from '@/types';
+import { answerLine } from '@/utils/course';
 import { saveDayLog, setSoreHealed, upsertSores } from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
 import { dayKey, hasReadingOn } from '@/utils/readings';
@@ -105,28 +106,45 @@ export default function TodayScreen({
     day: 'numeric'
   });
 
+  /*
+   * Recomputed from local state rather than from the server's copy, so the
+   * headline answers the question again the moment a slider moves — before
+   * anything is saved. It is the fastest feedback in the app.
+   */
+  const answer = useMemo(() => answerLine(sores), [sores]);
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-4 lg:px-6 lg:py-8">
-      <header className="mb-4 lg:mb-6">
-        <h1 className="hidden text-title lg:block">Today</h1>
-        <p className="text-muted-foreground lg:mt-2">
-          {dateLine}
-          {open.length > 0 && (
-            <>
-              {' · '}
-              {unlogged === 0
-                ? 'Everything logged.'
-                : `${unlogged} of ${open.length} sore${open.length === 1 ? '' : 's'} still to log.`}
-            </>
-          )}
-        </p>
+      {/*
+        The screen leads with the answer, not with the date and not with the
+        word "Today" — the top bar already says that. Whether a sore is
+        healing is the question someone opens this app to ask, so it is the
+        one sentence set in display type.
+      */}
+      <header className="mb-5 lg:mb-8">
+        <p className="tabular text-sm text-muted-foreground">{dateLine}</p>
+        <h1 className="mt-1.5 text-title">{answer.headline}</h1>
+        {answer.note && (
+          <p className="prose-measure mt-2 text-muted-foreground">
+            {answer.note}
+          </p>
+        )}
       </header>
 
       <div className="space-y-6">
         <section className="space-y-3" aria-labelledby="open-sores">
-          <h2 id="open-sores" className="text-subhead">
-            Open sores
-          </h2>
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 id="open-sores" className="text-subhead">
+              Open sores
+            </h2>
+            {open.length > 0 && (
+              <p className="tabular text-sm text-muted-foreground">
+                {unlogged === 0
+                  ? 'All logged'
+                  : `${unlogged} of ${open.length} left`}
+              </p>
+            )}
+          </div>
           {open.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center">
