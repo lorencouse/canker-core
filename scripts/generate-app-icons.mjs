@@ -9,19 +9,21 @@
  *
  *   node scripts/generate-app-icons.mjs
  *
- * Re-run it if the mark changes. Output goes to public/icons/.
+ * Re-run it if the mark changes. Output goes to public/icons/ for the web
+ * and PWA, and to resources/ as the single icon and splash source that
+ * `npx capacitor-assets generate` slices into the dozens of sizes iOS and
+ * Android each want. Those slices land inside ios/ and android/, which are
+ * generated and untracked, so this is a step to repeat on a new machine
+ * rather than something committed once.
  */
 import { deflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const OUT = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  'public',
-  'icons'
-);
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const OUT = join(ROOT, 'public', 'icons');
+const RES = join(ROOT, 'resources');
 
 /* Literal colours: an icon is drawn outside the page, so the CSS custom
    properties the component uses are not available here. These are the dark
@@ -31,7 +33,7 @@ const BG = [0x13, 0x1a, 0x21];
 const RING = [0x58, 0xb6, 0xc0];
 const DOT = [0xe1, 0x4b, 0x4b];
 
-/** Supersampling factor. 4x is indistinguishable from proper AA at these sizes. */
+/** Supersampling factor. 4x is indistinguishable from proper AA at icon sizes. */
 const SS = 4;
 
 /**
@@ -66,7 +68,7 @@ const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
  *                icons are cropped to an unknown shape, and the spec's safe
  *                zone is the middle 80%, so they need a wide margin.
  */
-function render(size, inset) {
+function render(size, inset, ss = SS) {
   const px = Buffer.alloc(size * size * 3);
   const scale = 32 / (1 - inset * 2) / size; // canvas px -> mark units
   const offset = -(size * inset) * scale;
@@ -76,17 +78,17 @@ function render(size, inset) {
       let r = 0,
         g = 0,
         b = 0;
-      for (let sy = 0; sy < SS; sy++) {
-        for (let sx = 0; sx < SS; sx++) {
-          const mx = (pxi + (sx + 0.5) / SS) * scale + offset;
-          const my = (py + (sy + 0.5) / SS) * scale + offset;
+      for (let sy = 0; sy < ss; sy++) {
+        for (let sx = 0; sx < ss; sx++) {
+          const mx = (pxi + (sx + 0.5) / ss) * scale + offset;
+          const my = (py + (sy + 0.5) / ss) * scale + offset;
           const c = sample(mx, my) ?? BG;
           r += c[0];
           g += c[1];
           b += c[2];
         }
       }
-      const n = SS * SS;
+      const n = ss * ss;
       const i = (py * size + pxi) * 3;
       px[i] = Math.round(r / n);
       px[i + 1] = Math.round(g / n);
@@ -150,3 +152,26 @@ for (const [name, size, inset] of files) {
   writeFileSync(join(OUT, name), render(size, inset));
   console.log(`wrote public/icons/${name} (${size}x${size})`);
 }
+
+mkdirSync(RES, { recursive: true });
+const sources = [
+  // capacitor-assets wants one 1024 icon and derives every platform size.
+  // It also generates the Android adaptive foreground by insetting this, so
+  // the margin here is the tight one and not the maskable safe zone.
+  ['icon.png', 1024, 0.12, SS],
+  // The splash is the same mark small and centred on the same ground, at the
+  // size capacitor-assets expects; it crops rather than scales, so the mark
+  // has to survive being cut to any aspect ratio.
+  ['splash.png', 2732, 0.4, 2],
+  // Light and dark are the same image: the ground is the dark slate in both
+  // themes, because the splash is what covers a theme it cannot yet read.
+  ['splash-dark.png', 2732, 0.4, 2]
+];
+for (const [name, size, inset, ss] of sources) {
+  writeFileSync(join(RES, name), render(size, inset, ss));
+  console.log(`wrote resources/${name} (${size}x${size})`);
+}
+
+console.log(
+  '\nNext: npm run cap:assets   (slices resources/ into ios/ and android/)'
+);

@@ -26,8 +26,11 @@ capacitor.config.ts
 What follows from that:
 
 - **The app needs a connection.** `native/shell/index.html` is what the user
-  sees when it does not have one. It is deliberately a real screen, not a
-  webview error.
+  sees when it does not have one — `server.errorPath` points the webview at
+  it, so it replaces the webview's own error page. It is served raw, without
+  the Capacitor bridge, so nothing on that page can call a plugin; that is
+  why the splash screen times out on its own rather than waiting to be
+  dismissed by code that only exists on the server.
 - **Deploys reach the app immediately**, with no store review. Only changes
   to the shell, the icons, or a plugin need a new binary.
 - **Auth works unchanged.** The session is an ordinary cookie on the
@@ -40,8 +43,16 @@ The `ios/` and `android/` directories are generated and untracked. Create
 them once per machine:
 
 ```bash
-npm run cap:add:ios        # needs Xcode
+npm run cap:add:ios        # needs Xcode and CocoaPods
 npm run cap:add:android    # needs Android Studio
+```
+
+Gradle here runs on Android Studio's bundled JDK 21. A newer JDK on the
+`PATH` fails the settings script with "Unsupported class file major version",
+so point it at the one that works:
+
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ```
 
 Then, whenever `capacitor.config.ts` or a plugin changes:
@@ -62,8 +73,17 @@ CAPACITOR_SERVER_URL=http://192.168.0.50:3100 npm run cap:sync
 Icons are generated from the mark in `components/icons/Logo.tsx`:
 
 ```bash
-node scripts/generate-app-icons.mjs
+npm run cap:assets
 ```
+
+That draws `resources/icon.png` and the two splash sources, then slices them
+into the sizes each platform wants. The slices land inside `ios/` and
+`android/`, which are untracked — so this runs once per machine after
+`cap:add:*`, and again whenever the mark changes. Only `resources/` and the
+web icons under `public/icons/` are committed.
+
+Run it before any build you intend to ship: without it both apps carry
+Capacitor's default logo.
 
 ## The layout
 

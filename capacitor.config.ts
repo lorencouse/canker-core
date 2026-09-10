@@ -34,7 +34,16 @@ const config: CapacitorConfig = {
       'accounts.google.com',
       'github.com'
     ],
-    androidScheme: 'https'
+    androidScheme: 'https',
+    // Android blocks cleartext by default, which is right for the deployed
+    // https origin and fatal for the documented dev workflow of pointing
+    // CAPACITOR_SERVER_URL at a LAN address. Derived rather than a constant,
+    // so a production build can never carry the exemption.
+    cleartext: serverUrl.startsWith('http://'),
+    // When server.url cannot be reached the webview would otherwise show its
+    // own error page. Send it to the local shell instead — that is what the
+    // bundle in webDir is for.
+    errorPath: 'index.html'
   },
 
   ios: {
@@ -50,7 +59,13 @@ const config: CapacitorConfig = {
 
   plugins: {
     SplashScreen: {
-      launchAutoHide: false, // Hidden by the app once the first paint lands.
+      // The app hides the splash itself once the first paint lands, which is
+      // why this is not a plain auto-hide. But the offline shell is served as
+      // the webview's error page, and error pages get no Capacitor bridge —
+      // nothing there can hide anything. So the splash also times out, late
+      // enough that a slow but working connection still paints under it.
+      launchAutoHide: true,
+      launchShowDuration: 5000,
       backgroundColor: '#131a21',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false
