@@ -35,7 +35,7 @@ async function requireUserId(): Promise<string | null> {
 
 function revalidate() {
   revalidatePath('/my-sores');
-  revalidatePath('/history');
+  revalidatePath('/insights');
   revalidatePath('/today');
 }
 

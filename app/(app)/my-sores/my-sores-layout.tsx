@@ -37,13 +37,19 @@ import { User, Sore } from '@/types';
 export const MySoresLayout = ({
   user,
   soresData,
-  initialSelectedId = null
+  initialSelectedId = null,
+  startInAddMode = false
 }: {
   user: User;
   soresData: Sore[];
   initialSelectedId?: string | null;
+  startInAddMode?: boolean;
 }) => (
-  <SoreProvider initialSores={soresData} initialSelectedId={initialSelectedId}>
+  <SoreProvider
+    initialSores={soresData}
+    initialSelectedId={initialSelectedId}
+    initialMode={startInAddMode ? 'add' : 'view'}
+  >
     <MySoresScreen user={user} />
   </SoreProvider>
 );

@@ -23,9 +23,9 @@ export const APP_NAV = [
     icon: Map
   },
   {
-    href: '/history',
-    label: 'History',
-    description: 'Readings over time',
+    href: '/insights',
+    label: 'Insights',
+    description: 'Patterns and readings over time',
     icon: LineChart
   },
   {

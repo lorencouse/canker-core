@@ -10,14 +10,14 @@ import { Button } from '@/components/ui/button';
 import type { DayLog, Sore, User } from '@/types';
 
 /**
- * History: the headline figures, the chart, the patterns, and every sore.
+ * Insights: the headline figures, the chart, the patterns, and every sore.
  *
  * Stacked at every width below xl. The chart and the table are the same
  * data at two levels of detail, and reading one against the other means
  * scrolling between them rather than sitting them side by side in 400px
  * columns where neither is legible.
  */
-const SoreHistoryLayout = ({
+const InsightsLayout = ({
   sores,
   dayLogs
 }: {
@@ -33,7 +33,7 @@ const SoreHistoryLayout = ({
         {/* The top bar already names the screen on a phone, so the heading
             is only drawn from lg up — but it stays in the document outline
             at every width, because the bar's label is not a heading. */}
-        <h1 className="text-title sr-only lg:not-sr-only">History</h1>
+        <h1 className="text-title sr-only lg:not-sr-only">Insights</h1>
         <p className="prose-measure text-muted-foreground lg:mt-2">
           {sores.length === 0
             ? 'Nothing logged yet.'
@@ -68,4 +68,4 @@ const SoreHistoryLayout = ({
   );
 };
 
-export default SoreHistoryLayout;
+export default InsightsLayout;

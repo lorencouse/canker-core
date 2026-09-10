@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { Plus } from 'lucide-react';
 
 import Logo from '@/components/icons/Logo';
 import ModeToggle from '@/components/mode-toggle';
@@ -28,6 +29,7 @@ export default function AppTopBar() {
   const router = getRedirectMethod() === 'client' ? clientRouter : null;
 
   const current = APP_NAV.find(({ href }) => isActiveTab(pathname, href));
+  const onMap = isActiveTab(pathname, '/my-sores');
 
   return (
     <header
@@ -82,6 +84,21 @@ export default function AppTopBar() {
         </nav>
 
         <div className="flex items-center gap-1">
+          {/*
+            Marking a sore is the one urgent thing this app does, and it was
+            reachable only by going to the map and finding a button there.
+            It is an action, not a destination, so it lives in the chrome
+            rather than taking a fifth tab — and it is hidden on the map
+            itself, where the action bar already owns it.
+          */}
+          {!onMap && (
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/my-sores?add" aria-label="Mark a new sore">
+                <Plus aria-hidden="true" />
+                <span className="sr-only sm:not-sr-only">New sore</span>
+              </Link>
+            </Button>
+          )}
           <ModeToggle />
           <form
             onSubmit={(e) => handleRequest(e, SignOut, router)}

@@ -8,7 +8,7 @@ const productLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/my-sores', label: 'Mouth map' },
-  { href: '/history', label: 'History' }
+  { href: '/insights', label: 'Insights' }
 ];
 
 const legalLinks = [

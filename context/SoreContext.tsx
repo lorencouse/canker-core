@@ -39,8 +39,13 @@ interface SoreContextProps {
 interface SoreProviderProps {
   children: ReactNode;
   initialSores: Sore[];
-  /** Open with this sore selected (a link from History). */
+  /** Open with this sore selected (a link from Insights). */
   initialSelectedId?: string | null;
+  /**
+   * Open already in this mode, for a link that means "mark a new sore"
+   * rather than "look at the map".
+   */
+  initialMode?: Mode;
 }
 
 const SoreContext = createContext<SoreContextProps | undefined>(undefined);
@@ -48,15 +53,23 @@ const SoreContext = createContext<SoreContextProps | undefined>(undefined);
 export const SoreProvider: React.FC<SoreProviderProps> = ({
   children,
   initialSores,
-  initialSelectedId = null
+  initialSelectedId = null,
+  initialMode = 'view'
 }) => {
   const initial = initialSores.find((s) => s.id === initialSelectedId) ?? null;
   const [selectedSore, setSelectedSore] = useState<Sore | null>(initial);
   const [sores, setSores] = useState<Sore[]>(initialSores);
-  // A healed sore linked from History has to be visible to be selected.
+  // A healed sore linked from Insights has to be visible to be selected.
   const [showHealed, setShowHealed] = useState(Boolean(initial?.healed_at));
-  const [mode, setMode] = useState<Mode>('view');
-  const [snapshot, setSnapshot] = useState<Sore[] | null>(null);
+  const [mode, setMode] = useState<Mode>(initialMode);
+  /*
+   * Opening in an editing mode has to snapshot too, or Cancel would have
+   * nothing to restore and Done would write every sore instead of the new
+   * one. This is what makes arriving from a link identical to pressing Add.
+   */
+  const [snapshot, setSnapshot] = useState<Sore[] | null>(
+    initialMode === 'view' ? null : initialSores
+  );
 
   const visibleSores = useMemo(
     () => (showHealed ? sores : sores.filter((s) => !s.healed_at)),
