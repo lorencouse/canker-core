@@ -26,8 +26,11 @@ capacitor.config.ts
 What follows from that:
 
 - **The app needs a connection.** `native/shell/index.html` is what the user
-  sees when it does not have one. It is deliberately a real screen, not a
-  webview error.
+  sees when it does not have one — `server.errorPath` points the webview at
+  it, so it replaces the webview's own error page. It is served raw, without
+  the Capacitor bridge, so nothing on that page can call a plugin; that is
+  why the splash screen times out on its own rather than waiting to be
+  dismissed by code that only exists on the server.
 - **Deploys reach the app immediately**, with no store review. Only changes
   to the shell, the icons, or a plugin need a new binary.
 - **Auth works unchanged.** The session is an ordinary cookie on the
@@ -40,8 +43,16 @@ The `ios/` and `android/` directories are generated and untracked. Create
 them once per machine:
 
 ```bash
-npm run cap:add:ios        # needs Xcode
+npm run cap:add:ios        # needs Xcode and CocoaPods
 npm run cap:add:android    # needs Android Studio
+```
+
+Gradle here runs on Android Studio's bundled JDK 21. A newer JDK on the
+`PATH` fails the settings script with "Unsupported class file major version",
+so point it at the one that works:
+
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ```
 
 Then, whenever `capacitor.config.ts` or a plugin changes:

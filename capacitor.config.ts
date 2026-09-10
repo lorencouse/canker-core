@@ -34,7 +34,11 @@ const config: CapacitorConfig = {
       'accounts.google.com',
       'github.com'
     ],
-    androidScheme: 'https'
+    androidScheme: 'https',
+    // When server.url cannot be reached the webview would otherwise show its
+    // own error page. Send it to the local shell instead — that is what the
+    // bundle in webDir is for.
+    errorPath: 'index.html'
   },
 
   ios: {
@@ -50,7 +54,13 @@ const config: CapacitorConfig = {
 
   plugins: {
     SplashScreen: {
-      launchAutoHide: false, // Hidden by the app once the first paint lands.
+      // The app hides the splash itself once the first paint lands, which is
+      // why this is not a plain auto-hide. But the offline shell is served as
+      // the webview's error page, and error pages get no Capacitor bridge —
+      // nothing there can hide anything. So the splash also times out, late
+      // enough that a slow but working connection still paints under it.
+      launchAutoHide: true,
+      launchShowDuration: 5000,
       backgroundColor: '#131a21',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false
