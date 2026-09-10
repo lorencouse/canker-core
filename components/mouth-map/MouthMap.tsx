@@ -21,6 +21,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/utils/cn';
 import { tap } from '@/utils/native';
+import { currentPain, currentSize, newReading } from '@/utils/readings';
 
 import { MapDefs, ViewArtwork } from './artwork';
 import MapControls from './MapControls';
@@ -58,7 +59,7 @@ export default function MouthMap({ user }: { user: User }) {
     setSelectedSore,
     mode
   } = useSoreContext();
-  const healedCount = sores.filter((s) => s.healed).length;
+  const healedCount = sores.filter((s) => s.healed_at).length;
   const [view, setView] = useState<MouthView>('front');
   const [camera, setCamera] = useState<Camera>(HOME);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -232,17 +233,17 @@ export default function MouthMap({ user }: { user: User }) {
       const zone = zoneAt(view, p);
       if (!zone) return;
       const pct = toPercent(p);
+      const now = new Date();
       const sore: Sore = {
         id: uuidv4(),
         user_id: user.id ?? '',
-        healed: null,
-        dates: [new Date().toISOString()],
-        size: [3],
-        pain: [3],
+        view,
         x: pct.x,
         y: pct.y,
-        view,
-        zone
+        zone,
+        created_at: now.toISOString(),
+        healed_at: null,
+        readings: [newReading(now)]
       };
       setSores((prev) => [...prev, sore]);
       setSelectedSore(sore);
@@ -329,19 +330,13 @@ export default function MouthMap({ user }: { user: User }) {
             <ViewArtwork view={view} p={idPrefix} />
             {visible.map((sore) => {
               const p = fromPercent({ x: sore.x!, y: sore.y! });
-              const size = sore.size?.length
-                ? sore.size[sore.size.length - 1]
-                : 3;
-              const pain = sore.pain?.length
-                ? sore.pain[sore.pain.length - 1]
-                : 3;
               return (
                 <SoreMarker
                   key={sore.id}
                   x={p.x}
                   y={p.y}
-                  radius={radiusFor(size, view)}
-                  pain={pain}
+                  radius={radiusFor(currentSize(sore), view)}
+                  pain={currentPain(sore)}
                   selected={sore.id === selectedSore?.id}
                   draggable={mode !== 'view'}
                   filterId={`${idPrefix}soft`}
@@ -394,7 +389,7 @@ export default function MouthMap({ user }: { user: User }) {
                 setShowHealed(on);
                 // A healed sore that is selected cannot stay selected once
                 // it is hidden.
-                if (!on && selectedSore?.healed) setSelectedSore(null);
+                if (!on && selectedSore?.healed_at) setSelectedSore(null);
               }}
               aria-label="Show healed sores on the map"
             />

@@ -3,47 +3,52 @@ import { useEffect, useState } from 'react';
 
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useSoreContext } from '@/context/SoreContext';
-import { hasReadingOn, latest, withReading } from '@/utils/readings';
+import {
+  currentPain,
+  currentSize,
+  hasReadingOn,
+  latestReading,
+  withReading
+} from '@/utils/readings';
 
+/**
+ * Today's reading for the selected sore: size, pain, and an optional note.
+ *
+ * The first change on a new day appends a reading; every change after that
+ * on the same day corrects it, so dragging a slider back and forth never
+ * produces more than one row.
+ */
 const SoreSliders: React.FC = () => {
   const { selectedSore, setSelectedSore, setSores } = useSoreContext();
 
-  const [soreSize, setSoreSize] = useState<number>(
-    latest(selectedSore?.size) ?? 3
-  );
-  const [painLevel, setPainLevel] = useState<number>(
-    latest(selectedSore?.pain) ?? 3
-  );
+  const [soreSize, setSoreSize] = useState<number>(currentSize(selectedSore));
+  const [painLevel, setPainLevel] = useState<number>(currentPain(selectedSore));
+  const [note, setNote] = useState<string>(latestReading(selectedSore)?.note ?? '');
 
-  /**
-   * Record the value as today's reading. The first change on a new day
-   * appends a reading; every change after that on the same day corrects it,
-   * so dragging a slider back and forth never produces more than one row.
-   */
-  const commit = (values: { size?: number; pain?: number }) => {
+  const commit = (values: { size?: number; pain?: number; note?: string | null }) => {
     if (!selectedSore) return;
     const updated = withReading(selectedSore, values);
     setSelectedSore(updated);
     setSores((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
   };
 
-  const handleSizeChange = (value: number) => {
-    setSoreSize(value);
-    commit({ size: value });
-  };
-
-  const handlePainChange = (value: number) => {
-    setPainLevel(value);
-    commit({ pain: value });
-  };
-
   useEffect(() => {
     if (selectedSore) {
-      setSoreSize(latest(selectedSore.size) ?? 3);
-      setPainLevel(latest(selectedSore.pain) ?? 3);
+      setSoreSize(currentSize(selectedSore));
+      setPainLevel(currentPain(selectedSore));
+      // The note only belongs to today's reading; yesterday's stays with
+      // yesterday.
+      setNote(
+        hasReadingOn(selectedSore, new Date())
+          ? (latestReading(selectedSore)?.note ?? '')
+          : ''
+      );
     }
-  }, [selectedSore]);
+    // Reset when a different sore is picked, not on every keystroke echo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSore?.id]);
 
   if (!selectedSore) return null;
 
@@ -74,7 +79,10 @@ const SoreSliders: React.FC = () => {
           min={1}
           max={20}
           value={[soreSize]}
-          onValueChange={(values) => handleSizeChange(values[0])}
+          onValueChange={(values) => {
+            setSoreSize(values[0]);
+            commit({ size: values[0] });
+          }}
           aria-label="Sore size in millimetres"
         />
       </div>
@@ -98,8 +106,27 @@ const SoreSliders: React.FC = () => {
           min={1}
           max={10}
           value={[painLevel]}
-          onValueChange={(values) => handlePainChange(values[0])}
+          onValueChange={(values) => {
+            setPainLevel(values[0]);
+            commit({ pain: values[0] });
+          }}
           aria-label="Pain level from 1 to 10"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="sore-note">Anything to note?</Label>
+        <Textarea
+          id="sore-note"
+          value={note}
+          rows={2}
+          maxLength={500}
+          placeholder="Stings when I eat, looks yellow in the middle…"
+          className="resize-none"
+          onChange={(e) => {
+            setNote(e.target.value);
+            commit({ note: e.target.value.trim() || null });
+          }}
         />
       </div>
     </div>

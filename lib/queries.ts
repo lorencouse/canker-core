@@ -1,25 +1,22 @@
 /**
  * Data access — raw SQL over the shared pool.
  *
- * Replaces utils/supabase/queries.ts. Two behavioural notes carried over from
- * the Supabase version:
+ * There is no row-level security: the app connects as one role, so **every
+ * user-scoped query takes an explicit userId** and callers must pass the id
+ * from the session, never from user input.
  *
- *   - Supabase enforced per-user access with RLS, so callers could select from
- *     `sores` unscoped and the database filtered rows. There is
- *     no RLS here, so **every user-scoped query takes an explicit userId** and
- *     callers must pass the id from the session, never from user input.
- *   - React's `cache()` is kept so a single render still hits the DB once per
- *     distinct argument.
+ * React's `cache()` means a single render hits the DB once per distinct
+ * argument.
  */
 import 'server-only';
 import { cache } from 'react';
 import { headers } from 'next/headers';
-import { query, queryOne } from '@/lib/db/pool';
+import { query } from '@/lib/db/pool';
 import { auth } from '@/lib/auth';
-import type { Sore, User } from '@/types';
+import type { DayLog, Sore, User } from '@/types';
 import { isMouthView, zoneFor } from '@/utils/mouth-map/geometry';
 
-/** The signed-in user, or null. Replaces `supabase.auth.getUser()`. */
+/** The signed-in user, or null. */
 export const getUser = cache(async (): Promise<User | null> => {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return null;
@@ -33,32 +30,60 @@ export const getUser = cache(async (): Promise<User | null> => {
   };
 });
 
-/**
- * Profile for the signed-in user.
- *
- * Previously a `select * from users` that RLS narrowed to the caller's own row.
- * The profile now lives on the auth user record, so this is the session lookup.
- */
+/** Profile for the signed-in user; the profile lives on the auth record. */
 export const getUserDetails = cache(async (): Promise<User | null> => getUser());
 
-/** Every sore belonging to a user. */
+/**
+ * Every sore belonging to a user, newest first, each with its readings
+ * oldest first.
+ *
+ * Timestamps come back through jsonb so they arrive as ISO 8601 strings
+ * rather than the pg driver's Date objects, which is the shape the client
+ * components already expect and the only one Safari parses reliably.
+ */
 export const getSores = cache(async (userId: string): Promise<Sore[]> => {
   const rows = await query<Sore>(
-    `select id, user_id, zone, view, x, y, dates, pain, size, healed
-     from sores
-     where user_id = $1
-     order by dates[1] desc nulls last`,
+    `select
+       s.id, s.user_id, s.view, s.x, s.y, s.zone,
+       to_jsonb(s.created_at) #>> '{}' as created_at,
+       to_jsonb(s.healed_at)  #>> '{}' as healed_at,
+       coalesce(
+         (select jsonb_agg(
+                   jsonb_build_object(
+                     'id', r.id,
+                     'recorded_at', r.recorded_at,
+                     'size', r.size,
+                     'pain', r.pain,
+                     'note', r.note)
+                   order by r.recorded_at)
+            from readings r
+           where r.sore_id = s.id),
+         '[]'::jsonb
+       ) as readings
+     from sores s
+     where s.user_id = $1
+     order by s.created_at desc`,
     [userId]
   );
   // The zone is a function of position; recomputing on read means rows
   // carried over from the old diagram pick up correct labels for free.
-  return rows.map((sore) => ({
-    ...sore,
-    view: isMouthView(sore.view) ? sore.view : 'front',
-    zone:
-      sore.x === null || sore.y === null
-        ? sore.zone
-        : zoneFor(isMouthView(sore.view) ? sore.view : 'front', sore.x, sore.y)
-  }));
+  return rows.map((sore) => {
+    const view = isMouthView(sore.view) ? sore.view : 'front';
+    return {
+      ...sore,
+      view,
+      zone: sore.x === null || sore.y === null ? sore.zone : zoneFor(view, sore.x, sore.y)
+    };
+  });
 });
 
+/** The user's daily logs, newest first. */
+export const getDayLogs = cache(async (userId: string): Promise<DayLog[]> => {
+  return query<DayLog>(
+    `select to_char(day, 'YYYY-MM-DD') as day, triggers, treatments, note
+     from day_logs
+     where user_id = $1
+     order by day desc`,
+    [userId]
+  );
+});

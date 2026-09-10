@@ -3,12 +3,9 @@ import type { MouthView } from '@/utils/mouth-map/geometry';
 /**
  * Application types.
  *
- * Previously generated from the Supabase schema into types_db.ts by
- * `supabase gen types`. With a self-hosted database there is no generator in the
- * loop, so these are maintained by hand alongside schema.sql.
+ * Maintained by hand alongside schema.sql — there is no generator in the loop
+ * with a self-hosted database.
  */
-
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 /** Signed-in user, assembled from the Better Auth session. */
 export interface User {
@@ -18,19 +15,41 @@ export interface User {
   avatar_url: string | null;
 }
 
+/** One measurement of a sore. At most one per sore per local day. */
+export interface Reading {
+  id: string;
+  /** ISO timestamp. */
+  recorded_at: string;
+  /** Width in millimetres. */
+  size: number;
+  /** 1-10. */
+  pain: number;
+  note: string | null;
+}
+
 export interface Sore {
   id: string;
   user_id: string;
-  /** Derived from view + x/y; stored so history queries can show it. */
-  zone: string;
   /** Which flat view of the mouth the sore was plotted on. */
   view: MouthView;
   /** Percent of the view's drawing box, 0-100. */
   x: number | null;
   y: number | null;
-  /** ISO timestamp strings, one appended per update. */
-  dates: string[] | null;
-  pain: number[] | null;
-  size: number[] | null;
-  healed: string | null;
+  /** Derived from view + x/y; stored so history queries can show it. */
+  zone: string;
+  /** ISO timestamp of when it was first marked. Day 1. */
+  created_at: string;
+  /** ISO timestamp, or null while the sore is still open. */
+  healed_at: string | null;
+  /** Oldest first. Never empty for a saved sore. */
+  readings: Reading[];
+}
+
+/** What else happened on a day: suspected causes and what was tried. */
+export interface DayLog {
+  /** Local calendar day, YYYY-MM-DD. */
+  day: string;
+  triggers: string[];
+  treatments: string[];
+  note: string | null;
 }

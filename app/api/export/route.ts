@@ -17,23 +17,24 @@ export async function GET() {
   const sores = await getSores(session.user.id);
 
   const rows: string[][] = [
-    ['sore_id', 'view', 'location', 'x_percent', 'y_percent', 'recorded_at', 'size_mm', 'pain_1_to_10', 'healed_at']
+    ['sore_id', 'view', 'location', 'x_percent', 'y_percent', 'first_marked', 'recorded_at', 'size_mm', 'pain_1_to_10', 'note', 'healed_at']
   ];
   for (const sore of sores) {
-    const dates = sore.dates ?? [];
-    dates.forEach((date, i) => {
+    for (const r of sore.readings) {
       rows.push([
         sore.id,
         sore.view,
         sore.zone,
         sore.x?.toFixed(2) ?? '',
         sore.y?.toFixed(2) ?? '',
-        date,
-        String(sore.size?.[i] ?? ''),
-        String(sore.pain?.[i] ?? ''),
-        sore.healed ?? ''
+        sore.created_at,
+        r.recorded_at,
+        String(r.size),
+        String(r.pain),
+        r.note ?? '',
+        sore.healed_at ?? ''
       ]);
-    });
+    }
   }
 
   const csv = rows.map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n';

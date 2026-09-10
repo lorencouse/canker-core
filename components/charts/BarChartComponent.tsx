@@ -42,14 +42,11 @@ function buildChart(sores: Sore[]) {
   sores.forEach((sore) => {
     const pains = new Map<string, number>();
 
-    sore.dates?.forEach((date, index) => {
-      const day = dayKey(date);
-      const size = sore.size?.[index];
-      if (size === undefined) return;
-
+    sore.readings.forEach((reading) => {
+      const day = dayKey(reading.recorded_at);
       if (!byDay.has(day)) byDay.set(day, { day });
-      byDay.get(day)![sore.id] = size;
-      pains.set(day, sore.pain?.[index] ?? 1);
+      byDay.get(day)![sore.id] = reading.size;
+      pains.set(day, reading.pain);
     });
 
     painByDay.set(sore.id, pains);

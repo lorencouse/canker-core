@@ -54,7 +54,7 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
   const [snapshot, setSnapshot] = useState<Sore[] | null>(null);
 
   const visibleSores = useMemo(
-    () => (showHealed ? sores : sores.filter((s) => !s.healed)),
+    () => (showHealed ? sores : sores.filter((s) => !s.healed_at)),
     [sores, showHealed]
   );
 

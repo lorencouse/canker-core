@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
-import { dayNumberOf, latest } from '@/utils/readings';
+import { dayNumberOf, latestReading } from '@/utils/readings';
 
 /**
  * The readings for the selected sore.
@@ -23,23 +23,19 @@ import { dayNumberOf, latest } from '@/utils/readings';
 
 /** Day 1 is the day it was first marked, matching how people count a sore. */
 function useSoreFacts(sore: Sore | null) {
-  const dates = sore?.dates ?? [];
-  const firstSeen = dates.length ? new Date(dates[0]) : null;
-
-  return useMemo(
-    () => ({
-      size: latest(sore?.size),
-      pain: latest(sore?.pain),
-      dates,
-      firstSeen,
-      lastUpdated: dates.length ? new Date(dates[dates.length - 1]) : null,
-      healed: sore?.healed ? new Date(sore.healed) : null,
+  return useMemo(() => {
+    const last = latestReading(sore);
+    return {
+      size: last?.size ?? null,
+      pain: last?.pain ?? null,
+      note: last?.note ?? null,
+      readings: sore?.readings.length ?? 0,
+      firstSeen: sore ? new Date(sore.created_at) : null,
+      lastUpdated: last ? new Date(last.recorded_at) : null,
+      healed: sore?.healed_at ? new Date(sore.healed_at) : null,
       dayNumber: sore ? dayNumberOf(sore) : null
-    }),
-    // The sore's identity and its reading count are what change the facts.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sore?.id, sore?.size, sore?.pain, sore?.dates, sore?.healed]
-  );
+    };
+  }, [sore]);
 }
 
 function Reading({ label, value }: { label: string; value: React.ReactNode }) {
@@ -120,18 +116,19 @@ export function SoreNavigator({ className }: { className?: string }) {
  */
 export function SoreReadings() {
   const { selectedSore } = useSoreContext();
-  const { size, pain, dates, firstSeen, lastUpdated, healed } =
+  const { size, pain, note, readings, firstSeen, lastUpdated, healed } =
     useSoreFacts(selectedSore);
 
   if (!selectedSore) return null;
 
   return (
+    <div className="space-y-4">
     <div className="flex items-start gap-5">
       <dl className="grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3.5">
         <Reading label="Size" value={size === null ? '—' : `${size} mm`} />
         <Reading label="Pain" value={pain === null ? '—' : `${pain} of 10`} />
         <Reading label="Location" value={selectedSore.zone} />
-        <Reading label="Readings" value={dates.length} />
+        <Reading label="Readings" value={readings} />
         <Reading
           label="First marked"
           value={firstSeen ? firstSeen.toLocaleDateString() : '—'}
@@ -163,6 +160,13 @@ export function SoreReadings() {
         </div>
         <span className="text-[11px] text-muted-foreground">Actual size</span>
       </div>
+    </div>
+    {note && (
+      <p className="rounded-lg bg-muted/50 px-3 py-2 text-sm">
+        <span className="text-muted-foreground">Latest note: </span>
+        {note}
+      </p>
+    )}
     </div>
   );
 }

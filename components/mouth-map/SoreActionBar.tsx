@@ -96,17 +96,17 @@ export default function SoreActionBar() {
     setMode('view');
   };
 
-  const setHealed = async (healed: string | null) => {
+  const setHealed = async (healedAt: string | null) => {
     if (!selectedSore) return;
     setBusy(true);
     try {
-      const result = await setSoreHealed(selectedSore.id, healed);
+      const result = await setSoreHealed(selectedSore.id, healedAt);
       if (failed(result)) return;
-      const updated = { ...selectedSore, healed };
+      const updated = { ...selectedSore, healed_at: healedAt };
       setSores((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
       // A healed sore leaves the map (unless healed ones are shown), so
       // keeping it selected would leave the details pointing at nothing.
-      setSelectedSore(healed ? null : updated);
+      setSelectedSore(healedAt ? null : updated);
       notify('success');
     } finally {
       setBusy(false);
@@ -167,7 +167,7 @@ export default function SoreActionBar() {
           </Button>
           {selectedSore && (
             <>
-              {selectedSore.healed ? (
+              {selectedSore.healed_at ? (
                 <Button
                   type="button"
                   variant="outline"

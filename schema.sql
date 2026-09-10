@@ -75,24 +75,43 @@ create index if not exists "verification_identifier_idx" on "verification" ("ide
 -- Application data
 -- ---------------------------------------------------------------------------
 
--- Column types mirror what the app actually reads and writes:
---   dates  text[]              — rendered with `new Date(str)`; kept as ISO strings
---                                so the pg driver does not coerce them to Date objects
---                                and change the shape the components already expect.
---   size / pain  double precision[]  — slider values, appended one entry per update.
---   view / x / y                     — the mouth-map view and the position within it,
---                                      as percentages of the view's drawing box.
+-- A sore is a place in the mouth. Its measurements live in `readings`, one
+-- row per local day, so notes and aggregates are ordinary SQL rather than
+-- array gymnastics. The zone label is recomputed from view + x/y on read.
 create table if not exists sores (
   id text primary key,
   user_id text not null references "user" ("id") on delete cascade,
-  zone text not null,
   -- Which flat view of the mouth map the sore was plotted on: front | cheeks | lips.
   view text not null default 'front',
+  -- Position within that view, as percentages of its drawing box.
   x double precision,
   y double precision,
-  dates text[],
-  pain double precision[],
-  size double precision[],
-  healed text
+  zone text not null,
+  -- Day 1.
+  created_at timestamptz not null default now(),
+  healed_at timestamptz
 );
-create index if not exists sores_user_id_idx on sores (user_id);
+create index if not exists sores_user_idx on sores (user_id, created_at desc);
+
+create table if not exists readings (
+  id text primary key,
+  sore_id text not null references sores (id) on delete cascade,
+  recorded_at timestamptz not null,
+  -- Width in millimetres.
+  size double precision not null check (size > 0),
+  pain integer not null check (pain between 1 and 10),
+  note text
+);
+create index if not exists readings_sore_idx on readings (sore_id, recorded_at);
+
+-- What else happened on a day: suspected triggers, treatments tried, a note.
+-- Values are drawn from the fixed lists in utils/day-log.ts so they can be
+-- counted. `day` is the user's local calendar day.
+create table if not exists day_logs (
+  user_id text not null references "user" ("id") on delete cascade,
+  day date not null,
+  triggers text[] not null default '{}',
+  treatments text[] not null default '{}',
+  note text,
+  primary key (user_id, day)
+);

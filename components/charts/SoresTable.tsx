@@ -9,6 +9,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Sore } from '@/types';
+import { latestReading } from '@/utils/readings';
 
 /**
  * Every sore on record.
@@ -18,9 +19,6 @@ import { Sore } from '@/types';
  * inside a vertically scrolling app is a gesture conflict as well as a
  * legibility one — so below `sm` each sore becomes a card instead.
  */
-
-const latest = (series: number[] | null) =>
-  series && series.length ? series[series.length - 1] : null;
 
 const dateOf = (iso?: string) =>
   iso ? new Date(iso).toLocaleDateString() : '—';
@@ -43,15 +41,16 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
       {/* Phone: one card per sore. */}
       <ul className="space-y-2 sm:hidden">
         {sores.map((sore) => {
-          const size = latest(sore.size);
-          const pain = latest(sore.pain);
+          const last = latestReading(sore);
+          const size = last?.size ?? null;
+          const pain = last?.pain ?? null;
 
           return (
             <li key={sore.id} className="rounded-lg border border-border p-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="font-medium">{sore.zone}</span>
                 <span className="tabular text-xs text-muted-foreground">
-                  {dateOf(sore.dates?.[0])}
+                  {dateOf(sore.created_at)}
                 </span>
               </div>
               <div className="mt-2 flex items-center gap-4 text-sm">
@@ -63,8 +62,8 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                   {pain === null ? '—' : `${pain}/10`}
                 </span>
                 <span className="ml-auto text-muted-foreground">
-                  {sore.healed
-                    ? `Healed ${new Date(sore.healed).toLocaleDateString()}`
+                  {sore.healed_at
+                    ? `Healed ${new Date(sore.healed_at).toLocaleDateString()}`
                     : 'Open'}
                 </span>
               </div>
@@ -87,16 +86,17 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
           </TableHeader>
           <TableBody>
             {sores.map((sore) => {
-              const size = latest(sore.size);
-              const pain = latest(sore.pain);
+              const last = latestReading(sore);
+              const size = last?.size ?? null;
+              const pain = last?.pain ?? null;
 
               return (
                 <TableRow key={sore.id}>
-                  <TableCell>{dateOf(sore.dates?.[0])}</TableCell>
+                  <TableCell>{dateOf(sore.created_at)}</TableCell>
                   <TableCell>
-                    {sore.healed ? (
+                    {sore.healed_at ? (
                       <span className="text-muted-foreground">
-                        Healed {new Date(sore.healed).toLocaleDateString()}
+                        Healed {new Date(sore.healed_at).toLocaleDateString()}
                       </span>
                     ) : (
                       'Open'

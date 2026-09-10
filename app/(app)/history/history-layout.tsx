@@ -16,7 +16,7 @@ import { User, Sore } from '@/types';
  * columns where neither is legible.
  */
 const SoreHistoryLayout = ({ user, sores }: { user: User; sores: Sore[] }) => {
-  const active = sores.filter((sore) => !sore.healed).length;
+  const active = sores.filter((sore) => !sore.healed_at).length;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-4 lg:px-6 lg:py-8">
