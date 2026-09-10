@@ -41,7 +41,10 @@ export const MIN_RADIUS = 4;
 /* ------------------------------------------------------------------------ */
 
 export const FRONT = (() => {
-  const x = 45, y = 14, w = 300, h = 376;
+  const x = 45,
+    y = 14,
+    w = 300,
+    h = 376;
   const cx = x + w / 2;
   const uy = y + h * 0.36; // upper arch centre line
   const ly = y + h * 0.64; // lower arch centre line
@@ -50,8 +53,22 @@ export const FRONT = (() => {
   const lry = h * 0.3;
   const tongueW = w * 0.52;
   return {
-    x, y, w, h, cx, uy, ly, rx, ury, lry,
-    tongue: { x: cx - tongueW / 2, w: tongueW, top: uy + h * 0.02, bottom: ly + lry * 0.6 }
+    x,
+    y,
+    w,
+    h,
+    cx,
+    uy,
+    ly,
+    rx,
+    ury,
+    lry,
+    tongue: {
+      x: cx - tongueW / 2,
+      w: tongueW,
+      top: uy + h * 0.02,
+      bottom: ly + lry * 0.6
+    }
   };
 })();
 
@@ -122,39 +139,64 @@ export function zoneAt(view: MouthView, p: Point): string | null {
     }
     case 'lips': {
       const { upper, lower } = LIPS;
-      if (inEllipse(p, upper.cx, upper.y + upper.h * 0.6, upper.w / 2, upper.h * 0.6))
+      if (
+        inEllipse(
+          p,
+          upper.cx,
+          upper.y + upper.h * 0.6,
+          upper.w / 2,
+          upper.h * 0.6
+        )
+      )
         return 'Upper lip';
-      if (inEllipse(p, lower.cx, lower.y + lower.h * 0.45, lower.w / 2, lower.h * 0.62))
+      if (
+        inEllipse(
+          p,
+          lower.cx,
+          lower.y + lower.h * 0.45,
+          lower.w / 2,
+          lower.h * 0.62
+        )
+      )
         return 'Lower lip';
       return null;
     }
     case 'front': {
       const f = FRONT;
       // Outside the cavity outline entirely?
-      const inUpperOuter = p.y <= f.uy && inEllipse(p, f.cx, f.uy, f.rx + 10, f.ury + 10);
-      const inLowerOuter = p.y >= f.ly && inEllipse(p, f.cx, f.ly, f.rx + 10, f.lry + 10);
-      const inMiddle = p.y > f.uy && p.y < f.ly && Math.abs(p.x - f.cx) <= f.rx + 10;
+      const inUpperOuter =
+        p.y <= f.uy && inEllipse(p, f.cx, f.uy, f.rx + 10, f.ury + 10);
+      const inLowerOuter =
+        p.y >= f.ly && inEllipse(p, f.cx, f.ly, f.rx + 10, f.lry + 10);
+      const inMiddle =
+        p.y > f.uy && p.y < f.ly && Math.abs(p.x - f.cx) <= f.rx + 10;
       if (!inUpperOuter && !inLowerOuter && !inMiddle) return null;
 
       // Tongue, tested as a tapered box.
       const t = f.tongue;
       if (p.y >= t.top && p.y <= t.bottom) {
         const span = t.bottom - t.top;
-        const taper = Math.max(0, (p.y - (t.top + span * 0.55)) / (span * 0.45));
+        const taper = Math.max(
+          0,
+          (p.y - (t.top + span * 0.55)) / (span * 0.45)
+        );
         const halfW = (t.w / 2) * (1 - 0.55 * taper * taper);
         if (Math.abs(p.x - f.cx) <= halfW) return 'Tongue';
       }
 
       if (p.y <= f.uy) {
-        if (inEllipse(p, f.cx, f.uy, f.rx - 16, f.ury - 16)) return 'Roof of mouth';
+        if (inEllipse(p, f.cx, f.uy, f.rx - 16, f.ury - 16))
+          return 'Roof of mouth';
         return 'Upper gums';
       }
       if (p.y >= f.ly) {
-        if (inEllipse(p, f.cx, f.ly, f.rx - 16, f.lry - 16)) return 'Floor of mouth';
+        if (inEllipse(p, f.cx, f.ly, f.rx - 16, f.lry - 16))
+          return 'Floor of mouth';
         return 'Lower gums';
       }
       // The band between the arches: gum ends at the sides, throat in the middle.
-      if (Math.abs(p.x - f.cx) > f.rx - 16) return p.y < (f.uy + f.ly) / 2 ? 'Upper gums' : 'Lower gums';
+      if (Math.abs(p.x - f.cx) > f.rx - 16)
+        return p.y < (f.uy + f.ly) / 2 ? 'Upper gums' : 'Lower gums';
       return 'Back of mouth';
     }
   }
@@ -166,3 +208,51 @@ export const zoneFor = (view: MouthView, xPct: number, yPct: number) =>
 
 export const isMouthView = (v: unknown): v is MouthView =>
   typeof v === 'string' && (MOUTH_VIEWS as readonly string[]).includes(v);
+
+/* ------------------------------------------------------------------------ */
+/* Zone anchors, for placing a sore by name rather than by pointer           */
+/* ------------------------------------------------------------------------ */
+
+export type ZoneAnchor = { zone: string; point: Point };
+
+/**
+ * A representative point inside each zone of a view: the grid point nearest
+ * the zone's centroid that actually lies in the zone. Found by scanning the
+ * drawing rather than typed in, so it cannot drift from the hit-testing
+ * above — and the gum band, which is a ring, still gets a point on the ring
+ * rather than its (empty) centre.
+ */
+function findAnchors(view: MouthView, step = 4): ZoneAnchor[] {
+  const buckets = new Map<string, Point[]>();
+  for (let y = step / 2; y < VIEW_BOX.height; y += step)
+    for (let x = step / 2; x < VIEW_BOX.width; x += step) {
+      const zone = zoneAt(view, { x, y });
+      if (!zone) continue;
+      if (!buckets.has(zone)) buckets.set(zone, []);
+      buckets.get(zone)!.push({ x, y });
+    }
+
+  const anchors: ZoneAnchor[] = [];
+  buckets.forEach((points, zone) => {
+    const cx = points.reduce((s, p) => s + p.x, 0) / points.length;
+    const cy = points.reduce((s, p) => s + p.y, 0) / points.length;
+    let best = points[0];
+    let bestD = Infinity;
+    for (const p of points) {
+      const d = (p.x - cx) ** 2 + (p.y - cy) ** 2;
+      if (d < bestD) {
+        bestD = d;
+        best = p;
+      }
+    }
+    anchors.push({ zone, point: best });
+  });
+  // Top to bottom, left to right: the order a list should read in.
+  return anchors.sort((a, b) => a.point.y - b.point.y || a.point.x - b.point.x);
+}
+
+export const ZONE_ANCHORS: Record<MouthView, ZoneAnchor[]> = {
+  front: findAnchors('front'),
+  cheeks: findAnchors('cheeks'),
+  lips: findAnchors('lips')
+};

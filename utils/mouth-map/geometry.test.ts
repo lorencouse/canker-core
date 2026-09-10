@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  MOUTH_VIEWS,
+  ZONE_ANCHORS,
   CHEEKS,
   FRONT,
   LIPS,
@@ -72,5 +74,20 @@ describe('isMouthView', () => {
     expect(isMouthView('front')).toBe(true);
     expect(isMouthView('gums')).toBe(false);
     expect(isMouthView(null)).toBe(false);
+  });
+});
+
+describe('ZONE_ANCHORS', () => {
+  it('has one anchor per zone, and every anchor is inside its zone', () => {
+    for (const view of MOUTH_VIEWS) {
+      const anchors = ZONE_ANCHORS[view];
+      expect(anchors.length).toBeGreaterThan(0);
+      expect(new Set(anchors.map((a) => a.zone)).size).toBe(anchors.length);
+      for (const { zone, point } of anchors) expect(zoneAt(view, point)).toBe(zone);
+    }
+    expect(ZONE_ANCHORS.front.map((a) => a.zone)).toContain('Tongue');
+    expect(ZONE_ANCHORS.front.map((a) => a.zone)).toContain('Upper gums');
+    expect(ZONE_ANCHORS.cheeks).toHaveLength(2);
+    expect(ZONE_ANCHORS.lips).toHaveLength(2);
   });
 });

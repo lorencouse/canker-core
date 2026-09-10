@@ -10,6 +10,7 @@ import {
   MOUTH_VIEWS,
   VIEW_BOX,
   VIEW_LABELS,
+  ZONE_ANCHORS,
   fromPercent,
   radiusFor,
   toPercent,
@@ -18,6 +19,13 @@ import {
   type MouthView,
   type Point
 } from '@/utils/mouth-map/geometry';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/utils/cn';
 import { tap } from '@/utils/native';
@@ -230,28 +238,44 @@ export default function MouthMap({ user }: { user: User }) {
 
     const p = toDrawing(e.clientX, e.clientY);
     if (mode === 'add') {
-      const zone = zoneAt(view, p);
-      if (!zone) return;
-      const pct = toPercent(p);
-      const now = new Date();
-      const sore: Sore = {
-        id: uuidv4(),
-        user_id: user.id ?? '',
-        view,
-        x: pct.x,
-        y: pct.y,
-        zone,
-        created_at: now.toISOString(),
-        healed_at: null,
-        readings: [newReading(now)]
-      };
-      setSores((prev) => [...prev, sore]);
-      setSelectedSore(sore);
-      // A placed sore is a committed act, unlike a pan or a zoom.
-      tap('medium');
+      placeSore(p);
     } else {
       setSelectedSore(null);
     }
+  };
+
+  /** Add a sore at a point in drawing units; nothing happens off the tissue. */
+  const placeSore = (p: Point) => {
+    const zone = zoneAt(view, p);
+    if (!zone) return;
+    const pct = toPercent(p);
+    const now = new Date();
+    const sore: Sore = {
+      id: uuidv4(),
+      user_id: user.id ?? '',
+      view,
+      x: pct.x,
+      y: pct.y,
+      zone,
+      created_at: now.toISOString(),
+      healed_at: null,
+      readings: [newReading(now)]
+    };
+    setSores((prev) => [...prev, sore]);
+    setSelectedSore(sore);
+    // A placed sore is a committed act, unlike a pan or a zoom.
+    tap('medium');
+  };
+
+  /** Keyboard movement, in percent of the view. Stops at the tissue edge. */
+  const nudgeSore = (sore: Sore, dx: number, dy: number) => {
+    if (sore.x === null || sore.y === null) return;
+    const pct = { x: sore.x + dx, y: sore.y + dy };
+    const zone = zoneAt(view, fromPercent(pct));
+    if (!zone) return;
+    const moved = { ...sore, x: pct.x, y: pct.y, zone };
+    setSores((prev) => prev.map((s) => (s.id === moved.id ? moved : s)));
+    setSelectedSore(moved);
   };
 
   const selectSore = (sore: Sore) => {
@@ -337,9 +361,12 @@ export default function MouthMap({ user }: { user: User }) {
                   y={p.y}
                   radius={radiusFor(currentSize(sore), view)}
                   pain={currentPain(sore)}
+                  label={`${sore.zone}, ${currentSize(sore)} mm, pain ${currentPain(sore)} of 10`}
                   selected={sore.id === selectedSore?.id}
                   draggable={mode !== 'view'}
                   filterId={`${idPrefix}soft`}
+                  onSelect={() => selectSore(sore)}
+                  onNudge={(dx, dy) => nudgeSore(sore, dx, dy)}
                   onPointerDown={(e) => {
                     selectSore(sore);
                     onPointerDown(
@@ -370,6 +397,32 @@ export default function MouthMap({ user }: { user: User }) {
         />
       </div>
 
+      {mode === 'add' && (
+        // The pointer-free way in. Placing by name drops the sore at the
+        // middle of the region; it can be nudged with the arrow keys after.
+        <Select
+          value=""
+          onValueChange={(zone) => {
+            const anchor = ZONE_ANCHORS[view].find((a) => a.zone === zone);
+            if (anchor) placeSore(anchor.point);
+          }}
+        >
+          <SelectTrigger
+            className="h-11 lg:h-10"
+            aria-label="Place a sore by naming the part of the mouth"
+          >
+            <SelectValue placeholder="Or place it by name…" />
+          </SelectTrigger>
+          <SelectContent>
+            {ZONE_ANCHORS[view].map((a) => (
+              <SelectItem key={a.zone} value={a.zone}>
+                {a.zone}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
       <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
         <p>Shown as in a mirror: your left is on the left.</p>
         {/*
@@ -379,8 +432,7 @@ export default function MouthMap({ user }: { user: User }) {
         {healedCount > 0 && (
           <label className="flex shrink-0 cursor-pointer items-center gap-2">
             <span>
-              Show healed{' '}
-              <span className="tabular">({healedCount})</span>
+              Show healed <span className="tabular">({healedCount})</span>
             </span>
             <Switch
               checked={showHealed}
