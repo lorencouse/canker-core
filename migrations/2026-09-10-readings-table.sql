@@ -68,4 +68,9 @@ from sores_old o,
 
 drop table sores_old;
 
+-- The old table still held the name `sores_pkey` when the new one was created,
+-- so Postgres named the new constraint `sores_pkey1`. Rename it, or a database
+-- built fresh from schema.sql differs from a migrated one.
+alter index sores_pkey1 rename to sores_pkey;
+
 commit;
