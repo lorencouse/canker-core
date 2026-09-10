@@ -237,5 +237,30 @@ in order, after deploying the code that expects them.
 
 ### Deploys
 
-Push to `main`; Coolify rebuilds and redeploys. Rollback is a redeploy of the
-previous commit from the Coolify UI.
+**Pushing to `main` does not deploy anything.** The application's build pack is
+`dockerimage`, not a git source — Coolify runs whatever tag
+`localhost:5000/canker-core` currently points at, and nothing watches the repo.
+
+A deploy is the four steps under [Building and shipping an
+image](#building-and-shipping-an-image), ending with the tag switch:
+
+```bash
+UUID=se1yk2uuejhylof4isj4x5wq
+SHA=$(git rev-parse --short HEAD)
+
+# Token lives in the sibling house-finder repo; the API is only reachable
+# from the server itself. The heredoc keeps it off the remote command line.
+COOLIFY_TOKEN=$(grep -m1 '^COOLIFY_TOKEN=' ../house-finder/.env | cut -d= -f2- | tr -d "\"'")
+
+ssh coolify 'bash -s' <<EOS
+curl -sS -X PATCH "http://localhost:8000/api/v1/applications/$UUID" \
+  -H "Authorization: Bearer $COOLIFY_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"docker_registry_image_tag": "$SHA"}'
+curl -sS -X POST "http://localhost:8000/api/v1/deploy?uuid=$UUID" \
+  -H "Authorization: Bearer $COOLIFY_TOKEN"
+EOS
+```
+
+Rollback is the same tag switch pointed at the previous sha — the old image is
+still in the registry, so there is nothing to rebuild.
