@@ -10,8 +10,17 @@ type Mode = 'add' | 'edit' | 'view';
 interface SoreContextProps {
   selectedSore: Sore | null;
   setSelectedSore: React.Dispatch<React.SetStateAction<Sore | null>>;
+  /** Every sore the user has, healed or not. */
   sores: Sore[];
   setSores: React.Dispatch<React.SetStateAction<Sore[]>>;
+  /**
+   * The sores the map and navigator currently show. Healed sores are hidden
+   * by default: the map is for what hurts now, and a year of healed marks
+   * would bury the one that does.
+   */
+  visibleSores: Sore[];
+  showHealed: boolean;
+  setShowHealed: React.Dispatch<React.SetStateAction<boolean>>;
   mode: Mode;
   setMode: React.Dispatch<React.SetStateAction<Mode>>;
   /**
@@ -40,8 +49,14 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
 }) => {
   const [selectedSore, setSelectedSore] = useState<Sore | null>(null);
   const [sores, setSores] = useState<Sore[]>(initialSores);
+  const [showHealed, setShowHealed] = useState(false);
   const [mode, setMode] = useState<Mode>('view');
   const [snapshot, setSnapshot] = useState<Sore[] | null>(null);
+
+  const visibleSores = useMemo(
+    () => (showHealed ? sores : sores.filter((s) => !s.healed)),
+    [sores, showHealed]
+  );
 
   const contextValue = useMemo(
     () => ({
@@ -49,12 +64,15 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
       setSelectedSore,
       sores,
       setSores,
+      visibleSores,
+      showHealed,
+      setShowHealed,
       mode,
       setMode,
       snapshot,
       setSnapshot
     }),
-    [selectedSore, sores, mode, snapshot]
+    [selectedSore, sores, visibleSores, showHealed, mode, snapshot]
   );
 
   return (

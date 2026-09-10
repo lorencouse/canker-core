@@ -18,6 +18,7 @@ import {
   type MouthView,
   type Point
 } from '@/utils/mouth-map/geometry';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/utils/cn';
 import { tap } from '@/utils/native';
 
@@ -47,8 +48,17 @@ type Camera = { k: number; tx: number; ty: number };
 const HOME: Camera = { k: 1, tx: 0, ty: 0 };
 
 export default function MouthMap({ user }: { user: User }) {
-  const { sores, setSores, selectedSore, setSelectedSore, mode } =
-    useSoreContext();
+  const {
+    sores,
+    setSores,
+    visibleSores,
+    showHealed,
+    setShowHealed,
+    selectedSore,
+    setSelectedSore,
+    mode
+  } = useSoreContext();
+  const healedCount = sores.filter((s) => s.healed).length;
   const [view, setView] = useState<MouthView>('front');
   const [camera, setCamera] = useState<Camera>(HOME);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -247,7 +257,7 @@ export default function MouthMap({ user }: { user: User }) {
     setSelectedSore(sore);
   };
 
-  const visible = sores.filter(
+  const visible = visibleSores.filter(
     (s) => s.view === view && s.x !== null && s.y !== null
   );
 
@@ -264,7 +274,7 @@ export default function MouthMap({ user }: { user: User }) {
         className="flex gap-1 rounded-xl bg-muted p-1"
       >
         {MOUTH_VIEWS.map((v) => {
-          const count = sores.filter((s) => s.view === v).length;
+          const count = visibleSores.filter((s) => s.view === v).length;
           return (
             <button
               key={v}
@@ -365,9 +375,32 @@ export default function MouthMap({ user }: { user: User }) {
         />
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Shown as in a mirror: your left is on the left.
-      </p>
+      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+        <p>Shown as in a mirror: your left is on the left.</p>
+        {/*
+          Only offered once there is something to show. A toggle for an
+          empty set is a question with no answer.
+        */}
+        {healedCount > 0 && (
+          <label className="flex shrink-0 cursor-pointer items-center gap-2">
+            <span>
+              Show healed{' '}
+              <span className="tabular">({healedCount})</span>
+            </span>
+            <Switch
+              checked={showHealed}
+              onCheckedChange={(on) => {
+                tap();
+                setShowHealed(on);
+                // A healed sore that is selected cannot stay selected once
+                // it is hidden.
+                if (!on && selectedSore?.healed) setSelectedSore(null);
+              }}
+              aria-label="Show healed sores on the map"
+            />
+          </label>
+        )}
+      </div>
     </div>
   );
 }

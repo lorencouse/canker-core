@@ -1,20 +1,38 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, CheckCircle2, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { toast } from '@/components/ui/Toasts/use-toast';
 import { useSoreContext } from '@/context/SoreContext';
-import { deleteSore, upsertSores } from '@/utils/actions/soreActions';
+import {
+  deleteSore,
+  setSoreHealed,
+  upsertSores,
+  type ActionResult
+} from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
 
 /**
- * The editing actions for the map: add, edit, delete, and the commit pair
- * that closes an editing session.
+ * The editing actions for the map: add, edit, mark healed, delete, and the
+ * commit pair that closes an editing session.
  *
- * Add and Edit are two-step. Opening a session snapshots the sores; Finish
+ * Add and Edit are two-step. Opening a session snapshots the sores; Done
  * writes them and Cancel restores the snapshot. That is what makes dragging
  * a sore around the map safe to experiment with.
+ *
+ * Healed and Delete write immediately. Healed is the normal end of a sore's
+ * story and keeps its history; Delete is for mistakes, and asks first
+ * because on a phone it sits one thumb-width from Edit.
  *
  * Laid out as one full-width row, which on a phone lands directly above the
  * tab bar where the thumb already is, and on a desktop sits under the map at
@@ -32,8 +50,16 @@ export default function SoreActionBar() {
     setSnapshot
   } = useSoreContext();
   const [busy, setBusy] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const editing = mode === 'add' || mode === 'edit';
+
+  const failed = (result: ActionResult) => {
+    if (result.ok) return false;
+    notify('error');
+    toast({ variant: 'destructive', title: result.error });
+    return true;
+  };
 
   const begin = (next: 'add' | 'edit') => {
     tap();
@@ -43,9 +69,17 @@ export default function SoreActionBar() {
   };
 
   const finish = async () => {
+    // Only the sores that changed. State updates replace a sore's object, so
+    // anything still referentially in the snapshot was never touched.
+    const changed = snapshot
+      ? sores.filter((s) => !snapshot.includes(s))
+      : sores;
     setBusy(true);
     try {
-      await upsertSores(sores);
+      const result = await upsertSores(changed);
+      // On failure the session stays open with the edits intact, so the
+      // user can retry rather than redo.
+      if (failed(result)) return;
       notify('success');
       setSnapshot(null);
       setMode('view');
@@ -62,13 +96,32 @@ export default function SoreActionBar() {
     setMode('view');
   };
 
+  const setHealed = async (healed: string | null) => {
+    if (!selectedSore) return;
+    setBusy(true);
+    try {
+      const result = await setSoreHealed(selectedSore.id, healed);
+      if (failed(result)) return;
+      const updated = { ...selectedSore, healed };
+      setSores((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+      // A healed sore leaves the map (unless healed ones are shown), so
+      // keeping it selected would leave the details pointing at nothing.
+      setSelectedSore(healed ? null : updated);
+      notify('success');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const remove = async () => {
     if (!selectedSore) return;
     setBusy(true);
     try {
-      await deleteSore(selectedSore.id);
-      setSores(sores.filter((s) => s.id !== selectedSore.id));
+      const result = await deleteSore(selectedSore.id);
+      if (failed(result)) return;
+      setSores((prev) => prev.filter((s) => s.id !== selectedSore.id));
       setSelectedSore(null);
+      setConfirmingDelete(false);
       notify('warning');
     } finally {
       setBusy(false);
@@ -114,23 +167,52 @@ export default function SoreActionBar() {
           </Button>
           {selectedSore && (
             <>
+              {selectedSore.healed ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="touch"
+                  onClick={() => setHealed(null)}
+                  disabled={busy}
+                >
+                  <RotateCcw aria-hidden="true" />
+                  Reopen
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="touch"
+                    onClick={() => begin('edit')}
+                    aria-label="Edit this sore"
+                    className="px-3"
+                  >
+                    <Pencil aria-hidden="true" />
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="touch"
+                    onClick={() => setHealed(new Date().toISOString())}
+                    disabled={busy}
+                    aria-label="Mark this sore healed"
+                    className="px-3"
+                  >
+                    <CheckCircle2 aria-hidden="true" />
+                    Healed
+                  </Button>
+                </>
+              )}
               <Button
                 type="button"
                 variant="outline"
                 size="touch"
-                onClick={() => begin('edit')}
-              >
-                <Pencil aria-hidden="true" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="touch"
-                onClick={remove}
+                onClick={() => setConfirmingDelete(true)}
                 disabled={busy}
                 aria-label="Delete this sore"
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                className="px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
                 <Trash2 aria-hidden="true" />
               </Button>
@@ -138,6 +220,38 @@ export default function SoreActionBar() {
           )}
         </>
       )}
+
+      <Dialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete this sore?</DialogTitle>
+            <DialogDescription>
+              Its readings go with it and it will not appear in your history.
+              If it has simply gone away, mark it healed instead.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="touch"
+              onClick={() => setConfirmingDelete(false)}
+              disabled={busy}
+            >
+              Keep it
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="touch"
+              onClick={remove}
+              disabled={busy}
+            >
+              {busy ? 'Deleting…' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

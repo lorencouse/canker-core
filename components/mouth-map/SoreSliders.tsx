@@ -4,63 +4,64 @@ import { useEffect, useState } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { useSoreContext } from '@/context/SoreContext';
+import { hasReadingOn, latest, withReading } from '@/utils/readings';
 
 const SoreSliders: React.FC = () => {
-  const { selectedSore, setSelectedSore, sores, setSores } = useSoreContext();
+  const { selectedSore, setSelectedSore, setSores } = useSoreContext();
 
-  const initialSoreSize = selectedSore?.size
-    ? selectedSore.size[selectedSore.size.length - 1]
-    : 3;
-  const initialPainLevel = selectedSore?.pain
-    ? selectedSore.pain[selectedSore.pain.length - 1]
-    : 3;
+  const [soreSize, setSoreSize] = useState<number>(
+    latest(selectedSore?.size) ?? 3
+  );
+  const [painLevel, setPainLevel] = useState<number>(
+    latest(selectedSore?.pain) ?? 3
+  );
 
-  const [soreSize, setSoreSize] = useState<number>(initialSoreSize);
-  const [painLevel, setPainLevel] = useState<number>(initialPainLevel);
-
-  /** Replace the current reading in place; earlier readings are history. */
-  const commit = (field: 'size' | 'pain', newValue: number) => {
+  /**
+   * Record the value as today's reading. The first change on a new day
+   * appends a reading; every change after that on the same day corrects it,
+   * so dragging a slider back and forth never produces more than one row.
+   */
+  const commit = (values: { size?: number; pain?: number }) => {
     if (!selectedSore) return;
-    const series = selectedSore[field];
-    const updatedSore = {
-      ...selectedSore,
-      [field]: series ? [...series.slice(0, -1), newValue] : [newValue]
-    };
-    setSelectedSore(updatedSore);
-    setSores(
-      sores.map((sore) => (sore.id === selectedSore.id ? updatedSore : sore))
-    );
+    const updated = withReading(selectedSore, values);
+    setSelectedSore(updated);
+    setSores((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
   };
 
-  const handleSizeChange = (newValue: number) => {
-    setSoreSize(newValue);
-    commit('size', newValue);
+  const handleSizeChange = (value: number) => {
+    setSoreSize(value);
+    commit({ size: value });
   };
 
-  const handlePainChange = (newValue: number) => {
-    setPainLevel(newValue);
-    commit('pain', newValue);
+  const handlePainChange = (value: number) => {
+    setPainLevel(value);
+    commit({ pain: value });
   };
 
   useEffect(() => {
     if (selectedSore) {
-      setSoreSize(
-        selectedSore.size?.length
-          ? selectedSore.size[selectedSore.size.length - 1]
-          : 3
-      );
-      setPainLevel(
-        selectedSore.pain?.length
-          ? selectedSore.pain[selectedSore.pain.length - 1]
-          : 3
-      );
+      setSoreSize(latest(selectedSore.size) ?? 3);
+      setPainLevel(latest(selectedSore.pain) ?? 3);
     }
   }, [selectedSore]);
 
   if (!selectedSore) return null;
 
+  const loggedToday = hasReadingOn(selectedSore, new Date());
+
   return (
     <div className="app-card space-y-5 p-4 sm:p-5">
+      {/*
+        Says which of the two things a slider move will do, because they look
+        identical on the slider and are not: one adds a day to the history,
+        the other corrects the day already there.
+      */}
+      <p className="text-xs text-muted-foreground">
+        {loggedToday
+          ? 'Updating today’s reading.'
+          : 'Move a slider to log today’s reading.'}
+      </p>
+
       <div className="space-y-1.5">
         <div className="flex items-baseline justify-between gap-3">
           <Label htmlFor="sore-size">How wide is it?</Label>

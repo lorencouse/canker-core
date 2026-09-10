@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
+import { dayNumberOf, latest } from '@/utils/readings';
 
 /**
  * The readings for the selected sore.
@@ -19,10 +20,6 @@ import { cn } from '@/utils/cn';
  * differs — the readings themselves are identical, and duplicating them
  * would guarantee the two drift.
  */
-
-/** Last entry of a reading series, which is the current value. */
-const latest = (series: number[] | null | undefined) =>
-  series && series.length ? series[series.length - 1] : null;
 
 /** Day 1 is the day it was first marked, matching how people count a sore. */
 function useSoreFacts(sore: Sore | null) {
@@ -36,16 +33,12 @@ function useSoreFacts(sore: Sore | null) {
       dates,
       firstSeen,
       lastUpdated: dates.length ? new Date(dates[dates.length - 1]) : null,
-      dayNumber: firstSeen
-        ? Math.max(
-            1,
-            Math.floor((Date.now() - firstSeen.getTime()) / 86_400_000) + 1
-          )
-        : null
+      healed: sore?.healed ? new Date(sore.healed) : null,
+      dayNumber: sore ? dayNumberOf(sore) : null
     }),
     // The sore's identity and its reading count are what change the facts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sore?.id, sore?.size, sore?.pain, sore?.dates]
+    [sore?.id, sore?.size, sore?.pain, sore?.dates, sore?.healed]
   );
 }
 
@@ -66,9 +59,10 @@ function Reading({ label, value }: { label: string; value: React.ReactNode }) {
  * sore more usefully than its index does.
  */
 export function SoreNavigator({ className }: { className?: string }) {
-  const { selectedSore, setSelectedSore, sores } = useSoreContext();
+  const { selectedSore, setSelectedSore, visibleSores: sores } =
+    useSoreContext();
   const [index, setIndex] = useState(0);
-  const { dayNumber } = useSoreFacts(selectedSore ?? null);
+  const { dayNumber, healed } = useSoreFacts(selectedSore ?? null);
 
   useEffect(() => {
     setIndex(sores.findIndex((sore) => sore.id === selectedSore?.id));
@@ -100,7 +94,7 @@ export function SoreNavigator({ className }: { className?: string }) {
         </p>
         {dayNumber !== null && (
           <p className="tabular text-xs text-muted-foreground">
-            Day {dayNumber}
+            {healed ? `Healed after ${dayNumber} day${dayNumber === 1 ? '' : 's'}` : `Day ${dayNumber}`}
           </p>
         )}
       </div>
@@ -126,7 +120,7 @@ export function SoreNavigator({ className }: { className?: string }) {
  */
 export function SoreReadings() {
   const { selectedSore } = useSoreContext();
-  const { size, pain, dates, firstSeen, lastUpdated } =
+  const { size, pain, dates, firstSeen, lastUpdated, healed } =
     useSoreFacts(selectedSore);
 
   if (!selectedSore) return null;
@@ -142,10 +136,14 @@ export function SoreReadings() {
           label="First marked"
           value={firstSeen ? firstSeen.toLocaleDateString() : '—'}
         />
-        <Reading
-          label="Last updated"
-          value={lastUpdated ? lastUpdated.toLocaleDateString() : '—'}
-        />
+        {healed ? (
+          <Reading label="Healed" value={healed.toLocaleDateString()} />
+        ) : (
+          <Reading
+            label="Last updated"
+            value={lastUpdated ? lastUpdated.toLocaleDateString() : '—'}
+          />
+        )}
       </dl>
 
       {/*
