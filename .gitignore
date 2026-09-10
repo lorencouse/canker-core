@@ -47,3 +47,6 @@ certificates
 
 # typescript incremental build cache
 *.tsbuildinfo
+
+# Ad-hoc production dumps (docs/DEPLOYMENT.md); contain user data.
+backups/
