@@ -1,0 +1,195 @@
+import {
+  ArticleFooter,
+  ArticleHeader
+} from '@/components/marketing/article/ArticleShell';
+import DraftNotice from '@/components/marketing/article/DraftNotice';
+import { articleBySlug } from '@/content/articles';
+
+export const slug = 'canker-sore-in-throat';
+
+export const metadata = {
+  title: articleBySlug(slug).title,
+  description: articleBySlug(slug).answer,
+  alternates: { canonical: `/blog/${slug}` },
+  // Belt and braces: the registry keeps it out of the sitemap, the index and
+  // llms.txt, and this keeps it out of an index if it is found anyway.
+  robots: { index: false, follow: false }
+};
+
+<ArticleHeader slug={slug} />
+
+<DraftNotice
+  reviewer="a dentist"
+  intro="Five questions, in the order they matter. Everything else is style and can be argued about later."
+  asks={[
+    {
+      ask: 'Is the lead claim right?',
+      detail:
+        'That aphthous ulcers do occur on the soft palate and the tonsillar pillars, but that a lesion on the tonsil itself is more often not aphthous.'
+    },
+    {
+      ask: 'Is the fever line safe?',
+      detail:
+        'The page leans hard on "a canker sore does not cause a fever" as the dividing line. Is that the right thing to hand someone, or does it risk reassuring the one reader it should not?'
+    },
+    {
+      ask: 'Are the same-day red flags the right list?',
+      detail:
+        'Trouble breathing or swallowing saliva, muffled voice, drooling, severe one-sided pain with trismus, stiff neck. Anything missing, anything overstated?'
+    },
+    {
+      ask: 'Is "what else it could be" described without diagnosing?',
+      detail:
+        'Each entry is one sentence naming what it typically arrives with, never what the reader has.'
+    },
+    {
+      ask: 'Is three weeks the right persistence threshold',
+      detail:
+        'for this site, given that every other page here uses two weeks as the point at which a sore stops being ordinary?'
+    }
+  ]}
+  note="Deliberately absent: any interactive triage. A widget that took symptoms and returned a likelihood would be the one thing on this site that reads as a diagnosis, so this page carries prose and a threshold instead."
+/>
+
+A canker sore is a local problem: one spot of lining breaks down, it hurts, it
+closes. Almost everything else that makes the back of your mouth sore is not
+local — it is an illness that happens to include your throat. That is the whole
+distinction this page is about, and it is usually decidable without anybody
+looking down your throat at all.
+
+## Can you get a canker sore in your throat?
+
+Yes, but be precise about where. The back of the mouth is not one surface. The
+soft palate, and the arches of tissue running down either side of the tonsil,
+are the soft, movable, non-keratinised lining that canker sores favour
+everywhere else in the mouth — the same kind of tissue as the inside of your
+lip. A genuine aphthous ulcer there is unremarkable: round, shallow, a pale
+floor and a red rim, painful out of proportion to its size because you swallow
+about a thousand times a day.
+
+The tonsil itself is not that tissue. It is lymphoid tissue with deep pits in
+its surface, and the things that commonly happen to it are infections and
+debris rather than ulcers. So "a canker sore on my tonsil" is a reasonable
+thing to type into a search box, and the honest answer is that a sore _on_ the
+tonsil is more often something else.
+
+## Is a white spot on my tonsil a canker sore?
+
+Usually not, and the useful test is coating versus crater.
+
+An **ulcer** is a break in the surface. It has an edge you could trace, the
+floor sits lower than the tissue around it, and nothing about it lifts off.
+
+A **coating** sits on top of intact tissue — the white or yellow film of a
+throat infection, spread across the tonsil or in patches on both sides. A
+**tonsil stone** is a firm white or yellow lump packed into one of the tonsil's
+pits, often with bad breath and often with no pain at all; they can sometimes be
+dislodged, which an ulcer cannot.
+
+If what you can see wipes, lifts, or is on both sides, the word "ulcer" is
+probably the wrong word for it, and this page is probably the wrong page.
+
+## Is it a canker sore or tonsillitis?
+
+Fever is the line worth trusting, and it is the reason this page leads with the
+distinction between a local sore and an illness.
+
+A canker sore does not cause a fever. It does not cause swollen glands in your
+neck, it does not make you feel generally unwell, and it does not make the whole
+of swallowing hurt — it makes one identifiable spot hurt, more when something
+touches it. If you can point to where it is, and you feel otherwise fine, a
+local sore is a reasonable thing to think you have.
+
+A throat infection is the other shape entirely: sore on both sides, worse over a
+day or two, usually with a fever and tender glands under the jaw, and often with
+nothing you can point at because the whole throat is the problem. That is not a
+sore to measure. That is an illness to have looked at if it is not settling.
+
+## What else puts sores at the back of the mouth
+
+One sentence each, because the point is not to work out which of these it is —
+it is to know that the list is long enough that guessing is a poor use of your
+afternoon.
+
+- **A viral sore throat**, far and away the most common: sore on both sides,
+  often with a cold, and better within a week.
+- **Bacterial throat infection**, which tends to come with a fever, tender neck
+  glands and a coated tonsil, and without the cough and runny nose of a viral
+  one.
+- **Herpangina and hand-foot-and-mouth**, which put small ulcers across the soft
+  palate and the back of the mouth, mostly in children, with a fever, and
+  sometimes a rash on the hands and feet.
+- **Glandular fever**, which is a severe sore throat with very swollen tonsils
+  and glands and exhaustion that is out of proportion to everything else,
+  typically in teenagers and young adults.
+- **A first herpes infection**, which puts many ulcers across the mouth and gums
+  at once along with a fever, and which is [not what a single ordinary canker
+  sore is](/blog/are-canker-sores-herpes).
+- **Something you scratched**, which is a real and underrated answer at the
+  back of the mouth: a crisp, a crust of toast, a fishbone. It hurts sharply
+  from the moment it happens and it is better in a few days.
+- **A tonsil stone**, which is debris rather than a sore, and is the thing most
+  often mistaken for an ulcer on a tonsil.
+
+There is also the case where recurring mouth ulcers are part of something wider
+— ulcers elsewhere as well as in the mouth, or with joint, eye or skin symptoms.
+That is not diagnosable from a page and is not something to track your way
+through; it is a reason to bring the whole pattern to a doctor.
+
+## How long should it take?
+
+If it is a canker sore, the same course as anywhere else: worst pain in the
+first two to three days, widest around the middle of the week, closing from the
+edges inward, and [gone within 7 to 14
+days](/blog/how-long-do-canker-sores-last). The back of the mouth does not have
+its own timetable.
+
+Anything at the back of the mouth that has not healed within three weeks should
+be looked at, regardless of what it looks like, how small it is, or how little
+it hurts by then. That is not a prediction about what it is. It is the
+threshold at which waiting stops being a reasonable plan.
+
+## When to stop guessing
+
+**This week**, if any of these are true:
+
+- a fever, or tender swollen glands in your neck
+- pain on swallowing rather than pain when something touches one spot
+- pain on one side that has lasted more than a few days
+- a sore at the back of the mouth that is not clearly better after a fortnight
+- repeated bouts of the same thing
+
+{/* The one block on the site that has to be found by someone skimming at
+    speed, so it gets a border. Neutral, not red: red on this site is a pain
+    value and nothing else. */}
+
+<div className="mt-6 rounded-lg border border-border bg-muted/40 p-5 [&>ul]:mb-0">
+
+**Today**, and without waiting for an appointment, if any of these are true:
+
+- difficulty breathing, or a feeling that your throat is closing
+- difficulty swallowing your own saliva, or drooling
+- a muffled or "hot potato" voice
+- severe pain on one side with difficulty opening your mouth
+- a stiff neck with a fever
+
+</div>
+
+That second list is not about canker sores at all. It is here because it is the
+list a page about sore throats is obliged to carry, and because the people most
+likely to be reading a tracking app's article at two in the morning are the
+people it is most likely to reach.
+
+## If it does turn out to be an ordinary one
+
+Then it has a course, and the only thing today's appearance tells you is where
+in that course you are — which is nothing, until there is a second look to
+compare it with. A sore at the back of the mouth is the hardest place to measure
+honestly, so if you are going to track it, track it with a phone light and a
+mirror at the same time of day, and accept that the number is rougher here than
+it would be on a lip.
+
+[Whether it is healing](/blog/is-my-canker-sore-healing) is still a question
+about millimetres. It is just a question about worse millimetres.
+
+<ArticleFooter />

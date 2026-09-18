@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-import { ARTICLES } from '@/content/articles';
+import { PUBLISHED_ARTICLES } from '@/content/articles';
 import { getURL } from '@/utils/helpers';
 
 /**
@@ -18,6 +18,9 @@ const PAGES: Array<{
   changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'];
 }> = [
   { path: '', priority: 1, changeFrequency: 'monthly' },
+  // The mouth map is a landing page rather than a supporting page: it is the
+  // hub every location article links up to, so it ranks above `about`.
+  { path: 'mouth-map', priority: 0.9, changeFrequency: 'monthly' },
   { path: 'about', priority: 0.8, changeFrequency: 'monthly' },
   { path: 'blog', priority: 0.7, changeFrequency: 'weekly' },
   { path: 'privacy', priority: 0.3, changeFrequency: 'yearly' },
@@ -37,7 +40,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Articles carry their own real dates. A sitemap that claims every page
     // changed at deploy time teaches crawlers to ignore the field, and the
     // whole point of it is to say when a page genuinely last changed.
-    ...ARTICLES.map((article) => ({
+    ...PUBLISHED_ARTICLES.map((article) => ({
       url: getURL(`blog/${article.slug}`),
       lastModified: new Date(`${article.updated}T00:00:00Z`),
       changeFrequency: 'yearly' as const,

@@ -1,0 +1,103 @@
+import HealingCheck from '@/components/marketing/HealingCheck';
+import {
+  ArticleFooter,
+  ArticleHeader
+} from '@/components/marketing/article/ArticleShell';
+import { articleBySlug } from '@/content/articles';
+
+export const slug = 'canker-sore-keeps-getting-bigger';
+
+export const metadata = {
+  title: articleBySlug(slug).title,
+  description: articleBySlug(slug).answer,
+  alternates: { canonical: `/blog/${slug}` }
+};
+
+<ArticleHeader slug={slug} />
+
+This is the day-two panic, and it is almost always a false alarm. A canker
+sore does not appear at full size and shrink from there. It opens small,
+widens for two or three days, stops, and only then starts closing — so the
+stretch where it is visibly getting worse is a normal part of the course
+rather than a departure from it.
+
+The useful question is not whether it grew. It is **when** it grew.
+
+## Is it normal for a canker sore to get bigger?
+
+In the first three days, yes. That is the single most common reason people
+decide something has gone wrong when nothing has.
+
+The sequence is the same almost every time: a day of tingling before anything
+is visible, then a small crater with a white or yellow floor and a red ring,
+then two or three days of that crater widening as the surface breaks down
+around its edge. Full size lands around day three or four. After that it fills
+in from the rim, which means **the white centre shrinks before the sore
+disappears** — one more thing that looks like deterioration and is not.
+
+The [day-by-day course](/blog/how-long-do-canker-sores-last) is the long
+version, and [the five stages drawn](/blog/canker-sore-stages) is what each
+of those steps actually looks like.
+
+## When getting bigger is worth acting on
+
+Three cases, and they are narrow on purpose:
+
+1. **Still widening after about day four.** Ordinary sores stop early. One
+   that has not is off the course this page describes.
+2. **Past 10mm across.** That is the uncommon major kind — slower, sometimes
+   weeks rather than days, and worth showing to a dentist.
+3. **Spreading rather than widening.** One round crater getting wider is the
+   normal thing. A patch that is extending irregularly, or new ulcers joining
+   up with it, is a different observation.
+
+Everything else — that it hurts more, that it looks angrier, that the white
+part is bigger than yesterday — is the ordinary first half of an ordinary
+sore.
+
+## How big do canker sores get?
+
+| Width at its widest | Usually gone by  | What it is                                                      |
+| ------------------- | ---------------- | --------------------------------------------------------------- |
+| Under 5mm           | Day 7–10         | A minor aphthous ulcer — the ordinary kind                      |
+| 5–10mm              | Day 10–14        | Still minor, just wider, so it takes longer to fill in          |
+| Over 10mm           | Two weeks to six | A major ulcer. Uncommon, slower, and worth showing to a dentist |
+
+Width is the best single predictor of how long yours will take, which is why
+it is the number worth having and pain is not. A crater fills in from its rim,
+so a 10mm sore is a good deal more than twice the work of a 5mm one.
+
+## Why it feels bigger than it looks
+
+Because pain tracks _where_ a sore is far more than how wide it is. A 3mm
+ulcer sitting exactly where your teeth close can be agonising; a broad shallow
+one on the inside of a cheek can be merely annoying and take twice as long.
+
+Pain also peaks in the first two to three days and fades from day four onward,
+while the sore itself is clearly visible for another week. So early on, rising
+pain and increasing size happen together and feel like one event — and then
+they separate, and the sore keeps closing long after it has stopped hurting.
+They are two measurements that do not move together, which is why the app
+records them separately instead of asking how it is going.
+
+## The only way to know whether it is still growing
+
+Eyeballing a sore against a ruler is good to about a millimetre. That sets the
+whole method:
+
+1. Measure the widest point in millimetres, in decent light.
+2. Write it down with the date.
+3. Measure again two days later.
+
+One millimetre of difference is noise. Two is real. And a single look — today,
+without yesterday's number — cannot tell you whether it is growing, stalled or
+closing, no matter how carefully you look at it.
+
+<HealingCheck />
+
+If the numbers come back the same on two dates a week apart, the question has
+changed from growth to [whether it is moving at
+all](/blog/canker-sore-wont-go-away), which has its own thresholds and its own
+appointment.
+
+<ArticleFooter />

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { ARTICLES } from '@/content/articles';
+import { PUBLISHED_ARTICLES } from '@/content/articles';
 
 export const metadata: Metadata = {
   title: 'Writing',
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function BlogIndexPage() {
   // Newest first, and stable: the registry order is editorial, the sort is not.
-  const articles = [...ARTICLES].sort((a, b) =>
+  const articles = [...PUBLISHED_ARTICLES].sort((a, b) =>
     b.published.localeCompare(a.published)
   );
 

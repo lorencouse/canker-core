@@ -1,3 +1,16 @@
+import {
+  FIBRIN,
+  FIBRIN_EDGE,
+  INK,
+  INK_SOFT,
+  MUCOSA,
+  MUCOSA_EDGE,
+  PX_PER_MM,
+  round,
+  scaleBarMarkup,
+  SEVERITY
+} from '@/components/marketing/diagrams/palette';
+
 /**
  * The five stages of a minor aphthous ulcer, and the drawing of each.
  *
@@ -8,39 +21,11 @@
  * month. `stageMarkup` is the single source of the drawing; both callers
  * position it and wrap it in their own <svg>.
  *
- * Colour follows the product's rule that red is data. The inflamed halo is
- * drawn from the --sev-* ramp because its intensity *is* the pain level, so
- * the stage where the ring is darkest is the stage that hurts most. Everything
- * else — mucosa, the fibrin floor — is neutral, which is also why the
- * diagrams do not look like the photographs they are competing with.
- *
- * Hex rather than CSS variables: the standalone SVG is served without our
- * stylesheet, so it has to carry its own colour.
+ * The palette and the millimetre scale live in ../diagrams/palette, shared
+ * with the canker-sore-versus-cold-sore drawing.
  */
 
-/** The light-theme --sev-* ramp, resolved. Index = pain level 1–10. */
-const SEVERITY = [
-  '#f3cdcd', // 1
-  '#efc1c1',
-  '#eb9e9e',
-  '#e88686',
-  '#e56c6c',
-  '#e05252',
-  '#e03838',
-  '#d42121',
-  '#c61b1b',
-  '#ad1414' // 10
-] as const;
-
-const MUCOSA = '#e6e2e2';
-const MUCOSA_EDGE = '#d7d2d2';
-const FIBRIN = '#faf7ef';
-const FIBRIN_EDGE = '#e6ddc6';
-const INK = '#131a21';
-const INK_SOFT = '#6b7785';
-
-/** Every diagram is drawn at one scale, so the sizes are comparable. */
-export const PX_PER_MM = 7;
+export { PX_PER_MM };
 
 export type Stage = {
   key: string;
@@ -114,8 +99,6 @@ export const STAGES: Stage[] = [
 /** The cell each stage is drawn into, in SVG user units. */
 export const CELL = { width: 150, height: 124 };
 
-const round = (n: number) => Math.round(n * 10) / 10;
-
 /**
  * One stage, drawn centred on the origin. The caller supplies the <svg> and
  * the transform that puts it somewhere.
@@ -162,17 +145,6 @@ export function stageMarkup(stage: Stage): string {
   }
 
   return parts.join('');
-}
-
-/** The millimetre scale bar that makes the sizes mean something. */
-export function scaleBarMarkup(x: number, y: number): string {
-  const width = 5 * PX_PER_MM;
-  return [
-    `<line x1="${x}" y1="${y}" x2="${x + width}" y2="${y}" stroke="${INK_SOFT}" stroke-width="1"/>`,
-    `<line x1="${x}" y1="${y - 3}" x2="${x}" y2="${y + 3}" stroke="${INK_SOFT}" stroke-width="1"/>`,
-    `<line x1="${x + width}" y1="${y - 3}" x2="${x + width}" y2="${y + 3}" stroke="${INK_SOFT}" stroke-width="1"/>`,
-    `<text x="${x + width + 8}" y="${y + 4}" font-family="system-ui, sans-serif" font-size="11" fill="${INK_SOFT}">5mm, actual scale</text>`
-  ].join('');
 }
 
 /**

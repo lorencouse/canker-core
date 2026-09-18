@@ -8,7 +8,10 @@ const productLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/blog', label: 'Writing' },
-  { href: '/my-sores', label: 'Mouth map' },
+  // The public map and the signed-in one are two different pages with the
+  // same drawing; the label has to say which is which.
+  { href: '/mouth-map', label: 'Mouth map' },
+  { href: '/my-sores', label: 'Your sores' },
   { href: '/insights', label: 'Insights' }
 ];
 
