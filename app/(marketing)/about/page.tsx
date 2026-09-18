@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'What Canker Core records, how the pain scale works, and what it deliberately does not do.'
+    'What Canker Core records, how the pain scale works, and what it deliberately does not do.',
+  alternates: { canonical: '/about' }
 };
 
 export default function AboutPage() {

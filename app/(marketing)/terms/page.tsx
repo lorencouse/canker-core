@@ -4,7 +4,8 @@ import Prose from '@/components/marketing/Prose';
 
 export const metadata: Metadata = {
   title: 'Terms',
-  description: 'The terms you agree to by using Canker Core.'
+  description: 'The terms you agree to by using Canker Core.',
+  alternates: { canonical: '/terms' }
 };
 
 export default function TermsPage() {

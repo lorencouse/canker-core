@@ -8,6 +8,12 @@ export const getURL = (path: string = '') => {
   //
   // Client components fall through to the inlined NEXT_PUBLIC_SITE_URL, since
   // SITE_URL is not exposed to the browser.
+  //
+  // One caveat on the runtime-switch story above: the marketing pages,
+  // robots.txt, sitemap.xml and the OG card are statically prerendered, so
+  // the absolute URLs in them are resolved during `next build` and a runtime
+  // SITE_URL cannot change them. NEXT_PUBLIC_SITE_URL has to be right at
+  // build time. See docs/DEPLOYMENT.md.
   let url =
     process?.env?.SITE_URL && process.env.SITE_URL.trim() !== ''
       ? process.env.SITE_URL

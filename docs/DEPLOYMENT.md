@@ -57,12 +57,21 @@ already saturating it), so **images are built locally and shipped**, never built
 on the server. This mirrors how kouzr deploys — its images come from the same
 `kouzr-registry` container.
 
+> **`NEXT_PUBLIC_SITE_URL` must be the real domain at build time.** The
+> marketing pages, `robots.txt`, `sitemap.xml` and the Open Graph card are
+> statically prerendered, and each one bakes in an absolute URL built from
+> this value. Leave it empty and the image ships a `sitemap.xml` full of
+> `http://localhost:3000` links and canonicals pointing at localhost — which
+> is worse than having none, because it tells Google the real pages are
+> duplicates of something it cannot fetch. The runtime `SITE_URL` cannot
+> rescue this: those files are written during the build.
+
 ```bash
 SHA=$(git rev-parse --short HEAD)
 
 # 1. Build for the VPS architecture (arm64; an Apple Silicon Mac matches natively)
 docker build --platform linux/arm64 \
-  --build-arg NEXT_PUBLIC_SITE_URL="" \
+  --build-arg NEXT_PUBLIC_SITE_URL="https://cankercore.com" \
   -t canker-core:$SHA .
 
 # 2. Stream it to the VPS.
@@ -85,9 +94,15 @@ internet.
 
 ## Changing the public domain
 
-The image is domain-agnostic: `SITE_URL` and `BETTER_AUTH_URL` are plain runtime
-variables, and the browser auth client uses its own origin. Cutover is therefore
-**an environment change and a restart — no rebuild**:
+The runtime half of the app is domain-agnostic: `SITE_URL` and
+`BETTER_AUTH_URL` are plain runtime variables, and the browser auth client uses
+its own origin.
+
+The *static* half is not. Since the marketing pages became prerenderable, the
+canonical tags, Open Graph URLs, `robots.txt` and `sitemap.xml` are written
+during `next build` from `NEXT_PUBLIC_SITE_URL`. **A domain change therefore
+needs a rebuild**, not just a restart — otherwise the new domain serves a
+sitemap advertising the old one.
 
 1. Point DNS for `cankercore.com` at `46.224.227.119` (currently it resolves to
    Vercel at `76.76.21.21`).
@@ -95,6 +110,8 @@ variables, and the browser auth client uses its own origin. Cutover is therefore
    update `SITE_URL` and `BETTER_AUTH_URL` to match.
 3. Redeploy (restart). Traefik requests the certificate automatically.
 4. Update the OAuth callback URLs with GitHub and Google.
+5. Rebuild and ship an image with `NEXT_PUBLIC_SITE_URL` set to the new
+   domain, then verify `/robots.txt` and `/sitemap.xml` name it.
 
 ---
 
@@ -152,7 +169,7 @@ runtime.
 
 | Variable | Notes |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | **Build-time.** Full public URL, no trailing slash |
+| `NEXT_PUBLIC_SITE_URL` | **Build-time.** Full public URL, no trailing slash. `https://cankercore.com`. Baked into canonicals, `sitemap.xml` and `robots.txt` — see the warning above |
 | `DATABASE_URL` | Internal connection string from step 1 |
 | `DATABASE_SSL` | `true` if the Postgres service terminates TLS |
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32`. Changing it logs everyone out |

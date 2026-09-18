@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import MouthMapHero from '@/components/marketing/MouthMapHero';
 import SeverityScale from '@/components/marketing/SeverityScale';
+import StartButton from '@/components/marketing/StartButton';
+import { JsonLd, softwareApplicationSchema } from '@/components/seo/JsonLd';
 import { Button } from '@/components/ui/button';
-import { getUser } from '@/lib/queries';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' }
+};
 
 /**
  * Healing is genuinely a sequence, so a timeline is the honest structure here
@@ -27,12 +33,10 @@ const TIMELINE = [
   }
 ];
 
-export default async function HomePage() {
-  const user = await getUser();
-  const startHref = user ? '/my-sores' : '/signin/signup';
-
+export default function HomePage() {
   return (
     <>
+      <JsonLd schema={softwareApplicationSchema} />
       <section className="container grid items-center gap-10 py-10 sm:py-16 lg:grid-cols-2 lg:gap-16 lg:py-24">
         <div>
           <h1 className="text-display">Know whether it&rsquo;s healing.</h1>
@@ -45,11 +49,7 @@ export default async function HomePage() {
               things to do on this screen, and a thumb should not have to
               aim at a pill floating in the middle of a line. */}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button asChild size="touch" className="sm:h-11 sm:px-8">
-              <Link href={startHref}>
-                {user ? 'Open your map' : 'Start tracking'}
-              </Link>
-            </Button>
+            <StartButton className="sm:h-11 sm:px-8" />
             <Button
               asChild
               variant="ghost"
@@ -104,15 +104,7 @@ export default async function HomePage() {
               It takes about fifteen seconds to log the first reading.
             </p>
           </div>
-          <Button
-            asChild
-            size="touch"
-            className="w-full sm:h-11 sm:w-auto sm:px-8"
-          >
-            <Link href={startHref}>
-              {user ? 'Open your map' : 'Start tracking'}
-            </Link>
-          </Button>
+          <StartButton className="w-full sm:h-11 sm:w-auto sm:px-8" />
         </div>
       </section>
     </>
