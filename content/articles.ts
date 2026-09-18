@@ -26,6 +26,37 @@ export type Article = {
 
 export const ARTICLES: Article[] = [
   {
+    slug: 'canker-sore-stages',
+    title: 'Canker sore stages: what each one looks like, drawn',
+    heading: 'The stages of a canker sore, drawn',
+    answer:
+      'A canker sore runs through five stages: a day or two of tingling before anything shows, two to three days of the ulcer opening and hurting most, a few days at full width, several days filling in from the edges, then closed tissue by day 10 to 14.',
+    published: '2026-09-18',
+    updated: '2026-09-18',
+    faqs: [
+      {
+        question: 'What are the stages of a canker sore?',
+        answer:
+          'Prodrome, ulceration, peak, granulation, and healed. The tingle comes a day or two before anything is visible; the crater opens and hurts most over days one to three; it sits at full width around days four to six; it fills in from the edges through day ten; and the tissue is closed by day ten to fourteen.'
+      },
+      {
+        question: 'How long does each stage of a canker sore last?',
+        answer:
+          'Roughly: one to two days of tingling, two to three days of the sore opening, two to three days at full size, three to four days filling in. A minor sore is closed inside two weeks.'
+      },
+      {
+        question: 'What does a canker sore look like when it first starts?',
+        answer:
+          'Usually like nothing. The first stage is felt rather than seen — a tingle or a tight spot. A small pale bump or a patch of redness may appear a few hours before the crater opens.'
+      },
+      {
+        question: 'Does a canker sore turn white when it is healing?',
+        answer:
+          'No. The white or yellow floor is there from the moment the ulcer opens; it is fibrin, not new tissue. What signals healing is that white area getting smaller, not its appearance.'
+      }
+    ]
+  },
+  {
     slug: 'how-long-do-canker-sores-last',
     title: 'How long do canker sores last? A day-by-day timeline',
     heading: 'How long a canker sore actually lasts',

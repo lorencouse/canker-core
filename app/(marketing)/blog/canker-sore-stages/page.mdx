@@ -1,0 +1,113 @@
+import {
+  ArticleFooter,
+  ArticleHeader
+} from '@/components/marketing/article/ArticleShell';
+import EmbedDiagrams from '@/components/marketing/stages/EmbedDiagrams';
+import StageDiagrams from '@/components/marketing/stages/StageDiagrams';
+import { articleBySlug } from '@/content/articles';
+
+export const slug = 'canker-sore-stages';
+
+export const metadata = {
+  title: articleBySlug(slug).title,
+  description: articleBySlug(slug).answer,
+  alternates: { canonical: `/blog/${slug}` }
+};
+
+<ArticleHeader slug={slug} />
+
+Most pages about this show you photographs of other people's mouths, which
+tell you very little: a photo has no scale, no date, and no way of saying
+whether the sore in it was getting better or worse that morning. What follows
+is drawn instead, all five stages at one millimetre scale, so the sizes can be
+compared to each other and to yours.
+
+<StageDiagrams />
+
+## What are the stages of a canker sore?
+
+### 1. Prodrome — day −2 to 0
+
+The stage that is felt rather than seen. A tingle, a prickle, or a spot on
+your lip that feels tight when you move it. There may be nothing visible at
+all, or a small pale bump a few hours before it opens.
+
+Almost nobody logs this one, and it is the most useful one to log. If you get
+sores often, the tingle is the only advance warning you will ever get, and
+knowing that yours reliably arrives two days ahead turns a surprise into a
+pattern.
+
+### 2. Ulceration — day 1 to 3
+
+The crater opens. A shallow round ulcer with a white or yellow floor inside a
+bright red ring, and it widens every day of this stage.
+
+This is also when it hurts most, which matters more than it sounds: **the pain
+peaks before the size does.** Salt, citrus, toothpaste and the corner of a
+crisp all find it.
+
+### 3. Peak — day 4 to 6
+
+At its widest, and holding still. The ring is still red but no longer
+spreading, and the pain has already started to ease.
+
+This is the confusing stage, and it is where most people decide something is
+wrong. The sore looks worse than it did on day two — it is genuinely bigger —
+while hurting less, and nothing changes for two or three days running. That
+plateau is the normal middle of a normal sore, not a stall.
+
+### 4. Granulation — day 7 to 10
+
+Healing, visibly. A canker sore closes from the edges inward, so the white
+centre shrinks while the overall spot is still there. A sore that is mostly
+pink with a small white middle is further along than one that is mostly white,
+even at the same width.
+
+### 5. Healed — day 10 to 14
+
+Closed. A faint pale patch may sit there for a few days afterwards. Minor
+canker sores do not scar; if something is still marked in that spot weeks
+later, it is worth showing to a dentist, because it is not the sore.
+
+## How long does each stage last?
+
+| Stage       | Days     | Typical width | What changes            |
+| ----------- | -------- | ------------- | ----------------------- |
+| Prodrome    | −2 to 0  | no ulcer      | you feel it             |
+| Ulceration  | 1 to 3   | 2–5mm         | opens, widens, hurts    |
+| Peak        | 4 to 6   | 4–8mm         | nothing — it holds      |
+| Granulation | 7 to 10  | 2–5mm         | fills in from the edges |
+| Healed      | 10 to 14 | closed        | pale patch, then gone   |
+
+These are the ranges for a minor aphthous ulcer, the ordinary kind under about
+10mm. Larger ones stretch every stage and can run for weeks. If you want the
+arithmetic for a particular sore, the [duration
+estimator](/blog/how-long-do-canker-sores-last) does it by size.
+
+## Does a canker sore turn white when it heals?
+
+No, and this is the most common misreading of the stages. The white or yellow
+floor is fibrin — the same stuff as a scab, minus the drying out — and it is
+there from the moment the ulcer opens. It is not new skin, and its appearance
+is not a milestone.
+
+What it does is get **smaller**. The useful question is not "is it white" but
+"is there less white than there was", which is a comparison, and comparisons
+need two observations.
+
+## Which stage is this one in?
+
+The stages are easy to tell apart on a diagram and hard to tell apart in a
+mirror, because what separates stage 3 from stage 4 is a change in width of a
+millimetre or two — and nobody can hold a millimetre in their head from
+Tuesday.
+
+The shortcut is that you do not actually need to name the stage. Two
+measurements two days apart answer the only question the stage was standing in
+for: [is it getting smaller](/blog/is-my-canker-sore-healing). Widening means
+stage 2, static means stage 3, narrowing means stage 4. The number tells you
+the stage, not the other way around.
+
+<EmbedDiagrams />
+
+<ArticleFooter />

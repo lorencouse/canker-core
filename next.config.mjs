@@ -1,5 +1,4 @@
 import createMDX from '@next/mdx';
-import remarkGfm from 'remark-gfm';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -31,7 +30,12 @@ const withMDX = createMDX({
   options: {
     // Tables, chiefly. An article about how long something takes is mostly a
     // table of durations, and plain MDX renders pipe syntax as literal pipes.
-    remarkPlugins: [remarkGfm]
+    //
+    // Named, not imported: `next dev --turbo` serialises loader options to
+    // pass them across threads and refuses a function, so an imported plugin
+    // breaks the dev server while building fine. The string form resolves in
+    // both.
+    remarkPlugins: [['remark-gfm', {}]]
   }
 });
 
