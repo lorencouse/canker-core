@@ -17,9 +17,10 @@ The VPS runs at its CPU limit, so images are **never** built on the server.
 - Coolify app uuid `se1yk2uuejhylof4isj4x5wq`, host alias `coolify`.
 - Postgres container `zp1hiabzhkgj4kwo2r9qa0qi`, user and db both `canker`.
 - Coolify API is reachable only from the server, `http://localhost:8000`.
-  Its token is `COOLIFY_TOKEN` in the sibling `house-finder/.env`. Pass it
-  into the remote shell through an unquoted heredoc on stdin, never on the
-  command line, so it stays out of the remote process list.
+  Its token is the whole contents of `~/coolify-token` on the VPS (not
+  `house-finder/.env`, which has no such key). Read it into a shell variable
+  inside an unquoted heredoc on stdin, never on the command line, so it stays
+  out of the remote process list — and never print it.
 
 Schema changes have no migration framework: `schema.sql` is the re-runnable
 source of truth, and one-off data migrations live in `migrations/` as dated
