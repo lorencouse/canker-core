@@ -1,0 +1,27 @@
+{
+  "_comment": "Question three: the three mark ideas as sketches only. The mark that ships is hand-drawn SVG — an image model cannot hold a geometric mark across sizes — so this sheet is for deciding which idea to draw, not for producing the file. One flat variant, three cells.",
+  "name": "mark-sketches",
+  "aspect": "1:1",
+  "cols": 3,
+  "refs": [],
+  "subjects": [
+    {
+      "id": "ring",
+      "prompt": "A single flat geometric symbol centred on a plain flat page slate #f6f7f9 background, drawn large and alone like a logo mark on a presentation slide, with generous empty margin all around it. The symbol is one thick deep teal #1b616a ring with a flat pale teal #e3f0f2 disc filling its centre, and one clean gap cut out of the ring at the upper left so the ring reads as the letter C without being a letter. Both ends of the gap are cut square. Perfectly circular, perfectly even thickness, no outline, no shadow, no gradient, no texture, no perspective, no three-dimensional shading. Nothing else is in the picture."
+    },
+    {
+      "id": "core",
+      "prompt": "A single flat geometric symbol centred on a plain flat page slate #f6f7f9 background, drawn large and alone like a logo mark on a presentation slide, with generous empty margin all around it. The symbol is three concentric circles: an outer thin deep teal #1b616a ring, a middle thin pale teal #e3f0f2 ring, and a small solid deep teal #1b616a disc filling the very centre. The rings are evenly spaced and perfectly even in thickness. No outline, no shadow, no gradient, no texture, no perspective, no three-dimensional shading. Nothing else is in the picture."
+    },
+    {
+      "id": "arc",
+      "prompt": "A single flat geometric symbol centred on a plain flat page slate #f6f7f9 background, drawn large and alone like a logo mark on a presentation slide, with generous empty margin all around it. The symbol is five solid circles of decreasing size, evenly spaced along a gentle downward curve from upper left to lower right, the largest at the upper left in deep teal #1b616a and each following one smaller and paler through to pale teal #e3f0f2. The circles do not touch and there is no line drawn through them. No outline, no shadow, no gradient, no texture, no perspective, no three-dimensional shading. Nothing else is in the picture."
+    }
+  ],
+  "variants": [
+    {
+      "id": "flat",
+      "style": "Flat vector symbol: solid hard-edged fills, no outlines, no line art, no shading, no texture, no gradient, no bevel, no glow, no reflection, no mockup and no surrounding frame or card. Only these colours appear anywhere in the picture: page slate #f6f7f9, card white #ffffff, ink #1d2835, deep teal #1b616a, bright teal #59b8c5, pale teal #e3f0f2, muted slate #657281, border slate #dbe0e6, warm tooth #f8f6f1, sand shade #e6e1d6, tissue rose #e9ddde, deep rose #d7c6c8. There is no red anywhere in the picture, on any object, garment, plant, animal or background: red is reserved for data in this product and must never be decoration. No orange, no yellow, no green, no purple, no blue that is not the teal listed, and no pink more saturated than #e9ddde. Nothing gory: no blood, no wound, no raw flesh, no medical close-up, no grimace; the picture stays calm enough for someone in pain to look at. No text, no letters, no numbers, no logos and no writing anywhere; every sign, screen and label is blank."
+    }
+  ]
+}

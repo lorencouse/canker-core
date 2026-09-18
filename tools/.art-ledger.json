@@ -1,0 +1,139 @@
+{
+  "calls": [
+    {
+      "at": "2026-09-18T03:31:56.695Z",
+      "name": "pip__flat__ff82a526bc",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:31:56.701Z",
+      "name": "pip__ink__d51d7ce4ad",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:31:56.708Z",
+      "name": "pip__paper__b92e5a4a25",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:31:56.715Z",
+      "name": "nim__flat__bda0b9455a",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:31:56.721Z",
+      "name": "nim__ink__cb28c8232d",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:31:56.728Z",
+      "name": "nim__paper__b6dafb5bf1",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:31:56.734Z",
+      "name": "tuck__flat__1076f6cb49",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:31:56.740Z",
+      "name": "tuck__ink__2670746eeb",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:31:56.748Z",
+      "name": "tuck__paper__0d5ed11a62",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:52:48.687Z",
+      "name": "coach__patch__8570371275",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:52:48.695Z",
+      "name": "coach__sportlogo__85392dea89",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:52:48.702Z",
+      "name": "coach__instrument__8ee91b347b",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T03:52:48.713Z",
+      "name": "coach__riso__a059e7b8e2",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T04:01:52.855Z",
+      "name": "coach__asdrawn__b186e1ec63",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T04:01:52.862Z",
+      "name": "coach__asdrawn__1e104a5983",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T04:01:52.870Z",
+      "name": "coach__reduced__109f55f725",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T04:01:52.876Z",
+      "name": "coach__reduced__8cd7af55be",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T04:01:52.882Z",
+      "name": "coach__bold__e560eec56d",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-09-18T04:01:52.888Z",
+      "name": "coach__bold__75d9511620",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    }
+  ],
+  "images": 19,
+  "usd": 0.6364999999999997
+}

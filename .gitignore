@@ -57,3 +57,6 @@ backups/
 # entitlements, store metadata) needs committing deliberately.
 /ios
 /android
+
+# Image-generation scratch (tools/style-lab.mjs); masters and contact sheets.
+/data

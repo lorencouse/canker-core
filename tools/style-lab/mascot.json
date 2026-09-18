@@ -1,0 +1,35 @@
+{
+  "_comment": "Question one and two at once (docs/ART-DIRECTION.md): three illustration styles across three mascot candidates, one draw each, 1K, square. Nine cells. The style block is the whole contract; a subject never restates it. Text only, no reference frames: there is nothing to reference yet, and this sheet is what produces the first one.",
+  "name": "mascot-and-style",
+  "aspect": "1:1",
+  "cols": 3,
+  "refs": [],
+  "subjects": [
+    {
+      "id": "pip",
+      "prompt": "A character portrait of Pip, alone on a plain flat page slate #f6f7f9 background with no scene, no props and no ground line. Pip is one plump rounded map-pin shape standing upright on its rounded end, roughly as tall as it is wide, its body deep teal #1b616a, with one flat pale teal #e3f0f2 disc set into the front of it like a face plate. On that disc are two plain ink #1d2835 ovals for eyes, with no whites, no pupils and no highlight dots, and two short ink brows above them, tilted slightly up at their inner ends so he reads as kind. He has no drawn mouth. Two small stub arms come off his sides; one is lifted in a small wave. He leans very slightly forward, at ease. One hard-edged border slate #dbe0e6 shadow shape sits under him. Nothing else is in the picture."
+    },
+    {
+      "id": "nim",
+      "prompt": "A character portrait of Nim, a small friendly axolotl, alone on a plain flat page slate #f6f7f9 background with no scene, no props and no ground line. Nim is stocky and rounded: a wide blunt head about half his height, a short body, four small stubby legs and a flat paddle tail curled around to one side. His body, head, legs and tail are warm tooth #f8f6f1 with flat deep teal #1b616a markings over the top of his head and along his back. Three short feathery gills stand out from each side of his head, drawn as flat rounded bright teal #59b8c5 branches, never wispy, never hair strokes. His eyes are two plain ink #1d2835 ovals with no whites, no pupils and no highlight dots, set wide apart, and his mouth is one short ink curve turned gently up. He is not pink and there is no pink anywhere on him. He sits facing the viewer with his front legs planted and his chin up. One hard-edged border slate #dbe0e6 shadow shape sits under him. Nothing else is in the picture."
+    },
+    {
+      "id": "tuck",
+      "prompt": "A character portrait of Tuck, a small round tortoise, alone on a plain flat page slate #f6f7f9 background with no scene, no props and no ground line. Tuck is built from simple rounded shapes: a high domed shell about two thirds of his height in deep teal #1b616a, laid out with a small number of flat pale teal #e3f0f2 plates in a plain honeycomb, and a head, four stumpy legs and a short tail in sand shade #e6e1d6. He stands in three-quarter view with one front foot lifted mid-step and his chin up, unhurried. His eyes are two plain ink #1d2835 ovals with no whites, no pupils and no highlight dots, and he has no drawn mouth; two short ink brows above the eyes carry his expression, which is calm and patient. One hard-edged border slate #dbe0e6 shadow shape sits under him. Nothing else is in the picture."
+    }
+  ],
+  "variants": [
+    {
+      "id": "flat",
+      "style": "Flat vector illustration: solid hard-edged colour fills, one flat colour per shape, no outlines, no line art, no shading, no texture, and no gradient on any object. Shadows are solid hard-edged shapes in border slate #dbe0e6. Sticker-like and simple, built from a small number of rounded blocky shapes. Only these colours appear anywhere in the picture: page slate #f6f7f9, card white #ffffff, ink #1d2835, deep teal #1b616a, bright teal #59b8c5, pale teal #e3f0f2, muted slate #657281, border slate #dbe0e6, warm tooth #f8f6f1, sand shade #e6e1d6, tissue rose #e9ddde, deep rose #d7c6c8. There is no red anywhere in the picture, on any object, garment, plant, animal or background: red is reserved for data in this product and must never be decoration. No orange, no yellow, no green, no purple, no blue that is not the teal listed, and no pink more saturated than #e9ddde. Nothing gory: no blood, no wound, no raw flesh, no medical close-up, no grimace; the picture stays calm enough for someone in pain to look at. No text, no letters, no numbers, no logos and no writing anywhere; every sign, screen and label is blank."
+    },
+    {
+      "id": "ink",
+      "style": "Flat colour fills drawn under a single even-weight ink line in #1d2835, about one sixtieth of the frame wide, with rounded ends and rounded corners; the line describes every shape and never changes thickness anywhere. No shading, no hatching, no texture, no gradients. It should read as a careful clinical diagram that happens to be friendly. Shadows, where any, are flat #dbe0e6 shapes with no line around them. Only these colours appear anywhere in the picture: page slate #f6f7f9, card white #ffffff, ink #1d2835, deep teal #1b616a, bright teal #59b8c5, pale teal #e3f0f2, muted slate #657281, border slate #dbe0e6, warm tooth #f8f6f1, sand shade #e6e1d6, tissue rose #e9ddde, deep rose #d7c6c8. There is no red anywhere in the picture, on any object, garment, plant, animal or background: red is reserved for data in this product and must never be decoration. No orange, no yellow, no green, no purple, no blue that is not the teal listed, and no pink more saturated than #e9ddde. Nothing gory: no blood, no wound, no raw flesh, no medical close-up, no grimace; the picture stays calm enough for someone in pain to look at. No text, no letters, no numbers, no logos and no writing anywhere; every sign, screen and label is blank."
+    },
+    {
+      "id": "paper",
+      "style": "Soft flat illustration: matte colour fills carrying one fine even paper grain across the whole frame, no outlines and no hard shadows. Forms are rounded and very slightly irregular, as if cut from paper, each with one soft shadow in border slate #dbe0e6 beneath it. Apart from the grain there is no gradient inside any shape, no gloss and no highlight. Only these colours appear anywhere in the picture: page slate #f6f7f9, card white #ffffff, ink #1d2835, deep teal #1b616a, bright teal #59b8c5, pale teal #e3f0f2, muted slate #657281, border slate #dbe0e6, warm tooth #f8f6f1, sand shade #e6e1d6, tissue rose #e9ddde, deep rose #d7c6c8. There is no red anywhere in the picture, on any object, garment, plant, animal or background: red is reserved for data in this product and must never be decoration. No orange, no yellow, no green, no purple, no blue that is not the teal listed, and no pink more saturated than #e9ddde. Nothing gory: no blood, no wound, no raw flesh, no medical close-up, no grimace; the picture stays calm enough for someone in pain to look at. No text, no letters, no numbers, no logos and no writing anywhere; every sign, screen and label is blank."
+    }
+  ]
+}

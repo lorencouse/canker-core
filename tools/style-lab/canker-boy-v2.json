@@ -1,0 +1,32 @@
+{
+  "_comment": "Round two, after Loren picked coach/sportlogo and asked for younger and no collared shirt (2026-09-17). The style question is settled, so the variants now test REDUCTION, which is what the last sheet failed at: the four style wordings converged and nothing survived a favicon. The winning cell rides along as a reference frame — the one lever text could not pull — so the subject says only what changed rather than redescribing him. Dropping the collar drops the teal tie with it, and Loren cut the whistle too, so nothing hangs at his neck. Skin route settled 2026-09-17: he is printed in two inks rather than given a skin token — sand face, deep teal shirt and cap. This also fixes a real contract bug in v1, where his #e6e1d6 face and #f8f6f1 shirt were near-identical and his head and torso read as one cream mass.",
+  "name": "canker-boy-v2",
+  "aspect": "1:1",
+  "cols": 3,
+  "refs": [
+    "data/style-lab/refs/canker-boy-v1.jpg"
+  ],
+  "subjects": [
+    {
+      "id": "coach",
+      "prompt": "Same character as the attached reference: Canker Boy, the mascot of a mouth-sore tracking app, alone against a plain flat paper #f1f3f5 ground with nothing behind him and no scene. Keep his deep teal #1b616a ball cap with the ink #0f151b brim and its completely blank front panel, and keep the wide open confident smile showing one clean even row of warm tooth #f8f6f1 teeth. Three things change. He is YOUNGER: a young man in his early twenties, about 22, with a smoother rounder face, a softer jaw, fuller cheeks and no lines anywhere on his face except his eyes, his eyebrows and his smile. He must not look middle-aged and must not look like a boy. And he wears NO COLLARED SHIRT, NO TIE and NO WHISTLE: instead a plain DEEP TEAL #1b616a athletic crew-neck t-shirt with a simple round ribbed neckline and short sleeves, completely blank with no collar, no buttons and no placket. There is nothing hanging around his neck at all — no whistle, no cord, no lanyard, no chain. His skin stays a flat even sand shade #e6e1d6 with no blush, no gradient and no shading, so his face reads clearly against the deep teal shirt. He is seen from the chest up, encouraging and warm, a coach pleased with somebody else's effort — never manic, never leering. There is exactly one of him and nobody else in the picture."
+    }
+  ],
+  "variants": [
+    {
+      "id": "asdrawn",
+      "style": "Drawn as a modern sports team logo: flat solid fills under one confident even-weight ink #0f151b outline, strong clean shapes, no gradient, no texture, no halftone, no shading and no soft shadow anywhere. Keep the level of detail and the construction of the attached reference exactly as it is; change only what the subject says to change. Only these colours appear anywhere in the picture: ink #0f151b, paper #f1f3f5, card white #ffffff, deep teal #1b616a, bright teal #59b8c5, pale teal #e3f0f2, muted slate #657281, warm tooth #f8f6f1, sand shade #e6e1d6. There is no red anywhere in the picture, on his cap, his shirt, his mouth, his skin or the background: red is reserved for data in this product and must never be decoration. No yellow, no orange, no green, no purple, no brown and no pink. Nothing gory: no sore, no wound, no blood; his mouth is healthy and ordinary. No text, no letters, no numbers, no logos and no writing anywhere; his cap and his shirt are completely blank.",
+      "refs": "inherit"
+    },
+    {
+      "id": "reduced",
+      "style": "Drawn as a modern sports team logo: flat solid fills under one confident even-weight ink #0f151b outline, strong clean shapes, no gradient, no texture, no halftone, no shading and no soft shadow anywhere. Reduce him hard. He is built from roughly a dozen flat shapes and no more. There is NO interior line anywhere on his face except two eyes, two eyebrows and the one line of his smile: no cheek lines, no nose shading, no crease beside the mouth, no wrinkles, no detail inside the ear, no linework on the neck. His silhouette alone must read clearly when filled in solid black at the size of a favicon. Only these colours appear anywhere in the picture: ink #0f151b, paper #f1f3f5, card white #ffffff, deep teal #1b616a, bright teal #59b8c5, pale teal #e3f0f2, muted slate #657281, warm tooth #f8f6f1, sand shade #e6e1d6. There is no red anywhere in the picture, on his cap, his shirt, his mouth, his skin or the background: red is reserved for data in this product and must never be decoration. No yellow, no orange, no green, no purple, no brown and no pink. Nothing gory: no sore, no wound, no blood; his mouth is healthy and ordinary. No text, no letters, no numbers, no logos and no writing anywhere; his cap and his shirt are completely blank.",
+      "refs": "inherit"
+    },
+    {
+      "id": "bold",
+      "style": "Drawn as a modern sports team logo: flat solid fills under one confident even-weight ink #0f151b outline, strong clean shapes, no gradient, no texture, no halftone, no shading and no soft shadow anywhere. Reduce him as far as the character survives: a bold athletic emblem built from the smallest possible number of flat shapes, thick confident strokes of even weight, and one strong clean diagonal through the composition. He is turned in a dynamic three-quarter view with his shoulders angled rather than square to the viewer, his chin lifted. NO interior line on the face except two eyes, two eyebrows and the smile. Nothing fussy, nothing small, nothing rendered. It must read at the size of a favicon. Only these colours appear anywhere in the picture: ink #0f151b, paper #f1f3f5, card white #ffffff, deep teal #1b616a, bright teal #59b8c5, pale teal #e3f0f2, muted slate #657281, warm tooth #f8f6f1, sand shade #e6e1d6. There is no red anywhere in the picture, on his cap, his shirt, his mouth, his skin or the background: red is reserved for data in this product and must never be decoration. No yellow, no orange, no green, no purple, no brown and no pink. Nothing gory: no sore, no wound, no blood; his mouth is healthy and ordinary. No text, no letters, no numbers, no logos and no writing anywhere; his cap and his shirt are completely blank.",
+      "refs": "inherit"
+    }
+  ]
+}
