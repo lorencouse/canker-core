@@ -26,6 +26,37 @@ export type Article = {
 
 export const ARTICLES: Article[] = [
   {
+    slug: 'why-do-i-keep-getting-canker-sores',
+    title: 'Why you keep getting canker sores in the same spot',
+    heading: 'Why you keep getting canker sores',
+    answer:
+      'Two patterns hide behind that question. Sores that keep returning to one spot usually point at something local — a sharp tooth, a bracket, a cheek you keep catching. Sores that turn up anywhere point at whole-mouth triggers. Telling them apart takes a map and a few dates, not memory.',
+    published: '2026-09-18',
+    updated: '2026-09-18',
+    faqs: [
+      {
+        question: 'Why do I keep getting canker sores in my mouth?',
+        answer:
+          'Recurrence is the usual form of the condition rather than a complication of it: for most people who get canker sores at all, getting them again is what it does. The useful question is not what causes them in general but what is different about the days before yours appear — and whether they land in one place or anywhere.'
+      },
+      {
+        question: 'Why does a canker sore keep coming back in the same spot?',
+        answer:
+          'Because something at that spot keeps happening. A chipped or sharp tooth edge, a rough filling, a brace bracket or wire, the rim of a night guard, or a cheek you bite in the same place. A dentist can feel an edge you cannot see, which makes this the pattern with the quickest fix.'
+      },
+      {
+        question: 'Why do I keep getting canker sores every week?',
+        answer:
+          'Weekly sores are a frequency question, not a cause question: there is no gap in which to find a trigger. Several a month, sores that stop you eating, or ulcers alongside symptoms elsewhere in the body are the cases worth taking to a doctor rather than waiting out.'
+      },
+      {
+        question: 'Why do I get multiple canker sores at once?',
+        answer:
+          'A crop of several at once usually argues against a local cause — one sharp tooth does not produce five sores in five places. It points at whatever was going on in the two or three days before they appeared. Log each one separately; they will be at different stages and heal at different rates.'
+      }
+    ]
+  },
+  {
     slug: 'canker-sore-stages',
     title: 'Canker sore stages: what each one looks like, drawn',
     heading: 'The stages of a canker sore, drawn',

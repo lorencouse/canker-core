@@ -1,0 +1,146 @@
+import PatternContrast from '@/components/marketing/PatternContrast';
+import RecurrencePattern from '@/components/marketing/RecurrencePattern';
+import {
+  ArticleFooter,
+  ArticleHeader
+} from '@/components/marketing/article/ArticleShell';
+import { articleBySlug } from '@/content/articles';
+
+export const slug = 'why-do-i-keep-getting-canker-sores';
+
+export const metadata = {
+  title: articleBySlug(slug).title,
+  description: articleBySlug(slug).answer,
+  alternates: { canonical: `/blog/${slug}` }
+};
+
+<ArticleHeader slug={slug} />
+
+Search this and you get a list of causes: stress, injury, acidic food, SLS
+toothpaste, hormones, a deficiency. The list is not wrong. It is just useless
+on its own, because most of it applies to most people most of the time, and
+nothing in it tells you which line is yours.
+
+There is a cheaper question that narrows it enormously, and you can answer it
+from memory right now: **do yours land in the same place, or anywhere?**
+
+## Same spot, or anywhere?
+
+<PatternContrast />
+
+Those two mouths had the same number of sores over the same three months. They
+are not the same problem, and looking for the same thing in both is why the
+cause list never resolves.
+
+**Sores in one fixed spot are reporting a place.** Mouth lining does not break
+down in the same few millimetres over and over by coincidence — something is
+repeatedly happening there. That is a physical thing you can go and find.
+
+**Sores anywhere are reporting a time.** There is nothing at any one site to
+look for, because the site keeps changing. What changes with them is the state
+you were in beforehand.
+
+## Why does a canker sore keep coming back in the same spot?
+
+Because whatever caught the tissue the first time is still there. The usual
+suspects are dull and mechanical:
+
+- a chipped tooth, a sharp cusp, or a filling with a rough margin
+- a brace bracket, a wire end, or an aligner edge
+- the rim of a denture or a night guard
+- a cheek or lip you catch in the same place, often in your sleep
+- a spot your toothbrush lands hard on, every day, twice a day
+
+None of this is exotic, and that is the good news: it is the one branch of
+this question with a same-week fix at the end of it. A dentist can run a
+finger along the edge you cannot see and smooth it in a single appointment.
+Bring them the location, not the story — "this exact spot, four times since
+June" is a different conversation from "I get a lot of canker sores".
+
+Two things are worth separating out from the ordinary version of this. A sore
+that comes back in the identical spot and never quite closes between rounds,
+or one that leaves the tissue looking different from how it looked before, is
+something to have examined rather than tracked.
+
+## Why do I keep getting canker sores in my mouth?
+
+Partly because that is what the condition does. Recurrence is the normal form
+of it rather than a sign something has gone wrong — the name for the ordinary
+kind is _recurrent_ aphthous stomatitis, and it is recurrent in roughly one
+person in five. Getting another one is not evidence that you are handling it
+badly.
+
+What varies between people is how often, and that is a more answerable
+question than why.
+
+<RecurrencePattern />
+
+## Why do I get multiple canker sores at once?
+
+A crop of three or four at once argues against the local explanation. One
+sharp tooth does not produce five sores in five places, so a simultaneous
+batch points at whatever the whole mouth was exposed to in the days before
+they appeared.
+
+Log them as separate sores even so. They rarely start on the same day and
+almost never finish together, and one of them being nearly closed tells you
+nothing about the one that opened yesterday. Each is its own place with its
+own course.
+
+## The lag that makes triggers hard to spot
+
+Here is the part that defeats memory. The thing that set a sore off happened
+**one to three days before you noticed it**, not on the day it started
+hurting. So the meal you are suspicious of — the one you ate the day the pain
+showed up — is close to the least likely candidate on the list, and the day
+that matters is one you have already stopped thinking about.
+
+This is why Canker Core tallies what you logged in the three days _before_
+each sore was first marked, rather than on the day itself. It is also why one
+sore proves nothing. Citrus the day before a sore is a coincidence. Citrus
+before four out of five is a pattern, and there is no way to see it without
+several sores' worth of dates written down.
+
+The list it counts against is fixed and short on purpose — stress, poor sleep,
+a bitten cheek, dental work, sharp food, spicy food, acidic food, citrus,
+nuts, chocolate, coffee, alcohol, SLS toothpaste, being ill, your period —
+because "spicy food" and "chilli" have to be the same word for a count to mean
+anything.
+
+## Why do I keep getting canker sores every week?
+
+When there is barely a gap, trigger-hunting stops working: nothing stands out
+as unusual because nothing has a quiet week to stand out against. The question
+changes from what set this one off to what is constant.
+
+That is also the threshold where it is worth someone else looking. Several a
+month, ulcers that stop you eating or sleeping, a pattern that changes sharply
+after years of being stable, or sores alongside anything elsewhere in the body
+— skin, eyes, gut, joints, a fever — are the cases where the mouth is not the
+whole story. A doctor's first move with frequent ulcers is usually to check
+things that have nothing to do with the mouth, iron and B12 and folate and
+coeliac disease among them. Which is a reason to get tested, not a reason to
+start taking something.
+
+## How to actually find yours
+
+It takes months, not minutes, and it is four things:
+
+1. **Mark the exact point**, not the region. The difference between "left
+   cheek" and a specific spot on the left cheek is the difference between the
+   two mouths at the top of this page.
+2. **Log the days, including the boring ones.** Triggers only count if the
+   days without a sore are in the record too.
+3. **Wait for four or five sores.** Below that, any pattern you see is you
+   pattern-matching on noise.
+4. **Then look at two things only**: whether the marks cluster, and which
+   trigger keeps turning up in the three days before.
+
+Everything else about a canker sore — [how long it will
+last](/blog/how-long-do-canker-sores-last), [which stage it is
+in](/blog/canker-sore-stages), [whether it is
+healing](/blog/is-my-canker-sore-healing) — is about one sore. This is the one
+question that needs a year of them, which is precisely the question memory is
+worst at and a log is best at.
+
+<ArticleFooter />

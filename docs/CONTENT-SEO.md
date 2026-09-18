@@ -210,11 +210,20 @@ Shipped as `/blog/canker-sore-stages`, with the set also served standalone at
 is an `<img>` inside an anchor rather than an iframe, since an iframe is not a
 link and the link is the reason to give the drawings away.
 
-**4. Why you keep getting them in the same spot.**
+**4. Why you keep getting them in the same spot.** — shipped
 Target: the recurrence cluster, ~6,000/mo, KD ~33. Framed as pattern-finding
 rather than cause-claiming, which is both what we can defend without a clinician
 and what the mouth map literally does. Ends at the trigger and treatment lists
 in `utils/day-log.ts`, and at a dentist for anything systemic.
+
+Shipped as `/blog/why-do-i-keep-getting-canker-sores`. Its spine is a split the
+cause lists never make: sores in one fixed spot are reporting a _place_ and
+have a mechanical explanation a dentist can find, while sores anywhere are
+reporting a _time_ and need the three days before each one. Two mouth maps
+side by side make the distinction in one glance, and a two-question widget
+sends the reader down whichever branch is theirs. That is pattern-finding, not
+cause-claiming, and it is the only article of the four whose answer requires a
+year of logging rather than a week of it.
 
 Around these, as volume justifies it: _day 7 and it is still there_, _two weeks
 and no better — what a dentist will ask you_ (this one mirrors the nudge the app

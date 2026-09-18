@@ -2,9 +2,13 @@
 module.exports = {
   darkMode: ['class', '[data-theme="dark"]'],
   content: [
-    'app/**/*.{ts,tsx}',
+    'app/**/*.{ts,tsx,mdx}',
     'components/**/*.{ts,tsx}',
-    'pages/**/*.{ts,tsx}'
+    'pages/**/*.{ts,tsx}',
+    // The MDX element map lives at the repo root, so its classes — the list
+    // markers and the table rules every article depends on — were never
+    // generated until this line existed.
+    'mdx-components.tsx'
   ],
   theme: {
     container: {
@@ -21,8 +25,14 @@ module.exports = {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif']
       },
       fontSize: {
-        display: ['clamp(2.5rem, 6vw, 3.75rem)', { lineHeight: '1.04', letterSpacing: '-0.03em' }],
-        title: ['clamp(1.75rem, 3.5vw, 2.5rem)', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
+        display: [
+          'clamp(2.5rem, 6vw, 3.75rem)',
+          { lineHeight: '1.04', letterSpacing: '-0.03em' }
+        ],
+        title: [
+          'clamp(1.75rem, 3.5vw, 2.5rem)',
+          { lineHeight: '1.1', letterSpacing: '-0.02em' }
+        ],
         section: ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.015em' }],
         subhead: ['1.125rem', { lineHeight: '1.35', letterSpacing: '-0.01em' }],
         /*
