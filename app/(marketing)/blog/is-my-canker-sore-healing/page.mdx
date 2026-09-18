@@ -1,0 +1,111 @@
+import HealingCheck from '@/components/marketing/HealingCheck';
+import {
+  ArticleFooter,
+  ArticleHeader
+} from '@/components/marketing/article/ArticleShell';
+import { articleBySlug } from '@/content/articles';
+
+export const slug = 'is-my-canker-sore-healing';
+
+export const metadata = {
+  title: articleBySlug(slug).title,
+  description: articleBySlug(slug).answer,
+  alternates: { canonical: `/blog/${slug}` }
+};
+
+<ArticleHeader slug={slug} />
+
+Almost every answer to this question is a list of things to look for, which is
+useless in practice, because all of them are gradual. A sore does not stop
+looking like an angry hole one morning. It narrows by half a millimetre a day,
+which is invisible to someone checking it in a bathroom mirror and obvious to
+anyone who wrote a number down.
+
+So this page is in two halves: the signs, which are real but weak, and the
+test, which actually works.
+
+## How do you know when a canker sore is healing?
+
+Four things change, roughly in this order.
+
+**The pain drops first.** Usually from around day four. This is the least
+reliable signal of the four, because it moves well ahead of the sore itself —
+people regularly conclude a sore has healed on the day it stopped hurting and
+then find it still there a week later.
+
+**The red ring fades.** The inflamed halo around the crater goes from angry
+red to a duller pink. This is a genuine sign and easier to see than size,
+because colour does not need a ruler.
+
+**The white centre shrinks.** A canker sore heals from the edges inward, so
+the pale floor gets smaller while the overall spot is still visible. A sore
+that is mostly pink with a small white middle is further along than one that
+is mostly white.
+
+**The whole thing gets narrower.** The one that actually settles it, and the
+one nobody can judge by eye from memory.
+
+## Do canker sores get worse before they get better?
+
+Yes, and this is the part most people get wrong. A canker sore normally widens
+and hurts more for the first two to three days. Then it holds roughly still
+for a few days before it starts closing.
+
+That plateau is where this question gets asked. Nothing is visibly improving,
+the pain has dulled but not gone, and it has been the same for three days —
+which reads as stuck, and is usually just the middle of a perfectly ordinary
+course. Getting worse early is expected. Getting worse after day four is not.
+
+## The test that actually works
+
+Measure the width at its widest point, in millimetres, write it down with the
+date, and do it again two days later.
+
+That is the whole method. It works because it replaces a judgement your memory
+is bad at — _is this smaller than it was?_ — with a comparison between two
+numbers, which is a judgement nobody can get wrong.
+
+<HealingCheck />
+
+Two details make the difference between a measurement and a guess:
+
+- **Same light, same angle, every time.** A sore looks bigger under a
+  bathroom light than by a window.
+- **Widest point across, not the length of the sore end to end.** Consistency
+  with yourself matters more than which convention you pick.
+
+## What a healing canker sore looks like
+
+Smaller, flatter, paler, and less painful to touch — in that order of
+reliability, reading right to left. If you want one thing to look for rather
+than four, look at how much of the spot is still white: a crater filling in
+from its edges is the clearest visual sign that the sore is closing, and
+unlike size it is a change you can actually see between two days.
+
+## Signs it is not healing
+
+- **Still widening after day four.**
+- **No measurable change by day fourteen.** Not still visible — still the same
+  width. Most sores are still visible at two weeks; few are still the same
+  size.
+- **Still there at three weeks**, at any size.
+- **A new one appearing in the same place** each time the last one clears.
+- **Fever, a rash, or sores elsewhere on the body** alongside it.
+
+The first three are reasons to have a dentist look. The last two are worth
+mentioning to a doctor, because recurring ulcers in a fixed spot and ulcers
+with symptoms elsewhere are the cases where the mouth is not the whole story.
+
+## Why you cannot tell by looking
+
+A minor canker sore shrinks by something like half a millimetre a day. Over
+two days that is one millimetre — real, measurable progress, and completely
+invisible to someone comparing today's mouth against a mental image of
+Tuesday's.
+
+This is not a failure of attention. Nobody can hold a millimetre in their
+head. It is the reason [Canker Core](/) exists as a log rather than a
+checklist: two numbers and a date, taken twice, answer the question that no
+amount of staring in a mirror can.
+
+<ArticleFooter />

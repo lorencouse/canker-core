@@ -22,7 +22,8 @@ const signedInLinks = [
 
 const signedOutLinks = [
   { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' }
+  { href: '/about', label: 'About' },
+  { href: '/blog', label: 'Writing' }
 ];
 
 export default function Navlinks() {
