@@ -7,6 +7,7 @@ import ExternalLink from './ExternalLink';
 const productLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
+  { href: '/blog', label: 'Writing' },
   { href: '/my-sores', label: 'Mouth map' },
   { href: '/insights', label: 'Insights' }
 ];

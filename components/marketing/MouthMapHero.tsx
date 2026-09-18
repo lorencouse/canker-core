@@ -53,8 +53,22 @@ export default function MouthMapHero() {
             const r = radiusFor(sore.size, 'front');
             return (
               <g key={sore.id}>
-                <circle cx={p.x} cy={p.y} r={r + 2} fill={`hsl(var(--sev-${sore.pain}))`} opacity="0.28" filter="url(#herosoft)" />
-                <circle cx={p.x} cy={p.y} r={r} fill={`hsl(var(--sev-${sore.pain}))`} stroke="hsl(var(--foreground) / 0.45)" strokeWidth="1" />
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={r + 2}
+                  fill={`hsl(var(--sev-${sore.pain}))`}
+                  opacity="0.28"
+                  filter="url(#herosoft)"
+                />
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={r}
+                  fill={`hsl(var(--sev-${sore.pain}))`}
+                  stroke="hsl(var(--foreground) / 0.45)"
+                  strokeWidth="1"
+                />
               </g>
             );
           })}
