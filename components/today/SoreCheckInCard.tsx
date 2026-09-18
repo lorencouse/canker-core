@@ -3,7 +3,10 @@
 import { CheckCircle2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import Gauge from '@/components/ui/Gauge';
 import { Label } from '@/components/ui/label';
+import { Panel, PanelBar, PanelBody, PanelMeta, PanelTitle } from '@/components/ui/Panel';
+import SeverityLadder from '@/components/ui/SeverityLadder';
 import { Slider } from '@/components/ui/slider';
 import { LongSoreNote } from '@/components/SoreDetails';
 import CourseStrip from '@/components/sore/CourseStrip';
@@ -20,9 +23,22 @@ import {
 
 /**
  * One open sore on the check-in screen: where it is, how long it has been
- * there, and today's two sliders.
+ * there, and today's two readings.
  *
- * "Same as yesterday" exists because the commonest daily truth about a sore
+ * The gauge carries the scanning job the severity left-edge used to do. A
+ * stack of these is scanned before it is read, and a dial sorts them by how
+ * bad each one is from further away than a 3px stripe ever did — while also
+ * answering "out of what", which the stripe could not.
+ *
+ * Pain and width are deliberately entered by different controls. Width is a
+ * continuous measurement in millimetres and a slider is honest about that.
+ * Pain is ten named steps, and a slider hides the scale behind its own
+ * thumb: on a phone the difference between a 6 and a 7 is about four pixels
+ * of travel, so the value people record is the one that was easy to hit
+ * rather than the one they meant. The ladder shows all ten and lands in one
+ * tap.
+ *
+ * "Same as last time" exists because the commonest daily truth about a sore
  * is that nothing changed, and a reading that says so is still a reading —
  * it is what turns a two-point chart into a curve.
  */
@@ -44,53 +60,48 @@ export default function SoreCheckInCard({
   const day = dayNumberOf(sore);
 
   return (
-    /*
-     * The only structural use of the severity ramp in the app: a stack of
-     * check-in cards is scanned before it is read, and the left edge sorts
-     * them by how bad each one is before your eye reaches a number. It says
-     * the same thing as the pain dot beside the slider, which is the point —
-     * a redundant encoding is what makes a scan possible.
-     */
-    <div
-      className="surface-worksheet space-y-4 border-l-[3px] p-4"
-      style={{ borderLeftColor: `hsl(var(--sev-${pain}))` }}
-    >
-      <div className="flex items-start gap-3">
-        {/* The sigil says which view and where; naming the view in text as
-            well would be the same fact twice. */}
-        <SoreSigil sore={sore} size={30} className="mt-px" />
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{sore.zone}</p>
-          <p className="tabular text-xs text-muted-foreground">
-            Day {day},{' '}
-            {logged ? (
-              <span className="text-primary">logged today</span>
-            ) : (
-              'not logged yet'
-            )}
-          </p>
+    <Panel>
+      <PanelBar>
+        <PanelTitle className="min-w-0 truncate">{sore.zone}</PanelTitle>
+        <PanelMeta className="shrink-0">
+          Day {day} &middot; {logged ? 'logged' : 'not logged'}
+        </PanelMeta>
+      </PanelBar>
+
+      <PanelBody>
+        <div className="flex items-center gap-4">
+          <Gauge pain={pain} size={88} label="Pain" />
+          {/* The sigil says which view and where; naming the view in text
+              as well would be the same fact twice. */}
+          <SoreSigil sore={sore} size={30} />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="ml-auto self-start"
+            onClick={onHeal}
+            aria-label={`Mark the ${sore.zone.toLowerCase()} sore healed`}
+          >
+            <CheckCircle2 aria-hidden="true" />
+            Healed
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onHeal}
-          aria-label={`Mark the ${sore.zone.toLowerCase()} sore healed`}
-        >
-          <CheckCircle2 aria-hidden="true" />
-          Healed
-        </Button>
-      </div>
 
-      {/* Sits right under "Day 6", where the row of six cells explains
-          itself without a label. */}
-      <CourseStrip sore={sore} animateLast={justSaved} />
+        {/*
+         * The strip gets the card's full width rather than the column beside
+         * the gauge. A course is one unbroken run of days, and in a 115px
+         * column it wrapped onto a second line at day nine — which reads as
+         * two sores, not one long one. Full width carries about three weeks
+         * on a phone before it has to wrap at all.
+         */}
+        <CourseStrip sore={sore} animateLast={justSaved} />
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <div className="flex items-baseline justify-between gap-3">
             <Label htmlFor={`size-${sore.id}`}>Width</Label>
-            <span className="tabular text-sm font-semibold">{size} mm</span>
+            <span className="tabular font-display text-sm font-semibold">
+              {size} mm
+            </span>
           </div>
           <Slider
             id={`size-${sore.id}`}
@@ -101,41 +112,33 @@ export default function SoreCheckInCard({
             aria-label="Sore size in millimetres"
           />
         </div>
-        <div className="space-y-1.5">
-          <div className="flex items-baseline justify-between gap-3">
-            <Label htmlFor={`pain-${sore.id}`}>Pain</Label>
-            <span className="tabular inline-flex items-center gap-2 text-sm font-semibold">
-              <span
-                className="size-3 rounded-full ring-1 ring-foreground/20"
-                style={{ backgroundColor: `hsl(var(--sev-${pain}))` }}
-              />
-              {pain} of 10
-            </span>
-          </div>
-          <Slider
-            id={`pain-${sore.id}`}
-            tone="severity"
-            min={1}
-            max={10}
-            value={[pain]}
-            onValueChange={([v]) => onChange(withReading(sore, { pain: v }))}
-            aria-label="Pain level from 1 to 10"
+
+        <div className="space-y-2">
+          {/* The label sits above the ladder rather than under it because
+              the ladder is a control being offered, not a figure being
+              reported — the label-under-figure rule is about readouts. */}
+          <Label>Pain today</Label>
+          <SeverityLadder
+            value={pain}
+            label="Pain today"
+            onChange={(v) => onChange(withReading(sore, { pain: v }))}
           />
         </div>
-      </div>
 
-      {!logged && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => onChange(withReading(sore, {}))}
-        >
-          Same as last time
-        </Button>
-      )}
+        {!logged && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="justify-self-start"
+            onClick={() => onChange(withReading(sore, {}))}
+          >
+            Same as last time
+          </Button>
+        )}
 
-      {isLongRunning(sore) && <LongSoreNote />}
-    </div>
+        {isLongRunning(sore) && <LongSoreNote />}
+      </PanelBody>
+    </Panel>
   );
 }

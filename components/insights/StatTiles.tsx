@@ -59,15 +59,31 @@ export default function StatTiles({ sores }: { sores: Sore[] }) {
   return (
     <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {tiles.map((tile) => (
-        <div key={tile.label} className="surface-instrument px-4 py-3">
+        /*
+         * Figure first, label under it. A number is what the eye lands on,
+         * and the label is the answer to the question the number raises —
+         * putting the label on top makes it an eyebrow the reader has to
+         * get past before reaching the point.
+         *
+         * flex-col-reverse keeps <dt> before <dd> in the DOM, so a screen
+         * reader still hears the term before its definition.
+         */
+        <div
+          key={tile.label}
+          className="surface-instrument flex flex-col-reverse px-1 pb-1"
+        >
           {/* Sentence case. A tracked-out caps label is chrome dressed as
               information, and five of them in a row is a lot of shouting
               for what are one-word nouns. */}
-          <dt className="text-xs text-muted-foreground">{tile.label}</dt>
-          <dd className="tabular mt-1.5 truncate font-display text-figure font-semibold">
+          <dt className="mt-1 text-xs text-muted-foreground">{tile.label}</dt>
+          <dd className="tabular truncate font-display text-figure font-semibold">
             {tile.value}
           </dd>
-          {tile.hint && <dd className="mt-0.5 text-xs text-muted-foreground">{tile.hint}</dd>}
+          {tile.hint && (
+            <dd className="order-first mt-1 text-xs text-muted-foreground">
+              {tile.hint}
+            </dd>
+          )}
         </div>
       ))}
     </dl>

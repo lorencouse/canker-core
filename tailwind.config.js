@@ -45,6 +45,8 @@ module.exports = {
       },
       colors: {
         border: 'hsl(var(--border))',
+        // Ink-weight separation. See the --rule note in styles/main.css.
+        rule: 'hsl(var(--rule))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
@@ -91,18 +93,26 @@ module.exports = {
           10: 'hsl(var(--sev-10))'
         }
       },
+      boxShadow: {
+        // The only two shadows in the product. Both are hard offsets in ink.
+        drop: 'var(--drop)',
+        'drop-sm': 'var(--drop-sm)'
+      },
       borderRadius: {
         lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        md: 'var(--radius)',
+        sm: 'var(--radius)',
         /*
          * Radius carries information here rather than being one house value.
-         * A worksheet is the softest thing on screen because you handle it; a
-         * data cell is the hardest because it is a measurement and should not
-         * look tappable. Chips and toggles stay fully round.
+         * Under the Chalk direction the house radius is zero. A surface, a
+         * control and a data cell all have square corners, and separation
+         * comes from an ink rule instead. Both tokens survive as names
+         * rather than as values, so the call sites still say what they
+         * mean; a chip is the only round thing left in the product, and it
+         * gets that from rounded-full.
          */
-        worksheet: '0.875rem',
-        cell: '2px'
+        worksheet: '0px',
+        cell: '0px'
       },
       keyframes: {
         /*

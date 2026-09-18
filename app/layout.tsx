@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Archivo, Source_Sans_3 } from 'next/font/google';
+import { Saira_Semi_Condensed, Source_Sans_3 } from 'next/font/google';
 import { PropsWithChildren, Suspense } from 'react';
 
 import NativeBridge from '@/components/native/NativeBridge';
@@ -13,7 +13,14 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { getURL } from '@/utils/helpers';
 import 'styles/main.css';
 
-const display = Archivo({
+/*
+ * Saira Semi Condensed carries every figure and every label. Almost all the
+ * large glyphs in this product are numbers, so the display face is really a
+ * numeral face: it has to set a three-digit figure large on a phone without
+ * wrapping, and hold an uppercase label at 12px without turning to mush.
+ * A normal-width grotesque does neither.
+ */
+const display = Saira_Semi_Condensed({
   subsets: ['latin'],
   weight: ['500', '600', '700'],
   variable: '--font-display',
