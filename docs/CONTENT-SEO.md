@@ -26,10 +26,16 @@ question a person with an active ulcer types at 11pm, it is the question the
 product exists to answer, and the searcher is by definition mid-episode — the
 only moment when starting a tracking log makes sense.
 
+The keyword data below bears this out exactly: the treatment and causes head
+terms are locked up by medical publishers at KD 48–64, while the whole
+duration-and-healing space sits at KD 18–35 with a SERP whose tenth result has
+no backlinks at all.
+
 Two assets follow from that, and they are the whole moat:
 
-1. **Interactive tools that answer the question on the page**, without an
-   account. The mouth map and the severity ramp already exist as components.
+1. **Interactive answers embedded in the articles** — a timeline estimator, the
+   stage diagrams, the mouth map — usable without an account. Not standalone
+   tool pages: nobody searches for the tools, they search for the questions.
 2. **First-party aggregate data.** Once there are a few hundred sores in
    `readings`, we can publish the median days-to-heal, the size curve by day,
    the distribution of sites in the mouth. Nobody else has that. It is the one
@@ -61,78 +67,172 @@ Rule for every page from here: the honest answer appears in the first forty
 words, above any preamble. That is what gets extracted — by a featured
 snippet, by an AI overview, and by whatever reads the page next.
 
-## Phase 1 — the tool pages (weeks 1–4)
+## What the keyword data says
 
-Tools, not articles, because they are the fastest route from a search result
-to a logged reading, and they attract links that a written page will not.
+Pulled from Semrush on 2026-09-17, US database. Volumes are monthly, KD is
+Semrush Keyword Difficulty.
 
-Each lives at a clean URL, works with no account, and ends in the same place:
-*this was one measurement, the useful thing is the second one — here is where
-to keep it.*
+**The market is enormous and the head is closed.** `canker sore` is 301,000
+a month at KD 52; `canker sores` 60,500 at KD 64; `what causes canker sores`
+40,500 at KD 48; `canker sore treatment` 74,000 at KD 48. Those are Cleveland
+Clinic and Mayo queries and we are not going to take them. Nothing in the plan
+should aim at them.
 
-1. **`/tools/canker-sore-size`** — a 1:1 on-screen millimetre ruler plus
-   photo-reference sizes, answering "how big is my canker sore". Solves the
-   real problem that nobody owns a ruler at 11pm. Targets *canker sore size
-   chart*, *how big is a canker sore*, *canker sore mm*.
-2. **`/tools/healing-timeline`** — enter day of onset and current size, get
-   the typical remaining course and the day at which it stops being typical.
-   Targets the largest cluster we can realistically win: *how long do canker
-   sores last*, *canker sore day 5*, *canker sore not healing*.
-3. **`/tools/mouth-map`** — the existing `MouthMapHero` made interactive
-   without a login: tap a spot, get the anatomical name and what recurs there.
-   Targets *canker sore on gums / tongue / inside lip / roof of mouth*, which
-   is a long tail of dozens of low-competition variants.
-4. **`/tools/is-it-a-canker-sore`** — a decision tree that distinguishes
-   aphthous ulcer from cold sore by the two facts a person can actually
-   observe (inside vs. outside the mouth, blister vs. crater). This is the one
-   near-diagnostic page worth having, because the distinction is definitional
-   rather than clinical. It must end at "see a dentist", never at a treatment.
+**The duration cluster is wide open, and it is exactly our thesis.**
 
-Every tool page carries `SoftwareApplication` or `HowTo` JSON-LD, a short
-written explainer beneath it so there is text to index, and an embed snippet —
-an `<iframe>` other sites can paste — because an embed is a link we do not
-have to ask for.
+| Keyword | Volume | KD |
+|---|---|---|
+| how long do canker sores last | 12,100 | **25** |
+| how long does a canker sore last | 3,600 | **18** |
+| how long does canker sore last | 1,300 | 24 |
+| how long canker sore go away | 880 | 34 |
+| how long does it take a canker sore to heal | 880 | 27 |
+| how long do canker sores take to heal | 720 | 23 |
+| how long for canker sore to heal | 720 | 28 |
+| how long to canker sores last | 590 | 22 |
 
-## Phase 2 — the article clusters (months 2–6)
+Plus roughly forty more variants between 40 and 400 a month, nearly all under
+KD 35. Call it **25,000 a month at an average difficulty in the twenties** —
+the single best target on the board, and the exact question the product exists
+to answer.
 
-One post a week is enough. Two clusters, and a firm boundary.
+**The SERP confirms it is winnable.** For `how long do canker sores last`,
+Semrush shows 156 results with an AI Overview and a Discussions-and-forums
+block at position 3. Cleveland Clinic holds #1 with 460 referring domains — but
+#2 is an Aspen Dental page with **2** referring domains, #8 a dental practice
+blog with 1, and **#10 has zero backlinks and zero referring domains**. Below
+the first result this is a SERP of thin dental-practice filler. A page written
+by someone who has actually watched the curve can take it. The forums block is
+the tell: Google is already reaching for patient experience on this query and
+finding only Reddit.
 
-**Cluster A — duration and course (the money cluster).** Everything here is
-observational and framed in time, which is exactly where a tracking app has
-standing to speak.
+**The "is it healing?" cluster is unowned.** Small individually, and nobody has
+bothered to write it properly.
 
-- How long a canker sore actually lasts, day by day
-- Day 7 and it is still there — what that does and does not mean
-- The four stages of a mouth ulcer, and what each one looks like
-- How to tell whether a canker sore is healing or getting worse
-- What a normal size curve looks like (built on our own data — see Phase 3)
-- Two weeks and no better: what a dentist will ask you *(mirrors the nudge the
-  app already shows, and is the safest high-intent page on the site)*
+| Keyword | Volume | KD |
+|---|---|---|
+| how do you know when canker sore is healing | 210 | **16** |
+| how to know a canker sore is healing | 260 | 32 |
+| how do you know when a canker sore is healing | 210 | 29 |
+| how to know if a canker sore is healing | 210 | 39 |
+| how to tell if canker sore is healing | 140 | 33 |
+| how can you tell if a canker sore is healing | 140 | 42 |
+| how to know if your canker sore is healing | 50 | **2** |
+| do canker sores get worse before they get better | 140 | 28 |
 
-**Cluster B — patterns and triggers (the retention cluster).** These match the
-`day_logs` trigger and treatment lists in `utils/day-log.ts` one to one, which
-means every article ends at a feature rather than at a CTA.
+About 1,400 a month across a dozen near-identical phrasings, at a difficulty
+that is essentially zero. This is one article, and it is the one that converts,
+because the honest answer is *measure it twice and compare* — which is the
+product.
 
-- Keeping a canker sore trigger diary, and what to record
-- SLS toothpaste: how to run a proper elimination test on yourself
-- Braces, dentures and a sore in the same place every time
-- Stress, sleep and recurrence — how to see it in your own log
-- Recurrent aphthous stomatitis: tracking episodes over a year
-- What to bring to a dentist about recurring ulcers
+**Stages is the second-biggest cluster, and it wants pictures.**
 
-**Off-limits, permanently, until there is a clinician on the masthead:** what
-cures a canker sore fastest, medication comparisons, supplement dosing,
-anything about oral cancer, anything phrased as diagnosis. We may *describe*
-what the app records about a treatment someone tried; we do not recommend one.
+| Keyword | Volume | KD |
+|---|---|---|
+| canker sore stages | 2,400 | 30 |
+| stages of canker sores | 1,000 | **20** |
+| canker sore healing stages | 1,000 | 30 |
+| stages of a canker sore pictures | 1,000 | 39 |
+| stages of a healing canker sore | 480 | 28 |
+| stages of a canker sore | 390 | 31 |
+| healing stages of a canker sore | 320 | **20** |
+| canker sore timeline | 110 | 23 |
 
-Every post: a fifty-word direct answer under the H1, a "last reviewed" date we
-actually maintain, an explicit *this is a log, not medical advice, see a
-dentist if X* line, question-shaped H2s, and a link to the relevant tool.
+Roughly 8,000 a month at KD ~28. The `pictures` intent is a gift rather than a
+problem: we cannot ethically stage photographs of strangers' mouths, but we can
+draw the day-by-day progression in the product's own visual language, which is
+more legible than a photo and is an asset other sites will hotlink.
 
-## Phase 3 — the data flywheel (month 4 onward)
+**Recurrence is where the long-term users are.**
+
+| Keyword | Volume | KD |
+|---|---|---|
+| chronic canker sores | 1,000 | 32 |
+| multiple canker sores at once | 1,000 | 28 |
+| recurring canker sore | 720 | 46 |
+| why do i keep getting canker sores in my mouth | 720 | 33 |
+| constant canker sores | 590 | 33 |
+| why do i get so many canker sores | 590 | 41 |
+| numerous canker sores at once | 480 | 31 |
+| frequent canker sores | 390 | 40 |
+| why do i keep getting canker sores every week | 320 | 28 |
+| recurring canker sore in the same spot (3 phrasings) | ~270 | ~29 |
+
+About 6,000 a month. Someone searching *recurring canker sore in the same spot*
+is describing a mouth map. They are also, unlike the acute searcher, someone
+with a reason to keep a log for a year.
+
+**Two ideas the data killed.** `mouth ulcer tracker app` returns no data at
+all — the product category has no search demand, so the planned
+"canker sore tracker apps" comparison page would rank for nothing. `canker
+sore size` likewise returns nothing; `how big do canker sores get` and
+`canker sore large` (1,300, KD 43) exist, but a millimetre-ruler tool has no
+query behind it. **The ruler tool is demoted out of Phase 1.** Nobody is
+looking for our tools. They are looking for an answer to a question about time,
+and the tools belong inside those answers.
+
+**UK is a separate, smaller, harder market.** `how long do mouth ulcers last`
+is 390 in the US but 1,300 in the UK, 3,100 globally, at KD 47 — the NHS owns
+it. Write US-first with *canker sore* as the primary term, use *mouth ulcer* as
+a synonym in the body so the page is eligible either way, and do not build a UK
+cluster until the US one is working.
+
+## Phase 1 — the four articles that carry the site
+
+Written in this order. Each is a genuine answer with an interactive piece
+embedded in it, not a landing page with a widget bolted on.
+
+**1. How long a canker sore actually lasts, day by day.**
+Target: `how long do canker sores last` and its forty variants, ~25,000/mo,
+KD ~25. Fifty-word answer at the top with the day range in it. Then the day-by-
+day course, what each day feels like, what changes the number, and the point at
+which the duration stops being normal. Embed the **healing-timeline estimator**
+here — day of onset plus current size in, typical remaining course out — because
+the calculator is the thing the SERP does not have and the forums block says
+people want. `FAQPage` markup for the sub-phrasings.
+
+**2. How to tell whether a canker sore is healing.**
+Target: the twelve "is it healing" phrasings, ~1,400/mo, KD ~16–40. The honest
+answer is that a single look tells you nothing and the comparison is the whole
+method: same spot, same light, width in millimetres, twice, two days apart. That
+is the article and it is also the pitch. Highest conversion rate on the site by
+some distance — it ends with the reader needing a second measurement.
+
+**3. The stages of a canker sore, drawn.**
+Target: the stages cluster, ~8,000/mo, KD ~28. Original day-by-day illustrations
+in the product's visual language — prodrome, ulceration, peak, granulation,
+healed — each with the size and pain the product would record. Competes on the
+`pictures` intent without photographing anyone. Make the diagram set
+embeddable; a linkable asset is worth more here than the ranking.
+
+**4. Why you keep getting them in the same spot.**
+Target: the recurrence cluster, ~6,000/mo, KD ~33. Framed as pattern-finding
+rather than cause-claiming, which is both what we can defend without a clinician
+and what the mouth map literally does. Ends at the trigger and treatment lists
+in `utils/day-log.ts`, and at a dentist for anything systemic.
+
+Around these, as volume justifies it: *day 7 and it is still there*, *two weeks
+and no better — what a dentist will ask you* (this one mirrors the nudge the app
+already shows and is the safest high-intent page on the site), *do canker sores
+get worse before they get better*, and the SLS-toothpaste elimination test.
+
+**Off-limits, permanently, until there is a clinician on the masthead:** the
+`canker sore treatment` head term and everything under it, medication
+comparisons, supplement dosing, anything about oral cancer, anything phrased as
+diagnosis. We may describe what the app records about a treatment someone tried;
+we do not recommend one. The one near-diagnostic page worth having is *canker
+sore or cold sore* — the distinction is definitional, not clinical — and it must
+end at "see a dentist".
+
+Every article: a fifty-word direct answer under the H1, a `Article` schema with
+real `datePublished`/`dateModified`, a maintained "last reviewed" date,
+question-shaped H2s matching the actual phrasings above, an explicit *this is a
+log, not medical advice* line, and a link to whichever tool belongs with it.
+
+## Phase 2 — the data flywheel (month 4 onward)
 
 This is the part that no competitor and no AI summariser can copy, and it is
-the reason to be patient through phases 1 and 2.
+the reason to be patient through Phase 1.
 
 Once there is a defensible volume of readings, publish a standing, versioned
 page — `/data/canker-sore-healing` — carrying the aggregate figures the
@@ -162,7 +262,7 @@ be easy to extract and worth extracting.
   sense lifted out of context, with the qualifier inside it, not two
   paragraphs later.
 - **Carry a number.** Pages with a specific figure and a stated source get
-  quoted; pages of adjectives do not. This is what Phase 3 is for.
+  quoted; pages of adjectives do not. This is what Phase 2 is for.
 - **Publish `/llms.txt`** — a plain-text map of the site's pages and what each
   answers.
 - **Keep the markup boring.** Server-rendered text, real headings, real
@@ -203,8 +303,10 @@ published. By month 12, the data page cited by a site we did not ask.
 
 1. Ship the Phase 0 build, then confirm `/robots.txt` and `/sitemap.xml`
    answer on the real domain and carry `cankercore.com` URLs.
-2. The size ruler tool, because it is the smallest thing that is genuinely
-   useful to a stranger.
-3. Search Console and Bing, so the next six months produce evidence.
-4. The healing-timeline tool and the duration cluster.
-5. The data page, the moment the numbers are honest.
+2. Search Console and Bing, so the next six months produce evidence.
+3. Blog infrastructure, then *how long a canker sore actually lasts* with the
+   timeline estimator in it — the biggest, easiest cluster on the board.
+4. *How to tell whether a canker sore is healing*, which is the same work
+   again at a tenth of the difficulty and converts harder.
+5. The stage diagrams, which are the linkable asset.
+6. The data page, the moment the numbers are honest.
