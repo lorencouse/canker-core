@@ -12,6 +12,7 @@ import { SignOut } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { getRedirectMethod } from '@/utils/auth-helpers/settings';
 import { cn } from '@/utils/cn';
+import { useSession } from '@/lib/auth-client';
 
 const signedInLinks = [
   { href: '/my-sores', label: 'Map' },
@@ -24,7 +25,13 @@ const signedOutLinks = [
   { href: '/about', label: 'About' }
 ];
 
-export default function Navlinks({ signedIn }: { signedIn: boolean }) {
+export default function Navlinks() {
+  // Resolved in the browser so the pages around this header can stay static.
+  // Until it resolves the header is the signed-out one, which is both what a
+  // crawler should see and the correct answer for most visitors.
+  const { data: session } = useSession();
+  const signedIn = Boolean(session?.user);
+
   const pathname = usePathname();
   const clientRouter = useRouter();
   const router = getRedirectMethod() === 'client' ? clientRouter : null;

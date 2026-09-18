@@ -3,6 +3,11 @@ import { Archivo, Source_Sans_3 } from 'next/font/google';
 import { PropsWithChildren, Suspense } from 'react';
 
 import NativeBridge from '@/components/native/NativeBridge';
+import {
+  JsonLd,
+  organizationSchema,
+  webSiteSchema
+} from '@/components/seo/JsonLd';
 import { Toaster } from '@/components/ui/Toasts/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { getURL } from '@/utils/helpers';
@@ -31,6 +36,26 @@ export const metadata: Metadata = {
   description:
     'Mark where a canker sore is on a mouth map, log its size and pain each day, and see whether it is actually healing.',
   applicationName: 'Canker Core',
+  // Every page's canonical is resolved against metadataBase, so a page only
+  // has to declare its own path. Without this the app is reachable at more
+  // than one host — the sslip staging domain, www — and the ranking signals
+  // split across them.
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    siteName: 'Canker Core',
+    locale: 'en_US',
+    url: '/',
+    title: 'Canker Core — track mouth sores and see whether they are healing',
+    description:
+      'Mark where a canker sore is on a mouth map, log its size and pain each day, and see whether it is actually healing.'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Canker Core — track mouth sores and see whether they are healing',
+    description:
+      'Mark where a canker sore is on a mouth map, log its size and pain each day, and see whether it is actually healing.'
+  },
   appleWebApp: {
     capable: true,
     title: 'Canker Core',
@@ -93,6 +118,8 @@ export default function RootLayout({ children }: PropsWithChildren) {
             Skip to content
           </a>
           {children}
+          <JsonLd schema={organizationSchema} />
+          <JsonLd schema={webSiteSchema} />
           <NativeBridge />
           {/* Toaster reads search params, which needs a boundary. */}
           <Suspense>

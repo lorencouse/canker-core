@@ -4,7 +4,8 @@ import Prose from '@/components/marketing/Prose';
 
 export const metadata: Metadata = {
   title: 'Privacy',
-  description: 'What Canker Core stores about you, and how to get rid of it.'
+  description: 'What Canker Core stores about you, and how to get rid of it.',
+  alternates: { canonical: '/privacy' }
 };
 
 export default function PrivacyPage() {
