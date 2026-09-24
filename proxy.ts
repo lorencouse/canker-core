@@ -4,8 +4,9 @@ import { NextResponse, type NextRequest } from 'next/server';
  * Route protection.
  *
  * Supabase's middleware ran on every request purely to refresh the auth session
- * cookie. Better Auth manages its own cookie lifetime, so the middleware now
- * does only a cheap optimistic check: presence of the session cookie.
+ * cookie. Better Auth manages its own cookie lifetime, so the proxy (Next 16's
+ * name for middleware) does only a cheap optimistic check: presence of the
+ * session cookie.
  *
  * This is deliberately *not* a validation: it only checks that the cookie is
  * present. Every protected page still resolves the real session server-side (via
@@ -13,10 +14,17 @@ import { NextResponse, type NextRequest } from 'next/server';
  * cookie gains nothing beyond reaching a page that will bounce it.
  *
  * The cookie is read by name rather than with better-auth's `getSessionCookie`
- * helper, which pulls `jose` into the Edge bundle and triggers unsupported-API
- * warnings for a check this simple.
+ * helper, which pulls in `jose` for a check this simple — and this runs on
+ * every matched request.
  */
-const PROTECTED_PATHS = ['/today', '/my-sores', '/insights', '/profile', '/welcome', '/api/export'];
+const PROTECTED_PATHS = [
+  '/today',
+  '/my-sores',
+  '/insights',
+  '/profile',
+  '/welcome',
+  '/api/export'
+];
 
 // Better Auth adds the __Secure- prefix when the base URL is https.
 const SESSION_COOKIES = [
@@ -24,7 +32,7 @@ const SESSION_COOKIES = [
   '__Secure-better-auth.session_token'
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isProtected = PROTECTED_PATHS.some(

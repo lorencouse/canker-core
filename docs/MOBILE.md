@@ -11,7 +11,7 @@ The native apps are a **shell around the hosted site**, not a bundled copy
 of it.
 
 This is a consequence of the stack, not a preference. The app uses server
-components, server actions, Next middleware, and a Better Auth session
+components, server actions, a Next proxy (middleware), and a Better Auth session
 backed by Postgres. `output: 'export'` supports none of those, so a static
 Capacitor bundle would mean rewriting the entire data layer as a client that
 talks to a separately deployed API. Wrapping the deployed app costs nothing
@@ -100,7 +100,7 @@ The onboarding shell has no chrome on purpose: there is nowhere else to be
 until the flow is done, and a tab bar over four empty screens is a poor first
 impression. `app/(app)/layout.tsx` sends anyone whose `"onboardedAt"` is null
 there before they reach a tab, which is why the check lives in a layout and
-not in the middleware — the middleware runs on the Edge with only a cookie,
+not in the proxy — the proxy runs on every request with only a cookie,
 and this needs a column.
 
 The signed-in app is the one with an app-shaped layout. Chrome is **fixed**

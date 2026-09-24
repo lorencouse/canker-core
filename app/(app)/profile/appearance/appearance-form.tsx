@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { Check, Monitor, Moon, Sun } from 'lucide-react';
 
 import { cn } from '@/utils/cn';
 import { Label } from '@/components/ui/label';
+import { useMounted } from '@/utils/hooks/useMounted';
 
 const OPTIONS = [
   {
@@ -34,9 +34,7 @@ const OPTIONS = [
  */
 export function AppearanceForm() {
   const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
 
   return (
     <div className="space-y-4">

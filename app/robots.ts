@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 import { getURL } from '@/utils/helpers';
 
 /**
- * Paths behind the session. The middleware already bounces a signed-out
+ * Paths behind the session. The proxy already bounces a signed-out
  * request to sign-in, so a crawler would only ever see a redirect — but
  * saying so here keeps the crawl budget on the pages that can rank.
  */

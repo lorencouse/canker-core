@@ -31,7 +31,6 @@ export default function NativeBridge() {
   // changed the theme: the splash screen needs to re-apply it later, long
   // after this effect last ran.
   const themeRef = useRef(resolvedTheme);
-  themeRef.current = resolvedTheme;
 
   const applyStatusBar = useCallback(async () => {
     const theme = themeRef.current;
@@ -52,6 +51,7 @@ export default function NativeBridge() {
   }, []);
 
   useEffect(() => {
+    themeRef.current = resolvedTheme;
     void applyStatusBar();
   }, [resolvedTheme, applyStatusBar]);
 

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/Toasts/use-toast';
+import { useMounted } from '@/utils/hooks/useMounted';
 import {
   applyReminder,
   readReminder,
@@ -20,15 +21,13 @@ import {
  * button under a single switch reads as a form that failed to submit.
  */
 export function ReminderForm() {
-  const [pref, setPref] = useState<ReminderPref | null>(null);
-  const [supported, setSupported] = useState(false);
-
   // Both values live in the browser, so read them after mount rather than
-  // during the server render.
-  useEffect(() => {
-    setPref(readReminder());
-    setSupported(remindersSupported());
-  }, []);
+  // during the server render. Until the first change, the stored preference
+  // is the answer.
+  const mounted = useMounted();
+  const [changed, setPref] = useState<ReminderPref | null>(null);
+  const pref = mounted ? (changed ?? readReminder()) : null;
+  const supported = mounted && remindersSupported();
 
   if (!pref) return null;
 
@@ -48,9 +47,9 @@ export function ReminderForm() {
   if (!supported) {
     return (
       <p className="prose-measure text-sm text-muted-foreground">
-        Reminders come with the iPhone and Android apps, which can nudge you
-        at a set time each day. In a browser there is no way to schedule
-        that, so the Today tab shows what is still to log instead.
+        Reminders come with the iPhone and Android apps, which can nudge you at
+        a set time each day. In a browser there is no way to schedule that, so
+        the Today tab shows what is still to log instead.
       </p>
     );
   }
@@ -85,8 +84,8 @@ export function ReminderForm() {
           }}
         />
         <p className="text-xs text-muted-foreground">
-          Evenings work best: the day’s eating is done and the sore has had
-          its say.
+          Evenings work best: the day’s eating is done and the sore has had its
+          say.
         </p>
       </div>
     </div>

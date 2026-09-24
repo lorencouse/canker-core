@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
@@ -10,6 +10,17 @@ import AuthField from './AuthField';
 import AuthLinks from './AuthLinks';
 import { signUp } from '@/utils/auth-helpers/server';
 
+type Message = { type: 'error' | 'success'; content: string };
+
+// An OAuth or email-link failure comes back as ?error=…&error_description=….
+function messageFromParams(params: URLSearchParams): Message | null {
+  const error = params.get('error');
+  const description = params.get('error_description');
+  return error && description
+    ? { type: 'error', content: decodeURIComponent(description) }
+    : null;
+}
+
 interface SignUpProps {
   allowEmail: boolean;
   redirectMethod: string;
@@ -18,21 +29,16 @@ interface SignUpProps {
 export default function SignUp({ allowEmail }: SignUpProps) {
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState<{
-    type: 'error' | 'success';
-    content: string;
-  } | null>(null);
+  const [message, setMessage] = useState<Message | null>(() =>
+    messageFromParams(searchParams)
+  );
 
-  useEffect(() => {
-    const errorParam = searchParams.get('error');
-    const errorDescription = searchParams.get('error_description');
-    if (errorParam && errorDescription) {
-      setMessage({
-        type: 'error',
-        content: decodeURIComponent(errorDescription)
-      });
-    }
-  }, [searchParams]);
+  const [shownParams, setShownParams] = useState(searchParams);
+  if (searchParams !== shownParams) {
+    setShownParams(searchParams);
+    const fromParams = messageFromParams(searchParams);
+    if (fromParams) setMessage(fromParams);
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

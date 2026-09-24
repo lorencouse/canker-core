@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
 import Logo from '@/components/icons/Logo';
@@ -39,7 +39,12 @@ export default function Navlinks() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Any navigation closes the mobile sheet, including a back/forward step.
-  useEffect(() => setMenuOpen(false), [pathname]);
+  // Checked during render so the sheet never paints open on the new page.
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (pathname !== menuPath) {
+    setMenuPath(pathname);
+    setMenuOpen(false);
+  }
 
   const links = signedIn ? signedInLinks : signedOutLinks;
 

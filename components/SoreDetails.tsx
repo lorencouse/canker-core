@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 
 import { useSoreContext } from '@/context/SoreContext';
@@ -58,12 +58,9 @@ function Reading({ label, value }: { label: string; value: React.ReactNode }) {
 export function SoreNavigator({ className }: { className?: string }) {
   const { selectedSore, setSelectedSore, visibleSores: sores } =
     useSoreContext();
-  const [index, setIndex] = useState(0);
   const { dayNumber, healed } = useSoreFacts(selectedSore ?? null);
 
-  useEffect(() => {
-    setIndex(sores.findIndex((sore) => sore.id === selectedSore?.id));
-  }, [selectedSore, sores]);
+  const index = sores.findIndex((sore) => sore.id === selectedSore?.id);
 
   const step = (delta: number) => {
     if (!sores.length) return;

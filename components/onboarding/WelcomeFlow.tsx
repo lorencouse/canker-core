@@ -18,6 +18,7 @@ import type { Sore, User } from '@/types';
 import { completeOnboarding } from '@/utils/actions/onboardingActions';
 import { upsertSores } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
+import { useMounted } from '@/utils/hooks/useMounted';
 import { notify, tap } from '@/utils/native';
 import {
   DEFAULT_TIME,
@@ -62,12 +63,12 @@ function Flow({ user }: { user: User }) {
     enabled: true,
     time: DEFAULT_TIME
   });
-  const [canRemind, setCanRemind] = useState(false);
+  const mounted = useMounted();
+  const canRemind = mounted && remindersSupported();
 
   // Add mode from the start: there is nothing on this map to view or drag,
   // and it carries the map's own "tap where the sore is" hint for free.
   useEffect(() => setMode('add'), [setMode]);
-  useEffect(() => setCanRemind(remindersSupported()), []);
 
   /*
    * One sore, whichever was tapped last. Add mode is built to place several
@@ -283,7 +284,9 @@ function Ready({
             <Switch
               id="welcome-reminder"
               checked={reminder.enabled}
-              onCheckedChange={(enabled) => onReminder({ ...reminder, enabled })}
+              onCheckedChange={(enabled) =>
+                onReminder({ ...reminder, enabled })
+              }
             />
           </div>
           <div className="grid gap-1.5">
@@ -307,8 +310,8 @@ function Ready({
         </div>
       ) : (
         <p className="prose-measure text-sm text-muted-foreground">
-          The iPhone and Android apps can nudge you at a set time each day. In
-          a browser the Today tab shows what is still to log instead.
+          The iPhone and Android apps can nudge you at a set time each day. In a
+          browser the Today tab shows what is still to log instead.
         </p>
       )}
     </div>

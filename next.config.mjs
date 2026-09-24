@@ -31,7 +31,7 @@ const withMDX = createMDX({
     // Tables, chiefly. An article about how long something takes is mostly a
     // table of durations, and plain MDX renders pipe syntax as literal pipes.
     //
-    // Named, not imported: `next dev --turbo` serialises loader options to
+    // Named, not imported: Turbopack (the default bundler) serialises loader options to
     // pass them across threads and refuses a function, so an imported plugin
     // breaks the dev server while building fine. The string form resolves in
     // both.

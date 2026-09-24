@@ -57,7 +57,7 @@ export default async function SignIn({
     disable_button: boolean;
     token?: string;
     error?: string;
-    /** Where to go after signing in; set by the middleware. */
+    /** Where to go after signing in; set by the proxy. */
     next?: string;
   }>;
 }) {

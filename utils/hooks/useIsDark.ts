@@ -1,7 +1,8 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { useEffect, useState } from 'react';
+
+import { useMounted } from '@/utils/hooks/useMounted';
 
 /**
  * Whether the dark palette is currently in effect.
@@ -11,9 +12,7 @@ import { useEffect, useState } from 'react';
  */
 export function useIsDark(): boolean {
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
 
   return mounted && resolvedTheme === 'dark';
 }

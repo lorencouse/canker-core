@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
+
+import { useMounted } from '@/utils/hooks/useMounted';
 
 /**
  * Subscribes to a media query.
@@ -10,17 +12,20 @@ import { useEffect, useState } from 'react';
  * useIsCompact below rather than treating the first false as an answer.
  */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      const list = window.matchMedia(query);
+      list.addEventListener('change', onChange);
+      return () => list.removeEventListener('change', onChange);
+    },
+    [query]
+  );
 
-  useEffect(() => {
-    const list = window.matchMedia(query);
-    setMatches(list.matches);
-    const onChange = (e: MediaQueryListEvent) => setMatches(e.matches);
-    list.addEventListener('change', onChange);
-    return () => list.removeEventListener('change', onChange);
-  }, [query]);
-
-  return matches;
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(query).matches,
+    () => false
+  );
 }
 
 /**
@@ -32,7 +37,6 @@ export function useMediaQuery(query: string): boolean {
  * the wrong one for a frame is worse than rendering neither.
  */
 export function useIsCompact() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
   return { isCompact: useMediaQuery('(max-width: 1023px)'), mounted };
 }

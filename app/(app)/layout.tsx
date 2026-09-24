@@ -19,9 +19,9 @@ import { getOnboardedAt, getUser } from '@/lib/queries';
 export default async function AppLayout({ children }: PropsWithChildren) {
   /*
    * Anyone who has not seen the first run goes through it before they see a
-   * tab bar. The check is here rather than in the middleware because the
-   * middleware runs on the Edge with only a cookie to go on, and this needs
-   * a column — and because every signed-in page is inside this layout, so
+   * tab bar. The check is here rather than in the proxy because the proxy
+   * runs on every request with only a cookie to go on, and this needs a
+   * database column — and because every signed-in page is inside this layout, so
    * there is exactly one place to enforce it.
    */
   const user = await getUser();

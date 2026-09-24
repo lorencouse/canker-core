@@ -68,17 +68,20 @@ export default function MouthMap({ user }: { user: User }) {
     mode
   } = useSoreContext();
   const healedCount = sores.filter((s) => s.healed_at).length;
-  const [view, setView] = useState<MouthView>('front');
+  const [view, setView] = useState<MouthView>(selectedSore?.view ?? 'front');
   const [camera, setCamera] = useState<Camera>(HOME);
   const svgRef = useRef<SVGSVGElement>(null);
   const idPrefix = useId().replace(/:/g, '');
 
   // Selecting a sore elsewhere (the details card's arrows) brings its view up.
-  useEffect(() => {
+  // Keyed on the id so switching views by hand is not undone by the next
+  // edit to the same sore.
+  const [viewedSoreId, setViewedSoreId] = useState(selectedSore?.id);
+  if (selectedSore?.id !== viewedSoreId) {
+    setViewedSoreId(selectedSore?.id);
     if (selectedSore?.view && selectedSore.view !== view)
       setView(selectedSore.view);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSore?.id]);
+  }
 
   /* ---- coordinate conversion ------------------------------------------- */
 

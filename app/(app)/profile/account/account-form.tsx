@@ -53,7 +53,9 @@ export function AccountForm() {
       return;
     }
     // The session is gone; a hard navigation drops every cached
-    // server component that still believes someone is signed in.
+    // server component that still believes someone is signed in, which
+    // router.push would keep.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.assign('/');
   };
 
@@ -135,8 +137,8 @@ export function AccountForm() {
           <DialogHeader>
             <DialogTitle>Delete your account?</DialogTitle>
             <DialogDescription>
-              This removes you and all of your readings right away. There is
-              no undo and nothing is kept.
+              This removes you and all of your readings right away. There is no
+              undo and nothing is kept.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">

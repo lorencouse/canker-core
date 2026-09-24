@@ -1,10 +1,11 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useSoreContext } from '@/context/SoreContext';
+import type { Sore } from '@/types';
 import {
   currentPain,
   currentSize,
@@ -12,6 +13,12 @@ import {
   latestReading,
   withReading
 } from '@/utils/readings';
+
+// The note only belongs to today's reading; yesterday's stays with yesterday.
+const todaysNote = (sore: Sore | null | undefined) =>
+  sore && hasReadingOn(sore, new Date())
+    ? (latestReading(sore)?.note ?? '')
+    : '';
 
 /**
  * Today's reading for the selected sore: size, pain, and an optional note.
@@ -25,30 +32,29 @@ const SoreSliders: React.FC = () => {
 
   const [soreSize, setSoreSize] = useState<number>(currentSize(selectedSore));
   const [painLevel, setPainLevel] = useState<number>(currentPain(selectedSore));
-  const [note, setNote] = useState<string>(latestReading(selectedSore)?.note ?? '');
+  const [note, setNote] = useState<string>(todaysNote(selectedSore));
 
-  const commit = (values: { size?: number; pain?: number; note?: string | null }) => {
+  const commit = (values: {
+    size?: number;
+    pain?: number;
+    note?: string | null;
+  }) => {
     if (!selectedSore) return;
     const updated = withReading(selectedSore, values);
     setSelectedSore(updated);
     setSores((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
   };
 
-  useEffect(() => {
+  // Reset when a different sore is picked, not on every keystroke echo.
+  const [shownSoreId, setShownSoreId] = useState(selectedSore?.id);
+  if (selectedSore?.id !== shownSoreId) {
+    setShownSoreId(selectedSore?.id);
     if (selectedSore) {
       setSoreSize(currentSize(selectedSore));
       setPainLevel(currentPain(selectedSore));
-      // The note only belongs to today's reading; yesterday's stays with
-      // yesterday.
-      setNote(
-        hasReadingOn(selectedSore, new Date())
-          ? (latestReading(selectedSore)?.note ?? '')
-          : ''
-      );
+      setNote(todaysNote(selectedSore));
     }
-    // Reset when a different sore is picked, not on every keystroke echo.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSore?.id]);
+  }
 
   if (!selectedSore) return null;
 
