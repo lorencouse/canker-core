@@ -32,7 +32,8 @@ export const dayKey = (date: Date): string => {
 };
 
 /** The device's IANA zone, so the server can draw day lines where this does. */
-export const localTimeZone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone;
+export const localTimeZone = (): string =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export const isSameLocalDay = (iso: string, when: Date): boolean =>
   dayKey(new Date(iso)) === dayKey(when);

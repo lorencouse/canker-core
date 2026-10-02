@@ -88,7 +88,9 @@ export default function TodayScreen({
     try {
       const toWrite = sores.filter((s) => changed.has(s.id));
       const [soreResult, logResult] = await Promise.all([
-        toWrite.length ? upsertSores(toWrite, localTimeZone()) : Promise.resolve({ ok: true as const }),
+        toWrite.length
+          ? upsertSores(toWrite, localTimeZone())
+          : Promise.resolve({ ok: true as const }),
         logDirty ? saveDayLog(log) : Promise.resolve({ ok: true as const })
       ]);
       const failure = [soreResult, logResult].find((r) => !r.ok);

@@ -60,7 +60,8 @@ const soreSchema = (now: Date) =>
   });
 
 export type ParsedSores =
-  { ok: true; sores: Sore[] } | { ok: false; error: string };
+  | { ok: true; sores: Sore[] }
+  | { ok: false; error: string };
 
 /** Validate an untrusted save payload against the shape the database expects. */
 export function parseSores(
