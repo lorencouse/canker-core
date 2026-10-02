@@ -86,10 +86,10 @@ create table if not exists sores (
   id text primary key,
   user_id text not null references "user" ("id") on delete cascade,
   -- Which flat view of the mouth map the sore was plotted on: front | cheeks | lips.
-  view text not null default 'front',
+  view text not null default 'front' check (view in ('front', 'cheeks', 'lips')),
   -- Position within that view, as percentages of its drawing box.
-  x double precision,
-  y double precision,
+  x double precision check (x between 0 and 100),
+  y double precision check (y between 0 and 100),
   zone text not null,
   -- Day 1.
   created_at timestamptz not null default now(),

@@ -20,6 +20,7 @@ import { upsertSores } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { useMounted } from '@/utils/hooks/useMounted';
 import { notify, tap } from '@/utils/native';
+import { localTimeZone } from '@/utils/readings';
 import {
   DEFAULT_TIME,
   applyReminder,
@@ -92,7 +93,7 @@ function Flow({ user }: { user: User }) {
     setSaving(true);
     try {
       if (write && sore) {
-        const saved = await upsertSores([sore]);
+        const saved = await upsertSores([sore], localTimeZone());
         if (!saved.ok) {
           notify('error');
           toast({ variant: 'destructive', title: saved.error });
