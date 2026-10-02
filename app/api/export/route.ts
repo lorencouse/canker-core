@@ -13,12 +13,25 @@ import { csvCell } from '@/utils/csv';
  */
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) return new Response('Sign in to export.', { status: 401 });
+  if (!session?.user)
+    return new Response('Sign in to export.', { status: 401 });
 
   const sores = await getSores(session.user.id);
 
   const rows: string[][] = [
-    ['sore_id', 'view', 'location', 'x_percent', 'y_percent', 'first_marked', 'recorded_at', 'size_mm', 'pain_1_to_10', 'note', 'healed_at']
+    [
+      'sore_id',
+      'view',
+      'location',
+      'x_percent',
+      'y_percent',
+      'first_marked',
+      'recorded_at',
+      'size_mm',
+      'pain_1_to_10',
+      'note',
+      'healed_at'
+    ]
   ];
   for (const sore of sores) {
     for (const r of sore.readings) {
