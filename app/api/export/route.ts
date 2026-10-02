@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 
 import { auth } from '@/lib/auth';
 import { getSores } from '@/lib/queries';
+import { csvCell } from '@/utils/csv';
 
 /**
  * The signed-in user's readings as CSV, one row per reading.
@@ -12,12 +13,25 @@ import { getSores } from '@/lib/queries';
  */
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) return new Response('Sign in to export.', { status: 401 });
+  if (!session?.user)
+    return new Response('Sign in to export.', { status: 401 });
 
   const sores = await getSores(session.user.id);
 
   const rows: string[][] = [
-    ['sore_id', 'view', 'location', 'x_percent', 'y_percent', 'first_marked', 'recorded_at', 'size_mm', 'pain_1_to_10', 'note', 'healed_at']
+    [
+      'sore_id',
+      'view',
+      'location',
+      'x_percent',
+      'y_percent',
+      'first_marked',
+      'recorded_at',
+      'size_mm',
+      'pain_1_to_10',
+      'note',
+      'healed_at'
+    ]
   ];
   for (const sore of sores) {
     for (const r of sore.readings) {
@@ -37,7 +51,7 @@ export async function GET() {
     }
   }
 
-  const csv = rows.map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n';
+  const csv = rows.map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
   const stamp = new Date().toISOString().slice(0, 10);
 
   return new Response(csv, {
@@ -47,9 +61,4 @@ export async function GET() {
       'cache-control': 'no-store'
     }
   });
-}
-
-/** RFC 4180 quoting: wrap anything with a comma, quote or newline. */
-function cell(value: string): string {
-  return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
