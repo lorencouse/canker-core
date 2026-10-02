@@ -77,7 +77,10 @@ describe('parseSores', () => {
 
   it('refuses a view the map does not have', () => {
     const result = parse([{ ...sore(), view: 'gums' }]);
-    expect(result).toEqual({ ok: false, error: expect.stringContaining('0.view') });
+    expect(result).toEqual({
+      ok: false,
+      error: expect.stringContaining('0.view')
+    });
   });
 
   it.each([
@@ -95,23 +98,32 @@ describe('parseSores', () => {
     expect(parse([sore({ x: 0, y: 100 })]).ok).toBe(true);
   });
 
-  it.each(['yesterday', '2026-09-08', '2026-13-01T00:00:00Z', '', 1757322000000])(
-    'refuses %j as a timestamp',
-    (value) => {
-      expect(parse([{ ...sore(), created_at: value }]).ok).toBe(false);
-      expect(parse([sore({ readings: [{ ...reading(), recorded_at: value as string }] })]).ok).toBe(
-        false
-      );
-    }
-  );
+  it.each([
+    'yesterday',
+    '2026-09-08',
+    '2026-13-01T00:00:00Z',
+    '',
+    1757322000000
+  ])('refuses %j as a timestamp', (value) => {
+    expect(parse([{ ...sore(), created_at: value }]).ok).toBe(false);
+    expect(
+      parse([
+        sore({ readings: [{ ...reading(), recorded_at: value as string }] })
+      ]).ok
+    ).toBe(false);
+  });
 
   it('refuses a reading from the future, beyond clock slack', () => {
     const later = (ms: number) => new Date(NOW.getTime() + ms).toISOString();
-    expect(parse([sore({ readings: [reading({ recorded_at: later(CLOCK_SKEW_MS) })] })]).ok).toBe(
-      true
-    );
+    expect(
+      parse([
+        sore({ readings: [reading({ recorded_at: later(CLOCK_SKEW_MS) })] })
+      ]).ok
+    ).toBe(true);
     const result = parse([
-      sore({ readings: [reading({ recorded_at: later(CLOCK_SKEW_MS + 1000) })] })
+      sore({
+        readings: [reading({ recorded_at: later(CLOCK_SKEW_MS + 1000) })]
+      })
     ]);
     expect(result).toEqual({
       ok: false,
@@ -120,15 +132,23 @@ describe('parseSores', () => {
   });
 
   it('refuses a sore created, or healed, in the future', () => {
-    expect(parse([sore({ created_at: '2026-09-11T12:00:00.000Z' })]).ok).toBe(false);
-    expect(parse([sore({ healed_at: '2026-09-11T12:00:00.000Z' })]).ok).toBe(false);
+    expect(parse([sore({ created_at: '2026-09-11T12:00:00.000Z' })]).ok).toBe(
+      false
+    );
+    expect(parse([sore({ healed_at: '2026-09-11T12:00:00.000Z' })]).ok).toBe(
+      false
+    );
   });
 
   it('refuses a size or pain that is not a number', () => {
-    expect(parse([sore({ readings: [{ ...reading(), size: '3' as unknown as number }] })]).ok).toBe(
-      false
-    );
-    expect(parse([sore({ readings: [{ ...reading(), pain: Number.NaN }] })]).ok).toBe(false);
+    expect(
+      parse([
+        sore({ readings: [{ ...reading(), size: '3' as unknown as number }] })
+      ]).ok
+    ).toBe(false);
+    expect(
+      parse([sore({ readings: [{ ...reading(), pain: Number.NaN }] })]).ok
+    ).toBe(false);
   });
 
   it('refuses a payload that is not a list of sores', () => {
@@ -139,7 +159,9 @@ describe('parseSores', () => {
   });
 
   it('caps the number of sores and of readings', () => {
-    const many = Array.from({ length: MAX_SORES_PER_SAVE + 1 }, (_, i) => sore({ id: `s${i}` }));
+    const many = Array.from({ length: MAX_SORES_PER_SAVE + 1 }, (_, i) =>
+      sore({ id: `s${i}` })
+    );
     expect(parse(many.slice(0, -1)).ok).toBe(true);
     expect(parse(many).ok).toBe(false);
 
@@ -164,15 +186,20 @@ describe('isTimeZone', () => {
 describe('dayKeyIn', () => {
   it('puts an instant on the calendar day of the given zone', () => {
     // 03:00 UTC is still the previous evening in New York.
-    expect(dayKeyIn('2026-09-09T03:00:00Z', 'America/New_York')).toBe('2026-09-08');
-    expect(dayKeyIn('2026-09-09T03:00:00Z', 'Europe/London')).toBe('2026-09-09');
+    expect(dayKeyIn('2026-09-09T03:00:00Z', 'America/New_York')).toBe(
+      '2026-09-08'
+    );
+    expect(dayKeyIn('2026-09-09T03:00:00Z', 'Europe/London')).toBe(
+      '2026-09-09'
+    );
     expect(dayKeyIn('2026-09-09T03:00:00+00:00', 'UTC')).toBe('2026-09-09');
   });
 });
 
 describe('sameDayReading', () => {
   const none = new Map<string, string>();
-  const stored = (...rs: Reading[]) => new Map(rs.map((r) => [r.id, r.recorded_at]));
+  const stored = (...rs: Reading[]) =>
+    new Map(rs.map((r) => [r.id, r.recorded_at]));
 
   const morning = reading({ id: 'm', recorded_at: '2026-09-08T07:00:00Z' });
   const evening = reading({ id: 'e', recorded_at: '2026-09-08T20:00:00Z' });
@@ -183,7 +210,9 @@ describe('sameDayReading', () => {
   });
 
   it('catches a new second reading on a day', () => {
-    expect(sameDayReading([morning, evening], stored(morning), 'UTC')).toBe(evening);
+    expect(sameDayReading([morning, evening], stored(morning), 'UTC')).toBe(
+      evening
+    );
   });
 
   it('catches two new readings on one day', () => {
@@ -194,26 +223,42 @@ describe('sameDayReading', () => {
     // 23:30 and 00:30 New York time: two days there, one day in UTC.
     const late = reading({ id: 'l', recorded_at: '2026-09-09T03:30:00Z' });
     const early = reading({ id: 'x', recorded_at: '2026-09-09T04:30:00Z' });
-    expect(sameDayReading([late, early], stored(late), 'America/New_York')).toBeNull();
+    expect(
+      sameDayReading([late, early], stored(late), 'America/New_York')
+    ).toBeNull();
     expect(sameDayReading([late, early], stored(late), 'UTC')).toBe(early);
 
     // 20:00 and 07:00 the next morning in Tokyo: two days there, one in UTC.
-    const tokyoEvening = reading({ id: 't1', recorded_at: '2026-09-08T11:00:00Z' });
-    const tokyoMorning = reading({ id: 't2', recorded_at: '2026-09-08T22:00:00Z' });
+    const tokyoEvening = reading({
+      id: 't1',
+      recorded_at: '2026-09-08T11:00:00Z'
+    });
+    const tokyoMorning = reading({
+      id: 't2',
+      recorded_at: '2026-09-08T22:00:00Z'
+    });
     const tokyo = [tokyoEvening, tokyoMorning];
-    expect(sameDayReading(tokyo, stored(tokyoEvening), 'Asia/Tokyo')).toBeNull();
-    expect(sameDayReading(tokyo, stored(tokyoEvening), 'UTC')).toBe(tokyoMorning);
+    expect(
+      sameDayReading(tokyo, stored(tokyoEvening), 'Asia/Tokyo')
+    ).toBeNull();
+    expect(sameDayReading(tokyo, stored(tokyoEvening), 'UTC')).toBe(
+      tokyoMorning
+    );
   });
 
   it('lets a same-day correction through, which keeps its timestamp', () => {
     const corrected = { ...evening, size: 5, pain: 2 };
-    expect(sameDayReading([nextDay, corrected], stored(nextDay, evening), 'UTC')).toBeNull();
+    expect(
+      sameDayReading([nextDay, corrected], stored(nextDay, evening), 'UTC')
+    ).toBeNull();
   });
 
   it('does not re-judge stored readings in a new zone', () => {
     // Two readings that were separate days where they were taken, now on
     // one day in the zone the user has travelled to.
-    expect(sameDayReading([morning, evening], stored(morning, evening), 'UTC')).toBeNull();
+    expect(
+      sameDayReading([morning, evening], stored(morning, evening), 'UTC')
+    ).toBeNull();
   });
 
   it('matches stored timestamps by instant, not by spelling', () => {
@@ -224,6 +269,8 @@ describe('sameDayReading', () => {
   it('re-checks a stored reading whose date moved', () => {
     const moved = { ...evening, recorded_at: '2026-09-09T09:00:00Z' };
     const before = stored(morning, evening, nextDay);
-    expect(sameDayReading([morning, moved, nextDay], before, 'UTC')).toBe(moved);
+    expect(sameDayReading([morning, moved, nextDay], before, 'UTC')).toBe(
+      moved
+    );
   });
 });

@@ -29,7 +29,10 @@ const timestamp = (now: Date) =>
     .string()
     // jsonb renders timestamptz with an offset, toISOString with a Z.
     .datetime({ offset: true })
-    .refine((s) => Date.parse(s) <= now.getTime() + CLOCK_SKEW_MS, 'is in the future');
+    .refine(
+      (s) => Date.parse(s) <= now.getTime() + CLOCK_SKEW_MS,
+      'is in the future'
+    );
 
 const percent = z.number().finite().min(0).max(100).nullable();
 
@@ -56,14 +59,24 @@ const soreSchema = (now: Date) =>
     readings: z.array(readingSchema(now)).max(MAX_READINGS_PER_SORE)
   });
 
-export type ParsedSores = { ok: true; sores: Sore[] } | { ok: false; error: string };
+export type ParsedSores =
+  { ok: true; sores: Sore[] } | { ok: false; error: string };
 
 /** Validate an untrusted save payload against the shape the database expects. */
-export function parseSores(input: unknown, now: Date = new Date()): ParsedSores {
-  const result = z.array(soreSchema(now)).max(MAX_SORES_PER_SAVE).safeParse(input);
+export function parseSores(
+  input: unknown,
+  now: Date = new Date()
+): ParsedSores {
+  const result = z
+    .array(soreSchema(now))
+    .max(MAX_SORES_PER_SAVE)
+    .safeParse(input);
   if (!result.success) {
     const issue = result.error.issues[0];
-    return { ok: false, error: `${issue.path.join('.') || 'sores'}: ${issue.message}` };
+    return {
+      ok: false,
+      error: `${issue.path.join('.') || 'sores'}: ${issue.message}`
+    };
   }
   // user_id is deliberately not part of the schema; the session supplies it.
   return {
@@ -114,7 +127,11 @@ export function sameDayReading(
   const days = readings.map((r) => dayKeyIn(r.recorded_at, timeZone));
   for (let i = 0; i < readings.length; i++) {
     const was = stored.get(readings[i].id);
-    if (was !== undefined && Date.parse(was) === Date.parse(readings[i].recorded_at)) continue;
+    if (
+      was !== undefined &&
+      Date.parse(was) === Date.parse(readings[i].recorded_at)
+    )
+      continue;
     if (days.some((day, j) => j !== i && day === days[i])) return readings[i];
   }
   return null;
