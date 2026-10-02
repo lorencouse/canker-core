@@ -8,6 +8,7 @@ import { auth } from '@/lib/auth';
 import { pool } from '@/lib/db/pool';
 import type { DayLog, Sore } from '@/types';
 import { TREATMENTS, TRIGGERS, pickKnown } from '@/utils/day-log';
+import { isTimeZone, parseSores, sameDayReading } from '@/utils/sore-payload';
 
 /**
  * Sore and day-log mutations.
@@ -41,8 +42,11 @@ function revalidate() {
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
+/** Thrown inside the transaction so a refused sore rolls back the whole save. */
+class SameDayReading extends Error {}
+
 /** Write one sore and bring its readings in line with the client's list. */
-async function writeSore(client: PoolClient, userId: string, sore: Sore) {
+async function writeSore(client: PoolClient, userId: string, sore: Sore, timeZone: string) {
   const { rowCount } = await client.query(
     `insert into sores (id, user_id, view, x, y, zone, created_at, healed_at)
      values ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -68,6 +72,17 @@ async function writeSore(client: PoolClient, userId: string, sore: Sore) {
   // A conflicting id owned by someone else updates nothing; leave their
   // readings alone too.
   if (!rowCount) return;
+
+  const { rows: stored } = await client.query<{ id: string; recorded_at: string }>(
+    `select id, to_jsonb(recorded_at) #>> '{}' as recorded_at from readings where sore_id = $1`,
+    [sore.id]
+  );
+  const clash = sameDayReading(
+    sore.readings,
+    new Map(stored.map((r) => [r.id, r.recorded_at])),
+    timeZone
+  );
+  if (clash) throw new SameDayReading(`sore ${sore.id} reading ${clash.id}`);
 
   const keep = sore.readings.map((r) => r.id);
   await client.query(
@@ -96,7 +111,24 @@ async function writeSore(client: PoolClient, userId: string, sore: Sore) {
   }
 }
 
-export async function upsertSores(sores: Sore[]): Promise<ActionResult> {
+/**
+ * Save sores and their readings. `timeZone` is the device's IANA zone, which
+ * the server needs to hold the one-reading-per-local-day rule.
+ *
+ * The payload is typed for callers but parsed as untrusted: a server action
+ * can be called with anything.
+ */
+export async function upsertSores(input: Sore[], timeZone: string): Promise<ActionResult> {
+  const parsed = parseSores(input);
+  if (!parsed.ok) {
+    console.error('Refused sore payload:', parsed.error);
+    return { ok: false, error: 'Some of these changes could not be saved. Reload and try again.' };
+  }
+  if (!isTimeZone(timeZone)) {
+    console.error('Refused sore payload: unknown time zone', timeZone);
+    return { ok: false, error: 'Could not tell which day it is for you. Reload and try again.' };
+  }
+  const sores = parsed.sores;
   if (sores.length === 0) return { ok: true };
 
   const userId = await requireUserId();
@@ -105,10 +137,14 @@ export async function upsertSores(sores: Sore[]): Promise<ActionResult> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    for (const sore of sores) await writeSore(client, userId, sore);
+    for (const sore of sores) await writeSore(client, userId, sore, timeZone);
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
+    if (error instanceof SameDayReading) {
+      console.error('Refused second reading on one day:', error.message);
+      return { ok: false, error: 'A sore can have only one reading a day. Reload and try again.' };
+    }
     console.error('Error upserting sores:', error);
     return { ok: false, error: 'Could not save your changes. Try again.' };
   } finally {

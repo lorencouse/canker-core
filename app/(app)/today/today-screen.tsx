@@ -13,7 +13,7 @@ import type { DayLog, Sore } from '@/types';
 import { answerLine } from '@/utils/course';
 import { saveDayLog, setSoreHealed, upsertSores } from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
-import { dayKey, hasReadingOn } from '@/utils/readings';
+import { dayKey, hasReadingOn, localTimeZone } from '@/utils/readings';
 
 /**
  * The daily check-in.
@@ -88,7 +88,7 @@ export default function TodayScreen({
     try {
       const toWrite = sores.filter((s) => changed.has(s.id));
       const [soreResult, logResult] = await Promise.all([
-        toWrite.length ? upsertSores(toWrite) : Promise.resolve({ ok: true as const }),
+        toWrite.length ? upsertSores(toWrite, localTimeZone()) : Promise.resolve({ ok: true as const }),
         logDirty ? saveDayLog(log) : Promise.resolve({ ok: true as const })
       ]);
       const failure = [soreResult, logResult].find((r) => !r.ok);

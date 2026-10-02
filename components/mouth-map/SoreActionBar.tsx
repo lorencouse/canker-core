@@ -21,6 +21,7 @@ import {
   type ActionResult
 } from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
+import { localTimeZone } from '@/utils/readings';
 
 /**
  * The editing actions for the map: add, edit, mark healed, delete, and the
@@ -76,7 +77,7 @@ export default function SoreActionBar() {
       : sores;
     setBusy(true);
     try {
-      const result = await upsertSores(changed);
+      const result = await upsertSores(changed, localTimeZone());
       // On failure the session stays open with the edits intact, so the
       // user can retry rather than redo.
       if (failed(result)) return;

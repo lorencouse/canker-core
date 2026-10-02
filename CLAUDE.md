@@ -29,7 +29,8 @@ SQL. Take a `pg_dump` into the gitignored `backups/` before any of it.
 Data model: a `sores` row is a place in the mouth; its measurements are rows
 in `readings` (one per local day, with an optional note); `day_logs` holds
 per-day triggers and treatments from the fixed lists in `utils/day-log.ts`.
-The "one reading per day" rule lives in `utils/readings.ts`.
+The "one reading per day" rule lives in `utils/readings.ts`, and the server
+holds it again in `utils/sore-payload.ts`.
 
 ## Mobile
 
