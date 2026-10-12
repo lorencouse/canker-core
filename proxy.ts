@@ -51,7 +51,11 @@ export async function proxy(request: NextRequest) {
 
   if (!isProtected) {
     const response = NextResponse.next();
-    if (!hasSession && request.method === 'GET' && !request.cookies.has(FIRST_TOUCH_COOKIE)) {
+    if (
+      !hasSession &&
+      request.method === 'GET' &&
+      !request.cookies.has(FIRST_TOUCH_COOKIE)
+    ) {
       rememberFirstTouch(request, response);
     }
     return response;
@@ -75,14 +79,19 @@ export async function proxy(request: NextRequest) {
 function rememberFirstTouch(request: NextRequest, response: NextResponse) {
   const value = encodeFirstTouch({
     path: request.nextUrl.pathname,
-    referrer: externalReferrerHost(request.headers.get('referer'), request.nextUrl.hostname),
+    referrer: externalReferrerHost(
+      request.headers.get('referer'),
+      request.nextUrl.hostname
+    ),
     at: new Date()
   });
   response.cookies.set(FIRST_TOUCH_COOKIE, value, {
     httpOnly: true,
     sameSite: 'lax',
     // TLS ends at Traefik, so the request the app sees is plain http.
-    secure: (request.headers.get('x-forwarded-proto') ?? request.nextUrl.protocol).startsWith('https'),
+    secure: (
+      request.headers.get('x-forwarded-proto') ?? request.nextUrl.protocol
+    ).startsWith('https'),
     path: '/',
     maxAge: FIRST_TOUCH_MAX_AGE
   });

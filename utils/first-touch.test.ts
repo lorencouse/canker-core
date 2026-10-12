@@ -10,12 +10,17 @@ import {
 describe('externalReferrerHost', () => {
   it('keeps only the host of an external referrer', () => {
     expect(
-      externalReferrerHost('https://www.google.com/search?q=canker+sore', 'cankercore.com')
+      externalReferrerHost(
+        'https://www.google.com/search?q=canker+sore',
+        'cankercore.com'
+      )
     ).toBe('www.google.com');
   });
 
   it('drops our own host, empty values and garbage', () => {
-    expect(externalReferrerHost('https://cankercore.com/blog', 'cankercore.com')).toBeNull();
+    expect(
+      externalReferrerHost('https://cankercore.com/blog', 'cankercore.com')
+    ).toBeNull();
     expect(externalReferrerHost('', 'cankercore.com')).toBeNull();
     expect(externalReferrerHost(null, 'cankercore.com')).toBeNull();
     expect(externalReferrerHost('not a url', 'cankercore.com')).toBeNull();
@@ -29,15 +34,21 @@ describe('first-touch cookie', () => {
       referrer: 'www.bing.com',
       at: new Date('2026-10-12T09:00:00.000Z')
     };
-    expect(decodeFirstTouch(encodeURIComponent(encodeFirstTouch(touch)))).toEqual(touch);
+    expect(
+      decodeFirstTouch(encodeURIComponent(encodeFirstTouch(touch)))
+    ).toEqual(touch);
   });
 
   it('treats anything malformed as absent', () => {
     expect(decodeFirstTouch(undefined)).toBeNull();
     expect(decodeFirstTouch('%7B')).toBeNull();
     expect(decodeFirstTouch(encodeURIComponent('"x"'))).toBeNull();
-    expect(decodeFirstTouch(encodeURIComponent(JSON.stringify({ p: 'blog', t: 1 })))).toBeNull();
-    expect(decodeFirstTouch(encodeURIComponent(JSON.stringify({ p: '/', t: 'x' })))).toBeNull();
+    expect(
+      decodeFirstTouch(encodeURIComponent(JSON.stringify({ p: 'blog', t: 1 })))
+    ).toBeNull();
+    expect(
+      decodeFirstTouch(encodeURIComponent(JSON.stringify({ p: '/', t: 'x' })))
+    ).toBeNull();
   });
 
   it('caps what it will hand to the database', () => {
@@ -52,7 +63,9 @@ describe('first-touch cookie', () => {
 
 describe('readCookie', () => {
   it('finds one cookie among several', () => {
-    expect(readCookie('a=1; cc_first_touch=xyz; b=2', 'cc_first_touch')).toBe('xyz');
+    expect(readCookie('a=1; cc_first_touch=xyz; b=2', 'cc_first_touch')).toBe(
+      'xyz'
+    );
     expect(readCookie('a=1', 'cc_first_touch')).toBeNull();
     expect(readCookie(null, 'cc_first_touch')).toBeNull();
   });

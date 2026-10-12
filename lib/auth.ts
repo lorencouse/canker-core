@@ -16,7 +16,11 @@ import { nextCookies } from 'better-auth/next-js';
 import { pool } from '@/lib/db/pool';
 import { sendEmail, actionEmail } from '@/lib/email/mailer';
 import { getURL } from '@/utils/helpers';
-import { FIRST_TOUCH_COOKIE, decodeFirstTouch, readCookie } from '@/utils/first-touch';
+import {
+  FIRST_TOUCH_COOKIE,
+  decodeFirstTouch,
+  readCookie
+} from '@/utils/first-touch';
 
 export const auth = betterAuth({
   database: pool,

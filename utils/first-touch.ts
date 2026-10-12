@@ -57,7 +57,11 @@ export function externalReferrerHost(
 
 /** The cookie value before encoding; Next percent-encodes it when it sets it. */
 export function encodeFirstTouch(touch: FirstTouch): string {
-  return JSON.stringify({ p: touch.path, r: touch.referrer, t: touch.at.getTime() });
+  return JSON.stringify({
+    p: touch.path,
+    r: touch.referrer,
+    t: touch.at.getTime()
+  });
 }
 
 /**
@@ -65,7 +69,9 @@ export function encodeFirstTouch(touch: FirstTouch): string {
  * The cookie is written by our own proxy but comes back from the browser, so
  * anything that does not parse into the expected shape is treated as absent.
  */
-export function decodeFirstTouch(value: string | null | undefined): FirstTouch | null {
+export function decodeFirstTouch(
+  value: string | null | undefined
+): FirstTouch | null {
   if (!value) return null;
   let raw: unknown;
   try {
@@ -84,7 +90,10 @@ export function decodeFirstTouch(value: string | null | undefined): FirstTouch |
 }
 
 /** Reads one cookie out of a raw `Cookie` request header. */
-export function readCookie(header: string | null | undefined, name: string): string | null {
+export function readCookie(
+  header: string | null | undefined,
+  name: string
+): string | null {
   if (!header) return null;
   for (const part of header.split(';')) {
     const eq = part.indexOf('=');
