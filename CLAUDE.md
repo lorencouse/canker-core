@@ -55,6 +55,10 @@ Red is data, never decoration: the `--sev-*` ramp encodes pain and is the
 only saturated red in the product. Everything else is cool slate plus one
 teal action colour. Comments explain *why*, not what.
 
+Analytics are first-party only, by owner decision: no third-party scripts.
+The funnel is read from Postgres by `scripts/funnel.sql`; the only tracking is
+the first-touch cookie in `utils/first-touch.ts`, and the privacy page says so.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

@@ -13,6 +13,7 @@
     "cap:android": "cap sync android && cap open android",
     "prettier-fix": "prettier --write .",
     "db:schema": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f schema.sql",
+    "db:funnel": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f scripts/funnel.sql",
     "db:migrate-from-supabase": "node scripts/migrate-from-supabase.mjs",
     "test": "vitest run",
     "art:lab": "node tools/style-lab.mjs",

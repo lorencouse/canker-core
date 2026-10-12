@@ -182,9 +182,8 @@ export const ARTICLES: Article[] = [
     heading: 'A sore at the back of the mouth',
     answer:
       'An ulcer at the back of the mouth can be a canker sore, but one on a tonsil often is not. Canker sores favour the soft palate and the arches beside the tonsil, arrive without a fever, and close in 7 to 14 days. A fever changes the question.',
-    published: '2026-09-19',
-    updated: '2026-09-19',
-    draft: true,
+    published: '2026-10-12',
+    updated: '2026-10-12',
     faqs: [
       {
         question: 'Can you get a canker sore in your throat?',

@@ -16,6 +16,11 @@ import { nextCookies } from 'better-auth/next-js';
 import { pool } from '@/lib/db/pool';
 import { sendEmail, actionEmail } from '@/lib/email/mailer';
 import { getURL } from '@/utils/helpers';
+import {
+  FIRST_TOUCH_COOKIE,
+  decodeFirstTouch,
+  readCookie
+} from '@/utils/first-touch';
 
 export const auth = betterAuth({
   database: pool,
@@ -79,6 +84,32 @@ export const auth = betterAuth({
           url
         });
         await sendEmail({ to: newEmail, subject: 'Confirm your new Canker Core email', text, html });
+      }
+    }
+  },
+
+  databaseHooks: {
+    user: {
+      create: {
+        // Credits the new account to the page that first brought the visitor
+        // in. Attribution is a nice-to-have, so a failure is logged and the
+        // signup goes ahead regardless.
+        after: async (user, context) => {
+          const touch = decodeFirstTouch(
+            readCookie(context?.headers?.get('cookie'), FIRST_TOUCH_COOKIE)
+          );
+          if (!touch) return;
+          try {
+            await pool.query(
+              `insert into signup_sources (user_id, landing_path, referrer_host, first_seen_at)
+               values ($1, $2, $3, $4)
+               on conflict (user_id) do nothing`,
+              [user.id, touch.path, touch.referrer, touch.at]
+            );
+          } catch (error) {
+            console.error('signup_sources insert failed', error);
+          }
+        }
       }
     }
   },

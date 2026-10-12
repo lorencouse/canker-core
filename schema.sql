@@ -119,3 +119,14 @@ create table if not exists day_logs (
   note text,
   primary key (user_id, day)
 );
+
+-- Where an account first arrived from, copied off the first-touch cookie when
+-- the account is created (utils/first-touch.ts). It exists only to credit
+-- signups to articles; the rest of the funnel in scripts/funnel.sql is
+-- derived from the tables above. No row means the cookie was absent.
+create table if not exists signup_sources (
+  user_id text primary key references "user" ("id") on delete cascade,
+  landing_path text not null,
+  referrer_host text,
+  first_seen_at timestamptz not null
+);
