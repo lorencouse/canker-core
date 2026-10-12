@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <Prose
       title="Privacy"
       intro="Canker Core holds health information, so it keeps as little as it can."
-      updated="9 September 2026"
+      updated="12 October 2026"
     >
       <section>
         <h2>What is stored</h2>
@@ -39,6 +39,19 @@ export default function PrivacyPage() {
           Your records are not sold, shared with advertisers, or used to train
           anything. There is no third-party analytics or tracking on the pages
           where your data appears.
+        </p>
+      </section>
+
+      <section>
+        <h2>How the site measures itself</h2>
+        <p>
+          There is no third-party analytics anywhere on the site. When you first
+          visit, a single first-party cookie notes the page you landed on and
+          the name of the site that linked you there, if any. If you go on to
+          create an account, those two facts are saved with it, which is how
+          Canker Core tells which articles help people start tracking. The only
+          other measure is a count of how many accounts go on to log a reading,
+          worked out from the readings themselves.
         </p>
       </section>
 

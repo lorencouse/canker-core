@@ -62,7 +62,7 @@ and all four Phase 1 articles are served. `/llms.txt` is still a 404.
 | 9   | Marketing pages made statically prerenderable. `Navbar` resolved the session on the server, which forced the entire marketing group dynamic; it now resolves in the browser and the signed-out header is what a crawler gets                                                       | `components/ui/Navbar/*`, `components/marketing/StartButton.tsx` |
 | 10  | Blog infrastructure: MDX articles as their own route folders with the registry in `content/articles.ts`. Articles as code, reviewed in a diff, not rows in the database. The tag index was dropped — four articles do not need one, and nine want a hub page each rather than tags | **done, without tags**                                           |
 | 11  | Google Search Console and **Bing Webmaster Tools**. Bing is not an afterthought — it is the index behind ChatGPT search and Copilot. Submit the sitemap to both                                                                                                                    | **open — needs you**                                             |
-| 12  | Analytics with a goal on _first reading logged_, not on signup                                                                                                                                                                                                                     | **open**                                                         |
+| 12  | Analytics with a goal on _first reading logged_, not on signup. First-party only (decided 2026-10-12): the funnel is read from Postgres, plus one first-touch cookie that credits each signup to its landing page and referrer. No third-party script | **done**: `scripts/funnel.sql`, `npm run db:funnel` |
 
 Rule for every page from here: the honest answer appears in the first forty
 words, above any preamble. That is what gets extracted — by a featured
@@ -711,9 +711,9 @@ Items 1 to 5 are done or in the build; the live list starts at 6.
    `/blog/canker-sore-in-throat`; publishing it is a review, not a writing
    task.
 9. ~~`/llms.txt`~~ (shipped, generated from `content/articles.ts` so it cannot
-   drift from the sitemap), and the analytics goal on _first reading logged_
-   rather than signup — still open, and a prerequisite for reading anything
-   above.
+   drift from the sitemap), ~~and the analytics goal on _first reading logged_
+   rather than signup~~ (shipped 2026-10-12 as a first-party Postgres funnel,
+   `scripts/funnel.sql`).
 10. ~~_Two weeks and it is still there_, then _stress_, then the cheap
     tails.~~ All four shipped 2026-09-17, which completes the writing in Phase
     1.5. What remains in it is not a writing task: the **throat page's
