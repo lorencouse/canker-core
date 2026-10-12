@@ -430,25 +430,24 @@ above tooth` (320, KD 11), `canker sore on gum by tooth` (390, KD 17),
   `canker sores along gum line` (320, KD 23). A sore against a specific tooth
   is the mechanical branch of article 4, and the useful thing to say is which
   tooth to ask a dentist to run a fingernail along.
-- **Throat and tonsil second** — drafted 2026-09-19, not published. The big
-  one: 70,000 a month with 39,000 at KD ≤ 35. Lead with the fact that changes the reader's afternoon — an ulcer on
-  a tonsil is often not a canker sore — then what else it could be in one
-  sentence each, then the threshold for going in. This is the page on the site
-  most likely to be wrong in a way that matters, so it is the one page in
-  Phase 1.5 worth having a dentist read before it ships.
+- **Throat and tonsil second**, drafted 2026-09-19 and **published
+  2026-10-12 without the dentist read**. The big one: 70,000 a month with
+  39,000 at KD ≤ 35. Lead with the fact that changes the reader's afternoon (an
+  ulcer on a tonsil is often not a canker sore), then what else it could be in
+  one sentence each, then the threshold for going in. This was the one page in
+  Phase 1.5 judged worth a dentist's read before it shipped; the owner chose to
+  publish it on the site's standard disclaimer instead.
 
-  It is written and routed at `/blog/canker-sore-in-throat`, and it is
-  **unpublished**: `draft: true` in the registry keeps it out of the sitemap,
-  the article index and `llms.txt`, and the page serves `noindex`. Nothing on
-  the site links to it, including the mouth map's own back-of-mouth entry. It
-  carries a banner with the five questions the review has to answer — whether
-  the lead claim about the tonsil is right, whether leaning on "a canker sore
-  does not cause a fever" as the dividing line is safe to hand someone,
-  whether the same-day red-flag list is right, whether the what-else-it-could-be
-  list describes without diagnosing, and whether three weeks is the right
-  persistence threshold on a site that uses two weeks everywhere else. That
-  last one is a genuine inconsistency and the review should settle it rather
-  than paper over it.
+  It is live at `/blog/canker-sore-in-throat`, in the sitemap, the article
+  index and `llms.txt`, and the mouth map's back-of-mouth entry links to it.
+  The five questions the review would have answered still stand, in case a
+  clinician ever reads it: whether the lead claim about the tonsil is right,
+  whether leaning on "a canker sore does not cause a fever" as the dividing
+  line is safe to hand someone, whether the same-day red-flag list is right,
+  whether the what-else-it-could-be list describes without diagnosing, and
+  whether three weeks is the right persistence threshold on a site that uses
+  two weeks everywhere else. That last one is a genuine inconsistency, shipped
+  as written.
 
   The page deliberately has no interactive piece. A widget taking symptoms and
   returning a likelihood would be the only thing on the site that reads as a
@@ -492,8 +491,8 @@ defensible without a clinician, because it ends in "which tooth" rather than
 Four sites now carry a threshold rather than a course — gum swelling and
 throbbing, swelling under the tongue, the same-spot cheek, and the back of the
 mouth. The back-of-mouth entry deliberately says the sore may well not be a
-canker sore and stops there, so the hub does not pre-empt the throat page it
-cannot yet write.
+canker sore and stops there, then links to the throat page, which carries the
+detail.
 
 **8. Two weeks and it is still there.** — shipped
 4,600 a month, weighted KD 37, and the safest high-intent page on the site:
@@ -706,19 +705,16 @@ Items 1 to 5 are done or in the build; the live list starts at 6.
    sores herpes_ on the same research.~~ Both shipped 2026-09-18, with the
    drawing served standalone as the site's second embeddable asset.
 8. ~~`/mouth-map` signed out, then the gum page~~ — both shipped 2026-09-19,
-   the hub first so the spoke had somewhere to link. The **throat page is
-   drafted and waiting on a dentist**, unpublished at
-   `/blog/canker-sore-in-throat`; publishing it is a review, not a writing
-   task.
+   the hub first so the spoke had somewhere to link. The **throat page**
+   followed on 2026-10-12, published without a clinical review.
 9. ~~`/llms.txt`~~ (shipped, generated from `content/articles.ts` so it cannot
    drift from the sitemap), ~~and the analytics goal on _first reading logged_
    rather than signup~~ (shipped 2026-10-12 as a first-party Postgres funnel,
    `scripts/funnel.sql`).
 10. ~~_Two weeks and it is still there_, then _stress_, then the cheap
     tails.~~ All four shipped 2026-09-17, which completes the writing in Phase
-    1.5. What remains in it is not a writing task: the **throat page's
-    clinical review**, and the two lower-priority mouth-map spokes — roof of
-    the mouth and inside the cheek — which were always gated on the gum page
-    ranking first.
+    1.5. What remains in it is not a writing task: the two lower-priority
+    mouth-map spokes, roof of the mouth and inside the cheek, which were
+    always gated on the gum page ranking first.
 11. The data page, the moment the numbers are honest — and it upgrades the
     mouth-map spokes the same week it lands.

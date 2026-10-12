@@ -2,7 +2,6 @@ import {
   ArticleFooter,
   ArticleHeader
 } from '@/components/marketing/article/ArticleShell';
-import DraftNotice from '@/components/marketing/article/DraftNotice';
 import { articleBySlug } from '@/content/articles';
 
 export const slug = 'canker-sore-in-throat';
@@ -10,46 +9,10 @@ export const slug = 'canker-sore-in-throat';
 export const metadata = {
   title: articleBySlug(slug).title,
   description: articleBySlug(slug).answer,
-  alternates: { canonical: `/blog/${slug}` },
-  // Belt and braces: the registry keeps it out of the sitemap, the index and
-  // llms.txt, and this keeps it out of an index if it is found anyway.
-  robots: { index: false, follow: false }
+  alternates: { canonical: `/blog/${slug}` }
 };
 
 <ArticleHeader slug={slug} />
-
-<DraftNotice
-  reviewer="a dentist"
-  intro="Five questions, in the order they matter. Everything else is style and can be argued about later."
-  asks={[
-    {
-      ask: 'Is the lead claim right?',
-      detail:
-        'That aphthous ulcers do occur on the soft palate and the tonsillar pillars, but that a lesion on the tonsil itself is more often not aphthous.'
-    },
-    {
-      ask: 'Is the fever line safe?',
-      detail:
-        'The page leans hard on "a canker sore does not cause a fever" as the dividing line. Is that the right thing to hand someone, or does it risk reassuring the one reader it should not?'
-    },
-    {
-      ask: 'Are the same-day red flags the right list?',
-      detail:
-        'Trouble breathing or swallowing saliva, muffled voice, drooling, severe one-sided pain with trismus, stiff neck. Anything missing, anything overstated?'
-    },
-    {
-      ask: 'Is "what else it could be" described without diagnosing?',
-      detail:
-        'Each entry is one sentence naming what it typically arrives with, never what the reader has.'
-    },
-    {
-      ask: 'Is three weeks the right persistence threshold',
-      detail:
-        'for this site, given that every other page here uses two weeks as the point at which a sore stops being ordinary?'
-    }
-  ]}
-  note="Deliberately absent: any interactive triage. A widget that took symptoms and returned a likelihood would be the one thing on this site that reads as a diagnosis, so this page carries prose and a threshold instead."
-/>
 
 A canker sore is a local problem: one spot of lining breaks down, it hurts, it
 closes. Almost everything else that makes the back of your mouth sore is not

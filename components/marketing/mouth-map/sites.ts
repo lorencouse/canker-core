@@ -135,7 +135,11 @@ export const MOUTH_SITES: MouthSite[] = [
     course:
       'This is the one site where the first thing to say is that it may well not be a canker sore. An ulcer far back — especially on a tonsil — is more often part of a throat infection, or one of the viral illnesses that put sores across the back of the mouth, and those arrive with symptoms a canker sore does not.',
     threshold:
-      'A sore throat with a fever, swollen glands, pain on swallowing, or pain on one side lasting more than a few days is worth showing someone rather than logging. Anything making it hard to swallow or breathe is today, not this week.'
+      'A sore throat with a fever, swollen glands, pain on swallowing, or pain on one side lasting more than a few days is worth showing someone rather than logging. Anything making it hard to swallow or breathe is today, not this week.',
+    article: {
+      slug: 'canker-sore-in-throat',
+      label: 'A sore at the back of the mouth, or on a tonsil'
+    }
   }
 ];
 
