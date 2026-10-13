@@ -1,3 +1,5 @@
+const plugin = require('tailwindcss/plugin');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ['class', '[data-theme="dark"]'],
@@ -142,5 +144,10 @@ module.exports = {
       }
     }
   },
-  plugins: [require('tailwindcss-animate')]
+  plugins: [
+    require('tailwindcss-animate'),
+    // Size controls off the input device, not the viewport (docs/MOBILE.md):
+    // `coarse:min-h-11` is a 44px tap target under a thumb only.
+    plugin(({ addVariant }) => addVariant('coarse', '@media (pointer: coarse)'))
+  ]
 };

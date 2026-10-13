@@ -55,7 +55,7 @@ const InsightsLayout = ({
       ) : (
         <div className="space-y-4 xl:space-y-8">
           <StatTiles sores={sores} />
-          <div className="grid gap-4 xl:grid-cols-2 xl:gap-8">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-8">
             <BarChartComponent sores={sores} />
             <TriggerTally sores={sores} logs={dayLogs} />
           </div>

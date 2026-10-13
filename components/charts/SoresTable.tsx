@@ -108,7 +108,7 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                   <SoreSigil sore={sore} size={30} />
                   <div className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{sore.zone}</span>
-                    <span className="tabular text-xs text-muted-foreground">
+                    <span className="tabular block truncate text-xs text-muted-foreground">
                       {sore.healed_at
                         ? `Healed ${dateOf(sore.healed_at)}`
                         : `Open, day ${dayNumberOf(sore)}`}

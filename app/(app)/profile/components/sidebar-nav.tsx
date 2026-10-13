@@ -36,7 +36,7 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
             href={item.href}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex h-10 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors',
+              'flex h-10 shrink-0 items-center whitespace-nowrap coarse:h-11 rounded-full px-4 text-sm font-medium transition-colors',
               'lg:h-auto lg:rounded-md lg:px-3 lg:py-2',
               active
                 ? 'bg-accent text-accent-foreground'

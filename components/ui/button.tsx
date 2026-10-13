@@ -9,8 +9,12 @@ const buttonVariants = cva(
    * chip: pressing translates it into its own shadow instead of fading its
    * opacity, which is the difference between a control that responds and
    * one that merely acknowledges.
+   *
+   * A label is one line, always: nowrap, capped at its container, and a
+   * label wrapped in a <span> ellipsises rather than spilling out. A button
+   * two lines tall reads as a paragraph, not a control.
    */
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap font-display text-sm font-semibold uppercase tracking-[0.09em] ring-offset-background transition-[filter,background-color,color] active:translate-x-px active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex max-w-full items-center justify-center gap-2 whitespace-nowrap [&>span]:min-w-0 [&>span]:truncate font-display text-sm font-semibold uppercase tracking-[0.09em] ring-offset-background transition-[filter,background-color,color] active:translate-x-px active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -34,12 +38,16 @@ const buttonVariants = cva(
         overlay:
           'border-2 border-rule bg-card/90 text-foreground backdrop-blur hover:bg-card'
       },
+      /*
+       * Sizes under 44px keep their drawing but get tap-target's invisible
+       * 44px hit area, so a compact control is still hittable by a thumb.
+       */
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 px-3',
+        default: 'tap-target h-10 px-4 py-2',
+        sm: 'tap-target h-9 px-3',
         lg: 'h-11 px-8',
-        icon: 'h-10 w-10',
-        xs: 'h-8 px-2.5 text-xs',
+        icon: 'tap-target h-10 w-10',
+        xs: 'tap-target h-8 px-2.5 text-xs',
         /*
          * Primary actions on a touch screen. 48px clears Apple's 44pt and
          * Android's 48dp minimums with room for the finger to be imprecise,

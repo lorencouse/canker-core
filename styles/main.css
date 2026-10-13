@@ -223,6 +223,15 @@
     text-wrap: balance;
   }
 
+  /* Body copy never strands one word on its last line. */
+  p,
+  li,
+  dd,
+  blockquote,
+  figcaption {
+    text-wrap: pretty;
+  }
+
   a {
     -webkit-tap-highlight-color: transparent;
   }
@@ -233,6 +242,9 @@
 
   /* Every figure in this product is a measurement; align them all. */
   table,
+  time,
+  data,
+  output,
   .tabular {
     font-variant-numeric: tabular-nums;
   }
