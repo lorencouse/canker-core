@@ -1,6 +1,8 @@
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { buttonVariants } from './button';
+import { Button, buttonVariants } from './button';
 
 const VARIANTS = ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link', 'overlay'] as const;
 const SIZES = ['default', 'sm', 'lg', 'icon', 'xs', 'touch'] as const;
@@ -23,8 +25,13 @@ describe('buttonVariants', () => {
   }
 
   it('lets a caller className override everything but the wrapping', () => {
-    const classes = buttonVariants({ className: 'w-full' }).split(/\s+/);
+    const html = renderToStaticMarkup(
+      createElement(Button, { className: 'w-full whitespace-normal' }, 'Save')
+    );
+    const classes = /class="([^"]*)"/.exec(html)![1].split(/\s+/);
+    expect(classes).toContain('w-full');
     expect(classes).toContain('whitespace-nowrap');
+    expect(classes).not.toContain('whitespace-normal');
   });
 
   it('gives every size under 44px the tap-target hit area', () => {
