@@ -316,7 +316,7 @@ export default function MouthMap({ user }: { user: User }) {
               }}
               className={cn(
                 // 44px tall on touch so a mis-aimed thumb still lands.
-                'flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full text-sm font-medium transition-colors lg:h-9',
+                'flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full text-sm font-medium transition-colors lg:h-9',
                 view === v
                   ? 'bg-card text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'

@@ -95,7 +95,7 @@ export default function MouthMapExplorer() {
               aria-pressed={selected}
               aria-controls={`${idPrefix}-${option.key}`}
               className={cn(
-                'rounded-full border px-3 py-2 text-sm transition-colors',
+                'whitespace-nowrap rounded-full border px-3 py-2 text-sm transition-colors',
                 'min-h-11 sm:min-h-0 sm:py-1.5',
                 selected
                   ? 'border-primary bg-primary text-primary-foreground'

@@ -149,7 +149,8 @@ the `.tap-target` utility, which expands its hit area to 44px without
 changing what is drawn.
 
 **Coarse pointers, not narrow screens.** Size controls off
-`@media (pointer: coarse)` where the distinction matters. A small laptop
+`@media (pointer: coarse)` (the `coarse:` Tailwind variant) where the
+distinction matters. A small laptop
 window is not a phone.
 
 **Text selection.** Chrome is `user-select: none`; content elements opt back

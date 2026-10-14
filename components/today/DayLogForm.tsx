@@ -26,7 +26,9 @@ export default function DayLogForm({
     const has = log[field].includes(value);
     onChange({
       ...log,
-      [field]: has ? log[field].filter((v) => v !== value) : [...log[field], value]
+      [field]: has
+        ? log[field].filter((v) => v !== value)
+        : [...log[field], value]
     });
   };
 
@@ -84,8 +86,8 @@ function ChipGroup({
               aria-pressed={on}
               onClick={() => onToggle(option)}
               className={cn(
-                // 40px tall on touch: a chip is tapped, not aimed at.
-                'inline-flex h-10 items-center rounded-full border px-3.5 text-sm transition-colors lg:h-8 lg:text-[13px]',
+                // 44px tall on touch: a chip is tapped, not aimed at.
+                'inline-flex h-10 items-center whitespace-nowrap rounded-full border px-3.5 text-sm transition-colors coarse:h-11 lg:h-8 lg:text-[13px]',
                 on
                   ? 'border-primary bg-accent text-accent-foreground'
                   : 'border-border bg-card text-muted-foreground hover:text-foreground'
