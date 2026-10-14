@@ -30,8 +30,10 @@ const buttonVariants = cva(
         destructive:
           'border-2 border-rule bg-card text-foreground shadow-drop-sm hover:bg-muted active:shadow-none',
         outline: 'border-2 border-rule bg-transparent hover:bg-muted',
-        secondary: 'border-2 border-transparent bg-muted text-foreground hover:bg-muted/80',
-        ghost: 'border-2 border-transparent hover:bg-muted hover:text-foreground',
+        secondary:
+          'border-2 border-transparent bg-muted text-foreground hover:bg-muted/80',
+        ghost:
+          'border-2 border-transparent hover:bg-muted hover:text-foreground',
         // A link is prose, so it keeps the reading face and its own case.
         link: 'font-sans normal-case tracking-normal text-primary underline-offset-4 hover:underline',
         // Overlay controls that sit on top of the mouth diagram.
@@ -75,7 +77,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : 'button';
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }), 'whitespace-nowrap')}
+        className={cn(
+          buttonVariants({ variant, size, className }),
+          'whitespace-nowrap'
+        )}
         ref={ref}
         {...props}
       />

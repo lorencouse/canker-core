@@ -62,7 +62,9 @@ export default function TabBar() {
                     aria-hidden="true"
                   />
                 </span>
-                <span aria-hidden="true" className="whitespace-nowrap">{label}</span>
+                <span aria-hidden="true" className="whitespace-nowrap">
+                  {label}
+                </span>
               </Link>
             </li>
           );

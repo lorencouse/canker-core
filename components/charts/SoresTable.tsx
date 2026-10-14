@@ -34,7 +34,8 @@ import SoreHistoryChart from './SoreHistoryChart';
  * would put a back button between every comparison.
  */
 
-const dateOf = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString() : '—');
+const dateOf = (iso?: string | null) =>
+  iso ? new Date(iso).toLocaleDateString() : '—';
 
 function PainDot({ pain }: { pain: number }) {
   return (
@@ -55,7 +56,9 @@ function SoreDetail({ sore }: { sore: Sore }) {
         <ul className="space-y-1 text-sm">
           {notes.map((r) => (
             <li key={r.id} className="flex gap-3">
-              <span className="tabular shrink-0 text-muted-foreground">{dateOf(r.recorded_at)}</span>
+              <span className="tabular shrink-0 text-muted-foreground">
+                {dateOf(r.recorded_at)}
+              </span>
               <span data-selectable>{r.note}</span>
             </li>
           ))}
@@ -107,21 +110,28 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                 <div className="flex items-center gap-3">
                   <SoreSigil sore={sore} size={30} />
                   <div className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{sore.zone}</span>
+                    <span className="block truncate font-medium">
+                      {sore.zone}
+                    </span>
                     <span className="tabular block truncate text-xs text-muted-foreground">
                       {sore.healed_at
                         ? `Healed ${dateOf(sore.healed_at)}`
                         : `Open, day ${dayNumberOf(sore)}`}
                     </span>
                   </div>
-                  <span className="tabular text-sm">{last ? `${last.size} mm` : '—'}</span>
+                  <span className="tabular text-sm">
+                    {last ? `${last.size} mm` : '—'}
+                  </span>
                   <span className="tabular inline-flex items-center gap-1.5 text-sm">
                     {last && <PainDot pain={last.pain} />}
                     {last ? `${last.pain}/10` : '—'}
                   </span>
                   <ChevronDown
                     aria-hidden="true"
-                    className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-180')}
+                    className={cn(
+                      'size-4 shrink-0 text-muted-foreground transition-transform',
+                      expanded && 'rotate-180'
+                    )}
                   />
                 </div>
                 <CourseStrip sore={sore} className="mt-2.5" />
@@ -177,7 +187,9 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                     <TableCell className="w-40">
                       <CourseStrip sore={sore} />
                     </TableCell>
-                    <TableCell className="text-right">{last ? `${last.size} mm` : '—'}</TableCell>
+                    <TableCell className="text-right">
+                      {last ? `${last.size} mm` : '—'}
+                    </TableCell>
                     <TableCell className="text-right">
                       {last ? (
                         <span className="inline-flex items-center gap-2">
@@ -190,7 +202,9 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                     </TableCell>
                     <TableCell className="tabular">
                       {sore.healed_at ? (
-                        <span className="text-muted-foreground">Healed {dateOf(sore.healed_at)}</span>
+                        <span className="text-muted-foreground">
+                          Healed {dateOf(sore.healed_at)}
+                        </span>
                       ) : (
                         `Open, day ${dayNumberOf(sore)}`
                       )}
@@ -198,7 +212,10 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                     <TableCell>
                       <ChevronDown
                         aria-hidden="true"
-                        className={cn('size-4 text-muted-foreground transition-transform', expanded && 'rotate-180')}
+                        className={cn(
+                          'size-4 text-muted-foreground transition-transform',
+                          expanded && 'rotate-180'
+                        )}
                       />
                     </TableCell>
                   </TableRow>

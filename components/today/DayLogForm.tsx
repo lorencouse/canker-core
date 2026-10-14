@@ -26,7 +26,9 @@ export default function DayLogForm({
     const has = log[field].includes(value);
     onChange({
       ...log,
-      [field]: has ? log[field].filter((v) => v !== value) : [...log[field], value]
+      [field]: has
+        ? log[field].filter((v) => v !== value)
+        : [...log[field], value]
     });
   };
 

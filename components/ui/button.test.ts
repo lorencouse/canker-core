@@ -4,7 +4,15 @@ import { describe, expect, it } from 'vitest';
 
 import { Button, buttonVariants } from './button';
 
-const VARIANTS = ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link', 'overlay'] as const;
+const VARIANTS = [
+  'default',
+  'destructive',
+  'outline',
+  'secondary',
+  'ghost',
+  'link',
+  'overlay'
+] as const;
 const SIZES = ['default', 'sm', 'lg', 'icon', 'xs', 'touch'] as const;
 
 /*
@@ -19,7 +27,11 @@ describe('buttonVariants', () => {
         const classes = buttonVariants({ variant, size }).split(/\s+/);
         expect(classes).toContain('whitespace-nowrap');
         expect(classes).toContain('max-w-full');
-        expect(classes.some((c) => /^whitespace-(normal|pre-wrap|pre-line|break-spaces)$/.test(c))).toBe(false);
+        expect(
+          classes.some((c) =>
+            /^whitespace-(normal|pre-wrap|pre-line|break-spaces)$/.test(c)
+          )
+        ).toBe(false);
       });
     }
   }
