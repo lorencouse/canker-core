@@ -68,7 +68,7 @@ function ZoomButton({
       onClick={onClick}
       aria-label={label}
       // Square and thumb-sized on touch, tidier under a cursor.
-      className={cn('size-11 rounded-full lg:size-9', className)}
+      className={cn('size-11 lg:size-10', className)}
     >
       {children}
     </Button>

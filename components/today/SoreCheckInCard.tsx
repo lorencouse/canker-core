@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
-import { Minus, Plus } from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import SeverityLadder from '@/components/ui/SeverityLadder';
-import { Slider } from '@/components/ui/slider';
-import { LongSoreNote } from '@/components/SoreDetails';
 import CourseBars from '@/components/sore/CourseBars';
+import LongSoreNote from '@/components/sore/LongSoreNote';
+import { PainField, WidthField } from '@/components/sore/ReadingFields';
 import SoreSigil from '@/components/sore/SoreSigil';
 import type { Sore } from '@/types';
 import { courseOf, trendOf } from '@/utils/course';
@@ -23,11 +21,6 @@ import {
   withReading
 } from '@/utils/readings';
 
-/** Width moves in half millimetres, which is as fine as anyone can judge one. */
-const STEP = 0.5;
-const MIN_SIZE = 0.5;
-const MAX_SIZE = 20;
-
 /**
  * One open sore on the check-in screen: where it is, its fortnight so far,
  * and today's two readings.
@@ -37,11 +30,8 @@ const MAX_SIZE = 20;
  * before a single figure is read, and the empty slots say how far into the
  * ordinary course it is.
  *
- * Pain and width are deliberately entered by different controls. Width is a
- * continuous measurement in millimetres, so it is a slider, with half-step
- * buttons either side because a thumb cannot land a slider on 3.5. Pain is
- * ten named steps, and a slider hides the scale behind its own thumb: the
- * ladder shows all ten and lands in one tap.
+ * The two readings are entered with the shared fields in ReadingFields,
+ * which say why width and pain get different controls.
  *
  * A sore already logged today collapses to that reading, so the card that
  * still needs something is the one that looks unfinished. "Change" opens the
@@ -73,16 +63,6 @@ export default function SoreCheckInCard({
   const day = dayNumberOf(sore);
   const last = latestReading(sore);
   const titleId = `sore-${sore.id}`;
-
-  const setSize = (next: number) =>
-    onChange(
-      withReading(sore, {
-        size: Math.min(
-          MAX_SIZE,
-          Math.max(MIN_SIZE, Math.round(next / STEP) * STEP)
-        )
-      })
-    );
 
   return (
     <article aria-labelledby={titleId} className="surface-worksheet p-4 sm:p-5">
@@ -139,70 +119,16 @@ export default function SoreCheckInCard({
 
       {editing ? (
         <div className="mt-5 grid gap-5">
-          <div>
-            <div className="flex items-baseline justify-between gap-3">
-              <label
-                htmlFor={`size-${sore.id}`}
-                className="text-base font-semibold"
-              >
-                Width today
-              </label>
-              <output
-                htmlFor={`size-${sore.id}`}
-                className="font-display text-xl font-semibold leading-none"
-              >
-                {size}{' '}
-                <small className="font-sans text-sm font-normal text-muted-foreground">
-                  mm
-                </small>
-              </output>
-            </div>
-            <div className="mt-2 grid grid-cols-[3.25rem_minmax(0,1fr)_3.25rem] items-center gap-2.5">
-              <Stepper
-                label="Half a millimetre narrower"
-                onClick={() => setSize(size - STEP)}
-                disabled={size <= MIN_SIZE}
-              >
-                <Minus aria-hidden="true" />
-              </Stepper>
-              <Slider
-                id={`size-${sore.id}`}
-                min={MIN_SIZE}
-                max={MAX_SIZE}
-                step={STEP}
-                value={[size]}
-                onValueChange={([v]) => setSize(v)}
-                aria-label="Width in millimetres"
-              />
-              <Stepper
-                label="Half a millimetre wider"
-                onClick={() => setSize(size + STEP)}
-                disabled={size >= MAX_SIZE}
-              >
-                <Plus aria-hidden="true" />
-              </Stepper>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-baseline justify-between gap-3">
-              <span id={`pain-${sore.id}`} className="text-base font-semibold">
-                Pain today
-              </span>
-              <output className="font-display text-xl font-semibold leading-none">
-                {pain}{' '}
-                <small className="font-sans text-sm font-normal text-muted-foreground">
-                  of 10
-                </small>
-              </output>
-            </div>
-            <SeverityLadder
-              className="mt-2"
-              value={pain}
-              label="Pain today"
-              onChange={(v) => onChange(withReading(sore, { pain: v }))}
-            />
-          </div>
+          <WidthField
+            id={`size-${sore.id}`}
+            value={size}
+            onChange={(mm) => onChange(withReading(sore, { size: mm }))}
+          />
+          <PainField
+            id={`pain-${sore.id}`}
+            value={pain}
+            onChange={(v) => onChange(withReading(sore, { pain: v }))}
+          />
 
           {!logged && last && (
             <Button
@@ -243,34 +169,6 @@ export default function SoreCheckInCard({
 
       {isLongRunning(sore) && <LongSoreNote className="mt-4" />}
     </article>
-  );
-}
-
-function Stepper({
-  label,
-  onClick,
-  disabled,
-  children
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      onClick={() => {
-        tap();
-        onClick();
-      }}
-      disabled={disabled}
-      aria-label={label}
-      className="h-12 w-full px-0 [&_svg]:size-5"
-    >
-      {children}
-    </Button>
   );
 }
 

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Reading, Sore } from '@/types';
-import { answerLine, courseOf, courseSentence, todayPhrase, trendOf } from './course';
+import {
+  answerLine,
+  courseOf,
+  courseSentence,
+  todayPhrase,
+  trendOf,
+  verdictOf
+} from './course';
 
 /** Local noon, so a test never straddles a day boundary in any timezone. */
 const at = (day: string, hour = 12) => {
@@ -230,5 +237,47 @@ describe('todayPhrase', () => {
     expect(todayPhrase(same, at('2026-09-04'))).toBe(
       'The tongue is the same width as yesterday and hurting the same.'
     );
+  });
+});
+
+describe('verdictOf', () => {
+  it('calls a narrower day healing and gives the figures', () => {
+    const lip = sore({
+      readings: [reading('2026-09-03', 4, 4), reading('2026-09-04', 3.5, 3)]
+    });
+    expect(verdictOf(lip, at('2026-09-04'))).toEqual({
+      word: 'Healing.',
+      detail: 'Narrower than yesterday and hurting less: 4.0 to 3.5 mm, pain 4 to 3.'
+    });
+  });
+
+  it('treats growth as ordinary in the first three days and worth watching after', () => {
+    const early = sore({
+      readings: [reading('2026-09-01', 3, 4), reading('2026-09-02', 4, 5)]
+    });
+    expect(verdictOf(early, at('2026-09-02')).word).toBe('Still growing.');
+    const late = sore({
+      readings: [reading('2026-09-04', 3, 4), reading('2026-09-05', 4, 5)]
+    });
+    expect(verdictOf(late, at('2026-09-05')).word).toBe('Worth watching.');
+  });
+
+  it('says plainly when today has no reading yet', () => {
+    const waiting = sore({ readings: [reading('2026-09-03', 3.5, 5)] });
+    expect(verdictOf(waiting, at('2026-09-04'))).toEqual({
+      word: 'Not logged today.',
+      detail: 'Last reading 3.5 mm, pain 5 of 10.'
+    });
+  });
+
+  it('closes a healed course with its length and widest day', () => {
+    const healed = sore({
+      healed_at: at('2026-09-09').toISOString(),
+      readings: [reading('2026-09-01', 3, 5), reading('2026-09-03', 4, 6)]
+    });
+    expect(verdictOf(healed, at('2026-09-20'))).toEqual({
+      word: 'Healed.',
+      detail: 'After 9 days, widest 4.0 mm.'
+    });
   });
 });
