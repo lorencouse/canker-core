@@ -34,10 +34,11 @@ const CardHeader = React.forwardRef<
 ));
 CardHeader.displayName = 'CardHeader';
 const CardTitle = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
+  HTMLHeadingElement,
+  // A card that is the whole page (sign-in) needs its title to be the h1.
+  React.HTMLAttributes<HTMLHeadingElement> & { as?: 'div' | 'h1' | 'h2' | 'h3' }
+>(({ className, as: Comp = 'div', ...props }, ref) => (
+  <Comp
     ref={ref}
     className={cn(
       'font-display text-2xl font-semibold uppercase leading-none tracking-[0.04em]',

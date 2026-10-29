@@ -70,7 +70,9 @@ export default function StatTiles({ sores }: { sores: Sore[] }) {
          */
         <div
           key={tile.label}
-          className="surface-instrument flex flex-col-reverse px-1 pb-1"
+          // Five tiles in two columns leave the last one beside an empty
+          // half row on a phone, so it takes the whole row there.
+          className="surface-instrument flex flex-col-reverse px-1 pb-1 last:odd:col-span-2 sm:last:odd:col-span-1"
         >
           {/* Sentence case. A tracked-out caps label is chrome dressed as
               information, and five of them in a row is a lot of shouting

@@ -30,7 +30,9 @@ export default async function SettingsLayout({
 }) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-4 lg:px-6 lg:py-8">
-      <header className="mb-4 hidden lg:mb-8 lg:block">
+      {/* Visually hidden on a phone, where the top bar already says
+          Settings, but still the page's h1 for a screen reader. */}
+      <header className="sr-only lg:not-sr-only lg:mb-8">
         <h1 className="text-title">Settings</h1>
         <p className="prose-measure mt-2 text-muted-foreground">
           Your details, your password and data, how the app looks, and reminders.

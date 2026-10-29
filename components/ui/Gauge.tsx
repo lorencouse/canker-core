@@ -81,7 +81,8 @@ export default function Gauge({ pain, size = 132, label, className }: Props) {
             {clamped}
           </span>
           {label && (
-            <span className="label mt-1" style={{ fontSize: size * 0.085 }}>
+            // Never under 11px: at the 88px card size the ratio alone gave 7.5px.
+            <span className="label mt-1" style={{ fontSize: Math.max(11, size * 0.085) }}>
               {label}
             </span>
           )}

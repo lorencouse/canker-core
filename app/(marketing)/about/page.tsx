@@ -22,10 +22,10 @@ export default function AboutPage() {
         <section>
           <h2>Marking a sore</h2>
           <p>
-            The mouth map has two views, the open mouth and the gums. Tap the
-            spot where the sore is and it becomes a point on the map, stored as
-            a position rather than a description you have to write out. You can
-            drag it if you put it in the wrong place.
+            The mouth map has three views: the front of the open mouth, the
+            cheeks and the lips. Tap the spot where the sore is and it becomes a
+            point on the map, stored as a position rather than a description you
+            have to write out. You can drag it if you put it in the wrong place.
           </p>
         </section>
 
@@ -54,10 +54,10 @@ export default function AboutPage() {
           <h2>What it will not tell you</h2>
           <p>
             Canker Core has no opinion about treatments and does not diagnose
-            anything. Mouth ulcers that last longer than three weeks, keep
-            coming back, or come with fever or weight loss are worth taking to a
-            doctor or dentist. This is a record to bring with you, not a
-            substitute for that visit.
+            anything. A mouth ulcer that has not started shrinking after two
+            weeks, keeps coming back, or come with fever or weight loss are
+            worth taking to a doctor or dentist. This is a record to bring with
+            you, not a substitute for that visit.
           </p>
         </section>
 

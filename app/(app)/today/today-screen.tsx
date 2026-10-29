@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/Toasts/use-toast';
 import type { DayLog, Sore } from '@/types';
 import { answerLine } from '@/utils/course';
 import { saveDayLog, setSoreHealed, upsertSores } from '@/utils/actions/soreActions';
+import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
 import { dayKey, hasReadingOn, localTimeZone } from '@/utils/readings';
 
@@ -199,10 +200,16 @@ export default function TodayScreen({
 
       {/*
         Sticky above the tab bar on a phone so Save is under the thumb no
-        matter how many cards are above it; inline on a desktop where the
-        whole screen fits.
+        matter how many cards are above it, but only once there is something
+        to save: a disabled button floating over the cards at half opacity
+        let them show through its label. Inline on a desktop.
       */}
-      <div className="sticky bottom-[calc(var(--tab-bar-h)+var(--safe-bottom)+0.75rem)] mt-6 lg:static">
+      <div
+        className={cn(
+          'mt-6 lg:static',
+          dirty && 'sticky bottom-[calc(var(--tab-bar-h)+var(--safe-bottom)+0.75rem)]'
+        )}
+      >
         <Button
           type="button"
           size="touch"

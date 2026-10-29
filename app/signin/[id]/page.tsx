@@ -108,7 +108,9 @@ export default async function SignIn({
     */
     <Card className="border-0 bg-transparent shadow-none sm:border sm:bg-card">
       <CardHeader>
-        <CardTitle className="text-section">{copy.title}</CardTitle>
+        <CardTitle as="h1" className="text-section">
+          {copy.title}
+        </CardTitle>
         <CardDescription>{copy.description}</CardDescription>
       </CardHeader>
       <CardContent>

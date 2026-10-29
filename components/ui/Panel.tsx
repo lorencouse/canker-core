@@ -74,7 +74,8 @@ const PanelMeta = React.forwardRef<
   <p
     ref={ref}
     className={cn(
-      'font-display text-[0.8125rem] font-medium uppercase tracking-[0.09em] tabular opacity-70',
+      // Sentence case: tracked capitals at this size read as a code.
+      'text-sm font-medium tabular opacity-80',
       className
     )}
     {...props}

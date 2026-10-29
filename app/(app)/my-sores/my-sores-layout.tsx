@@ -73,7 +73,7 @@ function MySoresScreen({ user }: { user: User }) {
         </p>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
         <div className="space-y-3">
           <MouthMap user={user} />
           <SeverityKey />

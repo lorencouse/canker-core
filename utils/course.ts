@@ -196,9 +196,9 @@ export function answerLine(sores: Sore[], now: Date = new Date()): Answer {
     // "on the" rather than "the <zone> one", which reads fine for the tongue
     // and not at all for the roof of mouth. Every zone name is a place, so
     // the preposition that suits a place suits all of them.
-    note: `Longest is on the ${longest.zone.toLowerCase()} — ${lower(courseSentence(longest, now))}`
+    note: `Longest is on the ${longest.zone.toLowerCase()}: ${lower(courseSentence(longest, now))}`
   };
 }
 
-/** "Day 9. Wider than yesterday." reads as a clause after an em dash. */
+/** "Day 9. Wider than yesterday." reads as a clause after a colon. */
 const lower = (s: string) => s[0].toLowerCase() + s.slice(1);

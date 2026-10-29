@@ -30,7 +30,8 @@
     --secondary: 210 18% 93%;
     --secondary-foreground: 212 30% 20%;
     --muted: 210 18% 94%;
-    --muted-foreground: 212 12% 45%;
+    /* 38% clears 4.5:1 on the ground; 45% measured 4.4:1 and failed AA. */
+    --muted-foreground: 212 14% 38%;
     --accent: 187 35% 92%;
     --accent-foreground: 187 60% 20%;
 
@@ -130,7 +131,8 @@
     --accent: 187 30% 22%;
     --accent-foreground: 187 45% 82%;
 
-    --destructive: 0 68% 52%;
+    /* Light enough to read as text on a card (52% measured 3.7:1). */
+    --destructive: 0 72% 64%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 212 18% 22%;

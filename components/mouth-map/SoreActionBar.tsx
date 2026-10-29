@@ -35,9 +35,9 @@ import { localTimeZone } from '@/utils/readings';
  * story and keeps its history; Delete is for mistakes, and asks first
  * because on a phone it sits one thumb-width from Edit.
  *
- * Laid out as one full-width row, which on a phone lands directly above the
- * tab bar where the thumb already is, and on a desktop sits under the map at
- * its natural width.
+ * The primary action takes a full row and the others share the row under
+ * it. Four labelled buttons in one row came to about 420px, wider than a
+ * phone, and pushed the whole page out sideways.
  */
 export default function SoreActionBar() {
   const {
@@ -130,7 +130,7 @@ export default function SoreActionBar() {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {editing ? (
         <>
           <Button
@@ -160,7 +160,7 @@ export default function SoreActionBar() {
           <Button
             type="button"
             size="touch"
-            className="flex-1"
+            className="w-full"
             onClick={() => begin('add')}
           >
             <Plus aria-hidden="true" />
@@ -175,6 +175,7 @@ export default function SoreActionBar() {
                   size="touch"
                   onClick={() => setHealed(null)}
                   disabled={busy}
+                  className="flex-1"
                 >
                   <RotateCcw aria-hidden="true" />
                   Reopen
@@ -187,7 +188,7 @@ export default function SoreActionBar() {
                     size="touch"
                     onClick={() => begin('edit')}
                     aria-label="Edit this sore"
-                    className="px-3"
+                    className="flex-1 px-3"
                   >
                     <Pencil aria-hidden="true" />
                     Edit
@@ -199,7 +200,7 @@ export default function SoreActionBar() {
                     onClick={() => setHealed(new Date().toISOString())}
                     disabled={busy}
                     aria-label="Mark this sore healed"
-                    className="px-3"
+                    className="flex-1 px-3"
                   >
                     <CheckCircle2 aria-hidden="true" />
                     Healed
@@ -213,7 +214,7 @@ export default function SoreActionBar() {
                 onClick={() => setConfirmingDelete(true)}
                 disabled={busy}
                 aria-label="Delete this sore"
-                className="px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                className="flex-1 px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
                 <Trash2 aria-hidden="true" />
               </Button>

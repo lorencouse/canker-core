@@ -166,7 +166,7 @@ describe('answerLine', () => {
     const awkward = sore({ zone: 'Roof of mouth', readings: [reading('2026-09-04', 5, 6)] });
     const other = sore({ id: 'd', created_at: at('2026-09-03').toISOString() });
     expect(answerLine([awkward, other], at('2026-09-04')).note).toMatch(
-      /^Longest is on the roof of mouth — /
+      /^Longest is on the roof of mouth: /
     );
   });
 
@@ -184,6 +184,6 @@ describe('answerLine', () => {
     });
     const answer = answerLine([older, newer], at('2026-09-04'));
     expect(answer.headline).toBe('2 sores open.');
-    expect(answer.note).toBe('Longest is on the left cheek — day 4. First reading logged.');
+    expect(answer.note).toBe('Longest is on the left cheek: day 4. First reading logged.');
   });
 });

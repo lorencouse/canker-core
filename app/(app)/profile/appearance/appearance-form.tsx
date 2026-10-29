@@ -65,7 +65,13 @@ export function AppearanceForm() {
                 {selected && <Check className="h-4 w-4 text-primary" />}
               </div>
               <p className="mt-3 font-medium">{label}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
+              <p
+                className={cn(
+                  'mt-0.5 text-sm',
+                  // Muted grey on the accent fill drops under 4.5:1 in dark.
+                  selected ? 'text-accent-foreground' : 'text-muted-foreground'
+                )}
+              >
                 {description}
               </p>
             </button>

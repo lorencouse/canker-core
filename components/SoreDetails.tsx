@@ -11,6 +11,7 @@ import SoreSigil from '@/components/sore/SoreSigil';
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
 import { courseSentence } from '@/utils/course';
+import { shortDate } from '@/utils/dates';
 import { isLongRunning } from '@/utils/insights';
 import { dayNumberOf, latestReading } from '@/utils/readings';
 
@@ -145,14 +146,14 @@ export function SoreReadings() {
         <Reading label="Readings" value={readings} />
         <Reading
           label="First marked"
-          value={firstSeen ? firstSeen.toLocaleDateString() : '—'}
+          value={firstSeen ? shortDate(firstSeen) : '—'}
         />
         {healed ? (
-          <Reading label="Healed" value={healed.toLocaleDateString()} />
+          <Reading label="Healed" value={shortDate(healed)} />
         ) : (
           <Reading
             label="Last updated"
-            value={lastUpdated ? lastUpdated.toLocaleDateString() : '—'}
+            value={lastUpdated ? shortDate(lastUpdated) : '—'}
           />
         )}
       </dl>

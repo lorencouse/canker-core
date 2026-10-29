@@ -38,8 +38,10 @@ const anchorFor = (sore: PlottedSore) => (sore.side === 'left' ? 14 : 86);
 
 export default function MouthMapHero() {
   return (
-    <figure className="m-0">
-      <div className="relative mx-auto aspect-[390/400] w-full max-w-[30rem] overflow-hidden rounded-lg border border-border bg-card">
+    // The width cap is on the figure, not the drawing, so the caption
+    // starts on the drawing's left edge instead of the column's.
+    <figure className="m-0 mx-auto w-full max-w-[30rem]">
+      <div className="relative aspect-[390/400] w-full overflow-hidden rounded-lg border border-border bg-card">
         <svg
           viewBox={viewBoxAttr}
           className="block h-full w-full"
