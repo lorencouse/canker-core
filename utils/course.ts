@@ -191,14 +191,59 @@ export function answerLine(sores: Sore[], now: Date = new Date()): Answer {
     };
   }
 
+  /*
+   * Several open: the headline is the to-do ("2 sores open, 1 to log") and
+   * the note is the news, one plain sentence per sore. Sores with a change
+   * to report come first, then the ones still waiting for today's reading.
+   */
+  const unlogged = open.filter((s) => !loggedToday(s, now));
+  const ordered = [
+    ...open.filter((s) => loggedToday(s, now)),
+    ...unlogged
+  ].slice(0, 3);
+  const sentences = ordered.map((s) => todayPhrase(s, now));
+  if (stubborn)
+    sentences.push(
+      `The ${place(longest)} is past two weeks, worth having a dentist look at it.`
+    );
+
   return {
-    headline: `${open.length} sores open.`,
-    // "on the" rather than "the <zone> one", which reads fine for the tongue
-    // and not at all for the roof of mouth. Every zone name is a place, so
-    // the preposition that suits a place suits all of them.
-    note: `Longest is on the ${longest.zone.toLowerCase()}: ${lower(courseSentence(longest, now))}`
+    headline: `${open.length} sores open, ${
+      unlogged.length ? `${unlogged.length} to log` : 'all logged'
+    }`,
+    note: sentences.join(' ')
   };
 }
 
-/** "Day 9. Wider than yesterday." reads as a clause after a colon. */
-const lower = (s: string) => s[0].toLowerCase() + s.slice(1);
+/*
+ * Every zone name is a place ("Lower lip", "Roof of mouth"), so "the <zone>"
+ * reads for all of them where "the <zone> one" reads for none.
+ */
+const place = (sore: Sore) => sore.zone.toLowerCase();
+
+/** One decimal, so "4.0 to 3.5 mm" lines up as a pair of measurements. */
+const mm = (n: number) => n.toFixed(1);
+
+/**
+ * One sore's day in a sentence: "The lower lip is narrower than yesterday
+ * (4.0 to 3.5 mm) and hurting less."
+ */
+export function todayPhrase(sore: Sore, now: Date = new Date()): string {
+  if (!loggedToday(sore, now)) return `The ${place(sore)} has not been measured today.`;
+  const trend = trendOf(sore);
+  if (!trend) return `The ${place(sore)} has its first reading today.`;
+
+  const { readings } = sore;
+  const prev = readings[readings.length - 2];
+  const last = readings[readings.length - 1];
+  const change = `(${mm(prev.size)} to ${mm(last.size)} mm)`;
+  const width = {
+    down: `narrower than ${trend.against} ${change}`,
+    up: `wider than ${trend.against} ${change}`,
+    same: `the same width as ${trend.against}`
+  }[trend.size];
+  const pain = { down: 'hurting less', up: 'hurting more', same: 'hurting the same' }[
+    trend.pain
+  ];
+  return `The ${place(sore)} is ${width} and ${pain}.`;
+}

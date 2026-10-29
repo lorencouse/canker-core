@@ -2,10 +2,8 @@ import * as React from 'react';
 import { cn } from '@/utils/cn';
 
 /*
- * Card is now the marketing and auth container only. Every data screen uses
- * Panel instead, which carries the inverted title bar and the ink rule; see
- * components/ui/Panel.tsx. The two differ on purpose - a sign-in form is a
- * thing you fill in once, a panel is a record you come back to.
+ * Card is the marketing and auth container only. Data screens use the
+ * surface classes in styles/main.css (.surface-worksheet and friends).
  */
 
 const Card = React.forwardRef<

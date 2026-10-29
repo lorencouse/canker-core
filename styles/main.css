@@ -292,16 +292,6 @@
     @apply text-muted-foreground;
   }
 
-  /*
-   * The bar across the top of a panel: ink ground, paper text. It is the
-   * one inversion in the product and it does the job a card title used to
-   * do, without a second border to separate it from the body.
-   */
-  .panel-bar {
-    background: hsl(var(--rule));
-    color: hsl(var(--card));
-  }
-
   /* Body copy tops out well under 80 characters. */
   .prose-measure {
     max-width: 68ch;

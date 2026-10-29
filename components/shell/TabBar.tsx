@@ -23,7 +23,9 @@ export default function TabBar() {
       aria-label="Main"
       className={cn(
         'fixed inset-x-0 bottom-0 z-40 lg:hidden',
-        'border-t border-border bg-background/95 backdrop-blur-md',
+        // Opaque: a frosted bar lets the content under it compete with the
+        // labels.
+        'border-t border-border bg-card',
         'safe-b safe-x'
       )}
       style={{ height: 'calc(var(--tab-bar-h) + var(--safe-bottom))' }}
@@ -40,28 +42,22 @@ export default function TabBar() {
                 aria-label={description}
                 className={cn(
                   'flex h-full flex-col items-center justify-center gap-1',
-                  'text-[11px] font-medium transition-colors',
-                  // No hover state: this bar only ever exists under a thumb.
-                  active ? 'text-primary' : 'text-muted-foreground'
+                  'text-xs transition-colors',
+                  /*
+                   * The active tab is ink and heavier, the rest muted. Weight
+                   * and stroke carry it as well as colour, so it survives
+                   * greyscale; teal stays the colour of actions, not places.
+                   */
+                  active
+                    ? 'font-semibold text-foreground'
+                    : 'font-medium text-muted-foreground'
                 )}
               >
-                {/*
-                  The active state is carried by a filled pill behind the
-                  icon rather than by colour alone, so it survives greyscale
-                  and does not rely on the teal reading as "selected".
-                */}
-                <span
-                  className={cn(
-                    'flex h-7 w-12 items-center justify-center rounded-full transition-colors',
-                    active ? 'bg-accent' : 'bg-transparent'
-                  )}
-                >
-                  <Icon
-                    className="size-5"
-                    strokeWidth={active ? 2.25 : 1.75}
-                    aria-hidden="true"
-                  />
-                </span>
+                <Icon
+                  className="size-[1.375rem]"
+                  strokeWidth={active ? 2.25 : 1.75}
+                  aria-hidden="true"
+                />
                 <span aria-hidden="true" className="whitespace-nowrap">
                   {label}
                 </span>

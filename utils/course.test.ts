@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Reading, Sore } from '@/types';
-import { answerLine, courseOf, courseSentence, trendOf } from './course';
+import { answerLine, courseOf, courseSentence, todayPhrase, trendOf } from './course';
 
 /** Local noon, so a test never straddles a day boundary in any timezone. */
 const at = (day: string, hour = 12) => {
@@ -166,7 +166,7 @@ describe('answerLine', () => {
     const awkward = sore({ zone: 'Roof of mouth', readings: [reading('2026-09-04', 5, 6)] });
     const other = sore({ id: 'd', created_at: at('2026-09-03').toISOString() });
     expect(answerLine([awkward, other], at('2026-09-04')).note).toMatch(
-      /^Longest is on the roof of mouth: /
+      /^The roof of mouth has its first reading today\./
     );
   });
 
@@ -183,7 +183,52 @@ describe('answerLine', () => {
       readings: [reading('2026-09-04', 2, 2)]
     });
     const answer = answerLine([older, newer], at('2026-09-04'));
-    expect(answer.headline).toBe('2 sores open.');
-    expect(answer.note).toBe('Longest is on the left cheek: day 4. First reading logged.');
+    expect(answer.headline).toBe('2 sores open, all logged');
+    expect(answer.note).toBe(
+      'The left cheek has its first reading today. The tongue has its first reading today.'
+    );
+  });
+
+  it('says how many are still to log and puts the news first', () => {
+    const waiting = sore({
+      id: 'b',
+      zone: 'Left cheek',
+      created_at: at('2026-09-01').toISOString(),
+      readings: [reading('2026-09-03', 3.5, 5)]
+    });
+    const logged = sore({
+      id: 'c',
+      zone: 'Lower lip',
+      created_at: at('2026-09-02').toISOString(),
+      readings: [reading('2026-09-03', 4, 4), reading('2026-09-04', 3.5, 3)]
+    });
+    const answer = answerLine([waiting, logged], at('2026-09-04'));
+    expect(answer.headline).toBe('2 sores open, 1 to log');
+    expect(answer.note).toBe(
+      'The lower lip is narrower than yesterday (4.0 to 3.5 mm) and hurting less. ' +
+        'The left cheek has not been measured today.'
+    );
+    expect(answer.note).not.toMatch(/\u2014/);
+  });
+});
+
+describe('todayPhrase', () => {
+  it('names a wider, more painful day plainly', () => {
+    const worse = sore({
+      zone: 'Tongue',
+      readings: [reading('2026-09-01', 3, 4), reading('2026-09-04', 4, 6)]
+    });
+    expect(todayPhrase(worse, at('2026-09-04'))).toBe(
+      'The tongue is wider than last time (3.0 to 4.0 mm) and hurting more.'
+    );
+  });
+
+  it('says when nothing changed in width', () => {
+    const same = sore({
+      readings: [reading('2026-09-03', 3, 4), reading('2026-09-04', 3, 4)]
+    });
+    expect(todayPhrase(same, at('2026-09-04'))).toBe(
+      'The tongue is the same width as yesterday and hurting the same.'
+    );
   });
 });
