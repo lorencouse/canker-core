@@ -116,20 +116,19 @@ so it does not get a tab.
 
 ### The mouth map screen
 
-The one screen that genuinely changes shape:
+One layout in CSS, two arrangements:
 
-- **Desktop** — map on the left, readings in a column beside it.
-- **Phone** — map fills the screen; readings arrive in a bottom sheet when a
-  sore is selected. The sheet is the point: pushing readings below the map
-  would scroll the map you just tapped off the top of the screen.
+- **Phone** — title and "Mark a new sore", then the map, then the selected
+  sore's detail inline under it (or the list of open sores when none is
+  selected). It used to be a bottom sheet over a blurred map; inline, the
+  detail can carry the course chart and still leave the map on screen.
+- **Desktop** — the same pieces with the map on the left and the detail on
+  the right, so the right half is never empty.
 
-Which one renders is decided in JavaScript (`useIsCompact`), not by CSS
-visibility, so only one is ever mounted — a hidden sheet is still a focus
-trap, and a duplicated map would be two cameras and two view states.
-
-The editing session's undo snapshot therefore lives in `SoreContext` rather
-than in the action bar, which is rendered under the map on desktop and
-inside the sheet on a phone.
+The editing session's undo snapshot lives in `SoreContext` rather than in a
+component, because its controls are split across the screen: the add button
+under the title, Cancel and Done under the map, the sore's own actions in
+its detail.
 
 ## Conventions
 

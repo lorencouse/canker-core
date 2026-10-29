@@ -14,7 +14,7 @@ export default function EmbedComparison() {
   const snippet = `<a href="${article}"><img src="${image}" alt="A canker sore and a cold sore side by side, drawn to scale" width="100%"></a>\n<p>Diagram by <a href="${getURL()}">Canker Core</a></p>`;
 
   return (
-    <aside className="my-10 rounded-xl border border-border bg-muted/40 p-5 sm:p-6">
+    <aside className="my-10 rounded-none border border-border bg-muted/40 p-5 sm:p-6">
       <h2 className="text-subhead">Use this diagram</h2>
       <p className="mt-2 text-sm text-muted-foreground">
         Free to reuse anywhere — a practice site, a patient handout, a forum

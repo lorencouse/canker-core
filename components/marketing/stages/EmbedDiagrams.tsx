@@ -16,7 +16,7 @@ export default function EmbedDiagrams() {
   const snippet = `<a href="${article}"><img src="${image}" alt="The five stages of a canker sore, drawn to scale" width="100%"></a>\n<p>Diagram by <a href="${getURL()}">Canker Core</a></p>`;
 
   return (
-    <aside className="my-10 rounded-xl border border-border bg-muted/40 p-5 sm:p-6">
+    <aside className="my-10 rounded-none border border-border bg-muted/40 p-5 sm:p-6">
       <h2 className="text-subhead">Use these diagrams</h2>
       <p className="mt-2 text-sm text-muted-foreground">
         They are free to reuse anywhere — a practice site, a patient handout, a

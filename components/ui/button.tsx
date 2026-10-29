@@ -6,9 +6,9 @@ const buttonVariants = cva(
   /*
    * Square, condensed, uppercase, and it moves when you press it. A button
    * under the Chalk direction is a key on a machine rather than a rounded
-   * chip: pressing translates it into its own shadow instead of fading its
-   * opacity, which is the difference between a control that responds and
-   * one that merely acknowledges.
+   * chip: pressing nudges it down a pixel instead of fading its opacity,
+   * which is the difference between a control that responds and one that
+   * merely acknowledges. It casts no shadow at rest (ART-DIRECTION.md).
    *
    * A label is one line, always: nowrap, capped at its container, and a
    * label wrapped in a <span> ellipsises rather than spilling out. A button
@@ -21,24 +21,22 @@ const buttonVariants = cva(
         // The one filled button on a screen, and it is the one that writes
         // a reading. Two of these on a screen means one of them is wrong.
         default:
-          'border-2 border-primary bg-primary text-primary-foreground shadow-drop-sm hover:brightness-110 active:shadow-none',
+          'border border-primary bg-primary text-primary-foreground hover:brightness-110',
         /*
          * Destructive is stated in words, not painted red: red is the
          * severity ramp and nothing else, so a delete button that borrowed
          * it would make every pain dot on the screen mean less.
          */
         destructive:
-          'border-2 border-rule bg-card text-foreground shadow-drop-sm hover:bg-muted active:shadow-none',
-        outline: 'border-2 border-rule bg-transparent hover:bg-muted',
+          'border border-control bg-card text-foreground hover:bg-muted',
+        outline: 'border border-control bg-transparent hover:bg-muted',
         secondary:
-          'border-2 border-transparent bg-muted text-foreground hover:bg-muted/80',
-        ghost:
-          'border-2 border-transparent hover:bg-muted hover:text-foreground',
+          'border border-transparent bg-muted text-foreground hover:bg-muted/80',
+        ghost: 'border border-transparent hover:bg-muted hover:text-foreground',
         // A link is prose, so it keeps the reading face and its own case.
         link: 'font-sans normal-case tracking-normal text-primary underline-offset-4 hover:underline',
         // Overlay controls that sit on top of the mouth diagram.
-        overlay:
-          'border-2 border-rule bg-card/90 text-foreground backdrop-blur hover:bg-card'
+        overlay: 'border border-control bg-card text-foreground hover:bg-muted'
       },
       /*
        * Sizes under 44px keep their drawing but get tap-target's invisible

@@ -33,24 +33,26 @@ export default function DayLogForm({
   };
 
   return (
-    <div className="surface-worksheet space-y-5 p-4">
+    <div className="space-y-5">
       <ChipGroup
-        label="Anything that might have set one off?"
+        label="Anything that might have set one off"
         options={TRIGGERS}
         selected={log.triggers}
         onToggle={(v) => toggle('triggers', v)}
       />
       <ChipGroup
-        label="Anything you tried?"
+        label="Anything you tried"
         options={TREATMENTS}
         selected={log.treatments}
         onToggle={(v) => toggle('treatments', v)}
       />
       <div className="space-y-1.5">
-        <Label htmlFor="day-note">Notes</Label>
+        <Label htmlFor="day-note" className="text-base font-semibold">
+          Note
+        </Label>
         <Textarea
           id="day-note"
-          rows={2}
+          rows={3}
           maxLength={1000}
           className="resize-none"
           placeholder="Slept badly, big presentation, new toothpaste…"
@@ -75,7 +77,7 @@ function ChipGroup({
 }) {
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-medium">{label}</legend>
+      <legend className="text-base font-semibold">{label}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const on = selected.includes(option);
@@ -87,10 +89,10 @@ function ChipGroup({
               onClick={() => onToggle(option)}
               className={cn(
                 // 44px tall on touch: a chip is tapped, not aimed at.
-                'inline-flex h-10 items-center whitespace-nowrap rounded-full border px-3.5 text-sm transition-colors coarse:h-11 lg:h-8 lg:text-[13px]',
+                'inline-flex h-10 items-center whitespace-nowrap rounded-full border px-3.5 text-[15px] transition-colors coarse:h-11 lg:h-9 lg:text-sm',
                 on
-                  ? 'border-primary bg-accent text-accent-foreground'
-                  : 'border-border bg-card text-muted-foreground hover:text-foreground'
+                  ? 'border-primary bg-accent font-semibold text-foreground'
+                  : 'border-control bg-card text-foreground hover:bg-muted'
               )}
             >
               {option}

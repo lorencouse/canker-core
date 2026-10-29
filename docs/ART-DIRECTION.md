@@ -76,12 +76,42 @@ chrome rather than sitting beside it in its own world.
 Nothing else appears. The rose pair is the mouth-map tissue from the app and
 carries the same meaning here: it is not a skin tone and not a decoration.
 
-Two more rules come from Chalk rather than from colour. **Elevation is a hard
-`5px 5px 0` offset in ink**, never a soft blur: a blur says floating, an
-offset says printed, and a record you keep is printed. Soft shadow is
-reserved for the rare thing that genuinely hovers, which so far is nothing.
-And **there is no skin colour in the token set**, which is a gap rather than
-an answer — see the open question below.
+Two more rules come from Chalk rather than from colour. **The hard `5px 5px 0`
+ink offset belongs to the drawings**, never a soft blur: a blur says
+floating, an offset says printed. Since 2026-10-28 it is no longer on the
+interface at rest (see "Chalk on screen" below); it stays in the art, where a
+silk-screened print is the idea. And **there is no skin colour in the token
+set**, which is a gap rather than an answer — see the open question below.
+
+## Chalk on screen, revised 2026-10-28
+
+Loren's call on the taste review: **drop the hard offset and the ink outlines
+on resting panels.** Two inks boxing every card, each lifted on a 5px offset,
+made the chrome louder than the pain data it holds, and in dark mode the
+inverted panel bar was the brightest thing on the screen.
+
+What changed in `styles/main.css`:
+
+- **Panels sit flat.** `.surface-worksheet`, `.surface-canvas` and `Card` are
+  a card fill on the ground with a `--border` hairline. No offset, no 2px ink
+  box, no inverted title bar.
+- **Controls have a quiet edge.** Buttons, steppers and the pain keys are
+  outlined in `--control` (1px, at least 3:1 against the ground), not ink, and
+  cast no shadow at rest. Pressing still nudges a button down a pixel.
+- **Square corners hold everywhere.** `rounded-xl` is gone from the product;
+  `--radius` is 0 and chips are the only round controls.
+- **Shadows** stay only on what genuinely hovers: dialogs, menus, a chart
+  tooltip.
+
+What keeps Chalk's ink:
+
+- **The drawings.** Canker Boy and any spot illustration keep the 2px ink
+  outline and may sit on the hard `5px 5px 0` offset (`--drop`), the
+  silk-screen print described below. The SVG diagrams keep their ink line.
+- **The instrument rule.** A readout (`.surface-instrument`, Insights) is
+  still marked by one 2px ink rule across its top; that is a rule over
+  figures, not a box around a panel.
+- The palette, the faces and the square corners are unchanged.
 
 **A third rule, from the subject matter.** The audience is in pain and
 usually looking something up at 1am. Nothing gory: no blood, no raw flesh,
@@ -219,15 +249,15 @@ the working tree (verified against `styles/main.css` and `tailwind.config.js`,
 not taken on trust). What it means for the art:
 
 - Ink is now `--rule` **#0f151b**, drawn at **2px**, and it is a real outline
-  on every object, not just eyes and linework. `--border` stays a hairline for
-  things that belong together. Two weights, never one.
-- Elevation is `--drop`, a **hard 5px 5px 0 offset in ink**. There is no soft
-  grey blur anywhere in the product, so there is none anywhere near him.
+  on every object he is made of, not just eyes and linework.
+- His elevation is `--drop`, a **hard 5px 5px 0 offset in ink**. There is no
+  soft grey blur anywhere near him.
 - `--radius` is **0**, and `rounded-worksheet` went to 0 as well. Nothing is a
   rounded rectangle except chips, which stay fully round. `.surface-instrument`
-  is a 2px ink top rule with no box at all; `.surface-worksheet` is a 2px ink
-  box with the hard offset. If he ever appears beside a surface, that is the
-  construction.
+  is a 2px ink top rule with no box at all. (Superseded 2026-10-28 for the
+  interface: `.surface-worksheet` was a 2px ink box with the hard offset and is
+  now a flat card with a hairline. The art keeps the outline and the offset;
+  see "Chalk on screen" above.)
 - Display type is **Saira Semi Condensed**, uppercase labels tracked +0.12em,
   sitting under the figure they name. Any earlier reference in this file to
   Archivo is stale.

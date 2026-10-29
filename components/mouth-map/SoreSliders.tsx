@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useState } from 'react';
 
-import { Slider } from '@/components/ui/slider';
+import { PainField, WidthField } from '@/components/sore/ReadingFields';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useSoreContext } from '@/context/SoreContext';
@@ -21,17 +21,16 @@ const todaysNote = (sore: Sore | null | undefined) =>
     : '';
 
 /**
- * Today's reading for the selected sore: size, pain, and an optional note.
+ * Today's reading for the selected sore: width, pain, and an optional note,
+ * taken with the same fields as the Today screen.
  *
  * The first change on a new day appends a reading; every change after that
- * on the same day corrects it, so dragging a slider back and forth never
+ * on the same day corrects it, so nudging a value back and forth never
  * produces more than one row.
  */
 const SoreSliders: React.FC = () => {
-  const { selectedSore, setSelectedSore, setSores } = useSoreContext();
+  const { selectedSore, setSelectedSore, setSores, mode } = useSoreContext();
 
-  const [soreSize, setSoreSize] = useState<number>(currentSize(selectedSore));
-  const [painLevel, setPainLevel] = useState<number>(currentPain(selectedSore));
   const [note, setNote] = useState<string>(todaysNote(selectedSore));
 
   const commit = (values: {
@@ -49,11 +48,7 @@ const SoreSliders: React.FC = () => {
   const [shownSoreId, setShownSoreId] = useState(selectedSore?.id);
   if (selectedSore?.id !== shownSoreId) {
     setShownSoreId(selectedSore?.id);
-    if (selectedSore) {
-      setSoreSize(currentSize(selectedSore));
-      setPainLevel(currentPain(selectedSore));
-      setNote(todaysNote(selectedSore));
-    }
+    if (selectedSore) setNote(todaysNote(selectedSore));
   }
 
   if (!selectedSore) return null;
@@ -61,67 +56,35 @@ const SoreSliders: React.FC = () => {
   const loggedToday = hasReadingOn(selectedSore, new Date());
 
   return (
-    <div className="surface-worksheet space-y-5 p-4 sm:p-5">
+    <div className="space-y-5 border border-border p-4">
       {/*
-        Says which of the two things a slider move will do, because they look
-        identical on the slider and are not: one adds a day to the history,
-        the other corrects the day already there.
+        Says which of the two things a change will do, because they look
+        identical and are not: one adds a day to the history, the other
+        corrects the day already there.
       */}
-      <p className="text-xs text-muted-foreground">
-        {loggedToday
-          ? 'Updating today’s reading.'
-          : 'Move a slider to log today’s reading.'}
+      <p className="text-sm text-muted-foreground">
+        {mode === 'add'
+          ? 'Set its first reading. Drag the mark to move it.'
+          : loggedToday
+            ? 'Correcting today’s reading. Drag the mark to move it.'
+            : 'Any change logs today’s reading. Drag the mark to move it.'}
       </p>
 
-      <div className="space-y-1.5">
-        <div className="flex items-baseline justify-between gap-3">
-          <Label htmlFor="sore-size">How wide is it?</Label>
-          {/* The reading, not a tooltip on the handle: it has to stay
-              legible while a thumb is covering the handle. */}
-          <span className="tabular text-base font-semibold">{soreSize} mm</span>
-        </div>
-        <Slider
-          id="sore-size"
-          min={1}
-          max={20}
-          value={[soreSize]}
-          onValueChange={(values) => {
-            setSoreSize(values[0]);
-            commit({ size: values[0] });
-          }}
-          aria-label="Sore size in millimetres"
-        />
-      </div>
+      <WidthField
+        id="sore-size"
+        value={currentSize(selectedSore)}
+        onChange={(mm) => commit({ size: mm })}
+      />
+      <PainField
+        id="sore-pain"
+        value={currentPain(selectedSore)}
+        onChange={(pain) => commit({ pain })}
+      />
 
       <div className="space-y-1.5">
-        <div className="flex items-baseline justify-between gap-3">
-          <Label htmlFor="sore-pain">How much does it hurt?</Label>
-          <span className="tabular inline-flex items-center gap-2 text-base font-semibold">
-            {/* The same swatch the map will draw, so the number and the
-                mark you are about to see agree before you commit. */}
-            <span
-              className="size-3 rounded-full ring-1 ring-foreground/20"
-              style={{ backgroundColor: `hsl(var(--sev-${painLevel}))` }}
-            />
-            {painLevel} of 10
-          </span>
-        </div>
-        <Slider
-          id="sore-pain"
-          tone="severity"
-          min={1}
-          max={10}
-          value={[painLevel]}
-          onValueChange={(values) => {
-            setPainLevel(values[0]);
-            commit({ pain: values[0] });
-          }}
-          aria-label="Pain level from 1 to 10"
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="sore-note">Anything to note?</Label>
+        <Label htmlFor="sore-note" className="text-base font-semibold">
+          Anything to note?
+        </Label>
         <Textarea
           id="sore-note"
           value={note}

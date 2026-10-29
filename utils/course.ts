@@ -23,7 +23,9 @@ const localMidnight = (d: Date) =>
 
 /** Whole calendar days between two instants. Rounded, so DST cannot shift it. */
 const daysBetween = (from: Date, to: Date) =>
-  Math.round((localMidnight(to).getTime() - localMidnight(from).getTime()) / DAY_MS);
+  Math.round(
+    (localMidnight(to).getTime() - localMidnight(from).getTime()) / DAY_MS
+  );
 
 /** One day of a sore's life. `pain` is null on a day with no reading. */
 export type CourseDay = {
@@ -128,11 +130,15 @@ export function courseSentence(sore: Sore, now: Date = new Date()): string {
   if (!trend) return `Day ${day}. First reading logged.`;
 
   const size = { down: 'narrower', up: 'wider', same: null }[trend.size];
-  const pain = { down: 'hurting less', up: 'hurting more', same: null }[trend.pain];
+  const pain = { down: 'hurting less', up: 'hurting more', same: null }[
+    trend.pain
+  ];
 
   if (!size && !pain) return `Day ${day}. No change since ${trend.against}.`;
-  if (size && pain) return `Day ${day}. ${cap(size)} than ${trend.against}, and ${pain}.`;
-  if (size) return `Day ${day}. ${cap(size)} than ${trend.against}, hurting the same.`;
+  if (size && pain)
+    return `Day ${day}. ${cap(size)} than ${trend.against}, and ${pain}.`;
+  if (size)
+    return `Day ${day}. ${cap(size)} than ${trend.against}, hurting the same.`;
   return `Day ${day}. ${cap(pain!)} than ${trend.against}, the same width.`;
 }
 
@@ -191,14 +197,133 @@ export function answerLine(sores: Sore[], now: Date = new Date()): Answer {
     };
   }
 
+  /*
+   * Several open: the headline is the to-do ("2 sores open, 1 to log") and
+   * the note is the news, one plain sentence per sore. Sores with a change
+   * to report come first, then the ones still waiting for today's reading.
+   */
+  const unlogged = open.filter((s) => !loggedToday(s, now));
+  const ordered = [
+    ...open.filter((s) => loggedToday(s, now)),
+    ...unlogged
+  ].slice(0, 3);
+  const sentences = ordered.map((s) => todayPhrase(s, now));
+  if (stubborn)
+    sentences.push(
+      `The ${place(longest)} is past two weeks, worth having a dentist look at it.`
+    );
+
   return {
-    headline: `${open.length} sores open.`,
-    // "on the" rather than "the <zone> one", which reads fine for the tongue
-    // and not at all for the roof of mouth. Every zone name is a place, so
-    // the preposition that suits a place suits all of them.
-    note: `Longest is on the ${longest.zone.toLowerCase()} — ${lower(courseSentence(longest, now))}`
+    headline: `${open.length} sores open, ${
+      unlogged.length ? `${unlogged.length} to log` : 'all logged'
+    }`,
+    note: sentences.join(' ')
   };
 }
 
-/** "Day 9. Wider than yesterday." reads as a clause after an em dash. */
-const lower = (s: string) => s[0].toLowerCase() + s.slice(1);
+/*
+ * Every zone name is a place ("Lower lip", "Roof of mouth"), so "the <zone>"
+ * reads for all of them where "the <zone> one" reads for none.
+ */
+const place = (sore: Sore) => sore.zone.toLowerCase();
+
+/** One decimal, so "4.0 to 3.5 mm" lines up as a pair of measurements. */
+const mm = (n: number) => n.toFixed(1);
+
+/**
+ * One sore's day in a sentence: "The lower lip is narrower than yesterday
+ * (4.0 to 3.5 mm) and hurting less."
+ */
+export function todayPhrase(sore: Sore, now: Date = new Date()): string {
+  if (!loggedToday(sore, now))
+    return `The ${place(sore)} has not been measured today.`;
+  const trend = trendOf(sore);
+  if (!trend) return `The ${place(sore)} has its first reading today.`;
+
+  const { readings } = sore;
+  const prev = readings[readings.length - 2];
+  const last = readings[readings.length - 1];
+  const change = `(${mm(prev.size)} to ${mm(last.size)} mm)`;
+  const width = {
+    down: `narrower than ${trend.against} ${change}`,
+    up: `wider than ${trend.against} ${change}`,
+    same: `the same width as ${trend.against}`
+  }[trend.size];
+  const pain = {
+    down: 'hurting less',
+    up: 'hurting more',
+    same: 'hurting the same'
+  }[trend.pain];
+  return `The ${place(sore)} is ${width} and ${pain}.`;
+}
+
+export type Verdict = {
+  /** One word or two, set in bold: "Healing.", "Worth watching." */
+  word: string;
+  /** The figures behind it, as a sentence. */
+  detail: string;
+};
+
+/**
+ * The selected sore's verdict on the map, in the order a person wants it:
+ * the call first, then the readings that make it.
+ *
+ * Wider is not automatically bad. The articles' own rule is that a sore
+ * grows for its first three days, so a wider reading then is the ordinary
+ * course and only from day four is it worth a second look.
+ */
+export function verdictOf(sore: Sore, now: Date = new Date()): Verdict {
+  const day = dayNumberOf(sore, now);
+  const { readings } = sore;
+  const last = readings[readings.length - 1];
+
+  if (sore.healed_at) {
+    const widest = readings.length
+      ? Math.max(...readings.map((r) => r.size))
+      : null;
+    return {
+      word: 'Healed.',
+      detail: `After ${day} day${day === 1 ? '' : 's'}${widest ? `, widest ${mm(widest)} mm` : ''}.`
+    };
+  }
+  if (!last)
+    return {
+      word: 'No readings yet.',
+      detail: 'Log today to start its course.'
+    };
+  if (!loggedToday(sore, now)) {
+    return {
+      word: 'Not logged today.',
+      detail: `Last reading ${mm(last.size)} mm, pain ${last.pain} of 10.`
+    };
+  }
+
+  const trend = trendOf(sore);
+  if (!trend) {
+    return {
+      word: 'First reading.',
+      detail: `${mm(last.size)} mm, pain ${last.pain} of 10.`
+    };
+  }
+
+  const prev = readings[readings.length - 2];
+  const figures = `${mm(prev.size)} to ${mm(last.size)} mm, pain ${prev.pain} to ${last.pain}`;
+  const width = {
+    down: `narrower than ${trend.against}`,
+    up: `wider than ${trend.against}`,
+    same: `the same width as ${trend.against}`
+  }[trend.size];
+  const pain = {
+    down: 'hurting less',
+    up: 'hurting more',
+    same: 'hurting the same'
+  }[trend.pain];
+  const detail = `${cap(width)} and ${pain}: ${figures}.`;
+
+  if (trend.size === 'down') return { word: 'Healing.', detail };
+  if (trend.size === 'up')
+    return { word: day <= 3 ? 'Still growing.' : 'Worth watching.', detail };
+  if (trend.pain === 'down') return { word: 'Easing.', detail };
+  if (trend.pain === 'up') return { word: 'Sorer.', detail };
+  return { word: 'No change.', detail };
+}

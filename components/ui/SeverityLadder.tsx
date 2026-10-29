@@ -39,7 +39,12 @@ export default function SeverityLadder({
     <div
       role="group"
       aria-label={`${label}, 1 to ${SEVERITY_MAX}`}
-      className={cn('flex gap-[3px]', className)}
+      /*
+       * Two rows of five under 640px. Ten keys in one row are about 30px
+       * wide on a phone, under the 44px rule, and too close together for
+       * .tap-target to widen without overlapping.
+       */
+      className={cn('grid grid-cols-5 gap-1.5 sm:flex sm:gap-[3px]', className)}
     >
       {LEVELS.map((level) => {
         const filled = value !== null && level <= value;
@@ -58,7 +63,7 @@ export default function SeverityLadder({
              * out of slabs.
              */
             className={cn(
-              'h-12 min-w-0 flex-1 border-2 border-rule bg-card font-display',
+              'h-12 min-w-0 flex-1 border border-control bg-card font-display',
               'text-sm font-semibold tabular text-muted-foreground',
               'transition-colors focus-visible:outline-none focus-visible:ring-2',
               'focus-visible:ring-ring focus-visible:ring-offset-2',

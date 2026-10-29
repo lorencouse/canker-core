@@ -1,45 +1,44 @@
 'use client';
 
-import { CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import Gauge from '@/components/ui/Gauge';
-import { Label } from '@/components/ui/label';
-import { Panel, PanelBar, PanelBody, PanelMeta, PanelTitle } from '@/components/ui/Panel';
-import SeverityLadder from '@/components/ui/SeverityLadder';
-import { Slider } from '@/components/ui/slider';
-import { LongSoreNote } from '@/components/SoreDetails';
-import CourseStrip from '@/components/sore/CourseStrip';
+import CourseBars, { courseSlots } from '@/components/sore/CourseBars';
+import LongSoreNote from '@/components/sore/LongSoreNote';
+import { PainField, WidthField } from '@/components/sore/ReadingFields';
 import SoreSigil from '@/components/sore/SoreSigil';
 import type { Sore } from '@/types';
+import { courseOf, trendOf } from '@/utils/course';
 import { isLongRunning } from '@/utils/insights';
+import { tap } from '@/utils/native';
 import {
   currentPain,
   currentSize,
   dayNumberOf,
   hasReadingOn,
+  isSameLocalDay,
+  latestReading,
   withReading
 } from '@/utils/readings';
 
 /**
- * One open sore on the check-in screen: where it is, how long it has been
- * there, and today's two readings.
+ * One open sore on the check-in screen: where it is, its fortnight so far,
+ * and today's two readings.
  *
- * The gauge carries the scanning job the severity left-edge used to do. A
- * stack of these is scanned before it is read, and a dial sorts them by how
- * bad each one is from further away than a 3px stripe ever did — while also
- * answering "out of what", which the stripe could not.
+ * The fortnight is the card's picture. Fourteen slots, bar height for
+ * width, colour for that day's pain, so "is it getting smaller" is answered
+ * before a single figure is read, and the empty slots say how far into the
+ * ordinary course it is.
  *
- * Pain and width are deliberately entered by different controls. Width is a
- * continuous measurement in millimetres and a slider is honest about that.
- * Pain is ten named steps, and a slider hides the scale behind its own
- * thumb: on a phone the difference between a 6 and a 7 is about four pixels
- * of travel, so the value people record is the one that was easy to hit
- * rather than the one they meant. The ladder shows all ten and lands in one
- * tap.
+ * The two readings are entered with the shared fields in ReadingFields,
+ * which say why width and pain get different controls.
  *
- * "Same as last time" exists because the commonest daily truth about a sore
- * is that nothing changed, and a reading that says so is still a reading —
+ * A sore already logged today collapses to that reading, so the card that
+ * still needs something is the one that looks unfinished. "Change" opens the
+ * controls again.
+ *
+ * "Same as yesterday" exists because the commonest daily truth about a sore
+ * is that nothing changed, and a reading that says so is still a reading:
  * it is what turns a two-point chart into a curve.
  */
 export default function SoreCheckInCard({
@@ -54,91 +53,166 @@ export default function SoreCheckInCard({
   /** True for a moment after a successful save. */
   justSaved?: boolean;
 }) {
-  const logged = hasReadingOn(sore, new Date());
+  const now = new Date();
+  const logged = hasReadingOn(sore, now);
+  // Open while editing, so the controls do not vanish the moment a reading
+  // exists; a logged sore starts closed.
+  const [editing, setEditing] = useState(!logged);
   const size = currentSize(sore);
   const pain = currentPain(sore);
   const day = dayNumberOf(sore);
+  const last = latestReading(sore);
+  const titleId = `sore-${sore.id}`;
 
   return (
-    <Panel>
-      <PanelBar>
-        <PanelTitle className="min-w-0 truncate">{sore.zone}</PanelTitle>
-        <PanelMeta className="shrink-0">
-          Day {day} &middot; {logged ? 'logged' : 'not logged'}
-        </PanelMeta>
-      </PanelBar>
-
-      <PanelBody>
-        <div className="flex items-center gap-4">
-          <Gauge pain={pain} size={88} label="Pain" />
-          {/* The sigil says which view and where; naming the view in text
-              as well would be the same fact twice. */}
-          <SoreSigil sore={sore} size={30} />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="ml-auto self-start"
-            onClick={onHeal}
-            aria-label={`Mark the ${sore.zone.toLowerCase()} sore healed`}
-          >
-            <CheckCircle2 aria-hidden="true" />
-            Healed
-          </Button>
+    <article aria-labelledby={titleId} className="surface-worksheet p-4 sm:p-5">
+      <header className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+        {/* The sigil says which view and where; naming the view in text as
+            well would be the same fact twice. */}
+        <SoreSigil sore={sore} size={36} />
+        <div className="min-w-0">
+          <h2 id={titleId} className="truncate text-subhead">
+            {sore.zone}
+          </h2>
+          <p className="tabular text-sm text-muted-foreground">
+            Day {day} &middot;{' '}
+            {logged && last && !editing ? (
+              `logged ${new Date(last.recorded_at).toLocaleTimeString(
+                undefined,
+                {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }
+              )}`
+            ) : logged ? (
+              'logged today'
+            ) : (
+              <span className="font-semibold text-foreground">
+                not logged today
+              </span>
+            )}
+          </p>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="font-display text-base normal-case tracking-normal text-primary"
+          onClick={onHeal}
+          aria-label={`Mark the ${sore.zone.toLowerCase()} sore healed`}
+        >
+          Healed
+        </Button>
+      </header>
 
-        {/*
-         * The strip gets the card's full width rather than the column beside
-         * the gauge. A course is one unbroken run of days, and in a 115px
-         * column it wrapped onto a second line at day nine — which reads as
-         * two sores, not one long one. Full width carries about three weeks
-         * on a phone before it has to wrap at all.
-         */}
-        <CourseStrip sore={sore} animateLast={justSaved} />
+      <div className="mt-4">
+        <div
+          aria-hidden="true"
+          className="tabular flex justify-between gap-3 text-sm text-muted-foreground"
+        >
+          <span>Day 1</span>
+          <span className="min-w-0 truncate">{courseCaption(sore)}</span>
+          <span>Day {courseSlots(sore, courseOf(sore))}</span>
+        </div>
+        <CourseBars sore={sore} animateLast={justSaved} className="mt-1.5" />
+      </div>
 
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between gap-3">
-            <Label htmlFor={`size-${sore.id}`}>Width</Label>
-            <span className="tabular font-display text-sm font-semibold">
-              {size} mm
-            </span>
-          </div>
-          <Slider
+      {editing ? (
+        <div className="mt-5 grid gap-5">
+          <WidthField
             id={`size-${sore.id}`}
-            min={1}
-            max={20}
-            value={[size]}
-            onValueChange={([v]) => onChange(withReading(sore, { size: v }))}
-            aria-label="Sore size in millimetres"
+            value={size}
+            onChange={(mm) => onChange(withReading(sore, { size: mm }))}
           />
-        </div>
-
-        <div className="space-y-2">
-          {/* The label sits above the ladder rather than under it because
-              the ladder is a control being offered, not a figure being
-              reported — the label-under-figure rule is about readouts. */}
-          <Label>Pain today</Label>
-          <SeverityLadder
+          <PainField
+            id={`pain-${sore.id}`}
             value={pain}
-            label="Pain today"
             onChange={(v) => onChange(withReading(sore, { pain: v }))}
           />
-        </div>
 
-        {!logged && (
+          {!logged && last && (
+            <Button
+              type="button"
+              variant="link"
+              className="h-11 justify-self-start px-0.5 text-base font-semibold underline"
+              onClick={() => onChange(withReading(sore, {}))}
+            >
+              {sameLabel(sore)}
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <span className="text-muted-foreground">Today</span>
+          <b className="tabular font-display text-xl font-semibold">
+            {size} mm
+          </b>
+          <b className="tabular font-display text-xl font-semibold">
+            Pain {pain}
+          </b>
+          <span className="min-w-0 text-muted-foreground">
+            {changeLine(sore)}
+          </span>
           <Button
             type="button"
-            variant="outline"
-            size="sm"
-            className="justify-self-start"
-            onClick={() => onChange(withReading(sore, {}))}
+            variant="link"
+            className="ml-auto h-11 px-0.5 text-base font-semibold"
+            onClick={() => {
+              tap();
+              setEditing(true);
+            }}
           >
-            Same as last time
+            Change
           </Button>
-        )}
+        </div>
+      )}
 
-        {isLongRunning(sore) && <LongSoreNote />}
-      </PanelBody>
-    </Panel>
+      {isLongRunning(sore) && <LongSoreNote className="mt-4" />}
+    </article>
   );
+}
+
+/** The middle caption over the bars: what the course has done so far. */
+function courseCaption(sore: Sore): string {
+  const days = courseOf(sore).filter((d) => d.size !== null);
+  if (days.length < 3) return 'Width by day, coloured by pain';
+  const peak = days.reduce((a, b) => (b.size! > a.size! ? b : a));
+  const last = days[days.length - 1];
+  // Only once it has come down from the peak; a tie with today is no peak.
+  if (peak.size! > last.size! && peak.n > 1) return `Peaked on day ${peak.n}`;
+  return 'Width by day, coloured by pain';
+}
+
+/** "Same as yesterday", or "Same as last time" after a gap. */
+function sameLabel(sore: Sore): string {
+  const last = latestReading(sore);
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return last && isSameLocalDay(last.recorded_at, yesterday)
+    ? 'Same as yesterday'
+    : 'Same as last time';
+}
+
+/**
+ * Today against the reading before it: "down 0.5 mm and 1 point" when both
+ * moved the same way, otherwise each said separately.
+ */
+function changeLine(sore: Sore): string {
+  const trend = trendOf(sore);
+  if (!trend) return 'first reading';
+  const { readings } = sore;
+  const prev = readings[readings.length - 2];
+  const last = readings[readings.length - 1];
+  const dSize = Math.abs(last.size - prev.size);
+  const dPain = Math.abs(last.pain - prev.pain);
+  const points = `${dPain} point${dPain === 1 ? '' : 's'}`;
+  if (!dSize && !dPain) return `no change since ${trend.against}`;
+  if (dSize && dPain && trend.size === trend.pain)
+    return `${trend.size} ${dSize} mm and ${points}`;
+  return [
+    dSize && `${dSize} mm ${trend.size === 'down' ? 'narrower' : 'wider'}`,
+    dPain && `pain ${trend.pain} ${points}`
+  ]
+    .filter(Boolean)
+    .join(', ');
 }

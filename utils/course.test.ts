@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Reading, Sore } from '@/types';
-import { answerLine, courseOf, courseSentence, trendOf } from './course';
+import {
+  answerLine,
+  courseOf,
+  courseSentence,
+  todayPhrase,
+  trendOf,
+  verdictOf
+} from './course';
 
 /** Local noon, so a test never straddles a day boundary in any timezone. */
 const at = (day: string, hour = 12) => {
@@ -42,7 +49,9 @@ describe('courseOf', () => {
 
   it('leaves days with no reading null rather than dropping them', () => {
     const days = courseOf(
-      sore({ readings: [reading('2026-09-01', 4, 5), reading('2026-09-03', 3, 2)] }),
+      sore({
+        readings: [reading('2026-09-01', 4, 5), reading('2026-09-03', 3, 2)]
+      }),
       at('2026-09-03')
     );
     expect(days.map((d) => d.pain)).toEqual([5, null, 2]);
@@ -72,31 +81,46 @@ describe('courseOf', () => {
 
 describe('trendOf', () => {
   it('is null on a single reading, because there is nothing to compare', () => {
-    expect(trendOf(sore({ readings: [reading('2026-09-01', 4, 5)] }))).toBeNull();
+    expect(
+      trendOf(sore({ readings: [reading('2026-09-01', 4, 5)] }))
+    ).toBeNull();
   });
 
   it('compares the latest reading with the one before it', () => {
     const trend = trendOf(
-      sore({ readings: [reading('2026-09-01', 4, 5), reading('2026-09-02', 3, 5)] })
+      sore({
+        readings: [reading('2026-09-01', 4, 5), reading('2026-09-02', 3, 5)]
+      })
     );
     expect(trend).toEqual({ size: 'down', pain: 'same', against: 'yesterday' });
   });
 
   it('says "last time" when the previous reading was not yesterday', () => {
     const trend = trendOf(
-      sore({ readings: [reading('2026-09-01', 4, 5), reading('2026-09-05', 6, 7)] })
+      sore({
+        readings: [reading('2026-09-01', 4, 5), reading('2026-09-05', 6, 7)]
+      })
     );
-    expect(trend).toMatchObject({ size: 'up', pain: 'up', against: 'last time' });
+    expect(trend).toMatchObject({
+      size: 'up',
+      pain: 'up',
+      against: 'last time'
+    });
   });
 });
 
 describe('courseSentence', () => {
   const two = (a: [number, number], b: [number, number]) =>
-    sore({ readings: [reading('2026-09-03', ...a), reading('2026-09-04', ...b)] });
+    sore({
+      readings: [reading('2026-09-03', ...a), reading('2026-09-04', ...b)]
+    });
 
   it('asks for today when today has no reading', () => {
     expect(
-      courseSentence(sore({ readings: [reading('2026-09-01', 4, 5)] }), at('2026-09-03'))
+      courseSentence(
+        sore({ readings: [reading('2026-09-01', 4, 5)] }),
+        at('2026-09-03')
+      )
     ).toBe('Day 3. Nothing logged yet today.');
   });
 
@@ -133,7 +157,9 @@ describe('courseSentence', () => {
 
 describe('answerLine', () => {
   it('invites a first mark when there is no history at all', () => {
-    expect(answerLine([], at('2026-09-04')).headline).toBe('Nothing logged yet.');
+    expect(answerLine([], at('2026-09-04')).headline).toBe(
+      'Nothing logged yet.'
+    );
   });
 
   it('counts the clear days once everything has healed', () => {
@@ -163,10 +189,13 @@ describe('answerLine', () => {
 
   it('phrases every zone name as a place, not as a possessive', () => {
     // "the roof of mouth one" is what the obvious phrasing produces.
-    const awkward = sore({ zone: 'Roof of mouth', readings: [reading('2026-09-04', 5, 6)] });
+    const awkward = sore({
+      zone: 'Roof of mouth',
+      readings: [reading('2026-09-04', 5, 6)]
+    });
     const other = sore({ id: 'd', created_at: at('2026-09-03').toISOString() });
     expect(answerLine([awkward, other], at('2026-09-04')).note).toMatch(
-      /^Longest is on the roof of mouth — /
+      /^The roof of mouth has its first reading today\./
     );
   });
 
@@ -183,7 +212,95 @@ describe('answerLine', () => {
       readings: [reading('2026-09-04', 2, 2)]
     });
     const answer = answerLine([older, newer], at('2026-09-04'));
-    expect(answer.headline).toBe('2 sores open.');
-    expect(answer.note).toBe('Longest is on the left cheek — day 4. First reading logged.');
+    expect(answer.headline).toBe('2 sores open, all logged');
+    expect(answer.note).toBe(
+      'The left cheek has its first reading today. The tongue has its first reading today.'
+    );
+  });
+
+  it('says how many are still to log and puts the news first', () => {
+    const waiting = sore({
+      id: 'b',
+      zone: 'Left cheek',
+      created_at: at('2026-09-01').toISOString(),
+      readings: [reading('2026-09-03', 3.5, 5)]
+    });
+    const logged = sore({
+      id: 'c',
+      zone: 'Lower lip',
+      created_at: at('2026-09-02').toISOString(),
+      readings: [reading('2026-09-03', 4, 4), reading('2026-09-04', 3.5, 3)]
+    });
+    const answer = answerLine([waiting, logged], at('2026-09-04'));
+    expect(answer.headline).toBe('2 sores open, 1 to log');
+    expect(answer.note).toBe(
+      'The lower lip is narrower than yesterday (4.0 to 3.5 mm) and hurting less. ' +
+        'The left cheek has not been measured today.'
+    );
+    expect(answer.note).not.toMatch(/\u2014/);
+  });
+});
+
+describe('todayPhrase', () => {
+  it('names a wider, more painful day plainly', () => {
+    const worse = sore({
+      zone: 'Tongue',
+      readings: [reading('2026-09-01', 3, 4), reading('2026-09-04', 4, 6)]
+    });
+    expect(todayPhrase(worse, at('2026-09-04'))).toBe(
+      'The tongue is wider than last time (3.0 to 4.0 mm) and hurting more.'
+    );
+  });
+
+  it('says when nothing changed in width', () => {
+    const same = sore({
+      readings: [reading('2026-09-03', 3, 4), reading('2026-09-04', 3, 4)]
+    });
+    expect(todayPhrase(same, at('2026-09-04'))).toBe(
+      'The tongue is the same width as yesterday and hurting the same.'
+    );
+  });
+});
+
+describe('verdictOf', () => {
+  it('calls a narrower day healing and gives the figures', () => {
+    const lip = sore({
+      readings: [reading('2026-09-03', 4, 4), reading('2026-09-04', 3.5, 3)]
+    });
+    expect(verdictOf(lip, at('2026-09-04'))).toEqual({
+      word: 'Healing.',
+      detail:
+        'Narrower than yesterday and hurting less: 4.0 to 3.5 mm, pain 4 to 3.'
+    });
+  });
+
+  it('treats growth as ordinary in the first three days and worth watching after', () => {
+    const early = sore({
+      readings: [reading('2026-09-01', 3, 4), reading('2026-09-02', 4, 5)]
+    });
+    expect(verdictOf(early, at('2026-09-02')).word).toBe('Still growing.');
+    const late = sore({
+      readings: [reading('2026-09-04', 3, 4), reading('2026-09-05', 4, 5)]
+    });
+    expect(verdictOf(late, at('2026-09-05')).word).toBe('Worth watching.');
+  });
+
+  it('says plainly when today has no reading yet', () => {
+    const waiting = sore({ readings: [reading('2026-09-03', 3.5, 5)] });
+    expect(verdictOf(waiting, at('2026-09-04'))).toEqual({
+      word: 'Not logged today.',
+      detail: 'Last reading 3.5 mm, pain 5 of 10.'
+    });
+  });
+
+  it('closes a healed course with its length and widest day', () => {
+    const healed = sore({
+      healed_at: at('2026-09-09').toISOString(),
+      readings: [reading('2026-09-01', 3, 5), reading('2026-09-03', 4, 6)]
+    });
+    expect(verdictOf(healed, at('2026-09-20'))).toEqual({
+      word: 'Healed.',
+      detail: 'After 9 days, widest 4.0 mm.'
+    });
   });
 });

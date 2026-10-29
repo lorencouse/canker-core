@@ -60,7 +60,7 @@ export default function TriggerEvidence() {
   }[verdict];
 
   return (
-    <figure className="my-10 rounded-xl border border-border bg-card p-5 sm:p-6">
+    <figure className="my-10 rounded-none border border-border bg-card p-5 sm:p-6">
       <figcaption className="text-subhead">
         Test your own stress tally
       </figcaption>

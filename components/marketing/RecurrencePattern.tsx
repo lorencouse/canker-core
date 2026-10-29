@@ -53,7 +53,7 @@ export default function RecurrencePattern() {
   const worthAsking = count >= 6;
 
   return (
-    <figure className="my-10 rounded-xl border border-border bg-card p-5 sm:p-6">
+    <figure className="my-10 rounded-none border border-border bg-card p-5 sm:p-6">
       <figcaption className="text-subhead">Which pattern is yours?</figcaption>
       <p className="mt-1 text-sm text-muted-foreground">
         Two things you already know, without looking anything up.

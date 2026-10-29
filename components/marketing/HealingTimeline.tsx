@@ -61,7 +61,7 @@ export default function HealingTimeline() {
   const worthAsking = day > LONG_SORE_DAYS || mm > 10;
 
   return (
-    <figure className="my-10 rounded-xl border border-border bg-card p-5 sm:p-6">
+    <figure className="my-10 rounded-none border border-border bg-card p-5 sm:p-6">
       <figcaption className="text-subhead">
         Where yours probably lands
       </figcaption>

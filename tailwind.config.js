@@ -49,6 +49,8 @@ module.exports = {
         border: 'hsl(var(--border))',
         // Ink-weight separation. See the --rule note in styles/main.css.
         rule: 'hsl(var(--rule))',
+        // The edge of a control. See --control in styles/main.css.
+        control: 'hsl(var(--control))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
@@ -96,7 +98,7 @@ module.exports = {
         }
       },
       boxShadow: {
-        // The only two shadows in the product. Both are hard offsets in ink.
+        // Hard offsets in ink, kept for drawings; nothing on screen at rest uses them.
         drop: 'var(--drop)',
         'drop-sm': 'var(--drop-sm)'
       },

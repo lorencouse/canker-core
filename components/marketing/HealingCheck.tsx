@@ -42,7 +42,7 @@ export default function HealingCheck() {
           };
 
   return (
-    <figure className="my-10 rounded-xl border border-border bg-card p-5 sm:p-6">
+    <figure className="my-10 rounded-none border border-border bg-card p-5 sm:p-6">
       <figcaption className="text-subhead">Compare two measurements</figcaption>
       <p className="mt-1 text-sm text-muted-foreground">
         Widest point, in millimetres, two days apart.

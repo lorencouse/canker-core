@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, CheckCircle2, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
+import { Check, Plus, RotateCcw, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,22 +24,22 @@ import { notify, tap } from '@/utils/native';
 import { localTimeZone } from '@/utils/readings';
 
 /**
- * The editing actions for the map: add, edit, mark healed, delete, and the
+ * The map's editing actions: add, log today, mark healed, delete, and the
  * commit pair that closes an editing session.
  *
- * Add and Edit are two-step. Opening a session snapshots the sores; Done
- * writes them and Cancel restores the snapshot. That is what makes dragging
- * a sore around the map safe to experiment with.
+ * Add and Log today are two-step. Opening a session snapshots the sores;
+ * Done writes them and Cancel restores the snapshot. That is what makes
+ * dragging a sore around the map safe to experiment with.
  *
  * Healed and Delete write immediately. Healed is the normal end of a sore's
- * story and keeps its history; Delete is for mistakes, and asks first
- * because on a phone it sits one thumb-width from Edit.
+ * story and keeps its history; Delete is for mistakes, so it is the quietest
+ * of the three and asks first.
  *
- * Laid out as one full-width row, which on a phone lands directly above the
- * tab bar where the thumb already is, and on a desktop sits under the map at
- * its natural width.
+ * The session state lives in the sore context, so the pieces can sit in
+ * different places on the screen: the add button under the title, Cancel and
+ * Done under the map, the rest in the selected sore's detail.
  */
-export default function SoreActionBar() {
+function useMapActions() {
   const {
     sores,
     setSores,
@@ -51,9 +51,6 @@ export default function SoreActionBar() {
     setSnapshot
   } = useSoreContext();
   const [busy, setBusy] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-
-  const editing = mode === 'add' || mode === 'edit';
 
   const failed = (result: ActionResult) => {
     if (result.ok) return false;
@@ -115,120 +112,144 @@ export default function SoreActionBar() {
   };
 
   const remove = async () => {
-    if (!selectedSore) return;
+    if (!selectedSore) return false;
     setBusy(true);
     try {
       const result = await deleteSore(selectedSore.id);
-      if (failed(result)) return;
+      if (failed(result)) return false;
       setSores((prev) => prev.filter((s) => s.id !== selectedSore.id));
       setSelectedSore(null);
-      setConfirmingDelete(false);
       notify('warning');
+      return true;
     } finally {
       setBusy(false);
     }
   };
 
+  return {
+    busy,
+    mode,
+    selectedSore,
+    editing: mode === 'add' || mode === 'edit',
+    begin,
+    finish,
+    cancel,
+    setHealed,
+    remove
+  };
+}
+
+/** The screen's one primary action. Hidden while a session is open. */
+export function MarkSoreButton({ className }: { className?: string }) {
+  const { editing, begin } = useMapActions();
+  if (editing) return null;
   return (
-    <div className="flex items-center gap-2">
-      {editing ? (
+    <Button
+      type="button"
+      size="touch"
+      className={className}
+      onClick={() => begin('add')}
+    >
+      <Plus aria-hidden="true" />
+      Mark a new sore
+    </Button>
+  );
+}
+
+/**
+ * Cancel and Done, wherever the hand already is: under the map while a new
+ * sore has not been placed yet, and under the reading fields once a sore is
+ * being placed or logged.
+ */
+export function EditingBar({ place }: { place: 'map' | 'detail' }) {
+  const { editing, busy, mode, selectedSore, cancel, finish } = useMapActions();
+  if (!editing) return null;
+  if ((place === 'detail') !== Boolean(selectedSore)) return null;
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="touch"
+        onClick={cancel}
+        disabled={busy}
+      >
+        <X aria-hidden="true" />
+        Cancel
+      </Button>
+      <Button type="button" size="touch" onClick={finish} disabled={busy}>
+        <Check aria-hidden="true" />
+        {busy ? 'Saving…' : mode === 'add' ? 'Done' : 'Save'}
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * The selected sore's own actions. A grid, so it can never be wider than
+ * its column: four labelled buttons in one row once pushed a phone page
+ * out to 437px.
+ */
+export default function SoreActions() {
+  const { busy, editing, selectedSore, begin, setHealed, remove } =
+    useMapActions();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  if (!selectedSore || editing) return null;
+
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_auto] items-center gap-2">
+      {selectedSore.healed_at ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="touch"
+          className="col-span-2"
+          onClick={() => setHealed(null)}
+          disabled={busy}
+        >
+          <RotateCcw aria-hidden="true" />
+          Reopen
+        </Button>
+      ) : (
         <>
           <Button
             type="button"
             variant="outline"
             size="touch"
-            className="flex-1"
-            onClick={cancel}
-            disabled={busy}
+            onClick={() => begin('edit')}
           >
-            <X aria-hidden="true" />
-            Cancel
+            Log today
           </Button>
           <Button
             type="button"
+            variant="outline"
             size="touch"
-            className="flex-1"
-            onClick={finish}
+            onClick={() => setHealed(new Date().toISOString())}
             disabled={busy}
+            aria-label="Mark this sore healed"
           >
-            <Check aria-hidden="true" />
-            {busy ? 'Saving…' : 'Done'}
+            Healed
           </Button>
-        </>
-      ) : (
-        <>
-          <Button
-            type="button"
-            size="touch"
-            className="flex-1"
-            onClick={() => begin('add')}
-          >
-            <Plus aria-hidden="true" />
-            Add a sore
-          </Button>
-          {selectedSore && (
-            <>
-              {selectedSore.healed_at ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="touch"
-                  onClick={() => setHealed(null)}
-                  disabled={busy}
-                >
-                  <RotateCcw aria-hidden="true" />
-                  Reopen
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="touch"
-                    onClick={() => begin('edit')}
-                    aria-label="Edit this sore"
-                    className="px-3"
-                  >
-                    <Pencil aria-hidden="true" />
-                    Edit
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="touch"
-                    onClick={() => setHealed(new Date().toISOString())}
-                    disabled={busy}
-                    aria-label="Mark this sore healed"
-                    className="px-3"
-                  >
-                    <CheckCircle2 aria-hidden="true" />
-                    Healed
-                  </Button>
-                </>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                size="touch"
-                onClick={() => setConfirmingDelete(true)}
-                disabled={busy}
-                aria-label="Delete this sore"
-                className="px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash2 aria-hidden="true" />
-              </Button>
-            </>
-          )}
         </>
       )}
+      <Button
+        type="button"
+        variant="link"
+        className="h-12 px-2 text-base text-muted-foreground underline hover:text-foreground"
+        onClick={() => setConfirmingDelete(true)}
+        disabled={busy}
+      >
+        Delete
+      </Button>
 
       <Dialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Delete this sore?</DialogTitle>
             <DialogDescription>
-              Its readings go with it and it will not appear in your history.
-              If it has simply gone away, mark it healed instead.
+              Its readings go with it and it will not appear in your history. If
+              it has simply gone away, mark it healed instead.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
@@ -245,7 +266,9 @@ export default function SoreActionBar() {
               type="button"
               variant="destructive"
               size="touch"
-              onClick={remove}
+              onClick={async () => {
+                if (await remove()) setConfirmingDelete(false);
+              }}
               disabled={busy}
             >
               {busy ? 'Deleting…' : 'Delete'}

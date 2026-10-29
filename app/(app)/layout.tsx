@@ -45,8 +45,8 @@ function AppSkeleton() {
       aria-busy="true"
     >
       <div className="h-6 w-40 animate-pulse rounded-md bg-muted" />
-      <div className="h-64 w-full animate-pulse rounded-xl bg-muted" />
-      <div className="h-32 w-full animate-pulse rounded-xl bg-muted" />
+      <div className="h-64 w-full animate-pulse rounded-none bg-muted" />
+      <div className="h-32 w-full animate-pulse rounded-none bg-muted" />
     </div>
   );
 }

@@ -293,13 +293,13 @@ export default function MouthMap({ user }: { user: User }) {
     <div className="space-y-3">
       {/*
         The view switch. A segmented control rather than a row of links: the
-        three views are one property of one object, and the iOS/Android
-        idiom for that is a single enclosed track.
+        three views are one property of one object. Square, like every other
+        control here, with the chosen view in ink.
       */}
       <div
         role="tablist"
         aria-label="Part of the mouth"
-        className="flex gap-1 rounded-full bg-muted p-1"
+        className="grid grid-cols-3 border border-control bg-card"
       >
         {MOUTH_VIEWS.map((v) => {
           const count = visibleSores.filter((s) => s.view === v).length;
@@ -316,18 +316,14 @@ export default function MouthMap({ user }: { user: User }) {
               }}
               className={cn(
                 // 44px tall on touch so a mis-aimed thumb still lands.
-                'flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full text-sm font-medium transition-colors lg:h-9',
+                'flex h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap border-l border-control text-[15px] transition-colors first:border-l-0 lg:h-10',
                 view === v
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-foreground font-semibold text-background'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
               {VIEW_LABELS[v]}
-              {count > 0 && (
-                <span className="tabular rounded-full bg-secondary px-1.5 text-[11px] leading-4 text-secondary-foreground">
-                  {count}
-                </span>
-              )}
+              {count > 0 && <span className="tabular">{count}</span>}
             </button>
           );
         })}
@@ -383,15 +379,6 @@ export default function MouthMap({ user }: { user: User }) {
           </g>
         </svg>
 
-        {mode === 'add' && (
-          // Along the bottom edge rather than the top: the top-right corner
-          // is the zoom stack, and on a phone the top of the map is where
-          // the front teeth are.
-          <p className="pointer-events-none absolute inset-x-2 bottom-2 rounded-lg border border-border/60 bg-card/90 px-3 py-2 text-center text-xs text-foreground shadow-sm backdrop-blur">
-            Tap where the sore is. Switch tabs for cheeks or lips.
-          </p>
-        )}
-
         <MapControls
           onZoomIn={() => zoomCentre(1.25)}
           onZoomOut={() => zoomCentre(0.8)}
@@ -399,6 +386,14 @@ export default function MouthMap({ user }: { user: User }) {
           zoomed={camera.k > 1}
         />
       </div>
+
+      {mode === 'add' && (
+        // Under the drawing, not on it: a floating hint covered the floor
+        // of the mouth on a phone, which is exactly where people tap.
+        <p className="text-base font-semibold">
+          Tap where the sore is, or name the place.
+        </p>
+      )}
 
       {mode === 'add' && (
         // The pointer-free way in. Placing by name drops the sore at the
@@ -426,8 +421,8 @@ export default function MouthMap({ user }: { user: User }) {
         </Select>
       )}
 
-      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <p>Shown as in a mirror: your left is on the left.</p>
+      <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+        <p>As in a mirror: your left is on the left.</p>
         {/*
           Only offered once there is something to show. A toggle for an
           empty set is a question with no answer.

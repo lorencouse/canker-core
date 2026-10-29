@@ -50,7 +50,7 @@ function StageCard({ stage }: { stage: Stage }) {
 
 export default function StageDiagrams() {
   return (
-    <figure className="my-10 rounded-xl border border-border bg-card p-5 sm:p-6">
+    <figure className="my-10 rounded-none border border-border bg-card p-5 sm:p-6">
       <figcaption className="text-subhead">
         The five stages, drawn to one scale
       </figcaption>

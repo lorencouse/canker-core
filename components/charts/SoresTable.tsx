@@ -17,6 +17,7 @@ import CourseStrip from '@/components/sore/CourseStrip';
 import SoreSigil from '@/components/sore/SoreSigil';
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
+import { shortDate } from '@/utils/dates';
 import { dayNumberOf, latestReading } from '@/utils/readings';
 
 import SoreHistoryChart from './SoreHistoryChart';
@@ -34,8 +35,7 @@ import SoreHistoryChart from './SoreHistoryChart';
  * would put a back button between every comparison.
  */
 
-const dateOf = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString() : '—';
+const dateOf = (iso?: string | null) => (iso ? shortDate(new Date(iso)) : '—');
 
 function PainDot({ pain }: { pain: number }) {
   return (

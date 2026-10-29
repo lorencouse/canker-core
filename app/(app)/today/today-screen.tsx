@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 import DayLogForm from '@/components/today/DayLogForm';
 import SoreCheckInCard from '@/components/today/SoreCheckInCard';
@@ -11,9 +11,14 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import type { DayLog, Sore } from '@/types';
 import { answerLine } from '@/utils/course';
-import { saveDayLog, setSoreHealed, upsertSores } from '@/utils/actions/soreActions';
+import {
+  saveDayLog,
+  setSoreHealed,
+  upsertSores
+} from '@/utils/actions/soreActions';
+import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
-import { dayKey, hasReadingOn, localTimeZone } from '@/utils/readings';
+import { dayKey, localTimeZone } from '@/utils/readings';
 
 /**
  * The daily check-in.
@@ -49,6 +54,7 @@ export default function TodayScreen({
   );
   const [logDirty, setLogDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   /*
    * The app's one deliberate flourish. Save used to produce a toast and
    * nothing else, which said "we heard you" but not what changed; this pops
@@ -59,18 +65,34 @@ export default function TodayScreen({
   const [justSaved, setJustSaved] = useState(false);
 
   const open = useMemo(() => sores.filter((s) => !s.healed_at), [sores]);
-  const unlogged = open.filter((s) => !hasReadingOn(s, new Date())).length;
   const dirty = changed.size > 0 || logDirty;
 
   const updateSore = (next: Sore) => {
     setSores((prev) => prev.map((s) => (s.id === next.id ? next : s)));
     setChanged((prev) => new Set(prev).add(next.id));
+    setSaved(false);
   };
 
   const updateLog = (next: DayLog) => {
     setLog(next);
     setLogDirty(true);
+    setSaved(false);
   };
+
+  /** "Left cheek, 2 triggers, 2 treatments": what Save is about to write. */
+  const pendingSummary =
+    [
+      ...sores.filter((s) => changed.has(s.id)).map((s) => s.zone),
+      ...(logDirty
+        ? [
+            count(log.triggers.length, 'trigger'),
+            count(log.treatments.length, 'treatment'),
+            log.note ? 'a note' : null
+          ]
+        : [])
+    ]
+      .filter(Boolean)
+      .join(', ') || 'Today’s log';
 
   const heal = async (sore: Sore) => {
     const healedAt = new Date().toISOString();
@@ -79,7 +101,9 @@ export default function TodayScreen({
       toast({ variant: 'destructive', title: result.error });
       return;
     }
-    setSores((prev) => prev.map((s) => (s.id === sore.id ? { ...s, healed_at: healedAt } : s)));
+    setSores((prev) =>
+      prev.map((s) => (s.id === sore.id ? { ...s, healed_at: healedAt } : s))
+    );
     notify('success');
   };
 
@@ -101,6 +125,7 @@ export default function TodayScreen({
       }
       setChanged(new Set());
       setLogDirty(false);
+      setSaved(true);
       notify('success');
       setJustSaved(true);
       setTimeout(() => setJustSaved(false), 400);
@@ -119,104 +144,132 @@ export default function TodayScreen({
 
   /*
    * Recomputed from local state rather than from the server's copy, so the
-   * headline answers the question again the moment a slider moves — before
-   * anything is saved. It is the fastest feedback in the app.
+   * headline answers the question again the moment a reading changes —
+   * before anything is saved. It is the fastest feedback in the app.
    */
   const answer = useMemo(() => answerLine(sores), [sores]);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-4 lg:px-6 lg:py-8">
+    <div
+      className={cn(
+        'mx-auto max-w-6xl px-4 py-5 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start lg:gap-x-8 lg:px-6 lg:py-9',
+        // Room under the last field for the Save bar that floats over it.
+        dirty && 'pb-28 lg:pb-9'
+      )}
+    >
       {/*
-        The screen leads with the answer, not with the date and not with the
-        word "Today" — the top bar already says that. Whether a sore is
-        healing is the question someone opens this app to ask, so it is the
-        one sentence set in display type.
+        The screen leads with the answer, not with the word "Today" — the
+        top bar already says that. The headline is the to-do, the line under
+        it is the news, in full ink because it is the point of the screen.
       */}
-      <header className="mb-5 lg:mb-8">
-        <p className="tabular text-sm text-muted-foreground">{dateLine}</p>
-        <h1 className="mt-1.5 text-title">{answer.headline}</h1>
-        {answer.note && (
-          <p className="prose-measure mt-2 text-muted-foreground">
-            {answer.note}
-          </p>
-        )}
+      <header className="lg:col-span-2">
+        <time dateTime={today} className="block text-sm text-muted-foreground">
+          {dateLine}
+        </time>
+        <h1 className="mt-0.5 text-2xl leading-tight lg:text-3xl">
+          {answer.headline}
+        </h1>
+        {answer.note && <p className="prose-measure mt-1.5">{answer.note}</p>}
       </header>
 
-      <div className="space-y-6">
+      <div className="mt-5 grid grid-cols-1 gap-4 lg:mt-6">
         {/*
-          With nothing open there is no list to head, and the answer line has
-          already said so — a section called "Open sores" containing a card
-          that repeats "nothing open" is the same sentence three times. What
-          is left is the one action, and which verb it wants depends on
-          whether this person has ever logged anything: a first mark and a
-          next mark are different invitations, and the second should not
-          read as a nag on a day someone has earned.
+          With nothing open there is no list, and the answer line has already
+          said so. What is left is the one action, and which verb it wants
+          depends on whether this person has ever logged anything: a first
+          mark and a next mark are different invitations.
         */}
         {open.length === 0 ? (
-          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-            <Button asChild variant="outline" size="touch" className="w-full sm:w-auto">
-              <Link href="/my-sores">
-                {sores.length === 0 ? 'Mark your first sore' : 'Mark a new sore'}
-              </Link>
-            </Button>
-            <p className="prose-measure text-sm text-muted-foreground">
+          <div className="surface-worksheet flex flex-col items-start gap-3 p-4 sm:p-5">
+            <p className="prose-measure">
               {sores.length === 0
                 ? 'The map is where a sore starts. It takes about fifteen seconds.'
-                : 'Logging what you ate and how you slept is still worth doing — it is how patterns show up on the days between sores.'}
+                : 'Logging what you ate and how you slept is still worth doing. It is how patterns show up on the days between sores.'}
             </p>
+            <Button
+              asChild
+              variant="outline"
+              size="touch"
+              className="w-full sm:w-auto"
+            >
+              <Link href="/my-sores?add">
+                {sores.length === 0
+                  ? 'Mark your first sore'
+                  : 'Mark a new sore'}
+              </Link>
+            </Button>
           </div>
         ) : (
-          <section className="space-y-3" aria-labelledby="open-sores">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 id="open-sores" className="text-subhead">
-                Open sores
-              </h2>
-              <p className="tabular text-sm text-muted-foreground">
-                {unlogged === 0
-                  ? 'All logged'
-                  : `${unlogged} of ${open.length} left`}
-              </p>
-            </div>
-            {open.map((sore) => (
-              <SoreCheckInCard
-                key={sore.id}
-                sore={sore}
-                onChange={updateSore}
-                onHeal={() => heal(sore)}
-                justSaved={justSaved}
-              />
-            ))}
-          </section>
+          open.map((sore) => (
+            <SoreCheckInCard
+              key={sore.id}
+              sore={sore}
+              onChange={updateSore}
+              onHeal={() => heal(sore)}
+              justSaved={justSaved}
+            />
+          ))
         )}
-
-        <section className="space-y-3" aria-labelledby="day-log">
-          <h2 id="day-log" className="text-subhead">
-            What else happened today?
-          </h2>
-          <DayLogForm log={log} onChange={updateLog} />
-        </section>
       </div>
 
       {/*
-        Sticky above the tab bar on a phone so Save is under the thumb no
-        matter how many cards are above it; inline on a desktop where the
-        whole screen fits.
+        A rail beside the sores on a desktop, sticky so Save stays in reach
+        however long the sore column is; a plain section under them on a
+        phone.
       */}
-      <div className="sticky bottom-[calc(var(--tab-bar-h)+var(--safe-bottom)+0.75rem)] mt-6 lg:static">
-        <Button
-          type="button"
-          size="touch"
-          className="w-full shadow-drop lg:w-auto lg:shadow-drop-sm"
-          disabled={!dirty || saving}
-          onClick={() => {
-            tap();
-            save();
-          }}
+      <section
+        aria-labelledby="day-log"
+        className="mt-8 lg:surface-worksheet lg:sticky lg:top-[calc(var(--app-bar-h)+var(--safe-top)+1.5rem)] lg:mt-6 lg:p-5"
+      >
+        <h2 id="day-log" className="text-xl">
+          What else happened today?
+        </h2>
+        <div className="mt-3.5">
+          <DayLogForm log={log} onChange={updateLog} />
+        </div>
+
+        {/*
+          On a phone Save floats above the tab bar, opaque, but only while
+          there is something to save: a disabled bar floating over the
+          cards let them show through its label. It names what it will save,
+          so the press has no surprise in it. Inside the rail on a desktop.
+        */}
+        <div
+          className={cn(
+            'mt-5 flex items-center gap-3',
+            dirty &&
+              'fixed inset-x-0 bottom-[calc(var(--tab-bar-h)+var(--safe-bottom))] z-30 mt-0 border-t border-border bg-background px-4 py-2.5 lg:static lg:z-auto lg:mt-5 lg:border-0 lg:bg-transparent lg:p-0'
+          )}
         >
-          {saving ? <Loader2 className="animate-spin" /> : <Check aria-hidden="true" />}
-          {saving ? 'Saving…' : dirty ? 'Save today’s check-in' : 'Nothing to save yet'}
-        </Button>
-      </div>
+          <p
+            aria-live="polite"
+            className="min-w-0 flex-1 text-sm text-muted-foreground"
+          >
+            {dirty ? pendingSummary : saved ? 'Saved.' : 'Nothing to save yet.'}
+          </p>
+          {dirty && (
+            <Button
+              type="button"
+              size="touch"
+              className="shrink-0"
+              disabled={saving}
+              onClick={() => {
+                tap();
+                save();
+              }}
+            >
+              {saving && (
+                <Loader2 className="animate-spin" aria-hidden="true" />
+              )}
+              {saving ? 'Saving' : 'Save today'}
+            </Button>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
+
+/** "2 triggers", or nothing for none. */
+const count = (n: number, noun: string) =>
+  n ? `${n} ${noun}${n === 1 ? '' : 's'}` : null;
