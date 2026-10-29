@@ -55,7 +55,7 @@ export default function AboutPage() {
           <p>
             Canker Core has no opinion about treatments and does not diagnose
             anything. A mouth ulcer that has not started shrinking after two
-            weeks, keeps coming back, or come with fever or weight loss are
+            weeks, keeps coming back, or comes with fever or weight loss is
             worth taking to a doctor or dentist. This is a record to bring with
             you, not a substitute for that visit.
           </p>

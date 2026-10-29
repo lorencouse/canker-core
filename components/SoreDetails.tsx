@@ -148,7 +148,7 @@ export function SoreDetail() {
         sore's real size, which is the point of showing it at all.
       */}
       <div className="mt-4 flex items-center gap-3 bg-secondary p-3">
-        <span className="flex size-12 shrink-0 items-center justify-center">
+        <span className="flex min-h-12 min-w-12 shrink-0 items-center justify-center">
           <span
             className="block rounded-full"
             style={{

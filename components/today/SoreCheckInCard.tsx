@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import CourseBars from '@/components/sore/CourseBars';
+import CourseBars, { courseSlots } from '@/components/sore/CourseBars';
 import LongSoreNote from '@/components/sore/LongSoreNote';
 import { PainField, WidthField } from '@/components/sore/ReadingFields';
 import SoreSigil from '@/components/sore/SoreSigil';
@@ -112,7 +112,7 @@ export default function SoreCheckInCard({
         >
           <span>Day 1</span>
           <span className="min-w-0 truncate">{courseCaption(sore)}</span>
-          <span>Day 14</span>
+          <span>Day {courseSlots(sore, courseOf(sore))}</span>
         </div>
         <CourseBars sore={sore} animateLast={justSaved} className="mt-1.5" />
       </div>

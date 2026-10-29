@@ -28,6 +28,11 @@ function axisMax(days: CourseDay[], base: number) {
   return Math.max(base, Math.ceil(widest / 2) * 2);
 }
 
+/** Slots the strip draws: a fortnight for an open sore, or more once it runs past one. */
+export function courseSlots(sore: Sore, days: CourseDay[]): number {
+  return sore.healed_at ? days.length : Math.max(FORTNIGHT, days.length);
+}
+
 /** The words a screen reader gets instead of the bars. */
 export function describeCourse(days: CourseDay[]): string {
   const logged = days.filter((d) => d.size !== null);
@@ -66,7 +71,7 @@ export default function CourseBars({
 }) {
   const days = courseOf(sore, now);
   const open = !sore.healed_at;
-  const slots = open ? Math.max(FORTNIGHT, days.length) : days.length;
+  const slots = courseSlots(sore, days);
   const max = axisMax(days, base);
   const todayIndex = open ? days.length - 1 : -1;
   const label = describeCourse(days);
