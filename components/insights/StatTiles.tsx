@@ -30,7 +30,12 @@ export default function StatTiles({ sores }: { sores: Sore[] }) {
     {
       label: 'Typical time to heal',
       value: median === null ? '—' : median,
-      hint: median === null ? 'none healed yet' : median === 1 ? 'day, median' : 'days, median'
+      hint:
+        median === null
+          ? 'none healed yet'
+          : median === 1
+            ? 'day, median'
+            : 'days, median'
     },
     {
       label: 'Worst pain, 30 days',

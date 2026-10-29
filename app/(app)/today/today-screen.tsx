@@ -11,7 +11,11 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import type { DayLog, Sore } from '@/types';
 import { answerLine } from '@/utils/course';
-import { saveDayLog, setSoreHealed, upsertSores } from '@/utils/actions/soreActions';
+import {
+  saveDayLog,
+  setSoreHealed,
+  upsertSores
+} from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
 import { dayKey, localTimeZone } from '@/utils/readings';
@@ -76,18 +80,19 @@ export default function TodayScreen({
   };
 
   /** "Left cheek, 2 triggers, 2 treatments": what Save is about to write. */
-  const pendingSummary = [
-    ...sores.filter((s) => changed.has(s.id)).map((s) => s.zone),
-    ...(logDirty
-      ? [
-          count(log.triggers.length, 'trigger'),
-          count(log.treatments.length, 'treatment'),
-          log.note ? 'a note' : null
-        ]
-      : [])
-  ]
-    .filter(Boolean)
-    .join(', ') || 'Today’s log';
+  const pendingSummary =
+    [
+      ...sores.filter((s) => changed.has(s.id)).map((s) => s.zone),
+      ...(logDirty
+        ? [
+            count(log.triggers.length, 'trigger'),
+            count(log.treatments.length, 'treatment'),
+            log.note ? 'a note' : null
+          ]
+        : [])
+    ]
+      .filter(Boolean)
+      .join(', ') || 'Today’s log';
 
   const heal = async (sore: Sore) => {
     const healedAt = new Date().toISOString();
@@ -96,7 +101,9 @@ export default function TodayScreen({
       toast({ variant: 'destructive', title: result.error });
       return;
     }
-    setSores((prev) => prev.map((s) => (s.id === sore.id ? { ...s, healed_at: healedAt } : s)));
+    setSores((prev) =>
+      prev.map((s) => (s.id === sore.id ? { ...s, healed_at: healedAt } : s))
+    );
     notify('success');
   };
 
@@ -179,9 +186,16 @@ export default function TodayScreen({
                 ? 'The map is where a sore starts. It takes about fifteen seconds.'
                 : 'Logging what you ate and how you slept is still worth doing. It is how patterns show up on the days between sores.'}
             </p>
-            <Button asChild variant="outline" size="touch" className="w-full sm:w-auto">
+            <Button
+              asChild
+              variant="outline"
+              size="touch"
+              className="w-full sm:w-auto"
+            >
               <Link href="/my-sores?add">
-                {sores.length === 0 ? 'Mark your first sore' : 'Mark a new sore'}
+                {sores.length === 0
+                  ? 'Mark your first sore'
+                  : 'Mark a new sore'}
               </Link>
             </Button>
           </div>
@@ -227,7 +241,10 @@ export default function TodayScreen({
               'fixed inset-x-0 bottom-[calc(var(--tab-bar-h)+var(--safe-bottom))] z-30 mt-0 border-t border-border bg-background px-4 py-2.5 lg:static lg:z-auto lg:mt-5 lg:border-0 lg:bg-transparent lg:p-0'
           )}
         >
-          <p aria-live="polite" className="min-w-0 flex-1 text-sm text-muted-foreground">
+          <p
+            aria-live="polite"
+            className="min-w-0 flex-1 text-sm text-muted-foreground"
+          >
             {dirty ? pendingSummary : saved ? 'Saved.' : 'Nothing to save yet.'}
           </p>
           {dirty && (
@@ -241,7 +258,9 @@ export default function TodayScreen({
                 save();
               }}
             >
-              {saving && <Loader2 className="animate-spin" aria-hidden="true" />}
+              {saving && (
+                <Loader2 className="animate-spin" aria-hidden="true" />
+              )}
               {saving ? 'Saving' : 'Save today'}
             </Button>
           )}
@@ -252,4 +271,5 @@ export default function TodayScreen({
 }
 
 /** "2 triggers", or nothing for none. */
-const count = (n: number, noun: string) => (n ? `${n} ${noun}${n === 1 ? '' : 's'}` : null);
+const count = (n: number, noun: string) =>
+  n ? `${n} ${noun}${n === 1 ? '' : 's'}` : null;

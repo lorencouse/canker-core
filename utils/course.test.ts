@@ -49,7 +49,9 @@ describe('courseOf', () => {
 
   it('leaves days with no reading null rather than dropping them', () => {
     const days = courseOf(
-      sore({ readings: [reading('2026-09-01', 4, 5), reading('2026-09-03', 3, 2)] }),
+      sore({
+        readings: [reading('2026-09-01', 4, 5), reading('2026-09-03', 3, 2)]
+      }),
       at('2026-09-03')
     );
     expect(days.map((d) => d.pain)).toEqual([5, null, 2]);
@@ -79,31 +81,46 @@ describe('courseOf', () => {
 
 describe('trendOf', () => {
   it('is null on a single reading, because there is nothing to compare', () => {
-    expect(trendOf(sore({ readings: [reading('2026-09-01', 4, 5)] }))).toBeNull();
+    expect(
+      trendOf(sore({ readings: [reading('2026-09-01', 4, 5)] }))
+    ).toBeNull();
   });
 
   it('compares the latest reading with the one before it', () => {
     const trend = trendOf(
-      sore({ readings: [reading('2026-09-01', 4, 5), reading('2026-09-02', 3, 5)] })
+      sore({
+        readings: [reading('2026-09-01', 4, 5), reading('2026-09-02', 3, 5)]
+      })
     );
     expect(trend).toEqual({ size: 'down', pain: 'same', against: 'yesterday' });
   });
 
   it('says "last time" when the previous reading was not yesterday', () => {
     const trend = trendOf(
-      sore({ readings: [reading('2026-09-01', 4, 5), reading('2026-09-05', 6, 7)] })
+      sore({
+        readings: [reading('2026-09-01', 4, 5), reading('2026-09-05', 6, 7)]
+      })
     );
-    expect(trend).toMatchObject({ size: 'up', pain: 'up', against: 'last time' });
+    expect(trend).toMatchObject({
+      size: 'up',
+      pain: 'up',
+      against: 'last time'
+    });
   });
 });
 
 describe('courseSentence', () => {
   const two = (a: [number, number], b: [number, number]) =>
-    sore({ readings: [reading('2026-09-03', ...a), reading('2026-09-04', ...b)] });
+    sore({
+      readings: [reading('2026-09-03', ...a), reading('2026-09-04', ...b)]
+    });
 
   it('asks for today when today has no reading', () => {
     expect(
-      courseSentence(sore({ readings: [reading('2026-09-01', 4, 5)] }), at('2026-09-03'))
+      courseSentence(
+        sore({ readings: [reading('2026-09-01', 4, 5)] }),
+        at('2026-09-03')
+      )
     ).toBe('Day 3. Nothing logged yet today.');
   });
 
@@ -140,7 +157,9 @@ describe('courseSentence', () => {
 
 describe('answerLine', () => {
   it('invites a first mark when there is no history at all', () => {
-    expect(answerLine([], at('2026-09-04')).headline).toBe('Nothing logged yet.');
+    expect(answerLine([], at('2026-09-04')).headline).toBe(
+      'Nothing logged yet.'
+    );
   });
 
   it('counts the clear days once everything has healed', () => {
@@ -170,7 +189,10 @@ describe('answerLine', () => {
 
   it('phrases every zone name as a place, not as a possessive', () => {
     // "the roof of mouth one" is what the obvious phrasing produces.
-    const awkward = sore({ zone: 'Roof of mouth', readings: [reading('2026-09-04', 5, 6)] });
+    const awkward = sore({
+      zone: 'Roof of mouth',
+      readings: [reading('2026-09-04', 5, 6)]
+    });
     const other = sore({ id: 'd', created_at: at('2026-09-03').toISOString() });
     expect(answerLine([awkward, other], at('2026-09-04')).note).toMatch(
       /^The roof of mouth has its first reading today\./
@@ -247,7 +269,8 @@ describe('verdictOf', () => {
     });
     expect(verdictOf(lip, at('2026-09-04'))).toEqual({
       word: 'Healing.',
-      detail: 'Narrower than yesterday and hurting less: 4.0 to 3.5 mm, pain 4 to 3.'
+      detail:
+        'Narrower than yesterday and hurting less: 4.0 to 3.5 mm, pain 4 to 3.'
     });
   });
 

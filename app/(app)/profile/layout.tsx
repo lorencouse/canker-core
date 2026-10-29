@@ -35,7 +35,8 @@ export default async function SettingsLayout({
       <header className="sr-only lg:not-sr-only lg:mb-8">
         <h1 className="text-title">Settings</h1>
         <p className="prose-measure mt-2 text-muted-foreground">
-          Your details, your password and data, how the app looks, and reminders.
+          Your details, your password and data, how the app looks, and
+          reminders.
         </p>
       </header>
 

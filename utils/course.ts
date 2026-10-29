@@ -23,7 +23,9 @@ const localMidnight = (d: Date) =>
 
 /** Whole calendar days between two instants. Rounded, so DST cannot shift it. */
 const daysBetween = (from: Date, to: Date) =>
-  Math.round((localMidnight(to).getTime() - localMidnight(from).getTime()) / DAY_MS);
+  Math.round(
+    (localMidnight(to).getTime() - localMidnight(from).getTime()) / DAY_MS
+  );
 
 /** One day of a sore's life. `pain` is null on a day with no reading. */
 export type CourseDay = {
@@ -128,11 +130,15 @@ export function courseSentence(sore: Sore, now: Date = new Date()): string {
   if (!trend) return `Day ${day}. First reading logged.`;
 
   const size = { down: 'narrower', up: 'wider', same: null }[trend.size];
-  const pain = { down: 'hurting less', up: 'hurting more', same: null }[trend.pain];
+  const pain = { down: 'hurting less', up: 'hurting more', same: null }[
+    trend.pain
+  ];
 
   if (!size && !pain) return `Day ${day}. No change since ${trend.against}.`;
-  if (size && pain) return `Day ${day}. ${cap(size)} than ${trend.against}, and ${pain}.`;
-  if (size) return `Day ${day}. ${cap(size)} than ${trend.against}, hurting the same.`;
+  if (size && pain)
+    return `Day ${day}. ${cap(size)} than ${trend.against}, and ${pain}.`;
+  if (size)
+    return `Day ${day}. ${cap(size)} than ${trend.against}, hurting the same.`;
   return `Day ${day}. ${cap(pain!)} than ${trend.against}, the same width.`;
 }
 
@@ -229,7 +235,8 @@ const mm = (n: number) => n.toFixed(1);
  * (4.0 to 3.5 mm) and hurting less."
  */
 export function todayPhrase(sore: Sore, now: Date = new Date()): string {
-  if (!loggedToday(sore, now)) return `The ${place(sore)} has not been measured today.`;
+  if (!loggedToday(sore, now))
+    return `The ${place(sore)} has not been measured today.`;
   const trend = trendOf(sore);
   if (!trend) return `The ${place(sore)} has its first reading today.`;
 
@@ -242,9 +249,11 @@ export function todayPhrase(sore: Sore, now: Date = new Date()): string {
     up: `wider than ${trend.against} ${change}`,
     same: `the same width as ${trend.against}`
   }[trend.size];
-  const pain = { down: 'hurting less', up: 'hurting more', same: 'hurting the same' }[
-    trend.pain
-  ];
+  const pain = {
+    down: 'hurting less',
+    up: 'hurting more',
+    same: 'hurting the same'
+  }[trend.pain];
   return `The ${place(sore)} is ${width} and ${pain}.`;
 }
 
@@ -269,13 +278,19 @@ export function verdictOf(sore: Sore, now: Date = new Date()): Verdict {
   const last = readings[readings.length - 1];
 
   if (sore.healed_at) {
-    const widest = readings.length ? Math.max(...readings.map((r) => r.size)) : null;
+    const widest = readings.length
+      ? Math.max(...readings.map((r) => r.size))
+      : null;
     return {
       word: 'Healed.',
       detail: `After ${day} day${day === 1 ? '' : 's'}${widest ? `, widest ${mm(widest)} mm` : ''}.`
     };
   }
-  if (!last) return { word: 'No readings yet.', detail: 'Log today to start its course.' };
+  if (!last)
+    return {
+      word: 'No readings yet.',
+      detail: 'Log today to start its course.'
+    };
   if (!loggedToday(sore, now)) {
     return {
       word: 'Not logged today.',
@@ -285,7 +300,10 @@ export function verdictOf(sore: Sore, now: Date = new Date()): Verdict {
 
   const trend = trendOf(sore);
   if (!trend) {
-    return { word: 'First reading.', detail: `${mm(last.size)} mm, pain ${last.pain} of 10.` };
+    return {
+      word: 'First reading.',
+      detail: `${mm(last.size)} mm, pain ${last.pain} of 10.`
+    };
   }
 
   const prev = readings[readings.length - 2];
@@ -295,9 +313,11 @@ export function verdictOf(sore: Sore, now: Date = new Date()): Verdict {
     up: `wider than ${trend.against}`,
     same: `the same width as ${trend.against}`
   }[trend.size];
-  const pain = { down: 'hurting less', up: 'hurting more', same: 'hurting the same' }[
-    trend.pain
-  ];
+  const pain = {
+    down: 'hurting less',
+    up: 'hurting more',
+    same: 'hurting the same'
+  }[trend.pain];
   const detail = `${cap(width)} and ${pain}: ${figures}.`;
 
   if (trend.size === 'down') return { word: 'Healing.', detail };

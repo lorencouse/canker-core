@@ -100,8 +100,8 @@ What changed in `styles/main.css`:
   cast no shadow at rest. Pressing still nudges a button down a pixel.
 - **Square corners hold everywhere.** `rounded-xl` is gone from the product;
   `--radius` is 0 and chips are the only round controls.
-- **Shadows** stay only on what genuinely hovers: dialogs, menus, the bottom
-  sheet, a chart tooltip.
+- **Shadows** stay only on what genuinely hovers: dialogs, menus, a chart
+  tooltip.
 
 What keeps Chalk's ink:
 

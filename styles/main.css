@@ -474,7 +474,7 @@
    * box worksheets in 2px of ink on a hard offset; next to the pain data it
    * was the loudest thing on the screen, so the offset went back to the
    * drawings and panels sit flat. Shadows remain for what genuinely hovers:
-   * a dialog, a menu, the bottom sheet, a chart tooltip.
+   * a dialog, a menu, a chart tooltip.
    */
   .surface-instrument {
     @apply border-t-2 border-rule bg-transparent pt-3;
