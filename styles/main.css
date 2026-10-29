@@ -56,9 +56,15 @@
     --rule-w: 2px;
 
     /*
-     * Elevation is a hard offset in ink, never a soft grey blur. A blur
-     * says "floating"; an offset says "printed", which is the right idea
-     * for a record you keep.
+     * The edge of a control: buttons, steppers, the pain keys. Dark enough
+     * to clear 3:1 against the ground, so a control is findable by its
+     * outline alone, and quieter than an ink rule.
+     */
+    --control: 212 14% 55%;
+
+    /*
+     * The hard ink offset belongs to the drawings now (the mascot, the
+     * diagrams), not to anything on screen at rest. See ART-DIRECTION.md.
      */
     --drop: 5px 5px 0 hsl(var(--rule));
     --drop-sm: 3px 3px 0 hsl(var(--rule));
@@ -146,6 +152,7 @@
      * carries it, not the shadow.
      */
     --rule: 210 20% 82%;
+    --control: 212 14% 44%;
     --drop: none;
     --drop-sm: none;
 
@@ -466,27 +473,28 @@
    *               single ink rule across the top and nothing else, so
    *               numbers sit in the page rather than float in a box.
    *               Nothing on an instrument is interactive.
-   *   worksheet   something you fill in — sliders, chips, forms. Boxed in
-   *               a two-pixel ink rule and lifted on a hard offset, so the
-   *               thing you handle is the thing that looks handled.
+   *   worksheet   something you fill in — sliders, chips, forms. A card
+   *               fill on the ground with a hairline edge: the step in tone
+   *               says "this is a thing", the hairline keeps it on a white
+   *               ground.
    *   canvas      the mouth map: a worksheet whose content is a drawing, so
    *               it clips its content instead of padding it.
    *
-   * The offset on a worksheet is the one exception to the old no-shadow
-   * rule, and it is not really a shadow: it is a hard ink offset with no
-   * blur, which reads as printed rather than floating. Soft shadows remain
-   * reserved for things that genuinely hover — the bottom sheet, the
-   * sticky Save button, a chart tooltip.
+   * Nothing at rest casts a shadow or wears an ink outline. Chalk used to
+   * box worksheets in 2px of ink on a hard offset; next to the pain data it
+   * was the loudest thing on the screen, so the offset went back to the
+   * drawings and panels sit flat. Shadows remain for what genuinely hovers:
+   * a dialog, a menu, the bottom sheet, a chart tooltip.
    */
   .surface-instrument {
     @apply border-t-2 border-rule bg-transparent pt-3;
   }
 
   .surface-worksheet {
-    @apply border-2 border-rule bg-card shadow-drop;
+    @apply border border-border bg-card;
   }
 
   .surface-canvas {
-    @apply relative overflow-hidden border-2 border-rule bg-card shadow-drop;
+    @apply relative overflow-hidden border border-border bg-card;
   }
 }

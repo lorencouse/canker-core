@@ -68,7 +68,7 @@ export default function GumToothCheck() {
   const wisdom = along === 'back';
 
   return (
-    <figure className="my-10 rounded-xl border border-border bg-card p-5 sm:p-6">
+    <figure className="my-10 rounded-none border border-border bg-card p-5 sm:p-6">
       <figcaption className="text-subhead">
         Which tooth is worth a fingernail?
       </figcaption>

@@ -163,7 +163,7 @@ export function SoreReadings() {
         which is the point of showing it at all.
       */}
       <div className="flex w-20 shrink-0 flex-col items-center gap-1.5">
-        <div className="flex size-20 items-center justify-center rounded-xl border border-border bg-muted/40">
+        <div className="flex size-20 items-center justify-center rounded-none border border-border bg-muted/40">
           <span
             className="rounded-full ring-1 ring-foreground/20"
             style={{

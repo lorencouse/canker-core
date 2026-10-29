@@ -63,7 +63,7 @@ export default function SeverityLadder({
              * out of slabs.
              */
             className={cn(
-              'h-12 min-w-0 flex-1 border-2 border-rule bg-card font-display',
+              'h-12 min-w-0 flex-1 border border-control bg-card font-display',
               'text-sm font-semibold tabular text-muted-foreground',
               'transition-colors focus-visible:outline-none focus-visible:ring-2',
               'focus-visible:ring-ring focus-visible:ring-offset-2',

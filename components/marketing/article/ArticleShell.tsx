@@ -102,7 +102,7 @@ export function ArticleFooter() {
         dentist or doctor.
       </p>
 
-      <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-border bg-card p-6 sm:flex-row sm:items-center">
+      <div className="flex flex-col items-start justify-between gap-4 rounded-none border border-border bg-card p-6 sm:flex-row sm:items-center">
         <div>
           <h2 className="text-subhead">Find out instead of guessing</h2>
           <p className="mt-1 text-muted-foreground">

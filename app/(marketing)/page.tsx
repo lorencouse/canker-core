@@ -65,7 +65,7 @@ export default function HomePage() {
       </section>
 
       <section className="container py-8 sm:py-12">
-        <div className="rounded-xl border border-border bg-card p-5 sm:p-8">
+        <div className="rounded-none border border-border bg-card p-5 sm:p-8">
           <h2 className="text-section">One scale, used everywhere</h2>
           <p className="prose-measure mt-2 text-muted-foreground">
             Pain is the only thing in Canker Core that gets a colour. The same
@@ -97,7 +97,7 @@ export default function HomePage() {
       </section>
 
       <section className="container pb-8">
-        <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-border bg-card p-6 sm:flex-row sm:items-center sm:p-8">
+        <div className="flex flex-col items-start justify-between gap-6 rounded-none border border-border bg-card p-6 sm:flex-row sm:items-center sm:p-8">
           <div>
             <h2 className="text-section">Start with the one you have now</h2>
             <p className="prose-measure mt-2 text-muted-foreground">

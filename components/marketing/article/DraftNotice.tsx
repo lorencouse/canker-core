@@ -35,7 +35,7 @@ export default function DraftNotice({
   note?: string;
 }) {
   return (
-    <aside className="mb-10 rounded-xl border-2 border-dashed border-border bg-muted/40 p-5">
+    <aside className="mb-10 rounded-none border-2 border-dashed border-border bg-muted/40 p-5">
       <p className="text-sm font-semibold uppercase tracking-wide text-foreground">
         Draft — not published
       </p>

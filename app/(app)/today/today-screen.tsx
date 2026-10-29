@@ -213,7 +213,7 @@ export default function TodayScreen({
         <Button
           type="button"
           size="touch"
-          className="w-full shadow-drop lg:w-auto lg:shadow-drop-sm"
+          className="w-full lg:w-auto"
           disabled={!dirty || saving}
           onClick={() => {
             tap();
