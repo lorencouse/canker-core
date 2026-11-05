@@ -7,7 +7,8 @@ import {
   streakHeadline,
   todayMood,
   triggerFreeStreak,
-  weekDots
+  weekDots,
+  withSavedLog
 } from './momentum';
 
 // Local-time constructors so the tests hold in any timezone.
@@ -135,5 +136,20 @@ describe('streakHeadline', () => {
     expect(streakHeadline(10)).toBe('Ten days strong.');
     expect(streakHeadline(12)).toBe('12 days strong.');
     expect(streakHeadline(120)).toBe('120 days strong.');
+  });
+});
+
+describe('withSavedLog', () => {
+  it('records the day log only when Save wrote it', () => {
+    const before = [log('2026-11-04')];
+    const todays = log('2026-11-05');
+    expect(withSavedLog(before, todays, false)).toBe(before);
+    expect(withSavedLog(before, todays, true)).toEqual([...before, todays]);
+  });
+
+  it('replaces an earlier copy of the same day', () => {
+    const first = log('2026-11-05', ['coffee']);
+    const second = log('2026-11-05');
+    expect(withSavedLog([first], second, true)).toEqual([second]);
   });
 });

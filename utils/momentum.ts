@@ -88,3 +88,15 @@ export const streakHeadline = (n: number): string => {
   const figure = n >= 1 && n <= 10 ? WORDS[n] : String(n);
   return `${figure} ${n === 1 ? 'day' : 'days'} strong.`;
 };
+
+/**
+ * The saved logs after a Save. The day's log joins them only when Save
+ * actually wrote it: adding an untouched log would count a day nobody
+ * logged towards the streak.
+ */
+export const withSavedLog = (
+  logs: DayLog[],
+  log: DayLog,
+  written: boolean
+): DayLog[] =>
+  written ? [...logs.filter((l) => l.day !== log.day), log] : logs;

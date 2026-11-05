@@ -20,6 +20,7 @@ import {
 } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
+import { withSavedLog } from '@/utils/momentum';
 import { dayKey, localTimeZone } from '@/utils/readings';
 
 /**
@@ -117,13 +118,16 @@ export default function TodayScreen({
 
   const save = async () => {
     setSaving(true);
+    // Whether this Save writes the day log, fixed now: the log can be
+    // edited again while the request is in flight.
+    const logWritten = logDirty;
     try {
       const toWrite = sores.filter((s) => changed.has(s.id));
       const [soreResult, logResult] = await Promise.all([
         toWrite.length
           ? upsertSores(toWrite, localTimeZone())
           : Promise.resolve({ ok: true as const }),
-        logDirty ? saveDayLog(log) : Promise.resolve({ ok: true as const })
+        logWritten ? saveDayLog(log) : Promise.resolve({ ok: true as const })
       ]);
       const failure = [soreResult, logResult].find((r) => !r.ok);
       if (failure && !failure.ok) {
@@ -132,7 +136,7 @@ export default function TodayScreen({
         return;
       }
       setSavedSores(sores);
-      setSavedLogs([...savedLogs.filter((l) => l.day !== log.day), log]);
+      setSavedLogs((prev) => withSavedLog(prev, log, logWritten));
       setChanged(new Set());
       setLogDirty(false);
       setSaved(true);
