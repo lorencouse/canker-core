@@ -44,7 +44,9 @@ export const isBadDay = (sores: Sore[], now: Date): boolean =>
     (sore) =>
       isSameLocalDay(sore.created_at, now) ||
       sore.readings.some(
-        (reading) => isSameLocalDay(reading.recorded_at, now) && reading.pain >= BAD_DAY_PAIN
+        (reading) =>
+          isSameLocalDay(reading.recorded_at, now) &&
+          reading.pain >= BAD_DAY_PAIN
       )
   );
 
@@ -57,12 +59,30 @@ export const weekDots = (logs: DayLog[], today: string): WeekDot[] => {
   const byDay = new Map(logs.map((log) => [log.day, log]));
   return Array.from({ length: 7 }, (_, i) => {
     const day = shiftDay(today, i - 6);
-    const weekday = parseDay(day).toLocaleDateString(undefined, { weekday: 'short' });
-    return { day, initial: weekday.charAt(0), won: isTriggerFree(byDay.get(day)) };
+    const weekday = parseDay(day).toLocaleDateString(undefined, {
+      weekday: 'short'
+    });
+    return {
+      day,
+      initial: weekday.charAt(0),
+      won: isTriggerFree(byDay.get(day))
+    };
   });
 };
 
-const WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+const WORDS = [
+  '',
+  'One',
+  'Two',
+  'Three',
+  'Four',
+  'Five',
+  'Six',
+  'Seven',
+  'Eight',
+  'Nine',
+  'Ten'
+];
 
 export const streakHeadline = (n: number): string => {
   const figure = n >= 1 && n <= 10 ? WORDS[n] : String(n);

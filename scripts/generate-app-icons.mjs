@@ -71,4 +71,6 @@ for (const [file, build] of targets) {
   console.log(`wrote ${file}`);
 }
 
-console.log('\nNext: npm run cap:assets   (slices resources/ into ios/ and android/)');
+console.log(
+  '\nNext: npm run cap:assets   (slices resources/ into ios/ and android/)'
+);

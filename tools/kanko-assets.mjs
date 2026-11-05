@@ -11,7 +11,10 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const masters = path.join(root, 'docs/superpowers/specs/assets/2026-11-05-kanko');
+const masters = path.join(
+  root,
+  'docs/superpowers/specs/assets/2026-11-05-kanko'
+);
 const out = path.join(root, 'public/images/kanko');
 
 const SIZE = 640;
@@ -81,7 +84,9 @@ const toTransparent = async (pipeline) => {
     const [r, g, b] = [data[p * 4], data[p * 4 + 1], data[p * 4 + 2]];
     const deficit = groundLuma - luma(r, g, b);
     const chroma = Math.max(r, g, b) - Math.min(r, g, b);
-    return deficit > 0 && deficit < SHADOW_MAX_DEFICIT && chroma <= SHADOW_MAX_CHROMA;
+    return (
+      deficit > 0 && deficit < SHADOW_MAX_DEFICIT && chroma <= SHADOW_MAX_CHROMA
+    );
   };
   const push = (p) => {
     if (!isBg[p] && isGroundLike(p)) {
@@ -145,10 +150,14 @@ const toTransparent = async (pipeline) => {
   for (let p = 0; p < width * height; p++) {
     if (!ring[p]) continue;
     const i = p * 4;
-    const t = Math.min(1, Math.max(0, (dist(p) - FULLY_GROUND) / (EDGE_FULL - FULLY_GROUND)));
+    const t = Math.min(
+      1,
+      Math.max(0, (dist(p) - FULLY_GROUND) / (EDGE_FULL - FULLY_GROUND))
+    );
     const a = t * t * (3 - 2 * t);
     for (let c = 0; c < 3; c++) {
-      const v = a > 0.05 ? (data[i + c] - (1 - a) * ground[c]) / a : data[i + c];
+      const v =
+        a > 0.05 ? (data[i + c] - (1 - a) * ground[c]) / a : data[i + c];
       data[i + c] = Math.round(Math.min(255, Math.max(0, v)));
     }
     data[i + 3] = Math.round(a * 255);
