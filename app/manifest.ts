@@ -21,10 +21,10 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    // Matches the dark ground the splash and native shell use, so a cold
+    // Matches the deep ink the splash and native shell use, so a cold
     // start does not flash white before the theme resolves.
-    background_color: '#131a21',
-    theme_color: '#131a21',
+    background_color: '#16163F',
+    theme_color: '#16163F',
     categories: ['health', 'medical', 'lifestyle'],
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },

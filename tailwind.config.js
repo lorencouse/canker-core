@@ -20,10 +20,11 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        // Archivo for headings: a squarish grotesque with a signage feel,
-        // which suits a product built around a map.
+        // Bricolage Grotesque for words and figures: a characterful display
+        // face with heavy weights that make a streak number feel earned.
         display: ['var(--font-display)', 'system-ui', 'sans-serif'],
-        // Source Sans 3 for body and data: humanist, real tabular numerals.
+        // Nunito for body and button labels: a rounded sans that matches
+        // the rounded shapes, with tabular numerals for data.
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif']
       },
       fontSize: {
@@ -49,6 +50,9 @@ module.exports = {
         border: 'hsl(var(--border))',
         // Ink-weight separation. See the --rule note in styles/main.css.
         rule: 'hsl(var(--rule))',
+        // Sunflower win colour and its pressable edge; lavender for comfort.
+        win: { DEFAULT: 'hsl(var(--win))', edge: 'hsl(var(--win-edge))' },
+        comfort: 'hsl(var(--comfort))',
         // The edge of a control. See --control in styles/main.css.
         control: 'hsl(var(--control))',
         input: 'hsl(var(--input))',
@@ -57,7 +61,8 @@ module.exports = {
         foreground: 'hsl(var(--foreground))',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))'
+          foreground: 'hsl(var(--primary-foreground))',
+          edge: 'hsl(var(--primary-edge))'
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -100,23 +105,25 @@ module.exports = {
       boxShadow: {
         // Hard offsets in ink, kept for drawings; nothing on screen at rest uses them.
         drop: 'var(--drop)',
-        'drop-sm': 'var(--drop-sm)'
+        'drop-sm': 'var(--drop-sm)',
+        // The pressable edge: a solid deeper-colour ledge under a control.
+        // Pressed, the control moves down and the edge goes (see button.tsx).
+        press: '0 5px 0 hsl(var(--primary-edge))',
+        'press-win': '0 5px 0 hsl(var(--win-edge))',
+        'press-line': '0 4px 0 hsl(var(--border))'
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'var(--radius)',
         sm: 'var(--radius)',
         /*
-         * Radius carries information here rather than being one house value.
-         * Under the Chalk direction the house radius is zero. A surface, a
-         * control and a data cell all have square corners, and separation
-         * comes from an ink rule instead. Both tokens survive as names
-         * rather than as values, so the call sites still say what they
-         * mean; a chip is the only round thing left in the product, and it
-         * gets that from rounded-full.
+         * Radius carries information: a surface is rounder than the data
+         * cell inside it, and a control (--radius, 16px) sits between. Chips
+         * and day dots are rounded-full. The names stay so call sites say
+         * what they mean.
          */
-        worksheet: '0px',
-        cell: '0px'
+        worksheet: '1.25rem',
+        cell: '0.75rem'
       },
       keyframes: {
         /*
