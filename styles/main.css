@@ -34,6 +34,12 @@
     /* Sunflower: a win. A fill or a figure, never small text on white. */
     --win: 46 100% 62%;
     --win-edge: 46 100% 43%;
+    /* Fixed ink for text on sunflower; it must not follow the theme. */
+    --win-foreground: 240 48% 17%;
+    /* The streak card: indigo, deepened in dark so sunflower reads on it. */
+    --streak: 240 85% 62%;
+    --streak-foreground: 0 0% 100%;
+    --streak-edge: 240 59% 45%;
 
     /* Lavender: comfort, the bad-day pillow and quiet secondary accents */
     --comfort: 254 74% 80%;
@@ -147,6 +153,10 @@
     /* Sunflower is unchanged: it was already built for an ink ground. */
     --win: 46 100% 62%;
     --win-edge: 46 100% 43%;
+    --win-foreground: 240 48% 17%;
+    --streak: 240 60% 38%;
+    --streak-foreground: 0 0% 100%;
+    --streak-edge: 240 55% 28%;
     --comfort: 254 74% 80%;
 
     --secondary: 239 47% 25%;
@@ -500,30 +510,5 @@
 
   .surface-canvas {
     @apply relative overflow-hidden border border-border bg-card;
-  }
-}
-
-@layer components {
-  /*
-   * The art is painted on the ground colour, not cut out, so its four edges
-   * are feathered into the page rather than left as a visible square.
-   */
-  .kanko-fade {
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent),
-      linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
-    -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent),
-      linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
-    mask-composite: intersect;
-  }
-
-  /*
-   * On the dark ground a feathered square still reads as a pale box, so the
-   * art is cut to a soft disc instead: it sits as a lit patch, not a frame.
-   */
-  .dark .kanko-fade {
-    -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent 100%);
-    mask-image: radial-gradient(closest-side, #000 72%, transparent 100%);
-    mask-composite: add;
   }
 }

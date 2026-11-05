@@ -24,6 +24,24 @@ describe.each([':root', '.dark'] as const)('colour tokens in %s', (scope) => {
     expect(contrastRatio(tokens[fg], tokens[bg])).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('keeps text on sunflower readable', () => {
+    expect(
+      contrastRatio(tokens['win-foreground'], tokens['win'])
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('keeps the streak card label at 4.5:1', () => {
+    expect(
+      contrastRatio(tokens['streak-foreground'], tokens['streak'])
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('keeps the sunflower streak figure at 3:1 on the card (large text)', () => {
+    expect(
+      contrastRatio(tokens['win'], tokens['streak'])
+    ).toBeGreaterThanOrEqual(3);
+  });
+
   it('keeps a control edge findable at 3:1 against the ground', () => {
     expect(
       contrastRatio(tokens['control'], tokens['background'])
@@ -31,7 +49,7 @@ describe.each([':root', '.dark'] as const)('colour tokens in %s', (scope) => {
   });
 
   it('defines the Momentum tokens later work relies on', () => {
-    for (const name of ['win', 'win-edge', 'primary-edge', 'comfort']) {
+    for (const name of ['win', 'win-edge', 'primary-edge', 'comfort', 'streak']) {
       expect(tokens[name], `--${name}`).toBeDefined();
     }
   });

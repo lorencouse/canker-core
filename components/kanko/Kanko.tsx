@@ -28,7 +28,10 @@ export default function Kanko({
       width={size}
       height={size}
       priority={priority}
-      className={cn('kanko-fade select-none object-cover', className)}
+      // Already sized, compressed WebP with an alpha channel; the optimizer
+      // would re-encode it without transparency.
+      unoptimized
+      className={cn('select-none object-cover', className)}
     />
   );
 }

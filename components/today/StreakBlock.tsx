@@ -11,8 +11,10 @@ import { dayKey } from '@/utils/readings';
 
 /**
  * The top of Today: Kanko, the day's headline and, on a trigger-free run,
- * the streak. It reads only saved data, so dragging a slider never changes
- * the mood; the caller passes what has been written, not what is being edited.
+ * the streak. Mood, streak and week dots come from the sores and logs passed
+ * in, which the caller keeps to what has been saved, so dragging a slider
+ * never changes them. In the neutral state the headline and note come from
+ * `answer`, which deliberately follows unsaved edits.
  */
 export default function StreakBlock({
   sores,
@@ -61,7 +63,7 @@ export default function StreakBlock({
 
       {mood === 'proud' && (
         <>
-          <div className="mt-4 flex w-full max-w-sm items-center justify-center gap-3 rounded-worksheet bg-primary px-4 py-3 text-primary-foreground shadow-press">
+          <div className="mt-4 flex w-full max-w-sm items-center justify-center gap-3 rounded-worksheet bg-streak px-4 py-3 text-streak-foreground shadow-[0_5px_0_hsl(var(--streak-edge))]">
             <span className="tabular whitespace-nowrap font-display text-4xl font-extrabold leading-none text-win">
               {streak}
             </span>
@@ -76,7 +78,7 @@ export default function StreakBlock({
                 key={dot.day}
                 className={
                   dot.won
-                    ? 'grid size-8 place-items-center rounded-full bg-win text-xs font-extrabold text-foreground shadow-press-win'
+                    ? 'grid size-8 place-items-center rounded-full bg-win text-xs font-extrabold text-win-foreground shadow-press-win'
                     : 'grid size-8 place-items-center rounded-full bg-border text-xs font-extrabold text-muted-foreground'
                 }
               >

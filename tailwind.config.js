@@ -51,7 +51,16 @@ module.exports = {
         // Ink-weight separation. See the --rule note in styles/main.css.
         rule: 'hsl(var(--rule))',
         // Sunflower win colour and its pressable edge; lavender for comfort.
-        win: { DEFAULT: 'hsl(var(--win))', edge: 'hsl(var(--win-edge))' },
+        win: {
+          DEFAULT: 'hsl(var(--win))',
+          edge: 'hsl(var(--win-edge))',
+          foreground: 'hsl(var(--win-foreground))'
+        },
+        streak: {
+          DEFAULT: 'hsl(var(--streak))',
+          foreground: 'hsl(var(--streak-foreground))',
+          edge: 'hsl(var(--streak-edge))'
+        },
         comfort: 'hsl(var(--comfort))',
         // The edge of a control. See --control in styles/main.css.
         control: 'hsl(var(--control))',
