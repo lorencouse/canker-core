@@ -53,10 +53,7 @@ export default function AppTopBar() {
           href="/my-sores"
           className="hidden items-center gap-2.5 rounded-md text-foreground lg:flex"
         >
-          <Logo size={26} />
-          <span className="font-display text-base font-semibold tracking-tight">
-            Canker Core
-          </span>
+          <Logo size={26} wordmark />
         </Link>
 
         <nav

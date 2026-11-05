@@ -89,10 +89,7 @@ export default function Navlinks() {
           href={signedIn ? '/my-sores' : '/'}
           className="flex items-center gap-2.5 rounded-md text-foreground"
         >
-          <Logo size={28} />
-          <span className="font-display text-base font-semibold tracking-tight">
-            Canker Core
-          </span>
+          <Logo size={28} wordmark />
         </Link>
 
         <div className="hidden items-center gap-1 md:flex">

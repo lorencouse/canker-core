@@ -179,4 +179,12 @@ await write(
   'kanko-neutral.webp'
 );
 
-console.log(`Wrote 5 images to ${path.relative(root, out)}`);
+// The logo face: the app-icon master is the face on solid indigo, edge to
+// edge, so a plain resize is enough (no transparency work). Logo.tsx
+// round-crops it with CSS.
+await sharp(path.join(masters, 'kanko-app-icon.webp'))
+  .resize(256, 256)
+  .webp({ quality: QUALITY })
+  .toFile(path.join(out, 'kanko-face.webp'));
+
+console.log(`Wrote 6 images to ${path.relative(root, out)}`);

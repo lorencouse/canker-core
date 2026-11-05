@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { ImageResponse } from 'next/og';
 
 /**
@@ -17,7 +19,14 @@ export const contentType = 'image/png';
 
 const SEVERITY = ['#e6b3b3', '#dd8c8c', '#d05f5f', '#c23434', '#a01f1f'];
 
-export default function Image() {
+export default async function Image() {
+  // Satori cannot decode WebP, so the face comes from the PNG app icon (the
+  // same art on the same indigo ground).
+  const face = await readFile(
+    path.join(process.cwd(), 'public/icons/icon-192.png')
+  );
+  const faceSrc = `data:image/png;base64,${face.toString('base64')}`;
+
   return new ImageResponse(
     (
       <div
@@ -27,21 +36,27 @@ export default function Image() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#131a21',
+          background: '#4B4BF0',
           padding: '72px 80px',
-          color: '#eff2f5'
+          color: '#ffffff'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <img
+            src={faceSrc}
+            width={72}
+            height={72}
+            alt=""
+            style={{ borderRadius: 36 }}
+          />
           <div
             style={{
-              width: 20,
-              height: 20,
-              borderRadius: 10,
-              background: '#63bfc9'
+              fontSize: 40,
+              fontWeight: 800,
+              letterSpacing: -0.5,
+              color: '#ffffff'
             }}
-          />
-          <div style={{ fontSize: 30, letterSpacing: -0.5, color: '#9fb0bf' }}>
+          >
             Canker Core
           </div>
         </div>
@@ -50,7 +65,14 @@ export default function Image() {
           <div style={{ fontSize: 82, lineHeight: 1.05, letterSpacing: -2 }}>
             Know whether it&rsquo;s healing.
           </div>
-          <div style={{ fontSize: 34, color: '#9fb0bf', maxWidth: 900 }}>
+          <div
+            style={{
+              fontSize: 34,
+              color: '#ffffff',
+              opacity: 0.85,
+              maxWidth: 900
+            }}
+          >
             Mark where a mouth sore is, log its size and pain each day, and see
             whether it is actually shrinking.
           </div>

@@ -20,10 +20,7 @@ export default function SignInLayout({ children }: PropsWithChildren) {
           href="/"
           className="flex items-center gap-2.5 rounded-md text-foreground"
         >
-          <Logo size={26} />
-          <span className="font-display text-base font-semibold tracking-tight">
-            Canker Core
-          </span>
+          <Logo size={26} wordmark />
         </Link>
         <ModeToggle />
       </div>

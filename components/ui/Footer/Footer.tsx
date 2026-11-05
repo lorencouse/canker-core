@@ -29,10 +29,7 @@ export default function Footer() {
             href="/"
             className="inline-flex items-center gap-2.5 text-foreground"
           >
-            <Logo size={26} />
-            <span className="font-display text-base font-semibold tracking-tight">
-              Canker Core
-            </span>
+            <Logo size={26} wordmark />
           </Link>
           <p className="prose-measure mt-3 text-sm text-muted-foreground">
             A private log for recurring mouth ulcers. Your sores stay on your
