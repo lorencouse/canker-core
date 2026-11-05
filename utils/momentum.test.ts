@@ -4,6 +4,7 @@ import type { DayLog, Reading, Sore } from '@/types';
 import {
   BAD_DAY_PAIN,
   isBadDay,
+  streakCardLabel,
   streakHeadline,
   todayMood,
   triggerFreeStreak,
@@ -136,6 +137,14 @@ describe('streakHeadline', () => {
     expect(streakHeadline(10)).toBe('Ten days strong.');
     expect(streakHeadline(12)).toBe('12 days strong.');
     expect(streakHeadline(120)).toBe('120 days strong.');
+  });
+});
+
+describe('streakCardLabel', () => {
+  it('is singular for a one-day streak', () => {
+    expect(streakCardLabel(1)).toBe('trigger-free day');
+    expect(streakCardLabel(2)).toBe('trigger-free days');
+    expect(streakCardLabel(14)).toBe('trigger-free days');
   });
 });
 

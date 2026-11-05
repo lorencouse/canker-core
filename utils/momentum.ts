@@ -89,6 +89,10 @@ export const streakHeadline = (n: number): string => {
   return `${figure} ${n === 1 ? 'day' : 'days'} strong.`;
 };
 
+/** The words beside the streak figure on Today's card. */
+export const streakCardLabel = (n: number): string =>
+  n === 1 ? 'trigger-free day' : 'trigger-free days';
+
 /**
  * The saved logs after a Save. The day's log joins them only when Save
  * actually wrote it: adding an untouched log would count a day nobody

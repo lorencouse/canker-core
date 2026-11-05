@@ -2,6 +2,7 @@ import Kanko from '@/components/kanko/Kanko';
 import type { DayLog, Sore } from '@/types';
 import type { Answer } from '@/utils/course';
 import {
+  streakCardLabel,
   streakHeadline,
   todayMood,
   triggerFreeStreak,
@@ -67,7 +68,7 @@ export default function StreakBlock({
             <span className="tabular whitespace-nowrap font-display text-4xl font-extrabold leading-none text-win">
               {streak}
             </span>
-            <span className="font-bold">trigger-free days</span>
+            <span className="font-bold">{streakCardLabel(streak)}</span>
           </div>
           <ol
             aria-label="Last seven days"
