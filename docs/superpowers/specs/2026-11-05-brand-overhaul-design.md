@@ -197,9 +197,9 @@ icon still needs iOS/Android variants (maskable safe zone, no transparency
 on iOS) cut from the master. If the face doesn't survive at 48px, ask for a
 tighter crop in a new batch rather than shipping mush.
 
-On the light screens the art fades into the ground at its edges (an 8%
-linear mask on all four sides; see `.ph:not(.night) .hero` in
-`mockups.html`), so no square edge shows.
+The shipped art has transparent backgrounds (cut out by
+`tools/kanko-assets.mjs`), so it sits directly on the ground in light and
+dark and no square edge shows; no edge mask is used.
 
 ## Voice
 

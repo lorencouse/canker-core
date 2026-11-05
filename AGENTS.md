@@ -52,8 +52,8 @@ Leave `SMTP_*` blank locally; magic links print to the server console.
 ## Conventions
 
 Red is data, never decoration: the `--sev-*` ramp encodes pain and is the
-only saturated red in the product. Everything else is cool slate plus one
-teal action colour. Comments explain *why*, not what.
+only saturated red in the product. Everything else is indigo, with
+sunflower for wins. Comments explain *why*, not what.
 
 Analytics are first-party only, by owner decision: no third-party scripts.
 The funnel is read from Postgres by `scripts/funnel.sql`; the only tracking is
