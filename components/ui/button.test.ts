@@ -52,15 +52,31 @@ describe('buttonVariants', () => {
     }
   });
 
-  it('is rounded, pressable and sentence case in every variant and size', () => {
+  it('is rounded and sentence case in every variant and size', () => {
     for (const variant of VARIANTS) {
       for (const size of SIZES) {
         const classes = buttonVariants({ variant, size }).split(/\s+/);
         expect(classes).toContain('rounded-2xl');
-        expect(classes).toContain('active:translate-y-[3px]');
-        expect(classes).toContain('active:shadow-none');
         expect(classes).not.toContain('uppercase');
       }
+    }
+  });
+
+  it('presses down only the variants that have an edge to press', () => {
+    for (const variant of [
+      'default',
+      'outline',
+      'destructive',
+      'overlay'
+    ] as const) {
+      const classes = buttonVariants({ variant }).split(/\s+/);
+      expect(classes).toContain('active:translate-y-[3px]');
+      expect(classes).toContain('active:shadow-none');
+    }
+    for (const variant of ['secondary', 'ghost', 'link'] as const) {
+      const classes = buttonVariants({ variant }).split(/\s+/);
+      expect(classes).not.toContain('active:translate-y-[3px]');
+      expect(classes).not.toContain('active:shadow-none');
     }
   });
 
