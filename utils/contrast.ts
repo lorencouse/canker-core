@@ -52,7 +52,11 @@ export function readTokens(
   );
   const tokens: Record<string, string> = {};
   if (!block) return tokens;
-  for (const m of block[1].matchAll(/--([\w-]+)\s*:\s*([^;]+);/g)) {
+  // exec loop rather than matchAll: the tsconfig target predates iterating
+  // a RegExpStringIterator.
+  const decl = /--([\w-]+)\s*:\s*([^;]+);/g;
+  let m: RegExpExecArray | null;
+  while ((m = decl.exec(block[1]))) {
     tokens[m[1]] = m[2].trim();
   }
   return tokens;
