@@ -74,7 +74,7 @@
 
     /*
      * The edge of a control: steppers, the pain keys. Dark enough to clear
-     * 3:1 against the ground, so a control is findable by its outline
+     * 3:1 against the ground and the card, so a control is findable by its outline
      * alone, and quieter than an ink rule.
      */
     --control: 240 19% 58%;
@@ -181,7 +181,7 @@
      * what give a button its depth here.
      */
     --rule: 240 81% 90%;
-    --control: 240 24% 50%;
+    --control: 240 24% 54%;
     --drop: none;
     --drop-sm: none;
 

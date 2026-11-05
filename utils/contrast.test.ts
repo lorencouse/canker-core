@@ -42,11 +42,14 @@ describe.each([':root', '.dark'] as const)('colour tokens in %s', (scope) => {
     ).toBeGreaterThanOrEqual(3);
   });
 
-  it('keeps a control edge findable at 3:1 against the ground', () => {
-    expect(
-      contrastRatio(tokens['control'], tokens['background'])
-    ).toBeGreaterThanOrEqual(3);
-  });
+  it.each(['background', 'card'])(
+    'keeps a control edge findable at 3:1 against --%s',
+    (ground) => {
+      expect(
+        contrastRatio(tokens['control'], tokens[ground])
+      ).toBeGreaterThanOrEqual(3);
+    }
+  );
 
   it('defines the Momentum tokens later work relies on', () => {
     for (const name of ['win', 'win-edge', 'primary-edge', 'comfort', 'streak']) {

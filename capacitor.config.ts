@@ -49,12 +49,12 @@ const config: CapacitorConfig = {
   ios: {
     // The web layer paints its own background under the notch; a white
     // native background flashes on rotate and on theme change.
-    backgroundColor: '#131a21',
+    backgroundColor: '#0f1033',
     contentInset: 'never'
   },
 
   android: {
-    backgroundColor: '#131a21'
+    backgroundColor: '#0f1033'
   },
 
   plugins: {
@@ -66,7 +66,7 @@ const config: CapacitorConfig = {
       // enough that a slow but working connection still paints under it.
       launchAutoHide: true,
       launchShowDuration: 5000,
-      backgroundColor: '#131a21',
+      backgroundColor: '#4B4BF0',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false
     },

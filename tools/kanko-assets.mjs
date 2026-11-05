@@ -5,7 +5,7 @@
  *
  *   npm run art:kanko
  */
-import { mkdir } from 'node:fs/promises';
+import { copyFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -196,4 +196,9 @@ await sharp(path.join(masters, 'kanko-app-icon.webp'))
   .webp({ quality: QUALITY })
   .toFile(path.join(out, 'kanko-face.webp'));
 
-console.log(`Wrote 6 images to ${path.relative(root, out)}`);
+await copyFile(
+  path.join(out, 'kanko-face.webp'),
+  path.join(root, 'native/shell/kanko-face.webp')
+);
+
+console.log(`Wrote 6 images to ${path.relative(root, out)}, plus the shell face`);
