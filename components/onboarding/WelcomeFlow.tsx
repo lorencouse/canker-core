@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 
+import Kanko from '@/components/kanko/Kanko';
 import FirstReading from '@/components/onboarding/FirstReading';
 import CourseStrip from '@/components/sore/CourseStrip';
 import SoreSigil from '@/components/sore/SoreSigil';
@@ -123,6 +124,15 @@ function Flow({ user }: { user: User }) {
       <Progress index={index} />
 
       <header className="mt-5">
+        {step === 'place' && (
+          <div className="mb-3 flex flex-col items-center gap-2 text-center">
+            <Kanko mood="hello" size={160} priority />
+            <p className="prose-measure text-foreground">
+              Hi, I’m Kanko. Let’s work out what sets your mouth sores off, one
+              day at a time.
+            </p>
+          </div>
+        )}
         <h1 className="text-title">{copy.title}</h1>
         <p className="prose-measure mt-2 text-muted-foreground">{copy.body}</p>
       </header>

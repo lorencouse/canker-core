@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { PropsWithChildren } from 'react';
 
+import Kanko from '@/components/kanko/Kanko';
 import Logo from '@/components/icons/Logo';
 import ModeToggle from '@/components/mode-toggle';
 
@@ -36,7 +37,14 @@ export default function SignInLayout({ children }: PropsWithChildren) {
           bottom-padded by the keyboard height rather than left to be hidden
           behind it.
         */}
-        <div className="w-full max-w-md pb-[var(--keyboard-h)]">{children}</div>
+        <div className="w-full max-w-md pb-[var(--keyboard-h)]">
+          {/* Only on screens tall enough to spare the room, so the form is
+              never pushed under a phone keyboard. */}
+          <div className="mb-4 hidden justify-center [@media(min-height:640px)]:flex">
+            <Kanko mood="hello" size={120} />
+          </div>
+          {children}
+        </div>
       </main>
     </div>
   );
