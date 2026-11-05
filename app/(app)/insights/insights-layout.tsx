@@ -6,6 +6,7 @@ import SoresTable from '@/components/charts/SoresTable';
 import Instrument from '@/components/insights/Instrument';
 import StatTiles from '@/components/insights/StatTiles';
 import TriggerTally from '@/components/insights/TriggerTally';
+import Kanko from '@/components/kanko/Kanko';
 import { Button } from '@/components/ui/button';
 import type { DayLog, Sore, User } from '@/types';
 
@@ -43,7 +44,10 @@ const InsightsLayout = ({
 
       {sores.length === 0 ? (
         <div className="surface-worksheet flex flex-col items-center px-4 py-14 text-center">
-          <h2 className="text-subhead">Your history starts with one mark</h2>
+          <Kanko mood="curious" size={120} />
+          <h2 className="mt-2 text-subhead">
+            Your history starts with one mark
+          </h2>
           <p className="prose-measure mt-2 text-muted-foreground">
             Once you log a sore on the mouth map, its size and pain over time
             show up here.
