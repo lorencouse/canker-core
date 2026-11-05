@@ -502,3 +502,28 @@
     @apply relative overflow-hidden border border-border bg-card;
   }
 }
+
+@layer components {
+  /*
+   * The art is painted on the ground colour, not cut out, so its four edges
+   * are feathered into the page rather than left as a visible square.
+   */
+  .kanko-fade {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent),
+      linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent),
+      linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
+    mask-composite: intersect;
+  }
+
+  /*
+   * On the dark ground a feathered square still reads as a pale box, so the
+   * art is cut to a soft disc instead: it sits as a lit patch, not a frame.
+   */
+  .dark .kanko-fade {
+    -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent 100%);
+    mask-image: radial-gradient(closest-side, #000 72%, transparent 100%);
+    mask-composite: add;
+  }
+}

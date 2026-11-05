@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
+import Kanko from '@/components/kanko/Kanko';
 import DayLogForm from '@/components/today/DayLogForm';
 import SoreCheckInCard from '@/components/today/SoreCheckInCard';
+import StreakBlock from '@/components/today/StreakBlock';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import type { DayLog, Sore } from '@/types';
@@ -42,6 +44,12 @@ export default function TodayScreen({
   const router = useRouter();
   const today = dayKey(new Date());
   const [sores, setSores] = useState(initialSores);
+  /*
+   * What has been written, as opposed to what is being edited. The streak
+   * block reads these so Kanko's mood moves on Save, never mid-slider.
+   */
+  const [savedSores, setSavedSores] = useState(initialSores);
+  const [savedLogs, setSavedLogs] = useState(dayLogs);
   const [changed, setChanged] = useState<Set<string>>(new Set());
   const [log, setLog] = useState<DayLog>(
     () =>
@@ -123,6 +131,8 @@ export default function TodayScreen({
         toast({ variant: 'destructive', title: failure.error });
         return;
       }
+      setSavedSores(sores);
+      setSavedLogs([...savedLogs.filter((l) => l.day !== log.day), log]);
       setChanged(new Set());
       setLogDirty(false);
       setSaved(true);
@@ -135,12 +145,6 @@ export default function TodayScreen({
       setSaving(false);
     }
   };
-
-  const dateLine = new Date().toLocaleDateString(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric'
-  });
 
   /*
    * Recomputed from local state rather than from the server's copy, so the
@@ -159,18 +163,14 @@ export default function TodayScreen({
     >
       {/*
         The screen leads with the answer, not with the word "Today" — the
-        top bar already says that. The headline is the to-do, the line under
-        it is the news, in full ink because it is the point of the screen.
+        top bar already says that. The block reads saved data only.
       */}
-      <header className="lg:col-span-2">
-        <time dateTime={today} className="block text-sm text-muted-foreground">
-          {dateLine}
-        </time>
-        <h1 className="mt-0.5 text-2xl leading-tight lg:text-3xl">
-          {answer.headline}
-        </h1>
-        {answer.note && <p className="prose-measure mt-1.5">{answer.note}</p>}
-      </header>
+      <StreakBlock
+        sores={savedSores}
+        logs={savedLogs}
+        now={new Date()}
+        answer={answer}
+      />
 
       <div className="mt-5 grid grid-cols-1 gap-4 lg:mt-6">
         {/*
@@ -181,6 +181,7 @@ export default function TodayScreen({
         */}
         {open.length === 0 ? (
           <div className="surface-worksheet flex flex-col items-start gap-3 p-4 sm:p-5">
+            <Kanko mood="curious" size={120} />
             <p className="prose-measure">
               {sores.length === 0
                 ? 'The map is where a sore starts. It takes about fifteen seconds.'

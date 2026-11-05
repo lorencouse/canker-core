@@ -16,6 +16,7 @@
     "db:funnel": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f scripts/funnel.sql",
     "db:migrate-from-supabase": "node scripts/migrate-from-supabase.mjs",
     "test": "vitest run",
+    "art:kanko": "node tools/kanko-assets.mjs",
     "art:lab": "node tools/style-lab.mjs",
     "art:review": "node tools/review-page.mjs --all --serve"
   },
@@ -87,6 +88,7 @@
     "postcss": "^8.4.49",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.5.14",
+    "sharp": "^0.35.5",
     "typescript": "^5.6.3",
     "vitest": "^5.0.1"
   },
