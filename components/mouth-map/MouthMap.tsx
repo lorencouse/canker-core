@@ -293,13 +293,13 @@ export default function MouthMap({ user }: { user: User }) {
     <div className="space-y-3">
       {/*
         The view switch. A segmented control rather than a row of links: the
-        three views are one property of one object. Square, like every other
-        control here, with the chosen view in ink.
+        three views are one property of one object. A rounded track with the
+        chosen view as an indigo pill, like the chips.
       */}
       <div
         role="tablist"
         aria-label="Part of the mouth"
-        className="grid grid-cols-3 border border-control bg-card"
+        className="grid grid-cols-3 gap-1 rounded-full border-2 border-border bg-card p-1"
       >
         {MOUTH_VIEWS.map((v) => {
           const count = visibleSores.filter((s) => s.view === v).length;
@@ -316,9 +316,9 @@ export default function MouthMap({ user }: { user: User }) {
               }}
               className={cn(
                 // 44px tall on touch so a mis-aimed thumb still lands.
-                'flex h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap border-l border-control text-[15px] transition-colors first:border-l-0 lg:h-10',
+                'flex h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full text-[15px] transition-colors lg:h-10',
                 view === v
-                  ? 'bg-foreground font-semibold text-background'
+                  ? 'bg-primary font-bold text-primary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
