@@ -94,3 +94,22 @@ export default function StreakBlock({
     </header>
   );
 }
+
+/**
+ * Holds the block's place until the device clock is read, so the sores
+ * below do not jump when it arrives. Sized to the common frame: date line,
+ * Kanko, a one-line headline and its note.
+ */
+export function StreakBlockPlaceholder() {
+  return (
+    <div
+      aria-hidden="true"
+      className="flex flex-col items-center lg:col-span-2"
+    >
+      <div className="h-5" />
+      <div className="-my-1 size-44" />
+      <div className="h-[1.875rem] lg:h-[2.25rem]" />
+      <div className="mt-1.5 h-6" />
+    </div>
+  );
+}

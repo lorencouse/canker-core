@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -8,7 +8,9 @@ import { Loader2 } from 'lucide-react';
 import Kanko from '@/components/kanko/Kanko';
 import DayLogForm from '@/components/today/DayLogForm';
 import SoreCheckInCard from '@/components/today/SoreCheckInCard';
-import StreakBlock from '@/components/today/StreakBlock';
+import StreakBlock, {
+  StreakBlockPlaceholder
+} from '@/components/today/StreakBlock';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import type { DayLog, Sore } from '@/types';
@@ -43,7 +45,15 @@ export default function TodayScreen({
   dayLogs: DayLog[];
 }) {
   const router = useRouter();
-  const today = dayKey(new Date());
+  /*
+   * Which day it is belongs to the device, not the server: a server on UTC
+   * is already on tomorrow during a US evening, and a block drawn there
+   * would show the wrong day and then fail to hydrate. So the clock is read
+   * on the device, once per visit, and everything keyed to the day waits
+   * for it.
+   */
+  const now = useDeviceNow();
+  const today = now ? dayKey(now) : null;
   const [sores, setSores] = useState(initialSores);
   /*
    * What has been written, as opposed to what is being edited. The streak
@@ -52,15 +62,17 @@ export default function TodayScreen({
   const [savedSores, setSavedSores] = useState(initialSores);
   const [savedLogs, setSavedLogs] = useState(dayLogs);
   const [changed, setChanged] = useState<Set<string>>(new Set());
-  const [log, setLog] = useState<DayLog>(
-    () =>
-      dayLogs.find((l) => l.day === today) ?? {
-        day: today,
-        triggers: [],
-        treatments: [],
-        note: null
-      }
-  );
+  /*
+   * Today's log as stored until the first edit, then the edit. Derived
+   * rather than seeded, because the stored one cannot be picked until the
+   * day is known.
+   */
+  const [editedLog, setEditedLog] = useState<DayLog | null>(null);
+  const log =
+    editedLog ??
+    (today
+      ? (dayLogs.find((l) => l.day === today) ?? blankLog(today))
+      : blankLog(''));
   const [logDirty, setLogDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -83,7 +95,7 @@ export default function TodayScreen({
   };
 
   const updateLog = (next: DayLog) => {
-    setLog(next);
+    setEditedLog(next);
     setLogDirty(true);
     setSaved(false);
   };
@@ -169,12 +181,16 @@ export default function TodayScreen({
         The screen leads with the answer, not with the word "Today" — the
         top bar already says that. The block reads saved data only.
       */}
-      <StreakBlock
-        sores={savedSores}
-        logs={savedLogs}
-        now={new Date()}
-        answer={answer}
-      />
+      {now ? (
+        <StreakBlock
+          sores={savedSores}
+          logs={savedLogs}
+          now={now}
+          answer={answer}
+        />
+      ) : (
+        <StreakBlockPlaceholder />
+      )}
 
       <div className="mt-5 grid grid-cols-1 gap-4 lg:mt-6">
         {/*
@@ -274,6 +290,27 @@ export default function TodayScreen({
     </div>
   );
 }
+
+/*
+ * The device clock as a store: null during the server render and hydration,
+ * then one Date for as long as the screen stays mounted. Dropped on unmount,
+ * so coming back to Today tomorrow reads the clock again.
+ */
+let deviceNow: Date | null = null;
+const subscribeToNow = () => () => {
+  deviceNow = null;
+};
+const readDeviceNow = () => (deviceNow ??= new Date());
+const readServerNow = () => null;
+const useDeviceNow = () =>
+  useSyncExternalStore(subscribeToNow, readDeviceNow, readServerNow);
+
+const blankLog = (day: string): DayLog => ({
+  day,
+  triggers: [],
+  treatments: [],
+  note: null
+});
 
 /** "2 triggers", or nothing for none. */
 const count = (n: number, noun: string) =>
