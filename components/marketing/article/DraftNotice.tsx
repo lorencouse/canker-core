@@ -36,8 +36,8 @@ export default function DraftNotice({
 }) {
   return (
     <aside className="mb-10 rounded-worksheet border-2 border-dashed border-border bg-muted/40 p-5">
-      <p className="text-sm font-semibold uppercase tracking-wide text-foreground">
-        Draft — not published
+      <p className="text-sm font-semibold text-foreground">
+        Draft, not published
       </p>
       <p className="mt-2 text-sm text-muted-foreground">
         This page is not in the sitemap, the article index or{' '}

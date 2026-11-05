@@ -28,21 +28,15 @@ function LesionCard({ lesion }: { lesion: Lesion }) {
 
       <dl className="mt-3 space-y-2 text-sm">
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-            Where
-          </dt>
+          <dt className="text-xs text-muted-foreground">Where</dt>
           <dd className="text-foreground">{lesion.where}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-            What it looks like
-          </dt>
+          <dt className="text-xs text-muted-foreground">What it looks like</dt>
           <dd className="text-foreground">{lesion.look}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-            Contagious
-          </dt>
+          <dt className="text-xs text-muted-foreground">Contagious</dt>
           <dd className="text-foreground">{lesion.contagious}</dd>
         </div>
       </dl>
