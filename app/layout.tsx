@@ -75,7 +75,10 @@ export const metadata: Metadata = {
     telephone: false,
     date: false
   },
+  // Setting icons at all switches off Next's app/icon.png convention, so the
+  // favicon has to be listed here alongside the apple icon.
   icons: {
+    icon: '/icon.png',
     apple: '/icons/apple-touch-icon.png'
   }
 };
