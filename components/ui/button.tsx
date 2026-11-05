@@ -4,39 +4,40 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/cn';
 const buttonVariants = cva(
   /*
-   * Square, condensed, uppercase, and it moves when you press it. A button
-   * under the Chalk direction is a key on a machine rather than a rounded
-   * chip: pressing nudges it down a pixel instead of fading its opacity,
-   * which is the difference between a control that responds and one that
-   * merely acknowledges. It casts no shadow at rest (ART-DIRECTION.md).
+   * Rounded and pressable. A button is a chunky key with a coloured edge
+   * under it: pressing moves it down by most of the edge and drops the edge,
+   * so it feels pushed in rather than faded. Only the filled and outlined
+   * variants carry an edge; secondary, ghost and link stay flat.
    *
    * A label is one line, always: nowrap, capped at its container, and a
    * label wrapped in a <span> ellipsises rather than spilling out. A button
    * two lines tall reads as a paragraph, not a control.
    */
-  'inline-flex max-w-full items-center justify-center gap-2 whitespace-nowrap [&>span]:min-w-0 [&>span]:truncate font-display text-sm font-semibold uppercase tracking-[0.09em] ring-offset-background transition-[filter,background-color,color] active:translate-x-px active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex max-w-full items-center justify-center gap-2 whitespace-nowrap [&>span]:min-w-0 [&>span]:truncate rounded-2xl font-sans text-sm font-extrabold ring-offset-background transition-[transform,box-shadow,background-color] active:translate-y-[3px] active:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
         // The one filled button on a screen, and it is the one that writes
         // a reading. Two of these on a screen means one of them is wrong.
         default:
-          'border border-primary bg-primary text-primary-foreground hover:brightness-110',
+          'bg-primary text-primary-foreground shadow-press hover:brightness-110',
         /*
          * Destructive is stated in words, not painted red: red is the
          * severity ramp and nothing else, so a delete button that borrowed
          * it would make every pain dot on the screen mean less.
          */
         destructive:
-          'border border-control bg-card text-foreground hover:bg-muted',
-        outline: 'border border-control bg-transparent hover:bg-muted',
+          'border-2 border-border bg-card text-foreground shadow-press-line hover:bg-muted',
+        outline:
+          'border-2 border-border bg-card shadow-press-line hover:bg-muted',
         secondary:
-          'border border-transparent bg-muted text-foreground hover:bg-muted/80',
-        ghost: 'border border-transparent hover:bg-muted hover:text-foreground',
-        // A link is prose, so it keeps the reading face and its own case.
-        link: 'font-sans normal-case tracking-normal text-primary underline-offset-4 hover:underline',
+          'bg-muted text-foreground hover:bg-muted/80',
+        ghost: 'hover:bg-muted hover:text-foreground',
+        // A link is prose, so it reads as text with an underline.
+        link: 'text-primary underline-offset-4 hover:underline',
         // Overlay controls that sit on top of the mouth diagram.
-        overlay: 'border border-control bg-card text-foreground hover:bg-muted'
+        overlay:
+          'border-2 border-border bg-card text-foreground shadow-press-line hover:bg-muted'
       },
       /*
        * Sizes under 44px keep their drawing but get tap-target's invisible
