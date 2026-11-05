@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kanko mockups</title><style>body{background:#1c1c1f;color:#eee;font-family:system-ui,sans-serif;padding:24px;margin:0}.subtitle{color:#aaa}</style></head><body>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  .mk { --bg:#F1F1FD; --ink:#16163F; --ink-2:#4A4A78; --indigo:#4B4BF0; --indigo-deep:#2F2FB8; --sun:#FFD23F; --sun-deep:#D9A800; --line:#E2E3FA; --lav:#B9A7F2; }
+  .mk-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:28px; }
+  .mk-cell { display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .mk-cap { font-size:13px; text-align:center; max-width:300px; line-height:1.45; }
+  .ph { width:290px; max-width:100%; height:600px; border-radius:40px; background:var(--bg); color:var(--ink); font-family:Nunito,sans-serif; box-shadow:0 0 0 8px #0d0d22, 0 24px 60px rgba(0,0,0,.25); overflow:hidden; display:flex; flex-direction:column; padding:18px 18px 22px; gap:12px; position:relative; }
+  .ph .sb { display:flex; justify-content:space-between; font-size:12px; font-weight:800; padding:0 6px; }
+  .ph h4 { font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:27px; line-height:1.05; margin:0; text-wrap:balance; }
+  .ph p { margin:0; font-size:15px; color:var(--ink-2); font-weight:600; text-wrap:pretty; }
+  .ph .hero { width:100%; aspect-ratio:1; object-fit:cover; margin:-6px 0 -10px; }
+  .ph .hero.sm { width:62%; align-self:center; margin:0; }
+  .ph:not(.night) .hero { -webkit-mask-image:linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent); -webkit-mask-composite:source-in; mask-image:linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent); mask-composite:intersect; }
+  .btn3d { border:0; width:100%; padding:14px; font:800 16px Nunito,sans-serif; border-radius:16px; background:var(--indigo); color:#fff; box-shadow:0 5px 0 var(--indigo-deep); white-space:nowrap; }
+  .btn-ghost { border:2px solid var(--line); background:#fff; color:var(--ink); box-shadow:0 4px 0 var(--line); }
+  .mt-auto { margin-top:auto; }
+  .streak { background:var(--indigo); color:#fff; border-radius:20px; padding:12px 14px; display:flex; align-items:center; gap:12px; box-shadow:0 5px 0 var(--indigo-deep); }
+  .streak .n { font-family:'Bricolage Grotesque',sans-serif; font-size:40px; font-weight:800; line-height:1; color:var(--sun); }
+  .streak small { opacity:.85; }
+  .week { display:flex; justify-content:space-between; }
+  .day { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; font-size:11px; font-weight:800; background:var(--line); color:#6B6B9A; }
+  .day.on { background:var(--sun); color:var(--ink); box-shadow:0 3px 0 var(--sun-deep); }
+  .sore { background:#fff; border:2px solid var(--line); border-radius:16px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:14px; }
+  .sore small { color:var(--ink-2); }
+  .sev { font-size:12px; font-weight:800; padding:4px 10px; border-radius:999px; white-space:nowrap; }
+  .sev3 { background:hsl(0 66% 77%); color:#2a1214; } .sev7 { background:hsl(0 73% 55%); color:#fff; }
+  .tabs { display:flex; justify-content:space-around; border-top:2px solid var(--line); margin:4px -18px -22px; padding:10px 0 16px; background:#fff; font-size:11px; font-weight:800; color:#8A8AB0; }
+  .tabs .on { color:var(--indigo); }
+  .tip { background:#fff; border:2px solid var(--line); border-radius:16px; padding:10px 12px; font-size:14px; font-weight:600; color:var(--ink-2); }
+  .tip b { color:var(--ink); }
+  .night { background:#0f1033; color:#fff; }
+  .night p { color:#B8B9E6; }
+  .night .hero { border-radius:24px; margin:0; }
+  .night .btn3d { background:var(--sun); color:var(--ink); box-shadow:0 5px 0 var(--sun-deep); }
+  .home { background:linear-gradient(160deg,#6E6EF7,#2F2FB8); padding-top:50px; }
+  .icons { display:grid; grid-template-columns:repeat(4,1fr); gap:18px 10px; padding:10px 6px; }
+  .ic { display:flex; flex-direction:column; align-items:center; gap:5px; font-size:10px; color:#fff; font-weight:700; }
+  .ic i { width:56px; height:56px; border-radius:14px; background:rgba(255,255,255,.25); display:block; }
+  .ic img { width:56px; height:56px; border-radius:14px; box-shadow:0 4px 10px rgba(0,0,0,.25); }
+  .notif { background:rgba(255,255,255,.88); border-radius:18px; padding:10px 12px; display:flex; gap:10px; align-items:center; color:var(--ink); margin-top:auto; }
+  .notif img { width:36px; height:36px; border-radius:9px; }
+  .notif div { font-size:12px; line-height:1.35; } .notif b { display:block; font-size:13px; }
+</style>
+
+<h2>Kanko in the app</h2>
+<p class="subtitle">Final: the original bad-day Kanko is back, and the pictures now fade into the screen with no square edges.</p>
+
+<div class="mk mk-grid">
+
+  <div class="mk-cell">
+    <div class="ph">
+      <div class="sb"><span>9:41</span><span>●●●</span></div>
+      <img class="hero" src="kanko-proud-streak.webp" alt="">
+      <h4>Three days strong!</h4>
+      <p>Your mouth is thanking you.</p>
+      <div class="streak"><div class="n">3</div><div><b>trigger-free days</b><br><small>6 more to beat your best</small></div></div>
+      <div class="week"><div class="day">M</div><div class="day">T</div><div class="day">W</div><div class="day on">T</div><div class="day on">F</div><div class="day on">S</div><div class="day">S</div></div>
+      <div class="tabs"><span class="on">Today</span><span>Map</span><span>History</span><span>Me</span></div>
+    </div>
+    <div class="mk-cap"><b>1 · Today, on a winning streak.</b> Kanko's cheeks are at their fullest, and the streak is the hero.</div>
+  </div>
+
+  <div class="mk-cell">
+    <div class="ph">
+      <div class="sb"><span>9:41</span><span>●●●</span></div>
+      <img class="hero" src="kanko-hello.webp" alt="">
+      <h4>Hi, I'm Kanko.</h4>
+      <p>Let's work out what sets your mouth sores off, one day at a time.</p>
+      <button class="btn3d mt-auto">Get started</button>
+      <button class="btn3d btn-ghost">I have an account</button>
+    </div>
+    <div class="mk-cap"><b>2 · Welcome.</b> The first thing a new user sees: a friendly face and one clear promise.</div>
+  </div>
+
+  <div class="mk-cell">
+    <div class="ph">
+      <div class="sb"><span>9:41</span><span>●●●</span></div>
+      <img class="hero sm" src="kanko-curious-empty.webp" alt="">
+      <h4>No sores logged yet</h4>
+      <p>When one shows up, tap the spot on the mouth map and I'll keep track of it.</p>
+      <button class="btn3d mt-auto">Log a sore</button>
+      <div class="tabs"><span>Today</span><span class="on">Map</span><span>History</span><span>Me</span></div>
+    </div>
+    <div class="mk-cap"><b>3 · Empty map.</b> Curious Kanko turns a blank screen into an invitation.</div>
+  </div>
+
+  <div class="mk-cell">
+    <div class="ph">
+      <div class="sb"><span>9:41</span><span>●●●</span></div>
+      <img class="hero sm" src="kanko-gentle-bad-day.webp" alt="">
+      <h4>Rough one today.</h4>
+      <p>Logged. That's the hard part done.</p>
+      <div class="sore"><div><b>Under the tongue</b><br><small>New today</small></div><span class="sev sev7">7 / 10</span></div>
+      <div class="tip"><b>Might help:</b> soft, cool foods and skipping citrus for a day or two.</div>
+      <button class="btn3d btn-ghost mt-auto">Done for today</button>
+    </div>
+    <div class="mk-cap"><b>4 · A bad day.</b> Quieter voice, no confetti, a calm button. Red appears only on the pain score.</div>
+  </div>
+
+  <div class="mk-cell">
+    <div class="ph night">
+      <div class="sb"><span>9:41 pm</span><span>●●●</span></div>
+      <img class="hero" src="kanko-sleepy-night.webp" alt="">
+      <h4>Before bed: how did today go?</h4>
+      <p>Two taps and you're done. Kanko's already yawning.</p>
+      <button class="btn3d mt-auto">Log today</button>
+    </div>
+    <div class="mk-cap"><b>5 · Evening check-in.</b> A dark night version for the end-of-day reminder.</div>
+  </div>
+
+  <div class="mk-cell">
+    <div class="ph home">
+      <div class="icons">
+        <div class="ic"><i></i>Mail</div><div class="ic"><i></i>Photos</div><div class="ic"><img src="kanko-app-icon.webp" alt="">Canker Core</div><div class="ic"><i></i>Notes</div>
+        <div class="ic"><i></i>Maps</div><div class="ic"><i></i>Music</div><div class="ic"><i></i>Health</div><div class="ic"><i></i>Clock</div>
+      </div>
+      <div class="notif"><img src="kanko-app-icon.webp" alt=""><div><b>Canker Core</b>Four days strong! Keep that streak going, Kanko believes in you.</div></div>
+    </div>
+    <div class="mk-cap"><b>6 · App icon and notification.</b> Kanko's puffed-cheek face is the icon.</div>
+  </div>
+
+</div>
+
+<h3 style="margin-top:36px">The cleaned-up character sheet</h3>
+<p class="subtitle">Version 1 of the redraw, with no stray labels and a lavender pillow. Every later image uses this as its reference.</p>
+<img src="kanko-character-sheet.webp" alt="Kanko 3D character sheet" style="width:100%;border-radius:14px">
+
+</body></html>
