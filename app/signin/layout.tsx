@@ -39,8 +39,9 @@ export default function SignInLayout({ children }: PropsWithChildren) {
         */}
         <div className="w-full max-w-md pb-[var(--keyboard-h)]">
           {/* Only on screens tall enough to spare the room, so the form is
-              never pushed under a phone keyboard. */}
-          <div className="mb-4 hidden justify-center [@media(min-height:640px)]:flex">
+              never pushed under a phone keyboard. The webview does not
+              shrink for the keyboard, so the open state is hidden too. */}
+          <div className="mb-4 hidden justify-center [@media(min-height:640px)]:flex [[data-keyboard=open]_&]:!hidden">
             <Kanko mood="hello" size={120} />
           </div>
           {children}
