@@ -484,10 +484,11 @@
    * designed, and it wastes the cheapest signal available: a person can tell
    * a thing they read from a thing they fill in before they focus on either.
    *
-   *   instrument  a readout — figures, charts, tables. Ruled, not boxed: a
-   *               single ink rule across the top and nothing else, so
-   *               numbers sit in the page rather than float in a box.
-   *               Nothing on an instrument is interactive.
+   *   instrument  a readout — figures, charts, tables. A quiet rounded
+   *               card fill with no edge at all: it reads as a place to
+   *               look, not a thing to fill in, and no ink rule turns
+   *               screen chrome into a heavy line. Nothing on an
+   *               instrument is interactive.
    *   worksheet   something you fill in — sliders, chips, forms. A card
    *               fill on the ground with a hairline edge: the step in tone
    *               says "this is a thing", the hairline keeps it on a white
@@ -501,7 +502,7 @@
    * hovers: a dialog, a menu, a chart tooltip.
    */
   .surface-instrument {
-    @apply border-t-2 border-rule bg-transparent pt-3;
+    @apply rounded-worksheet bg-card p-3;
   }
 
   .surface-worksheet {
