@@ -93,8 +93,14 @@ generic) and a dark sleep-tracker look (too serious).
 | Lavender         | `#B9A7F2` | Comfort: the bad-day pillow, quiet secondary accents                                  |
 | Card             | `#FFFFFF` | Cards on the light ground                                                             |
 
-The existing `--sev-*` ramp and the `--mm-*` mouth-map tissue colours stay
-exactly as they are.
+The existing `--sev-*` ramp stays exactly as it is. The mouth map is
+redrawn as a soft toy to match Kanko: rounded shapes shaded by soft
+gradients and one drop shadow, no outlines, one smooth tooth band per arch,
+a smooth tongue, in a mauve-rose `--mm-*` palette (lips a cooler, greyer,
+paler mauve). Its regions and stored sore positions do not move. The new
+tissue colours must not regress: for every pain level in both themes, its
+contrast against each tissue fill is at least its weakest contrast against
+the old fills (`utils/contrast.test.ts` holds this).
 
 **(builder's call)** Mapping these onto the existing HSL custom properties
 in `styles/main.css` (`--primary`, `--background`, `--accent`, `--chart-*`

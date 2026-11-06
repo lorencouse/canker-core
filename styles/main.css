@@ -109,25 +109,32 @@
     --sev-ink-hi: 0 0% 100%;
 
     /*
-     * Mouth-map tissue. Low-chroma rose-grey: reads as mouth, but stays far
-     * enough from the severity ramp that a sore is always the saturated mark.
+     * Mouth-map tissue: the soft-toy mouth. Mauve-rose that reads as mouth
+     * and sits in Kanko's indigo world. Luminance is held by
+     * utils/contrast.test.ts so no severity colour is harder to find on any
+     * fill than it was on the old rose-grey; the lips are a cooler, greyer
+     * mauve, paler than the pale pain colours, for the same reason.
      */
-    --mm-ink: 350 20% 23% / 0.55;
-    --mm-ink-soft: 350 20% 23% / 0.22;
-    --mm-label: 350 6% 40%;
-    --mm-tissue: 355 21% 89%;
-    --mm-tissue-deep: 353 17% 81%;
-    --mm-tissue-light: 0 22% 94%;
-    --mm-gum: 353 19% 83%;
-    --mm-gum-deep: 352 15% 75%;
-    --mm-tongue: 355 21% 86%;
-    --mm-tongue-light: 0 27% 91%;
-    --mm-tongue-deep: 354 16% 78%;
-    --mm-palate: 0 23% 91%;
-    --mm-throat: 354 17% 79%;
-    --mm-tooth: 43 33% 96%;
-    --mm-tooth-shade: 41 24% 87%;
-    --mm-tooth-line: 30 14% 41% / 0.45;
+    --mm-ink: 285 30% 25% / 0.5;
+    --mm-ink-soft: 285 30% 25% / 0.2;
+    --mm-label: 285 25% 26%;
+    --mm-shadow: 265 45% 25% / 0.22;
+    --mm-tissue: 333 30% 88%;
+    --mm-tissue-deep: 329 24% 81%;
+    --mm-tissue-light: 334 36% 94%;
+    --mm-gum: 333 30% 88%;
+    --mm-gum-deep: 329 24% 81%;
+    --mm-tongue: 338 38% 84%;
+    --mm-tongue-light: 340 44% 88%;
+    --mm-tongue-deep: 337 30% 78%;
+    --mm-palate: 334 36% 94%;
+    --mm-throat: 330 22% 76%;
+    --mm-lip: 290 30% 92%;
+    --mm-lip-light: 290 36% 95%;
+    --mm-lip-deep: 288 26% 90%;
+    --mm-tooth: 42 100% 97%;
+    --mm-tooth-shade: 38 40% 90%;
+    --mm-tooth-line: 38 20% 45% / 0.35;
 
     /* Chart series reference the ramp so history matches the map */
     --chart-1: var(--sev-3);
@@ -204,21 +211,26 @@
     --sev-ink-lo: 0 0% 100%;
     --sev-ink-hi: 0 0% 100%;
 
-    --mm-ink: 350 30% 91% / 0.5;
-    --mm-ink-soft: 350 30% 91% / 0.18;
-    --mm-label: 347 5% 64%;
-    --mm-tissue: 338 8% 27%;
-    --mm-tissue-deep: 340 8% 21%;
-    --mm-tissue-light: 342 8% 33%;
-    --mm-gum: 346 9% 28%;
-    --mm-gum-deep: 342 9% 22%;
-    --mm-tongue: 342 8% 30%;
-    --mm-tongue-light: 344 8% 35%;
-    --mm-tongue-deep: 333 9% 23%;
-    --mm-palate: 340 7% 31%;
-    --mm-throat: 340 7% 21%;
-    --mm-tooth: 36 13% 78%;
-    --mm-tooth-shade: 34 8% 64%;
+    /* Deep plum: no lighter than the old dark tissue, so bright pain still pops. */
+    --mm-ink: 280 30% 92% / 0.5;
+    --mm-ink-soft: 280 30% 92% / 0.18;
+    --mm-label: 280 30% 94%;
+    --mm-shadow: 0 0% 0% / 0.45;
+    --mm-tissue: 268 18% 28%;
+    --mm-tissue-deep: 262 24% 21%;
+    --mm-tissue-light: 267 15% 31%;
+    --mm-gum: 268 18% 28%;
+    --mm-gum-deep: 262 24% 21%;
+    --mm-tongue: 294 13% 30%;
+    --mm-tongue-light: 296 13% 32%;
+    --mm-tongue-deep: 293 15% 24%;
+    --mm-palate: 267 15% 31%;
+    --mm-throat: 265 28% 16%;
+    --mm-lip: 290 14% 27%;
+    --mm-lip-light: 290 14% 29%;
+    --mm-lip-deep: 290 16% 22%;
+    --mm-tooth: 38 35% 89%;
+    --mm-tooth-shade: 36 20% 78%;
     --mm-tooth-line: 0 0% 0% / 0.35;
   }
 }
