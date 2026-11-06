@@ -36,7 +36,8 @@ const moods = {
   medal: 'kanko-medal.webp',
   envelope: 'kanko-envelope.webp',
   clipboard: 'kanko-clipboard.webp',
-  offline: 'kanko-offline.webp'
+  offline: 'kanko-offline.webp',
+  sleepy: 'kanko-sleepy.webp'
 };
 
 // The art is painted on a flat lavender ground. The background is the region
@@ -222,7 +223,8 @@ const darkMoods = {
   medal: PAGE_DARK,
   envelope: PAGE_DARK,
   clipboard: PAGE_DARK,
-  offline: PAGE_DARK
+  offline: PAGE_DARK,
+  sleepy: PAGE_DARK
 };
 const BORDER_COLS = 8;
 const SMOOTH = 24; // rows either side for the moving average
