@@ -31,6 +31,24 @@ export const dayKey = (date: Date): string => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 };
 
+/** Midnight local, so day arithmetic ignores the time of day. */
+export const localMidnight = (d: Date): Date =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+/**
+ * Local midnight `n` calendar days from `date`'s day (negative goes back).
+ * Steps the calendar rather than adding 24-hour periods, which would repeat
+ * or skip a date across a 25- or 23-hour daylight-saving day.
+ */
+export const addDays = (date: Date, n: number): Date =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate() + n);
+
+/** Whole local calendar days from `from`'s day to `to`'s day. Rounded, so DST cannot shift it. */
+export const daysBetween = (from: Date, to: Date): number =>
+  Math.round(
+    (localMidnight(to).getTime() - localMidnight(from).getTime()) / 86_400_000
+  );
+
 /** The device's IANA zone, so the server can draw day lines where this does. */
 export const localTimeZone = (): string =>
   Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -97,8 +115,8 @@ export function withReading(
  * than flooring keeps a 23- or 25-hour day from shifting the count.
  */
 export function dayNumberOf(sore: Sore, now: Date = new Date()): number {
-  const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const start = midnight(new Date(sore.created_at));
-  const end = midnight(new Date(sore.healed_at ?? now));
-  return Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
+  return Math.max(
+    1,
+    daysBetween(new Date(sore.created_at), new Date(sore.healed_at ?? now)) + 1
+  );
 }

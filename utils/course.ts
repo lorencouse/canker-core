@@ -1,6 +1,12 @@
 import type { Sore } from '@/types';
 import { LONG_SORE_DAYS } from '@/utils/insights';
-import { dayKey, dayNumberOf, latestReading } from '@/utils/readings';
+import {
+  addDays,
+  dayKey,
+  dayNumberOf,
+  daysBetween,
+  latestReading
+} from '@/utils/readings';
 
 /**
  * A sore's course: the day-by-day shape of it, and the one sentence that
@@ -14,18 +20,6 @@ import { dayKey, dayNumberOf, latestReading } from '@/utils/readings';
  * rule in readings.ts. A sore marked at 23:00 and updated at 09:00 the next
  * morning has two readings on two days, and the strip has to show two cells.
  */
-
-const DAY_MS = 86_400_000;
-
-/** Midnight local, so day arithmetic ignores the time a reading was taken. */
-const localMidnight = (d: Date) =>
-  new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-/** Whole calendar days between two instants. Rounded, so DST cannot shift it. */
-const daysBetween = (from: Date, to: Date) =>
-  Math.round(
-    (localMidnight(to).getTime() - localMidnight(from).getTime()) / DAY_MS
-  );
 
 /** One day of a sore's life. `pain` is null on a day with no reading. */
 export type CourseDay = {
@@ -59,7 +53,7 @@ export function courseOf(sore: Sore, now: Date = new Date()): CourseDay[] {
 
   const days: CourseDay[] = [];
   for (let i = 0; i <= span; i++) {
-    const date = new Date(localMidnight(start).getTime() + i * DAY_MS);
+    const date = addDays(start, i);
     const key = dayKey(date);
     const reading = byDay.get(key);
     days.push({

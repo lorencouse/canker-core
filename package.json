@@ -16,6 +16,7 @@
     "db:funnel": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f scripts/funnel.sql",
     "db:migrate-from-supabase": "node scripts/migrate-from-supabase.mjs",
     "test": "vitest run",
+    "test:dst": "TZ=America/Los_Angeles vitest run utils/dst.test.ts",
     "art:kanko": "node tools/kanko-assets.mjs",
     "art:lab": "node tools/style-lab.mjs",
     "art:review": "node tools/review-page.mjs --all --serve"

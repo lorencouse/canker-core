@@ -1,5 +1,5 @@
 import type { DayLog, Sore } from '@/types';
-import { dayKey, dayNumberOf } from '@/utils/readings';
+import { addDays, dayKey, dayNumberOf } from '@/utils/readings';
 
 /**
  * Summary arithmetic for the History screen.
@@ -9,8 +9,6 @@ import { dayKey, dayNumberOf } from '@/utils/readings';
  * trigger tally in particular is a correlation over a handful of days and is
  * framed as "worth noticing", never "the cause".
  */
-
-const DAY_MS = 86_400_000;
 
 /** Sores that have lasted this long deserve a professional look. */
 export const LONG_SORE_DAYS = 14;
@@ -74,7 +72,7 @@ export function triggersBeforeSores(
     const seen = new Set<string>();
     let any = false;
     for (let i = 0; i < window; i++) {
-      const log = byDay.get(dayKey(new Date(start.getTime() - i * DAY_MS)));
+      const log = byDay.get(dayKey(addDays(start, -i)));
       if (!log) continue;
       any = true;
       for (const t of log.triggers) seen.add(t);
