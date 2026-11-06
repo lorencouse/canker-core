@@ -24,6 +24,7 @@ import OauthSignIn from '@/components/ui/AuthForms/OauthSignIn';
 import ForgotPassword from '@/components/ui/AuthForms/ForgotPassword';
 import UpdatePassword from '@/components/ui/AuthForms/UpdatePassword';
 import SignUp from '@/components/ui/AuthForms/Signup';
+import SignInKanko from '../signin-kanko';
 
 /** Heading and supporting line for each view, kept in one place. */
 const COPY: Record<string, { title: string; description: string }> = {
@@ -46,6 +47,23 @@ const COPY: Record<string, { title: string; description: string }> = {
   signup: {
     title: 'Create your account',
     description: 'Start tracking the sore you have right now.'
+  }
+};
+
+/**
+ * After a link is sent the form stays on screen, disabled, so the heading
+ * says what happened rather than asking for an email again.
+ */
+const SENT_COPY: Record<string, { title: string; description: string }> = {
+  email_signin: {
+    title: 'Check your email',
+    description:
+      'We’ve sent you a sign-in link. Open it and you’re in. You can close this tab.'
+  },
+  forgot_password: {
+    title: 'Check your email',
+    description:
+      'We’ve sent you a link to choose a new password. You can close this tab.'
   }
 };
 
@@ -94,7 +112,9 @@ export default async function SignIn({
     return redirect('/signin/forgot_password');
   }
 
-  const copy = COPY[viewProp] ?? COPY.password_signin;
+  // The server sets disable_button only after it has sent the email.
+  const sent = String(disableButton) === 'true' ? SENT_COPY[viewProp] : null;
+  const copy = sent ?? COPY[viewProp] ?? COPY.password_signin;
   const oauthProviders = configuredOAuthProviders();
   const showOauth =
     allowOauth &&
@@ -109,52 +129,58 @@ export default async function SignIn({
       floating panel inside a screen that contains nothing else reads as a
       web form, where a full-bleed one reads as the app's first screen.
     */
-    <Card className="border-0 bg-transparent shadow-none sm:border sm:bg-card">
-      <CardHeader>
-        <CardTitle as="h1" className="text-section">
-          {copy.title}
-        </CardTitle>
-        <CardDescription>{copy.description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {viewProp === 'password_signin' && (
-          <PasswordSignIn
-            allowEmail={allowEmail}
-            redirectMethod={redirectMethod}
-            next={next}
-          />
-        )}
-        {viewProp === 'email_signin' && (
-          <EmailSignIn
-            allowPassword={allowPassword}
-            redirectMethod={redirectMethod}
-            disableButton={disableButton}
-            next={next}
-          />
-        )}
-        {viewProp === 'forgot_password' && (
-          <ForgotPassword
-            allowEmail={allowEmail}
-            redirectMethod={redirectMethod}
-            disableButton={disableButton}
-          />
-        )}
-        {viewProp === 'update_password' && (
-          <UpdatePassword redirectMethod={redirectMethod} token={resetToken} />
-        )}
-        {viewProp === 'signup' && (
-          <SignUp allowEmail={allowEmail} redirectMethod={redirectMethod} />
-        )}
+    <>
+      <SignInKanko mood={sent ? 'envelope' : 'hello'} />
+      <Card className="border-0 bg-transparent shadow-none sm:border sm:bg-card">
+        <CardHeader>
+          <CardTitle as="h1" className="text-section">
+            {copy.title}
+          </CardTitle>
+          <CardDescription>{copy.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {viewProp === 'password_signin' && (
+            <PasswordSignIn
+              allowEmail={allowEmail}
+              redirectMethod={redirectMethod}
+              next={next}
+            />
+          )}
+          {viewProp === 'email_signin' && (
+            <EmailSignIn
+              allowPassword={allowPassword}
+              redirectMethod={redirectMethod}
+              disableButton={disableButton}
+              next={next}
+            />
+          )}
+          {viewProp === 'forgot_password' && (
+            <ForgotPassword
+              allowEmail={allowEmail}
+              redirectMethod={redirectMethod}
+              disableButton={disableButton}
+            />
+          )}
+          {viewProp === 'update_password' && (
+            <UpdatePassword
+              redirectMethod={redirectMethod}
+              token={resetToken}
+            />
+          )}
+          {viewProp === 'signup' && (
+            <SignUp allowEmail={allowEmail} redirectMethod={redirectMethod} />
+          )}
 
-        {showOauth && (
-          <div className="mt-6">
-            <Separator text="or" />
-            <div className="mt-4">
-              <OauthSignIn next={next} providers={oauthProviders} />
+          {showOauth && (
+            <div className="mt-6">
+              <Separator text="or" />
+              <div className="mt-4">
+                <OauthSignIn next={next} providers={oauthProviders} />
+              </div>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 }
