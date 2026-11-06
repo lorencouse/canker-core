@@ -55,10 +55,18 @@ describe('withReading', () => {
   });
 
   it('keeps a same-day note when only a slider moves, and clears it when asked', () => {
-    const noted = withReading(sore(), { note: 'stings' }, at('2026-09-08T12:00:00'));
+    const noted = withReading(
+      sore(),
+      { note: 'stings' },
+      at('2026-09-08T12:00:00')
+    );
     const nudged = withReading(noted, { pain: 6 }, at('2026-09-08T13:00:00'));
     expect(nudged.readings[0].note).toBe('stings');
-    const cleared = withReading(nudged, { note: null }, at('2026-09-08T14:00:00'));
+    const cleared = withReading(
+      nudged,
+      { note: null },
+      at('2026-09-08T14:00:00')
+    );
     expect(cleared.readings[0].note).toBeNull();
   });
 
@@ -69,7 +77,11 @@ describe('withReading', () => {
   });
 
   it('starts a series with defaults when the sore has none', () => {
-    const next = withReading(sore({ readings: [] }), { size: 4 }, at('2026-09-09T09:00:00'));
+    const next = withReading(
+      sore({ readings: [] }),
+      { size: 4 },
+      at('2026-09-09T09:00:00')
+    );
     expect(next.readings).toHaveLength(1);
     expect(next.readings[0]).toMatchObject({ size: 4, pain: 3 });
   });
@@ -84,7 +96,9 @@ describe('withReading', () => {
 
 describe('current values', () => {
   it('read the latest reading or fall back to defaults', () => {
-    const s = sore({ readings: [reading(), reading({ id: 'r2', size: 6, pain: 8 })] });
+    const s = sore({
+      readings: [reading(), reading({ id: 'r2', size: 6, pain: 8 })]
+    });
     expect(latestReading(s)?.id).toBe('r2');
     expect(currentSize(s)).toBe(6);
     expect(currentPain(s)).toBe(8);
@@ -94,13 +108,20 @@ describe('current values', () => {
 
   it('newReading uses the defaults and the given time', () => {
     const r = newReading(at('2026-09-09T09:00:00'));
-    expect(r).toMatchObject({ size: 3, pain: 3, note: null, recorded_at: local('2026-09-09T09:00:00') });
+    expect(r).toMatchObject({
+      size: 3,
+      pain: 3,
+      note: null,
+      recorded_at: local('2026-09-09T09:00:00')
+    });
   });
 });
 
 describe('hasReadingOn', () => {
   it('compares local calendar days, not 24-hour windows', () => {
-    const s = sore({ readings: [reading({ recorded_at: '2026-09-08T23:30:00' })] });
+    const s = sore({
+      readings: [reading({ recorded_at: '2026-09-08T23:30:00' })]
+    });
     expect(hasReadingOn(s, at('2026-09-08T00:10:00'))).toBe(true);
     expect(hasReadingOn(s, at('2026-09-09T00:10:00'))).toBe(false);
   });

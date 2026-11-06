@@ -19,9 +19,9 @@ export default function PrivacyPage() {
         <h2>What is stored</h2>
         <p>
           Your email address and password hash, so you can sign in. Anything you
-          choose to put in your profile, which is only a name. And your
-          sores: position on the mouth map, size and pain readings, and the
-          dates those readings were taken.
+          choose to put in your profile, which is only a name. And your sores:
+          position on the mouth map, size and pain readings, and the dates those
+          readings were taken.
         </p>
       </section>
 
@@ -72,8 +72,8 @@ export default function PrivacyPage() {
           You can delete individual sores from the mouth map at any time. To
           delete your whole account and every reading attached to it, open
           Settings, then Account, and choose Delete account. It is removed
-          immediately. The same page lets you download everything first as a
-          CSV file.
+          immediately. The same page lets you download everything first as a CSV
+          file.
         </p>
       </section>
 

@@ -156,9 +156,8 @@ export const expectedMood = (
   const latest = utcKey(t + 14 * HOUR);
   const newest = logs
     .filter((l) => l.day >= earliest && l.day <= latest)
-    .reduce<DayLog | undefined>(
-      (best, l) => (best === undefined || l.day > best.day ? l : best),
-      undefined
-    );
+    .reduce<
+      DayLog | undefined
+    >((best, l) => (best === undefined || l.day > best.day ? l : best), undefined);
   return isTriggerFree(newest) ? 'proud' : 'neutral';
 };
