@@ -12,8 +12,13 @@ import type { KankoMood } from '@/components/kanko/moods';
  */
 export default function SignInKanko({ mood }: { mood: KankoMood }) {
   return (
-    <div className="mb-4 hidden justify-center [@media(min-height:640px)]:flex [[data-keyboard=open]_&]:!hidden">
-      <Kanko mood={mood} size={120} />
+    <div className="-mb-3 -mt-2 hidden justify-center [@media(min-height:640px)]:flex [[data-keyboard=open]_&]:!hidden">
+      {/* 168px on a phone, 200px from sm up; the art carries its own margin, so the wrapper pulls in. */}
+      <Kanko
+        mood={mood}
+        size={200}
+        className="size-[168px] sm:size-[200px]"
+      />
     </div>
   );
 }

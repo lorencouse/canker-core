@@ -26,7 +26,7 @@ export default function SignInLayout({ children }: PropsWithChildren) {
 
       <main
         id="main"
-        className="flex flex-1 items-center justify-center px-4 py-10"
+        className="flex flex-1 items-center justify-center px-4 py-3 sm:py-10"
       >
         {/*
           The keyboard covers the lower half of a phone, so the card is
