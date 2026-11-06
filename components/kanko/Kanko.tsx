@@ -43,10 +43,7 @@ export default function Kanko({
         {...shared}
         alt=""
         src={darkSrc}
-        className={cn(
-          'hidden select-none object-cover dark:block',
-          className
-        )}
+        className={cn('hidden select-none object-cover dark:block', className)}
       />
     </>
   );
