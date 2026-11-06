@@ -121,7 +121,39 @@ describe('patchAppDelegate', () => {
     );
     expect(text).toContain('openURLContexts');
     expect(text).toContain('continue userActivity');
-    expect(text.match(/ApplicationDelegateProxy\.shared/g)).toHaveLength(2);
+    expect(text).toContain('willConnectTo');
+    expect(text).toContain('connectionOptions.urlContexts.first?.url');
+    expect(text).toContain('connectionOptions.userActivities.first');
+    expect(text.match(/ApplicationDelegateProxy\.shared/g)).toHaveLength(4);
+    expect(text.match(/class SceneDelegate\b/g)).toHaveLength(1);
+  });
+
+  it('upgrades the v1 block written by an earlier run', () => {
+    const v1 = `${APP_DELEGATE}
+// Added by scripts/patch-native.mjs: iOS 27 requires the UIScene lifecycle.
+// Info.plist's UIApplicationSceneManifest names this class.
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    }
+
+}
+`;
+    const upgraded = patchAppDelegate(v1);
+    expect(upgraded.changed).toBe(true);
+    expect(upgraded.text).toBe(patchAppDelegate(APP_DELEGATE).text);
+    expect(patchAppDelegate(upgraded.text).changed).toBe(false);
+  });
+
+  it('refuses a hand-written SceneDelegate and says to regenerate', () => {
+    const hand = `${APP_DELEGATE}
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+}
+`;
+    expect(() => patchAppDelegate(hand)).toThrow(/Regenerate the iOS project/);
   });
 });
 

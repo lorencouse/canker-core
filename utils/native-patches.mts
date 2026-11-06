@@ -91,16 +91,35 @@ export function patchPbxproj(text: string): PatchResult {
  * iOS 27 traps at launch in an app that has not adopted the scene lifecycle,
  * and the Capacitor 7 template has not. The scene delegate forwards URL opens
  * and universal links to Capacitor, which the app delegate did before scenes
- * took them over.
+ * took them over — including the URL or activity that cold-launched the app,
+ * which arrives in the connection options rather than a later callback.
+ *
+ * The block carries a versioned marker. An older version of this patch is
+ * replaced in place; a SceneDelegate this script did not write is refused,
+ * because merging into hand-written Swift is not safe to do blind.
  */
-export const SCENE_DELEGATE_MARKER = 'class SceneDelegate:';
+export const SCENE_DELEGATE_MARKER = '// patch-native: SceneDelegate v2';
+
+/** First line of the v1 block, appended last in the file by earlier runs. */
+const SCENE_DELEGATE_V1_START =
+  '// Added by scripts/patch-native.mjs: iOS 27 requires the UIScene lifecycle.';
 
 export const SCENE_DELEGATE_SWIFT = `
+${SCENE_DELEGATE_MARKER}
 // Added by scripts/patch-native.mjs: iOS 27 requires the UIScene lifecycle.
 // Info.plist's UIApplicationSceneManifest names this class.
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
+
+    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        if let url = connectionOptions.urlContexts.first?.url {
+            _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: url, options: [:])
+        }
+        if let userActivity = connectionOptions.userActivities.first {
+            _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, continue: userActivity, restorationHandler: { _ in })
+        }
+    }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
         for context in URLContexts {
@@ -117,6 +136,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 export function patchAppDelegate(text: string): PatchResult {
   if (text.includes(SCENE_DELEGATE_MARKER)) return { text, changed: false };
+  const v1 = text.indexOf(SCENE_DELEGATE_V1_START);
+  if (v1 !== -1) {
+    // v1 was appended last, so everything from its first line on is ours.
+    const out = text.slice(0, v1).replace(/\s*$/, '\n') + SCENE_DELEGATE_SWIFT;
+    return { text: out, changed: true };
+  }
+  if (/class SceneDelegate\b/.test(text)) {
+    throw new Error(
+      'AppDelegate.swift already has a SceneDelegate that scripts/patch-native.mjs ' +
+        'did not write (probably a hand edit). Regenerate the iOS project ' +
+        '(rm -rf ios && npm run cap:add:ios) so the script can apply its own.'
+    );
+  }
   if (!/class AppDelegate\b/.test(text) || !text.includes('import Capacitor')) {
     throw new PatchAnchorError(
       'AppDelegate.swift',
