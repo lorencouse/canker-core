@@ -33,9 +33,7 @@ export default function SignInLayout({ children }: PropsWithChildren) {
           bottom-padded by the keyboard height rather than left to be hidden
           behind it.
         */}
-        <div className="w-full max-w-md pb-[var(--keyboard-h)]">
-          {children}
-        </div>
+        <div className="w-full max-w-md pb-[var(--keyboard-h)]">{children}</div>
       </main>
     </div>
   );
