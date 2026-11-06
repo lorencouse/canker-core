@@ -15,3 +15,5 @@ ios
 android
 native
 capacitor.config.ts
+# ...except the local plugin's manifest, which npm ci needs to link it.
+!native/plugins/web-auth/package.json

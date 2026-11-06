@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { getUser } from '@/lib/queries';
+import { configuredOAuthProviders } from '@/lib/auth';
 import {
   getAuthTypes,
   getViewTypes,
@@ -94,8 +95,10 @@ export default async function SignIn({
   }
 
   const copy = COPY[viewProp] ?? COPY.password_signin;
+  const oauthProviders = configuredOAuthProviders();
   const showOauth =
     allowOauth &&
+    oauthProviders.length > 0 &&
     viewProp !== 'update_password' &&
     viewProp !== 'forgot_password';
 
@@ -147,7 +150,7 @@ export default async function SignIn({
           <div className="mt-6">
             <Separator text="or" />
             <div className="mt-4">
-              <OauthSignIn next={next} />
+              <OauthSignIn next={next} providers={oauthProviders} />
             </div>
           </div>
         )}

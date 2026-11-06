@@ -58,3 +58,41 @@ export async function openExternal(url: string) {
   const { Browser } = await import('@capacitor/browser');
   await Browser.open({ url, presentationStyle: 'popover' });
 }
+
+/**
+ * The WebAuth plugin (native/plugins/web-auth): Apple's system sign-in sheet,
+ * ASWebAuthenticationSession. Unlike the Browser plugin's
+ * SFSafariViewController, it shares Safari's cookies, saved passwords and
+ * passkeys, which is the whole point of using it for sign-in.
+ *
+ * Registered by name rather than imported from the package: the site is
+ * what runs in the webview, so it must not depend on a package that only
+ * exists for the native build.
+ */
+interface WebAuthPlugin {
+  start(options: {
+    url: string;
+    callbackScheme: string;
+  }): Promise<{ url: string }>;
+}
+
+let webAuth: WebAuthPlugin | undefined;
+
+/** True only where the system sheet exists: the iOS app. */
+export const hasSystemSignIn = () => isNative() && platform() === 'ios';
+
+/**
+ * Opens `url` in the system sign-in sheet and resolves with the callback URL
+ * it is redirected to. Rejects with code 'CANCELED' when the person closes
+ * the sheet, and with 'UNAVAILABLE' anywhere but iOS.
+ */
+export async function systemSignIn(url: string, callbackScheme: string) {
+  if (!hasSystemSignIn()) {
+    throw Object.assign(new Error('System sign-in is unavailable here.'), {
+      code: 'UNAVAILABLE'
+    });
+  }
+  const { registerPlugin } = await import('@capacitor/core');
+  webAuth ??= registerPlugin<WebAuthPlugin>('WebAuth');
+  return webAuth.start({ url, callbackScheme });
+}

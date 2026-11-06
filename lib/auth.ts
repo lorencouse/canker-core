@@ -13,6 +13,7 @@
 import { betterAuth } from 'better-auth';
 import { magicLink } from 'better-auth/plugins/magic-link';
 import { nextCookies } from 'better-auth/next-js';
+import { nativeHandoff } from '@/lib/native-handoff-plugin';
 import { pool } from '@/lib/db/pool';
 import { sendEmail, actionEmail } from '@/lib/email/mailer';
 import { getURL } from '@/utils/helpers';
@@ -21,6 +22,23 @@ import {
   decodeFirstTouch,
   readCookie
 } from '@/utils/first-touch';
+
+function credentials(prefix: 'GITHUB' | 'GOOGLE') {
+  const clientId = process.env[`${prefix}_CLIENT_ID`]?.trim();
+  const clientSecret = process.env[`${prefix}_CLIENT_SECRET`]?.trim();
+  return clientId && clientSecret ? { clientId, clientSecret } : undefined;
+}
+
+const OAUTH_CREDENTIALS = {
+  github: credentials('GITHUB'),
+  google: credentials('GOOGLE')
+};
+
+/** The OAuth providers this deployment can actually sign in with, in the
+ * order the sign-in page shows them. */
+export function configuredOAuthProviders(): ('google' | 'github')[] {
+  return (['google', 'github'] as const).filter((p) => OAUTH_CREDENTIALS[p]);
+}
 
 export const auth = betterAuth({
   database: pool,
@@ -44,7 +62,12 @@ export const auth = betterAuth({
         buttonLabel: 'Reset password',
         url
       });
-      await sendEmail({ to: user.email, subject: 'Reset your Canker Core password', text, html });
+      await sendEmail({
+        to: user.email,
+        subject: 'Reset your Canker Core password',
+        text,
+        html
+      });
     }
   },
 
@@ -58,32 +81,47 @@ export const auth = betterAuth({
         buttonLabel: 'Confirm email',
         url
       });
-      await sendEmail({ to: user.email, subject: 'Confirm your Canker Core email', text, html });
+      await sendEmail({
+        to: user.email,
+        subject: 'Confirm your Canker Core email',
+        text,
+        html
+      });
     }
   },
 
+  // Only providers with credentials are registered. A provider without them
+  // used to be registered anyway, and Better Auth answered its sign-in with a
+  // 500 ("OAuth provider requires clientId") that the button swallowed, so
+  // tapping it did nothing at all. configuredOAuthProviders() drives which
+  // buttons the sign-in page shows.
   socialProviders: {
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string
-    },
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string
-    }
+    ...(OAUTH_CREDENTIALS.github && { github: OAUTH_CREDENTIALS.github }),
+    ...(OAUTH_CREDENTIALS.google && { google: OAUTH_CREDENTIALS.google })
   },
 
   user: {
     changeEmail: {
       enabled: true,
-      sendChangeEmailVerification: async ({ newEmail, url }: { newEmail: string; url: string }) => {
+      sendChangeEmailVerification: async ({
+        newEmail,
+        url
+      }: {
+        newEmail: string;
+        url: string;
+      }) => {
         const { text, html } = actionEmail({
           heading: 'Confirm your new email',
           body: 'Confirm this address to finish updating the email on your Canker Core account.',
           buttonLabel: 'Confirm email change',
           url
         });
-        await sendEmail({ to: newEmail, subject: 'Confirm your new Canker Core email', text, html });
+        await sendEmail({
+          to: newEmail,
+          subject: 'Confirm your new Canker Core email',
+          text,
+          html
+        });
       }
     }
   },
@@ -145,9 +183,17 @@ export const auth = betterAuth({
           buttonLabel: 'Sign in',
           url
         });
-        await sendEmail({ to: email, subject: 'Sign in to Canker Core', text, html });
+        await sendEmail({
+          to: email,
+          subject: 'Sign in to Canker Core',
+          text,
+          html
+        });
       }
     }),
+    // The iOS system sign-in handoff (app/api/native-auth). Server-only
+    // endpoints; nothing is added under /api/auth.
+    nativeHandoff(),
     // Must stay last: lets server actions set auth cookies on the response.
     nextCookies()
   ]

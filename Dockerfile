@@ -7,6 +7,9 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+# The iOS sign-in plugin is a local `file:` dependency. Only its package.json
+# is needed for npm ci to link it; the site never imports it.
+COPY native/plugins/web-auth/package.json ./native/plugins/web-auth/
 RUN npm ci
 
 # Stage 2: Build the application
