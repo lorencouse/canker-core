@@ -13,7 +13,12 @@
  *     applinks:cankercore.com) and CODE_SIGN_ENTITLEMENTS pointing at it, so
  *     iCloud Keychain offers the site's saved passwords in the app and the
  *     system sign-in's universal-link callback reaches only this app.
- * Android: the white Kanko notification small icon from resources/notification.
+ * Android:
+ *   - an autoVerify App Link intent-filter on MainActivity for
+ *     https://cankercore.com/native-auth/callback, so the system sign-in's
+ *     Custom Tab returns to this app (public/.well-known/assetlinks.json is
+ *     the other half);
+ *   - the white Kanko notification small icon from resources/notification.
  *
  * Safe to run repeatedly. A platform whose folder is missing is skipped; a
  * file whose expected anchor is missing stops the run with an error.
@@ -32,6 +37,7 @@ import { fileURLToPath } from 'node:url';
 import {
   ENTITLEMENTS_PATH,
   notificationIconCopies,
+  patchAndroidManifest,
   patchAppDelegate,
   patchEntitlements,
   patchInfoPlist,
@@ -92,6 +98,10 @@ const patchIos = () => {
 };
 
 const patchAndroid = () => {
+  patchFile(
+    path.join(ROOT, 'android/app/src/main/AndroidManifest.xml'),
+    patchAndroidManifest
+  );
   const res = path.join(ROOT, 'android/app/src/main/res');
   if (!existsSync(res)) throw new Error(`${rel(res)} is missing`);
   for (const { from, to } of notificationIconCopies()) {
