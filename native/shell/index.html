@@ -67,6 +67,12 @@
         font-weight: 800;
         letter-spacing: -0.02em;
       }
+      .kanko {
+        display: block;
+        width: 144px;
+        height: 144px;
+        margin: 0 auto 1rem;
+      }
       h1 {
         margin: 0 0 0.5rem;
         font-size: 1.375rem;
@@ -103,6 +109,21 @@
         <img src="kanko-face.webp" alt="" />
         <span>Canker Core</span>
       </div>
+      <!-- Decorative: the heading says it. The dark pose is drawn on the
+           dark ground, so it swaps with the scheme like the page does. -->
+      <picture aria-hidden="true">
+        <source
+          srcset="kanko-offline-dark.webp"
+          media="(prefers-color-scheme: dark)"
+        />
+        <img
+          class="kanko"
+          src="kanko-offline.webp"
+          alt=""
+          width="144"
+          height="144"
+        />
+      </picture>
       <h1>Canker Core is offline</h1>
       <p>
         Your map lives on your account, so it needs a connection to load. Your

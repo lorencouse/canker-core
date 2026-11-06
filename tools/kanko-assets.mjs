@@ -370,6 +370,12 @@ await copyFile(
   path.join(root, 'native/shell/kanko-face.webp')
 );
 
+// The offline shell is static and served without the site, so it carries
+// its own copy of the offline pose, light and dark.
+for (const name of ['kanko-offline.webp', 'kanko-offline-dark.webp']) {
+  await copyFile(path.join(out, name), path.join(root, 'native/shell', name));
+}
+
 console.log(
   `Wrote ${Object.keys(moods).length + 1} images (plus ${Object.keys(darkMoods).length} dark) to ${path.relative(root, out)}, plus the shell face`
 );
