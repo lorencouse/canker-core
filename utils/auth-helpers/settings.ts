@@ -56,10 +56,22 @@ export const DEFAULT_AFTER_SIGN_IN = '/today';
  * plain relative path — an absolute URL, a protocol-relative `//host`, an
  * empty value — falls back to the map, so the parameter can never bounce a
  * user off to another site.
+ *
+ * Backslashes and control characters are refused too: browsers read `/\host`
+ * as `//host`, and strip tabs and newlines before parsing, so `/\tevil.com`
+ * style values would otherwise slip past the `//` check. The native sign-in
+ * handoff (app/api/native-auth) puts this value into a server redirect, so it
+ * has to hold for a Location header and not only for client-side routing.
  */
 export function safeNext(raw: unknown): string {
   const value = typeof raw === 'string' ? raw.trim() : '';
-  if (!value.startsWith('/') || value.startsWith('//') || value.startsWith('/signin'))
+  if (
+    !value.startsWith('/') ||
+    value.startsWith('//') ||
+    value.startsWith('/signin') ||
+    value.length > 512 ||
+    /[\\\u0000-\u001f\u007f]/.test(value)
+  )
     return DEFAULT_AFTER_SIGN_IN;
   return value;
 }
