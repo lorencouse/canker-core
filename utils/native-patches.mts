@@ -1,0 +1,188 @@
+/**
+ * Text patches for the generated Capacitor projects (`ios/`, `android/`).
+ *
+ * Those folders are produced by `cap add` and are untracked, so any fix made
+ * by hand in Xcode vanishes on the next regeneration. scripts/patch-native.mjs
+ * re-applies these after every `cap add` and `cap sync`.
+ *
+ * Every patch is idempotent: it recognises its own finished state and returns
+ * the text unchanged. When neither the finished state nor the anchor it edits
+ * is present, it throws, because a template change upstream would otherwise
+ * turn the patch into a silent no-op and the build would break at launch.
+ *
+ * Kept free of non-erasable TypeScript so Node runs it directly from the .mjs
+ * script, and free of I/O so vitest can drive it with fixture text.
+ */
+
+export type PatchResult = { text: string; changed: boolean };
+
+/** Xcode 27 refuses iOS 14; 15 is the lowest target it builds. */
+export const IOS_DEPLOYMENT_TARGET = '15.0';
+
+export class PatchAnchorError extends Error {
+  constructor(file: string, anchor: string) {
+    super(
+      `${file}: expected anchor not found (${anchor}). The Capacitor template ` +
+        'has probably changed; update utils/native-patches.mts to match it.'
+    );
+    this.name = 'PatchAnchorError';
+  }
+}
+
+const below = (version: string, floor: string) =>
+  parseFloat(version) < parseFloat(floor);
+
+/** `platform :ios, '14.0'` -> 15.0, and pin every pod target to 15.0. */
+export const POD_MARKER = '# patch-native: pod deployment target';
+
+export function patchPodfile(text: string): PatchResult {
+  let out = text;
+
+  const platform = /^platform :ios, '([\d.]+)'/m;
+  const match = out.match(platform);
+  if (!match) throw new PatchAnchorError('Podfile', "platform :ios, '<x>'");
+  if (below(match[1], IOS_DEPLOYMENT_TARGET)) {
+    out = out.replace(platform, `platform :ios, '${IOS_DEPLOYMENT_TARGET}'`);
+  }
+
+  // Pods carry their own podspec minimum (14.0 for Capacitor 7), which Xcode
+  // 27 rejects per target, so the app's target alone is not enough.
+  if (!out.includes(POD_MARKER)) {
+    const anchor =
+      /^(post_install do \|installer\|\n\s*assertDeploymentTarget\(installer\)\n)/m;
+    if (!anchor.test(out)) {
+      throw new PatchAnchorError(
+        'Podfile',
+        'post_install do |installer| assertDeploymentTarget(installer)'
+      );
+    }
+    out = out.replace(
+      anchor,
+      `$1  ${POD_MARKER}\n` +
+        '  installer.pods_project.targets.each do |target|\n' +
+        '    target.build_configurations.each do |config|\n' +
+        `      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '${IOS_DEPLOYMENT_TARGET}'\n` +
+        '    end\n' +
+        '  end\n'
+    );
+  }
+
+  return { text: out, changed: out !== text };
+}
+
+/** Every `IPHONEOS_DEPLOYMENT_TARGET` under 15.0 in the app project -> 15.0. */
+export function patchPbxproj(text: string): PatchResult {
+  const setting = /IPHONEOS_DEPLOYMENT_TARGET = ([\d.]+);/g;
+  if (!setting.test(text)) {
+    throw new PatchAnchorError(
+      'project.pbxproj',
+      'IPHONEOS_DEPLOYMENT_TARGET = <x>;'
+    );
+  }
+  const out = text.replace(setting, (whole, version: string) =>
+    below(version, IOS_DEPLOYMENT_TARGET)
+      ? `IPHONEOS_DEPLOYMENT_TARGET = ${IOS_DEPLOYMENT_TARGET};`
+      : whole
+  );
+  return { text: out, changed: out !== text };
+}
+
+/**
+ * iOS 27 traps at launch in an app that has not adopted the scene lifecycle,
+ * and the Capacitor 7 template has not. The scene delegate forwards URL opens
+ * and universal links to Capacitor, which the app delegate did before scenes
+ * took them over.
+ */
+export const SCENE_DELEGATE_MARKER = 'class SceneDelegate:';
+
+export const SCENE_DELEGATE_SWIFT = `
+// Added by scripts/patch-native.mjs: iOS 27 requires the UIScene lifecycle.
+// Info.plist's UIApplicationSceneManifest names this class.
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        for context in URLContexts {
+            _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: context.url, options: [:])
+        }
+    }
+
+    func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+        _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, continue: userActivity, restorationHandler: { _ in })
+    }
+
+}
+`;
+
+export function patchAppDelegate(text: string): PatchResult {
+  if (text.includes(SCENE_DELEGATE_MARKER)) return { text, changed: false };
+  if (!/class AppDelegate\b/.test(text) || !text.includes('import Capacitor')) {
+    throw new PatchAnchorError(
+      'AppDelegate.swift',
+      'import Capacitor + class AppDelegate'
+    );
+  }
+  const out = text.replace(/\s*$/, '\n') + SCENE_DELEGATE_SWIFT;
+  return { text: out, changed: true };
+}
+
+export const SCENE_MANIFEST_KEY = '<key>UIApplicationSceneManifest</key>';
+
+const SCENE_MANIFEST_PLIST = `	${SCENE_MANIFEST_KEY}
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+`;
+
+/**
+ * Adds the scene manifest as the last key of the top-level dict. A text edit
+ * rather than PlistBuddy so it is testable without macOS; the script lints
+ * the result with plutil where it exists.
+ */
+export function patchInfoPlist(text: string): PatchResult {
+  if (text.includes(SCENE_MANIFEST_KEY)) return { text, changed: false };
+  const anchor = /\n<\/dict>\s*\n<\/plist>\s*$/;
+  if (!anchor.test(text)) {
+    throw new PatchAnchorError('Info.plist', 'closing </dict></plist>');
+  }
+  const out = text.replace(
+    anchor,
+    (tail) => `\n${SCENE_MANIFEST_PLIST}${tail.slice(1)}`
+  );
+  return { text: out, changed: true };
+}
+
+/** Android notification small icon: densities and their pixel sizes. */
+export const NOTIFICATION_ICON_NAME = 'ic_stat_kanko';
+
+export const NOTIFICATION_ICON_SIZES = {
+  mdpi: 24,
+  hdpi: 36,
+  xhdpi: 48,
+  xxhdpi: 72,
+  xxxhdpi: 96
+} as const;
+
+/** Committed source -> generated Android destination, relative paths. */
+export function notificationIconCopies(): { from: string; to: string }[] {
+  return Object.keys(NOTIFICATION_ICON_SIZES).map((density) => ({
+    from: `resources/notification/drawable-${density}/${NOTIFICATION_ICON_NAME}.png`,
+    to: `android/app/src/main/res/drawable-${density}/${NOTIFICATION_ICON_NAME}.png`
+  }));
+}

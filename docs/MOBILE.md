@@ -47,19 +47,36 @@ npm run cap:add:ios        # needs Xcode and CocoaPods
 npm run cap:add:android    # needs Android Studio
 ```
 
-Gradle here runs on Android Studio's bundled JDK 21. A newer JDK on the
-`PATH` fails the settings script with "Unsupported class file major version",
-so point it at the one that works:
+Each of those runs `npm run cap:patch` (`scripts/patch-native.mjs`) after
+`cap add`, because the generated projects need fixes the Capacitor 7
+templates lack, and anything edited by hand in `ios/` or `android/` is lost
+on regeneration:
+
+- **iOS:** deployment target 15.0 in the Podfile, every pod target and the
+  app project (Xcode 27 rejects 14.0), then `pod install`; and a
+  `SceneDelegate` plus `UIApplicationSceneManifest` in `Info.plist` (iOS 27
+  crashes at launch in an app without the scene lifecycle).
+- **Android:** copies the Kanko notification small icon from
+  `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`.
+
+The script is idempotent, skips a platform whose folder is missing, and stops
+with an error if a template no longer has the text it patches. The patches
+live in `utils/native-patches.mts`.
+
+Gradle 8.11 here needs JDK 21. A newer JDK — including the one Android
+Studio now bundles — fails the settings script with "Unsupported class file
+major version", so point `JAVA_HOME` at a JDK 21 (for example Homebrew's
+`openjdk@21`):
 
 ```bash
-export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
 ```
 
 Then, whenever `capacitor.config.ts` or a plugin changes:
 
 ```bash
-npm run cap:ios            # sync + open Xcode
-npm run cap:android        # sync + open Android Studio
+npm run cap:ios            # sync + patch + open Xcode
+npm run cap:android        # sync + patch + open Android Studio
 ```
 
 To point a build at a local dev server instead of production — the usual way
@@ -77,7 +94,8 @@ Icons and splash are generated from Kanko's face (the master named in
 npm run cap:assets
 ```
 
-That draws `resources/icon.png` and the two splash sources, then slices them
+That draws `resources/icon.png`, the two splash sources and the Android
+notification icons in `resources/notification/`, then slices the icon and splash
 into the sizes each platform wants. The slices land inside `ios/` and
 `android/`, which are untracked — so this runs once per machine after
 `cap:add:*`, and again whenever the master changes. Only `resources/`, the
