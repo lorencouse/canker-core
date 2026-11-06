@@ -19,9 +19,9 @@ export default function PrivacyPage() {
         <h2>What is stored</h2>
         <p>
           Your email address and password hash, so you can sign in. Anything you
-          choose to put in your profile, which is only a name. And your
-          sores: position on the mouth map, size and pain readings, and the
-          dates those readings were taken.
+          choose to put in your profile, which is only a name. And your sores:
+          position on the mouth map, size and pain readings, and the dates those
+          readings were taken.
         </p>
       </section>
 
@@ -51,7 +51,9 @@ export default function PrivacyPage() {
           create an account, those two facts are saved with it, which is how
           Canker Core tells which articles help people start tracking. The only
           other measure is a count of how many accounts go on to log a reading,
-          worked out from the readings themselves.
+          worked out from the readings themselves. A second cookie, named tz,
+          stores only your device’s time zone so dates show correctly; it is not
+          used for tracking.
         </p>
       </section>
 
@@ -70,8 +72,8 @@ export default function PrivacyPage() {
           You can delete individual sores from the mouth map at any time. To
           delete your whole account and every reading attached to it, open
           Settings, then Account, and choose Delete account. It is removed
-          immediately. The same page lets you download everything first as a
-          CSV file.
+          immediately. The same page lets you download everything first as a CSV
+          file.
         </p>
       </section>
 

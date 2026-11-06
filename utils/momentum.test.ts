@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { DayLog, Reading, Sore } from '@/types';
 import {
   BAD_DAY_PAIN,
+  expectedMood,
   isBadDay,
   streakCardLabel,
   streakHeadline,
@@ -185,5 +186,101 @@ describe('withSavedLog', () => {
     const first = log('2026-11-05', ['coffee']);
     const second = log('2026-11-05');
     expect(withSavedLog([first], second, true)).toEqual([second]);
+  });
+});
+
+describe('expectedMood', () => {
+  // The server's clock, in UTC; the result must not depend on the host zone.
+  const server = new Date(Date.UTC(2026, 10, 5, 12, 0, 0));
+
+  it('is proud when a recent trigger-free day is logged', () => {
+    expect(expectedMood([sore()], [log('2026-11-04')], server)).toBe('proud');
+  });
+
+  it('allows for a device a day ahead or behind the server', () => {
+    expect(expectedMood([sore()], [log('2026-11-06')], server)).toBe('proud');
+    expect(expectedMood([sore()], [log('2026-11-03')], server)).toBe('neutral');
+  });
+
+  it('is neutral when the last log is too old or had triggers', () => {
+    expect(expectedMood([sore()], [log('2026-11-01')], server)).toBe('neutral');
+    expect(
+      expectedMood([sore()], [log('2026-11-04', ['coffee'])], server)
+    ).toBe('neutral');
+  });
+
+  it('is gentle for a sore placed or a bad reading around now', () => {
+    const fresh = sore({ created_at: '2026-11-05T08:00:00.000Z' });
+    expect(expectedMood([fresh], [log('2026-11-04')], server)).toBe('gentle');
+    const sharp = sore({
+      readings: [
+        reading({ recorded_at: '2026-11-05T10:00:00.000Z', pain: BAD_DAY_PAIN })
+      ]
+    });
+    expect(expectedMood([sharp], [], server)).toBe('gentle');
+  });
+
+  it('ignores a sore placed too long ago to be on the device today', () => {
+    const older = sore({ created_at: '2026-11-04T01:00:00.000Z' });
+    expect(expectedMood([older], [log('2026-11-04')], server)).toBe('proud');
+  });
+
+  it('is neutral when the newest log in range had triggers', () => {
+    const logs = [log('2026-11-04'), log('2026-11-05', ['coffee'])];
+    expect(expectedMood([sore()], logs, server)).toBe('neutral');
+  });
+
+  describe('with the device zone', () => {
+    it('is proud when a sore was placed yesterday evening on the device', () => {
+      // 20:00 in Los Angeles on Nov 4, seen at 10:00 there on Nov 5.
+      const lastNight = sore({ created_at: '2026-11-05T04:00:00.000Z' });
+      const morning = new Date('2026-11-05T18:00:00.000Z');
+      const logs = [log('2026-11-04')];
+      expect(expectedMood([lastNight], logs, morning)).toBe('gentle');
+      expect(
+        expectedMood([lastNight], logs, morning, 'America/Los_Angeles')
+      ).toBe('proud');
+    });
+
+    it('is gentle for a sore placed earlier on the device day', () => {
+      const fresh = sore({ created_at: '2026-11-05T16:00:00.000Z' });
+      const morning = new Date('2026-11-05T18:00:00.000Z');
+      expect(
+        expectedMood(
+          [fresh],
+          [log('2026-11-04')],
+          morning,
+          'America/Los_Angeles'
+        )
+      ).toBe('gentle');
+    });
+
+    it('counts the streak from the device day', () => {
+      // 00:30 on Nov 6 in Kolkata, still Nov 5 on the server.
+      const justAfterMidnight = new Date('2026-11-05T19:00:00.000Z');
+      const logs = [log('2026-11-03')];
+      expect(
+        expectedMood([sore()], logs, justAfterMidnight, 'Asia/Kolkata')
+      ).toBe('neutral');
+      expect(
+        expectedMood(
+          [sore()],
+          [log('2026-11-05')],
+          justAfterMidnight,
+          'Asia/Kolkata'
+        )
+      ).toBe('proud');
+    });
+
+    it('falls back to the guess for a zone that is not real', () => {
+      const lastNight = sore({ created_at: '2026-11-05T04:00:00.000Z' });
+      const morning = new Date('2026-11-05T18:00:00.000Z');
+      expect(
+        expectedMood([lastNight], [log('2026-11-04')], morning, 'Mars/Olympus')
+      ).toBe('gentle');
+      expect(expectedMood([lastNight], [log('2026-11-04')], morning, '')).toBe(
+        'gentle'
+      );
+    });
   });
 });
