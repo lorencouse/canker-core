@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.cankercore.app",
+      "sha256_cert_fingerprints": [
+        "94:0D:2D:34:03:06:C7:74:53:3A:99:BF:AC:F1:09:9B:89:FE:12:68:5C:45:25:99:CE:8A:52:B8:B9:10:46:7E"
+      ]
+    }
+  }
+]

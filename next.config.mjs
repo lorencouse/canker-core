@@ -32,7 +32,18 @@ const nextConfig = {
         ]
       },
       {
-        // The iOS sign-in's https callback carries a handoff token in its
+        // Android fetches this to verify the App Link the Android sign-in
+        // returns through (android:autoVerify in scripts/patch-native.mjs).
+        // It must be a plain 200 application/json with no redirect; proxy.ts
+        // skips .well-known, so it never gets a first-touch cookie either.
+        source: '/.well-known/assetlinks.json',
+        headers: [
+          { key: 'Content-Type', value: 'application/json' },
+          { key: 'Cache-Control', value: 'public, max-age=3600' }
+        ]
+      },
+      {
+        // The native sign-in's https callback carries a handoff token in its
         // query (app/native-auth/callback). Opened in a browser, the page's
         // one link must not send that URL on as a referrer, and nothing may
         // keep a copy.

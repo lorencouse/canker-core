@@ -45,10 +45,12 @@ export async function handleRequest(
  * Start an OAuth sign-in. Resolves with a message to show when it could not
  * start, and with null when it is under way or was cancelled.
  *
- * In a browser (and the Android app) this is Better Auth's ordinary redirect,
- * with the callback at /api/auth/callback/<provider>, and so it is in an iOS
- * app that cannot catch an https callback (before iOS 17.4). Otherwise the
- * iOS app runs it in Apple's system sign-in sheet; see utils/native-auth.ts.
+ * In a browser this is Better Auth's ordinary redirect, with the callback at
+ * /api/auth/callback/<provider>, and so it is in an app that cannot catch the
+ * https callback (iOS before 17.4; Android with no Custom Tabs browser or an
+ * unverified App Link). Otherwise the app runs it in the system sign-in:
+ * Apple's sign-in sheet on iOS, a Custom Tab on Android; see
+ * utils/native-auth.ts.
  */
 export async function signInWithOAuth(
   e: React.FormEvent<HTMLFormElement>
@@ -58,7 +60,8 @@ export async function signInWithOAuth(
   const provider = String(formData.get('provider')).trim() as OAuthProvider;
   const next = safeNext(formData.get('next'));
 
-  if (await hasSystemSignIn()) return signInWithSystemSheet(provider, next);
+  if (await hasSystemSignIn(NATIVE_AUTH_HTTPS_PATH))
+    return signInWithSystemSheet(provider, next);
 
   // signIn.social reports failure in its result rather than throwing; left
   // unread, a server error made the button silently do nothing.
@@ -101,7 +104,7 @@ async function signInWithSystemSheet(
       NATIVE_AUTH_HTTPS_PATH
     ));
   } catch (err) {
-    // Closing the sheet is a choice, not an error: stay put, say nothing.
+    // Closing the sheet or tab is a choice, not an error: stay put, say nothing.
     if ((err as { code?: string })?.code === 'CANCELED') return null;
     return nativeAuthErrorMessage('unknown');
   }

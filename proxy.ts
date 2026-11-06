@@ -105,9 +105,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - .well-known (apple-app-site-association: fetched by Apple's CDN,
-     *   which needs a plain 200 and has no use for the first-touch cookie)
-     * - native-auth/ (the iOS sign-in's https callback; its URL carries a
+     * - .well-known (apple-app-site-association and assetlinks.json:
+     *   fetched by Apple's CDN and Google's verifier, which need a plain 200
+     *   and have no use for the first-touch cookie)
+     * - native-auth/ (the native sign-in's https callback; its URL carries a
      *   handoff token and is never anyone's first touch)
      * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
      */

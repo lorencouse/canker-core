@@ -326,3 +326,65 @@ export function notificationIconCopies(): { from: string; to: string }[] {
     to: `android/app/src/main/res/drawable-${density}/${NOTIFICATION_ICON_NAME}.png`
   }));
 }
+
+/**
+ * The App Link the Android system sign-in returns through
+ * (utils/native-auth.ts). Google and GitHub sign-in run in a Chrome Custom
+ * Tab, which ends on https://cankercore.com/native-auth/callback. This filter
+ * on MainActivity claims exactly that path, and android:autoVerify makes
+ * Android check public/.well-known/assetlinks.json, so once verified the link
+ * opens only this app. Exactly that path and no wider: Chrome keeps a
+ * same-host navigation in the tab when the page it leaves opens in the same
+ * apps, so a filter matching the whole site would strand the callback in the
+ * tab (and pull ordinary links into the app).
+ *
+ * MainActivity must stay singleTask: the App Link then reaches the running
+ * activity through onNewIntent, which also closes the Custom Tab above it.
+ */
+export const APP_LINK_HOST = 'cankercore.com';
+export const APP_LINK_PATH = '/native-auth/callback';
+export const APP_LINK_MARKER = '<!-- patch-native: sign-in app link -->';
+
+export const APP_LINK_FILTER =
+  `            ${APP_LINK_MARKER}\n` +
+  '            <intent-filter android:autoVerify="true">\n' +
+  '                <action android:name="android.intent.action.VIEW" />\n' +
+  '                <category android:name="android.intent.category.DEFAULT" />\n' +
+  '                <category android:name="android.intent.category.BROWSABLE" />\n' +
+  `                <data android:scheme="https" android:host="${APP_LINK_HOST}" android:path="${APP_LINK_PATH}" />\n` +
+  '            </intent-filter>\n';
+
+const MAIN_ACTIVITY =
+  /(<activity\b[^>]*\bandroid:name="\.MainActivity"[^>]*>)([\s\S]*?)(\n[ \t]*<\/activity>)/;
+
+/** Adds the sign-in App Link intent-filter to MainActivity, once. */
+export function patchAndroidManifest(text: string): PatchResult {
+  if (text.includes(APP_LINK_MARKER)) {
+    if (text.includes(APP_LINK_FILTER)) return { text, changed: false };
+    throw new Error(
+      'AndroidManifest.xml has a sign-in app link that differs from the one ' +
+        'scripts/patch-native.mjs writes. Regenerate the Android project ' +
+        '(rm -rf android && npm run cap:add:android).'
+    );
+  }
+
+  const match = text.match(MAIN_ACTIVITY);
+  if (!match) {
+    throw new PatchAnchorError(
+      'AndroidManifest.xml',
+      '<activity android:name=".MainActivity"> … </activity>'
+    );
+  }
+  if (!/\bandroid:launchMode="singleTask"/.test(match[1])) {
+    throw new PatchAnchorError(
+      'AndroidManifest.xml',
+      'MainActivity android:launchMode="singleTask"'
+    );
+  }
+  const out = text.replace(
+    MAIN_ACTIVITY,
+    (_all, open: string, body: string, close: string) =>
+      `${open}${body.replace(/\n+$/, '\n')}\n${APP_LINK_FILTER.slice(0, -1)}${close}`
+  );
+  return { text: out, changed: true };
+}

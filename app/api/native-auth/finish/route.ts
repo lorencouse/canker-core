@@ -2,7 +2,8 @@
  * GET  /api/native-auth/finish?next=…&nonce=…[&error=…]
  * POST /api/native-auth/finish  (the confirmation form)
  *
- * The last pages the iOS system sign-in sheet loads. Better Auth's provider
+ * The last pages the system sign-in (the iOS sheet or Android Custom Tab;
+ * "the sheet" below) loads. Better Auth's provider
  * callback redirects to the GET once the sheet holds a session (or with
  * ?error= when the provider refused). The GET deletes that session at once,
  * holds its user as a five-minute pending handoff keyed by the flow cookie,
@@ -10,7 +11,8 @@
  * left signed in however the sheet is closed. Only the POST of that form,
  * from this origin and carrying a CSRF token bound to the flow cookie, spends
  * the pending handoff on a 60-second single-use handoff token and redirects
- * to the site's https callback, which the sheet hands only to this app.
+ * to the site's https callback, which only this app receives (a universal
+ * link on iOS, a verified App Link on Android).
  *
  * Only a flow begun by /api/native-auth/start can get here usefully: the
  * nonce must match the httpOnly cookie start set in this same cookie jar, so
@@ -80,7 +82,7 @@ export async function GET(request: NextRequest) {
     const res = noStore(new NextResponse(html, { status: 200 }));
     for (const [name, value] of Object.entries(CONFIRM_PAGE_HEADERS))
       res.headers.set(name, value);
-    // Expires the sheet's session cookie, so Safari is not left signed in.
+    // Expires the sheet's session cookie, so Safari (or Chrome) is not left signed in.
     forwardCookies(res, headers);
     return res;
   } catch (error) {

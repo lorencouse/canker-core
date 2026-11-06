@@ -2,7 +2,8 @@
  * GET /api/native-auth/start?provider=google|github&next=/today&nonce=…
  *     [&ft=…]
  *
- * The first page the iOS system sign-in sheet loads. Begins Better Auth's
+ * The first page the system sign-in (the iOS sheet or Android Custom Tab;
+ * "the sheet" below) loads. Begins Better Auth's
  * ordinary social sign-in here, server side, so its OAuth state cookie lands
  * in the sheet's cookie jar — the jar the provider callback will arrive in —
  * and sends the sheet on to the provider. The provider callback is still

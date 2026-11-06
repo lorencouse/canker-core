@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { randomNonce } from './native-auth';
+import { APP_LINK_HOST, APP_LINK_PATH } from './native-patches.mjs';
 import {
   FIRST_TOUCH_COOKIE,
   decodeFirstTouch,
@@ -137,6 +138,34 @@ describe('start', () => {
     });
   });
 
+  // iOS and Android return through the same https link (a universal link,
+  // an App Link); there is no callback kind for a client to choose, so a
+  // parameter naming one, or a scheme, changes nothing.
+  it.each([
+    'android',
+    'ios',
+    'com.cankercore.app://auth/callback',
+    'intent://auth/callback#Intent;scheme=com.cankercore.app;end'
+  ])('starts the same flow whatever callback=%s says', async (callback) => {
+    const nonce = randomNonce();
+    const res = await start(
+      request(
+        `/api/native-auth/start?${new URLSearchParams({ provider: 'google', nonce, next: '/today', callback })}`
+      )
+    );
+    expect(res.headers.get('location')).toMatch(
+      /^https:\/\/accounts\.google\.com\//
+    );
+    const finish = new URL(
+      api.signInSocial.mock.calls[0][0].body.callbackURL,
+      ORIGIN
+    );
+    expect(Object.fromEntries(finish.searchParams)).toEqual({
+      nonce,
+      next: '/today'
+    });
+  });
+
   it('fails through the https callback, whatever the app asks for', async () => {
     const res = await start(
       request('/api/native-auth/start?provider=apple&callback=scheme')
@@ -251,12 +280,25 @@ describe('finish', () => {
     expect(location.searchParams.get('next')).toBe('/insights');
   });
 
-  it('never redirects to a custom scheme, whatever the form says', async () => {
+  it.each(['scheme', 'android', 'com.cankercore.app://auth/callback'])(
+    'never redirects to a custom scheme, whatever callback=%s says',
+    async (callback) => {
+      const { form } = await confirmForm();
+      const res = await post({ ...form, callback, action: 'continue' });
+      expect(res.headers.get('location')).toMatch(
+        /^https:\/\/cankercore\.com\/native-auth\/callback\?token=/
+      );
+    }
+  );
+
+  it('redirects Continue to the App Link path the Android app claims', async () => {
     const { form } = await confirmForm();
-    const res = await post({ ...form, callback: 'scheme', action: 'continue' });
-    expect(res.headers.get('location')).toMatch(
-      /^https:\/\/cankercore\.com\/native-auth\/callback\?token=/
-    );
+    const res = await post({ ...form, action: 'continue' });
+    const location = new URL(res.headers.get('location')!);
+    expect(location.protocol).toBe('https:');
+    expect(location.host).toBe(APP_LINK_HOST);
+    expect(location.port).toBe('');
+    expect(location.pathname).toBe(APP_LINK_PATH);
   });
 
   it('reports an expired or already-answered confirmation', async () => {

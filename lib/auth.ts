@@ -191,7 +191,7 @@ export const auth = betterAuth({
         });
       }
     }),
-    // The iOS system sign-in handoff (app/api/native-auth). Server-only
+    // The native system sign-in handoff (app/api/native-auth). Server-only
     // endpoints; nothing is added under /api/auth.
     nativeHandoff(),
     // Must stay last: lets server actions set auth cookies on the response.

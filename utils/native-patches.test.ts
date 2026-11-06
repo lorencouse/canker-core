@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  APP_LINK_FILTER,
+  APP_LINK_HOST,
+  APP_LINK_PATH,
   NOTIFICATION_ICON_SIZES,
   PatchAnchorError,
   notificationIconCopies,
+  patchAndroidManifest,
   patchAppDelegate,
   patchEntitlements,
   patchInfoPlist,
@@ -11,6 +15,7 @@ import {
   patchPodfile,
   type PatchResult
 } from './native-patches.mjs';
+import { NATIVE_AUTH_HTTPS_PATH } from './native-auth';
 
 // Trimmed from what `cap add ios` (Capacitor 7) generates.
 const PODFILE = `require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
@@ -57,12 +62,45 @@ const INFO_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 `;
 
+// What `cap add android` (Capacitor 7) generates, trimmed.
+const ANDROID_MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:exported="false">
+        </provider>
+    </application>
+
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>
+`;
+
 const cases: [string, string, (text: string) => PatchResult][] = [
   ['Podfile', PODFILE, patchPodfile],
   ['project.pbxproj', PBXPROJ, patchPbxproj],
   ['AppDelegate.swift', APP_DELEGATE, patchAppDelegate],
   ['Info.plist', INFO_PLIST, patchInfoPlist],
-  ['project.pbxproj (entitlements)', PBXPROJ, patchPbxprojEntitlements]
+  ['project.pbxproj (entitlements)', PBXPROJ, patchPbxprojEntitlements],
+  ['AndroidManifest.xml', ANDROID_MANIFEST, patchAndroidManifest]
 ];
 
 describe.each(cases)('%s patch', (_name, fixture, patch) => {
@@ -313,5 +351,49 @@ describe('notificationIconCopies', () => {
       from: 'resources/notification/drawable-mdpi/ic_stat_kanko.png',
       to: 'android/app/src/main/res/drawable-mdpi/ic_stat_kanko.png'
     });
+  });
+});
+
+describe('patchAndroidManifest', () => {
+  const activity = (text: string) =>
+    text.slice(text.indexOf('<activity'), text.indexOf('</activity>'));
+
+  it('claims exactly the sign-in callback, verified, on MainActivity', () => {
+    const { text } = patchAndroidManifest(ANDROID_MANIFEST);
+    const main = activity(text);
+    expect(main).toContain('<intent-filter android:autoVerify="true">');
+    expect(main).toContain(
+      `<data android:scheme="https" android:host="${APP_LINK_HOST}" android:path="${APP_LINK_PATH}" />`
+    );
+    // The launcher filter is untouched, and nothing went outside the activity.
+    expect(main).toContain('android.intent.category.LAUNCHER');
+    expect(text.replace(APP_LINK_FILTER, '')).not.toContain('autoVerify');
+    expect(text.match(/autoVerify/g)).toHaveLength(1);
+  });
+
+  it('matches the path the server redirects to, and nothing wider', () => {
+    expect(APP_LINK_PATH).toBe(NATIVE_AUTH_HTTPS_PATH);
+    expect(APP_LINK_FILTER).not.toMatch(/pathPrefix|pathPattern|scheme="http"/);
+    // A custom scheme would let any app claim the callback.
+    expect(APP_LINK_FILTER.match(/android:scheme="([^"]+)"/g)).toEqual([
+      'android:scheme="https"'
+    ]);
+  });
+
+  it('refuses a MainActivity that is no longer singleTask', () => {
+    expect(() =>
+      patchAndroidManifest(
+        ANDROID_MANIFEST.replace(' android:launchMode="singleTask"', '')
+      )
+    ).toThrow(PatchAnchorError);
+  });
+
+  it('refuses a sign-in link it did not write and says to regenerate', () => {
+    const { text } = patchAndroidManifest(ANDROID_MANIFEST);
+    const edited = text.replace(
+      `android:path="${APP_LINK_PATH}"`,
+      'android:pathPrefix="/"'
+    );
+    expect(() => patchAndroidManifest(edited)).toThrow(/Regenerate/);
   });
 });

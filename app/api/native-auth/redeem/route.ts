@@ -1,7 +1,8 @@
 /**
  * GET /api/native-auth/redeem?token=…&next=…
  *
- * Loaded by the app's webview after the iOS system sign-in sheet hands back
+ * Loaded by the app's webview after the system sign-in (the iOS sheet, or
+ * the Android Custom Tab through its App Link) hands back
  * its callback. Spends the handoff token — which must be unexpired, unused,
  * and minted for the nonce in this webview's own cookie — and signs the
  * webview in with a new session, then goes on to `next`. Every failure lands

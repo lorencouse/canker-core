@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { ImpactStyle } from '@capacitor/haptics';
 
 /**
@@ -60,17 +60,22 @@ export async function openExternal(url: string) {
 }
 
 /**
- * The WebAuth plugin (native/plugins/web-auth): Apple's system sign-in sheet,
- * ASWebAuthenticationSession. Unlike the Browser plugin's
- * SFSafariViewController, it shares Safari's cookies, saved passwords and
- * passkeys, which is the whole point of using it for sign-in.
+ * The WebAuth plugin (native/plugins/web-auth): the system sign-in. On iOS
+ * it is Apple's sign-in sheet, ASWebAuthenticationSession, which unlike the
+ * Browser plugin's SFSafariViewController shares Safari's cookies, saved
+ * passwords and passkeys. On Android it is a Chrome Custom Tab, which shares
+ * Chrome's signed-in Google accounts and passkeys, and comes back through a
+ * verified App Link. Either way, reaching the person's existing accounts is
+ * the whole point of using it for sign-in.
  *
  * Registered by name rather than imported from the package: the site is
  * what runs in the webview, so it must not depend on a package that only
  * exists for the native build.
  */
 interface WebAuthPlugin {
-  capabilities(): Promise<{ httpsCallback: boolean }>;
+  capabilities(options: {
+    callbackPath: string;
+  }): Promise<{ httpsCallback: boolean }>;
   start(options: {
     url: string;
     callbackPath: string;
@@ -79,21 +84,26 @@ interface WebAuthPlugin {
 
 let webAuth: WebAuthPlugin | undefined;
 
-const webAuthPlugin = async () => {
-  const { registerPlugin } = await import('@capacitor/core');
-  return (webAuth ??= registerPlugin<WebAuthPlugin>('WebAuth'));
-};
+// Synchronous on purpose: the plugin is a proxy that turns any property,
+// `then` included, into a native call, so resolving a promise with it calls
+// an unimplemented `WebAuth.then()` and the promise never settles.
+const webAuthPlugin = () =>
+  (webAuth ??= registerPlugin<WebAuthPlugin>('WebAuth'));
 
 /**
- * True only where the system sheet can return through the site's universal
- * link, which only this app can receive: the iOS app on iOS 17.4+ with an
- * https server. False on an app build without the plugin's capabilities
- * method, which then keeps OAuth in the webview.
+ * True only where the system sign-in can return through the site's
+ * `https://<server><callbackPath>` link, which only this app can receive:
+ * the iOS app on iOS 17.4+, or the Android app with a Custom Tabs browser
+ * and (on Android 12+, which can say) a verified App Link, both with an
+ * https server. False on an app build without the plugin, which then keeps
+ * OAuth in the webview. (The iOS plugin ignores callbackPath here.)
  */
-export async function hasSystemSignIn(): Promise<boolean> {
-  if (!isNative() || platform() !== 'ios') return false;
+export async function hasSystemSignIn(callbackPath: string): Promise<boolean> {
+  if (!isNative() || !['ios', 'android'].includes(platform())) return false;
   try {
-    const { httpsCallback } = await (await webAuthPlugin()).capabilities();
+    const { httpsCallback } = await webAuthPlugin().capabilities({
+      callbackPath
+    });
     return httpsCallback === true;
   } catch {
     return false;
@@ -101,10 +111,10 @@ export async function hasSystemSignIn(): Promise<boolean> {
 }
 
 /**
- * Opens `url` in the system sign-in sheet and resolves with the
+ * Opens `url` in the system sign-in and resolves with the
  * `https://<server><callbackPath>` URL it is redirected to. Rejects with code
- * 'CANCELED' when the person closes the sheet.
+ * 'CANCELED' when the person closes the sheet or the tab.
  */
 export async function systemSignIn(url: string, callbackPath: string) {
-  return (await webAuthPlugin()).start({ url, callbackPath });
+  return webAuthPlugin().start({ url, callbackPath });
 }

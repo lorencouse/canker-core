@@ -2,16 +2,21 @@
   "name": "@canker-core/web-auth",
   "version": "1.0.0",
   "private": true,
-  "description": "Apple's system sign-in sheet (ASWebAuthenticationSession) for the Canker Core iOS app.",
+  "description": "System sign-in for the Canker Core apps: Apple's sign-in sheet (ASWebAuthenticationSession) on iOS, a Custom Tab returning through a verified App Link on Android.",
   "license": "UNLICENSED",
   "author": "Canker Core",
   "files": [
     "ios/Sources",
-    "CankerCoreWebAuth.podspec"
+    "CankerCoreWebAuth.podspec",
+    "android/build.gradle",
+    "android/src/main"
   ],
   "capacitor": {
     "ios": {
       "src": "ios"
+    },
+    "android": {
+      "src": "android"
     }
   }
 }
