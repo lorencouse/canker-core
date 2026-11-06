@@ -77,9 +77,9 @@ export async function GET(request: NextRequest) {
       next: safeNext(params.get('next')),
       csrf: confirmToken(secret, flow)
     });
-    const res = noStore(
-      new NextResponse(html, { status: 200, headers: CONFIRM_PAGE_HEADERS })
-    );
+    const res = noStore(new NextResponse(html, { status: 200 }));
+    for (const [name, value] of Object.entries(CONFIRM_PAGE_HEADERS))
+      res.headers.set(name, value);
     // Expires the sheet's session cookie, so Safari is not left signed in.
     forwardCookies(res, headers);
     return res;

@@ -48,7 +48,7 @@ export function confirmPage(input: ConfirmPageInput): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="referrer" content="no-referrer">
+<meta name="referrer" content="same-origin">
 <title>Continue to Canker Core</title>
 <style>${STYLE}</style>
 </head>
@@ -69,9 +69,12 @@ ${hidden('next', input.next)}
 `;
 }
 
-/** Headers for that page: never cached, never framed, nothing but itself. */
+/** Headers for that page: never framed, nothing but itself, and no referrer
+ * beyond this origin. Not no-referrer: under it a form POST carries
+ * `Origin: null`, and finish refuses any POST without this origin. */
 export const CONFIRM_PAGE_HEADERS = {
   'Content-Type': 'text/html; charset=utf-8',
+  'Referrer-Policy': 'same-origin',
   'Content-Security-Policy':
     "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
   'X-Frame-Options': 'DENY'

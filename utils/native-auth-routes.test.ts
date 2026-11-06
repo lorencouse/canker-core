@@ -196,6 +196,29 @@ describe('finish', () => {
     expect(api.mintNativeHandoff).not.toHaveBeenCalled();
   });
 
+  /**
+   * The Origin a WebKit browser puts on the confirmation form's POST to this
+   * same origin: Fetch's "serializing a request origin" sends `null` for a
+   * non-GET request from a document whose referrer policy is no-referrer,
+   * and the document's policy is its meta referrer, else the header.
+   */
+  function originBrowserSends(res: Response, html: string): string {
+    const meta = html.match(/<meta name="referrer" content="([^"]*)">/)?.[1];
+    const policy = meta ?? res.headers.get('referrer-policy') ?? '';
+    return policy === 'no-referrer' ? 'null' : ORIGIN;
+  }
+
+  it('accepts Continue with the Origin the sheet actually sends', async () => {
+    const { res, html, form } = await confirmForm();
+    expect(res.headers.get('referrer-policy')).toBe('same-origin');
+    const posted = await post(
+      { ...form, action: 'continue' },
+      { origin: originBrowserSends(res, html) }
+    );
+    expect(posted.status).toBe(303);
+    expect(api.mintNativeHandoff).toHaveBeenCalled();
+  });
+
   it('refuses a GET without the flow cookie, holding nothing', async () => {
     const res = await finishGet(request(finishUrl));
     expect(res.headers.get('location')).toBe(
@@ -262,6 +285,7 @@ describe('finish', () => {
   it.each([
     ['a cross-site post', { origin: 'https://evil.com' }, {}],
     ['a post with no origin', { origin: undefined }, {}],
+    ['a post with an opaque origin', { origin: 'null' }, {}],
     ['a forged csrf token', {}, { csrf: 'x'.repeat(43) }],
     ['a csrf token from another flow', {}, { nonce: randomNonce() }],
     ['no flow cookie', { cookie: undefined }, {}]
