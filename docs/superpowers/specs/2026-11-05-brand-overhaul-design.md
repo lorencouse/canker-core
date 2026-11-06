@@ -15,8 +15,8 @@ art (the "Chalk" direction in `docs/ART-DIRECTION.md`). Loren's verdict is
 that it feels vibe-coded and generic. The colours, the logo and the screens
 don't add up to an original, cohesive brand.
 
-The feeling the product should give is **agency**: *I'm doing something
-about this, and it's working.* The user is building healthier habits and can
+The feeling the product should give is **agency**: _I'm doing something
+about this, and it's working._ The user is building healthier habits and can
 see the progress. It is not a clinic and not a pain diary that pities you.
 
 Two references, each borrowed for one thing:
@@ -80,18 +80,18 @@ generic) and a dark sleep-tracker look (too serious).
 
 ### Colour
 
-| Role | Hex | Use |
-| --- | --- | --- |
-| Indigo (primary) | `#4B4BF0` | The action colour: primary buttons, the streak card, active tab, links |
-| Indigo deep | `#2F2FB8` | The pressable bottom edge under indigo controls; pressed state |
-| Sunflower | `#FFD23F` | Wins only: the streak number, completed days, stars, celebration accents |
-| Sunflower deep | `#D9A800` | The pressable edge under sunflower elements |
-| Ink | `#16163F` | Body text, headings, the night background |
-| Ink soft | `#4A4A78` | Secondary text |
-| Ground | `#F1F1FD` | Light-mode page background (matches the art's background exactly, so Kanko blends in) |
-| Line | `#E2E3FA` | Borders, inactive day dots, the edge under ghost buttons |
-| Lavender | `#B9A7F2` | Comfort: the bad-day pillow, quiet secondary accents |
-| Card | `#FFFFFF` | Cards on the light ground |
+| Role             | Hex       | Use                                                                                   |
+| ---------------- | --------- | ------------------------------------------------------------------------------------- |
+| Indigo (primary) | `#4B4BF0` | The action colour: primary buttons, the streak card, active tab, links                |
+| Indigo deep      | `#2F2FB8` | The pressable bottom edge under indigo controls; pressed state                        |
+| Sunflower        | `#FFD23F` | Wins only: the streak number, completed days, stars, celebration accents              |
+| Sunflower deep   | `#D9A800` | The pressable edge under sunflower elements                                           |
+| Ink              | `#16163F` | Body text, headings, the night background                                             |
+| Ink soft         | `#4A4A78` | Secondary text                                                                        |
+| Ground           | `#F1F1FD` | Light-mode page background (matches the art's background exactly, so Kanko blends in) |
+| Line             | `#E2E3FA` | Borders, inactive day dots, the edge under ghost buttons                              |
+| Lavender         | `#B9A7F2` | Comfort: the bad-day pillow, quiet secondary accents                                  |
+| Card             | `#FFFFFF` | Cards on the light ground                                                             |
 
 The existing `--sev-*` ramp and the `--mm-*` mouth-map tissue colours stay
 exactly as they are.
@@ -178,14 +178,14 @@ toward red in a drawing, that drawing is rejected.
 
 ### Moods and where they're used
 
-| Mood | Asset | Screen |
-| --- | --- | --- |
-| Proud, cheeks full, confetti | `kanko-proud-streak.webp` | Today, on a streak |
-| Waving hello | `kanko-hello.webp` | Welcome / first run (`components/onboarding`) |
-| Curious, peeking over a box | `kanko-curious-empty.webp` | Empty states (no sores yet, empty history) |
+| Mood                              | Asset                       | Screen                                              |
+| --------------------------------- | --------------------------- | --------------------------------------------------- |
+| Proud, cheeks full, confetti      | `kanko-proud-streak.webp`   | Today, on a streak                                  |
+| Waving hello                      | `kanko-hello.webp`          | Welcome / first run (`components/onboarding`)       |
+| Curious, peeking over a box       | `kanko-curious-empty.webp`  | Empty states (no sores yet, empty history)          |
 | Gentle, hugging a lavender pillow | `kanko-gentle-bad-day.webp` | After logging a high-severity reading or a new sore |
-| Sleepy, nightcap, moon | `kanko-sleepy-night.webp` | Evening check-in reminder |
-| Puffed-cheek face on indigo | `kanko-app-icon.webp` | App icon, PWA icons, notification icon |
+| Sleepy, nightcap, moon            | `kanko-sleepy-night.webp`   | Evening check-in reminder                           |
+| Puffed-cheek face on indigo       | `kanko-app-icon.webp`       | App icon, PWA icons, notification icon              |
 
 Loren chose the original gentle drawing (half-closed, calm eyes) over a
 wide-eyed redraw. Don't "fix" it.

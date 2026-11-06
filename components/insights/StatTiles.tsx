@@ -8,7 +8,7 @@ import {
 
 /**
  * The headline figures. Plain numbers in text ink — a stat tile is not a
- * chart, and colouring a number teal would make it look like a link. The
+ * chart, and colouring a number indigo would make it look like a link. The
  * one exception is the pain swatch, which is data and wears the ramp.
  */
 export default function StatTiles({ sores }: { sores: Sore[] }) {

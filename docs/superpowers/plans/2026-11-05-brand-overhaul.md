@@ -37,10 +37,12 @@
 ### Task 1: Tokens, fonts and the contrast guard
 
 **Files:**
+
 - Create: `utils/contrast.ts`, `utils/contrast.test.ts`
 - Modify: `styles/main.css` (`:root` and `.dark` blocks, `.label`, `.mouth-map-label`, surface comments), `tailwind.config.js` (`fontFamily` comments, `colors`, `borderRadius`, `boxShadow`), `app/layout.tsx` (fonts, `viewport.themeColor`), `app/manifest.ts` (`background_color`, `theme_color`)
 
 **Interfaces:**
+
 - Produces: CSS custom properties `--win`, `--win-edge`, `--primary-edge`, `--comfort` (HSL triplets, both themes); Tailwind colours `win`, `win-edge`, `primary-edge`, `comfort`; Tailwind shadows `press` (`0 5px 0 hsl(var(--primary-edge))`), `press-win` (`0 5px 0 hsl(var(--win-edge))`), `press-line` (`0 4px 0 hsl(var(--border))`); radius tokens `worksheet: 1.25rem`, `cell: 0.75rem`, `--radius: 1rem`.
 - Produces: `contrastRatio(a: string, b: string): number` taking two HSL triplet strings as written in main.css (`"240 84% 62%"`), and `readTokens(css: string, scope: ':root' | '.dark'): Record<string, string>`.
 
@@ -56,9 +58,11 @@
 ### Task 2: Rounded, pressable buttons
 
 **Files:**
+
 - Modify: `components/ui/button.tsx`, `components/ui/button.test.ts`
 
 **Interfaces:**
+
 - Consumes: Task 1 shadows `press`, `press-line`, colours `primary-edge`.
 - Produces: unchanged `Button`/`buttonVariants` API (same variant and size names).
 
@@ -71,11 +75,14 @@
 ### Task 3: Streak, week and mood logic
 
 **Files:**
+
 - Create: `utils/momentum.ts`, `utils/momentum.test.ts`
 
 **Interfaces:**
+
 - Consumes: `DayLog`, `Sore` from `@/types`; `dayKey`, `isSameLocalDay` from `@/utils/readings`.
 - Produces:
+
   - `BAD_DAY_PAIN = 6`
   - `triggerFreeStreak(logs: DayLog[], today: string): number` — consecutive local days, each with a `DayLog` whose `triggers` is empty. Counting starts at `today` if today has a log, otherwise at the day before (an unlogged today doesn't break it). A logged day with any trigger, or a missing day, ends it.
   - `isBadDay(sores: Sore[], now: Date): boolean` — a sore with `created_at` on today's local date, or any reading recorded today with `pain >= BAD_DAY_PAIN`.
@@ -104,10 +111,12 @@
 ### Task 4: Kanko assets, `<Kanko>`, and the Today streak block
 
 **Files:**
+
 - Create: `tools/kanko-assets.mjs`, `public/images/kanko/*.webp` (generated), `components/kanko/Kanko.tsx`, `components/kanko/moods.ts`, `components/kanko/moods.test.ts`, `components/today/StreakBlock.tsx`
 - Modify: `app/(app)/today/today-screen.tsx` (header and empty-state block), `styles/main.css` (`.kanko-fade`), `package.json` (`sharp` devDependency, `"art:kanko": "node tools/kanko-assets.mjs"`)
 
 **Interfaces:**
+
 - Consumes: Task 3 `todayMood`, `triggerFreeStreak`, `weekDots`, `streakHeadline`, `Mood`.
 - Produces: `type KankoMood = 'proud' | 'hello' | 'curious' | 'gentle' | 'neutral'`; `KANKO: Record<KankoMood, { src: string; width: number; height: number }>` in `moods.ts`; `<Kanko mood: KankoMood; size: number; className?: string; priority?: boolean />` rendering a decorative `next/image` (`alt=""`, `aria-hidden`) with the `.kanko-fade` mask; `<StreakBlock sores logs now />`.
 
@@ -124,9 +133,11 @@
 ### Task 5: Welcome and sign-in
 
 **Files:**
+
 - Modify: `components/onboarding/WelcomeFlow.tsx` (the `place` step's intro), `app/signin/layout.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 4 `<Kanko>`; Task 6 `<Logo>` (if Task 6 has landed, otherwise leave the existing import).
 
 - [ ] **Step 1:** Add `<Kanko mood="hello" size={160} priority />` above the first step's heading in `WelcomeFlow`, with the line `Hi, I'm Kanko. Let's work out what sets your mouth sores off, one day at a time.` as the intro copy for that step (keep the step's existing instructions below it). No change to the steps, writes or skipping.
@@ -137,11 +148,13 @@
 ### Task 6: Logo, icons and share card
 
 **Files:**
+
 - Modify: `components/icons/Logo.tsx`, `scripts/generate-app-icons.mjs` (rewrite on sharp), `app/opengraph-image.tsx`, `package.json` (`cap:assets` background colours `#4B4BF0`), `app/layout.tsx` (`icons`)
 - Create: `public/images/kanko/kanko-face.webp`, `app/icon.png` (generated)
 - Delete: `public/favicon.ico` (replaced by `app/icon.png`), `public/images/canker-core-logo-110.png`, `public/images/home/canker-core-banner-650.png` after confirming with `grep -r` that nothing references them
 
 **Interfaces:**
+
 - Produces: `<Logo size?: number; wordmark?: boolean; className?: string />` — Kanko's face (`kanko-face.webp`, round-cropped) and, when `wordmark`, `Canker Core` in `font-display font-extrabold`. Keeps `role="img"`/`aria-label="Canker Core"` on the face when there's no wordmark.
 
 - [ ] **Step 1:** Extend `tools/kanko-assets.mjs` to write `kanko-face.webp` (256×256, centred crop of the app-icon master's face) and run it.
@@ -155,6 +168,7 @@
 ### Task 7: Articles stay quiet, docs corrected, and Loren's review
 
 **Files:**
+
 - Modify: `docs/ART-DIRECTION.md` (a superseded banner at the top pointing to the spec; leave the history below it), `AGENTS.md` (Conventions: the sentence "Everything else is cool slate plus one teal action colour" is now wrong; correct it to indigo with sunflower for wins, and nothing else)
 - Create: `docs/superpowers/review/2026-11-05-brand/` screenshots (gitignored if large; otherwise committed)
 

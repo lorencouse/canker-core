@@ -52,7 +52,13 @@ describe.each([':root', '.dark'] as const)('colour tokens in %s', (scope) => {
   );
 
   it('defines the Momentum tokens later work relies on', () => {
-    for (const name of ['win', 'win-edge', 'primary-edge', 'comfort', 'streak']) {
+    for (const name of [
+      'win',
+      'win-edge',
+      'primary-edge',
+      'comfort',
+      'streak'
+    ]) {
       expect(tokens[name], `--${name}`).toBeDefined();
     }
   });

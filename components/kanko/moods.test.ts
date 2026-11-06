@@ -8,9 +8,13 @@ const publicDir = path.resolve(__dirname, '../../public');
 
 describe('KANKO', () => {
   it('has all five moods', () => {
-    expect(Object.keys(KANKO).sort()).toEqual(
-      ['curious', 'gentle', 'hello', 'neutral', 'proud']
-    );
+    expect(Object.keys(KANKO).sort()).toEqual([
+      'curious',
+      'gentle',
+      'hello',
+      'neutral',
+      'proud'
+    ]);
   });
 
   it.each(Object.entries(KANKO))('%s points at a real, light file', (_, k) => {

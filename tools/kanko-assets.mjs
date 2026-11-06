@@ -201,4 +201,6 @@ await copyFile(
   path.join(root, 'native/shell/kanko-face.webp')
 );
 
-console.log(`Wrote 6 images to ${path.relative(root, out)}, plus the shell face`);
+console.log(
+  `Wrote 6 images to ${path.relative(root, out)}, plus the shell face`
+);

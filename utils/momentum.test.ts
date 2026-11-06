@@ -41,7 +41,9 @@ const sore = (overrides: Partial<Sore> = {}): Sore => ({
   zone: 'Tongue',
   created_at: new Date(2026, 10, 1, 9, 0, 0).toISOString(),
   healed_at: null,
-  readings: [reading({ recorded_at: new Date(2026, 10, 1, 9, 0, 0).toISOString() })],
+  readings: [
+    reading({ recorded_at: new Date(2026, 10, 1, 9, 0, 0).toISOString() })
+  ],
   ...overrides
 });
 
@@ -57,7 +59,11 @@ describe('triggerFreeStreak', () => {
   });
 
   it('a trigger ends the streak', () => {
-    const logs = [log('2026-11-03'), log('2026-11-04', ['Citrus']), log('2026-11-05')];
+    const logs = [
+      log('2026-11-03'),
+      log('2026-11-04', ['Citrus']),
+      log('2026-11-05')
+    ];
     expect(triggerFreeStreak(logs, today)).toBe(1);
   });
 
@@ -80,14 +86,21 @@ describe('triggerFreeStreak', () => {
 describe('isBadDay', () => {
   it('treats pain at the threshold as a bad day', () => {
     expect(BAD_DAY_PAIN).toBe(6);
-    expect(isBadDay([sore({ readings: [reading({ pain: 6 })] })], now)).toBe(true);
-    expect(isBadDay([sore({ readings: [reading({ pain: 5 })] })], now)).toBe(false);
+    expect(isBadDay([sore({ readings: [reading({ pain: 6 })] })], now)).toBe(
+      true
+    );
+    expect(isBadDay([sore({ readings: [reading({ pain: 5 })] })], now)).toBe(
+      false
+    );
   });
 
   it('ignores high pain recorded on another day', () => {
     const yesterday = new Date(2026, 10, 4, 9, 0, 0).toISOString();
     expect(
-      isBadDay([sore({ readings: [reading({ pain: 9, recorded_at: yesterday })] })], now)
+      isBadDay(
+        [sore({ readings: [reading({ pain: 9, recorded_at: yesterday })] })],
+        now
+      )
     ).toBe(false);
   });
 
@@ -114,7 +127,11 @@ describe('todayMood', () => {
 
 describe('weekDots', () => {
   it('lists the 7 local days ending today, oldest first', () => {
-    const logs = [log('2026-11-03'), log('2026-11-04', ['Citrus']), log('2026-11-05')];
+    const logs = [
+      log('2026-11-03'),
+      log('2026-11-04', ['Citrus']),
+      log('2026-11-05')
+    ];
     const dots = weekDots(logs, today);
     expect(dots.map((d) => d.day)).toEqual([
       '2026-10-30',
@@ -125,7 +142,15 @@ describe('weekDots', () => {
       '2026-11-04',
       '2026-11-05'
     ]);
-    expect(dots.map((d) => d.won)).toEqual([false, false, false, false, true, false, true]);
+    expect(dots.map((d) => d.won)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true
+    ]);
     dots.forEach((d) => expect(d.initial).toHaveLength(1));
   });
 });

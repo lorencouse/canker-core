@@ -46,7 +46,7 @@ export default function TabBar() {
                   /*
                    * The active tab is ink and heavier, the rest muted. Weight
                    * and stroke carry it as well as colour, so it survives
-                   * greyscale; teal stays the colour of actions, not places.
+                   * greyscale; indigo stays the colour of actions, not places.
                    */
                   active
                     ? 'font-semibold text-foreground'

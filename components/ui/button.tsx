@@ -32,8 +32,7 @@ const buttonVariants = cva(
           'border-2 border-border bg-card text-foreground shadow-press-line hover:bg-muted active:translate-y-[3px] active:shadow-none',
         outline:
           'border-2 border-border bg-card shadow-press-line hover:bg-muted active:translate-y-[3px] active:shadow-none',
-        secondary:
-          'bg-muted text-foreground hover:bg-muted/80',
+        secondary: 'bg-muted text-foreground hover:bg-muted/80',
         ghost: 'hover:bg-muted hover:text-foreground',
         // A link is prose, so it reads as text with an underline.
         link: 'text-primary underline-offset-4 hover:underline',
