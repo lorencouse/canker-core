@@ -79,6 +79,13 @@ const config: CapacitorConfig = {
       // Chrome is fixed, so resizing the webview would fight the safe-area
       // padding. The app lifts affected surfaces itself via --keyboard-h.
       resize: KeyboardResize.None
+    },
+    LocalNotifications: {
+      // Android draws the small icon as a tinted alpha mask, so it needs its
+      // own white silhouette (resources/notification, copied into android/
+      // by scripts/patch-native.mjs). iOS always shows the app icon.
+      smallIcon: 'ic_stat_kanko',
+      iconColor: '#4B4BF0'
     }
   }
 };
