@@ -219,4 +219,14 @@ describe('expectedMood', () => {
     });
     expect(expectedMood([sharp], [], server)).toBe('gentle');
   });
+
+  it('ignores a sore placed too long ago to be on the device today', () => {
+    const older = sore({ created_at: '2026-11-04T01:00:00.000Z' });
+    expect(expectedMood([older], [log('2026-11-04')], server)).toBe('proud');
+  });
+
+  it('is neutral when the newest log in range had triggers', () => {
+    const logs = [log('2026-11-04'), log('2026-11-05', ['coffee'])];
+    expect(expectedMood([sore()], logs, server)).toBe('neutral');
+  });
 });

@@ -124,7 +124,7 @@ export const expectedMood = (
   const t = serverNow.getTime();
   const HOUR = 3_600_000;
   const near = (iso: string) =>
-    Math.abs(new Date(iso).getTime() - t) < 38 * HOUR;
+    Math.abs(new Date(iso).getTime() - t) <= 25 * HOUR;
   const bad = sores.some(
     (sore) =>
       near(sore.created_at) ||
@@ -136,8 +136,11 @@ export const expectedMood = (
   // A streak needs today or yesterday logged, so look back one more day.
   const earliest = utcKey(t - 12 * HOUR - 24 * HOUR);
   const latest = utcKey(t + 14 * HOUR);
-  const plausible = logs.some(
-    (l) => isTriggerFree(l) && l.day >= earliest && l.day <= latest
-  );
-  return plausible ? 'proud' : 'neutral';
+  const newest = logs
+    .filter((l) => l.day >= earliest && l.day <= latest)
+    .reduce<DayLog | undefined>(
+      (best, l) => (best === undefined || l.day > best.day ? l : best),
+      undefined
+    );
+  return isTriggerFree(newest) ? 'proud' : 'neutral';
 };
