@@ -28,21 +28,15 @@ function LesionCard({ lesion }: { lesion: Lesion }) {
 
       <dl className="mt-3 space-y-2 text-sm">
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-            Where
-          </dt>
+          <dt className="text-xs text-muted-foreground">Where</dt>
           <dd className="text-foreground">{lesion.where}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-            What it looks like
-          </dt>
+          <dt className="text-xs text-muted-foreground">What it looks like</dt>
           <dd className="text-foreground">{lesion.look}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-            Contagious
-          </dt>
+          <dt className="text-xs text-muted-foreground">Contagious</dt>
           <dd className="text-foreground">{lesion.contagious}</dd>
         </div>
       </dl>
@@ -52,7 +46,7 @@ function LesionCard({ lesion }: { lesion: Lesion }) {
 
 export default function CompareLesions() {
   return (
-    <figure className="my-10 rounded-none border border-border bg-card p-5 sm:p-6">
+    <figure className="my-10 rounded-worksheet border border-border bg-card p-5 sm:p-6">
       <figcaption className="text-subhead">
         The two, drawn to the same millimetre scale
       </figcaption>

@@ -51,4 +51,43 @@ describe('buttonVariants', () => {
       expect(buttonVariants({ size }).split(/\s+/)).toContain('tap-target');
     }
   });
+
+  it('is rounded and sentence case in every variant and size', () => {
+    for (const variant of VARIANTS) {
+      for (const size of SIZES) {
+        const classes = buttonVariants({ variant, size }).split(/\s+/);
+        expect(classes).toContain('rounded-2xl');
+        expect(classes).not.toContain('uppercase');
+      }
+    }
+  });
+
+  it('presses down only the variants that have an edge to press', () => {
+    for (const variant of [
+      'default',
+      'outline',
+      'destructive',
+      'overlay'
+    ] as const) {
+      const classes = buttonVariants({ variant }).split(/\s+/);
+      expect(classes).toContain('active:translate-y-[3px]');
+      expect(classes).toContain('active:shadow-none');
+    }
+    for (const variant of ['secondary', 'ghost', 'link'] as const) {
+      const classes = buttonVariants({ variant }).split(/\s+/);
+      expect(classes).not.toContain('active:translate-y-[3px]');
+      expect(classes).not.toContain('active:shadow-none');
+    }
+  });
+
+  it('draws its pressable edge in the variant colour', () => {
+    expect(buttonVariants({ variant: 'default' }).split(/\s+/)).toContain(
+      'shadow-press'
+    );
+    for (const variant of ['outline', 'destructive', 'overlay'] as const) {
+      expect(buttonVariants({ variant }).split(/\s+/)).toContain(
+        'shadow-press-line'
+      );
+    }
+  });
 });

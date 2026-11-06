@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Saira_Semi_Condensed, Source_Sans_3 } from 'next/font/google';
+import { Bricolage_Grotesque, Nunito } from 'next/font/google';
 import { PropsWithChildren, Suspense } from 'react';
 
 import NativeBridge from '@/components/native/NativeBridge';
@@ -14,22 +14,22 @@ import { getURL } from '@/utils/helpers';
 import 'styles/main.css';
 
 /*
- * Saira Semi Condensed carries every figure and every label. Almost all the
- * large glyphs in this product are numbers, so the display face is really a
- * numeral face: it has to set a three-digit figure large on a phone without
- * wrapping, and hold an uppercase label at 12px without turning to mush.
- * A normal-width grotesque does neither.
+ * Bricolage Grotesque is the display face for words and figures: heavy
+ * weights give a streak number or a headline real presence, and it has to
+ * set a three-digit figure large on a 320px phone without wrapping.
+ * Nunito is the body face: rounded terminals echo the rounded shapes, and
+ * its 800 weight carries button labels.
  */
-const display = Saira_Semi_Condensed({
+const display = Bricolage_Grotesque({
   subsets: ['latin'],
-  weight: ['500', '600', '700'],
+  weight: ['600', '800'],
   variable: '--font-display',
   display: 'swap'
 });
 
-const sans = Source_Sans_3({
+const sans = Nunito({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['500', '600', '700', '800'],
   variable: '--font-sans',
   display: 'swap'
 });
@@ -75,16 +75,18 @@ export const metadata: Metadata = {
     telephone: false,
     date: false
   },
+  // Setting icons at all switches off Next's app/icon.png convention, so the
+  // favicon has to be listed here alongside the apple icon.
   icons: {
-    icon: '/favicon.ico',
+    icon: '/icon.png',
     apple: '/icons/apple-touch-icon.png'
   }
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f5f7f9' },
-    { media: '(prefers-color-scheme: dark)', color: '#131a21' }
+    { media: '(prefers-color-scheme: light)', color: '#F1F1FD' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f1033' }
   ],
   width: 'device-width',
   initialScale: 1,

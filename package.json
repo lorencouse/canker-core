@@ -8,7 +8,7 @@
     "cap:add:ios": "cap add ios",
     "cap:add:android": "cap add android",
     "cap:sync": "cap sync",
-    "cap:assets": "node scripts/generate-app-icons.mjs && capacitor-assets generate --ios --android --iconBackgroundColor '#131a21' --iconBackgroundColorDark '#131a21' --splashBackgroundColor '#131a21' --splashBackgroundColorDark '#131a21'",
+    "cap:assets": "node scripts/generate-app-icons.mjs && capacitor-assets generate --ios --android --iconBackgroundColor '#4B4BF0' --iconBackgroundColorDark '#4B4BF0' --splashBackgroundColor '#4B4BF0' --splashBackgroundColorDark '#16163F'",
     "cap:ios": "cap sync ios && cap open ios",
     "cap:android": "cap sync android && cap open android",
     "prettier-fix": "prettier --write .",
@@ -16,6 +16,7 @@
     "db:funnel": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f scripts/funnel.sql",
     "db:migrate-from-supabase": "node scripts/migrate-from-supabase.mjs",
     "test": "vitest run",
+    "art:kanko": "node tools/kanko-assets.mjs",
     "art:lab": "node tools/style-lab.mjs",
     "art:review": "node tools/review-page.mjs --all --serve"
   },
@@ -87,6 +88,7 @@
     "postcss": "^8.4.49",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.5.14",
+    "sharp": "^0.35.5",
     "typescript": "^5.6.3",
     "vitest": "^5.0.1"
   },

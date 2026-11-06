@@ -28,7 +28,7 @@ import { MOUTH_SITES, SITE_BY_ZONE } from './sites';
  * whole to a crawler and to anyone whose JavaScript never arrives; the
  * interaction only decides which panel is visible.
  *
- * The markers are the teal action colour, never the --sev-* ramp: nothing
+ * The markers are the indigo action colour, never the --sev-* ramp: nothing
  * here is a pain value, and red on this map means a measurement.
  */
 /**

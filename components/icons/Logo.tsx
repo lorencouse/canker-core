@@ -1,43 +1,35 @@
+import Image from 'next/image';
+import { cn } from '@/utils/cn';
+
 /**
- * The mark is the product in miniature: the mouth outline you plot on, with a
- * single sore marked inside it. The ring inherits currentColor so it themes,
- * while the dot stays on the severity ramp because it stands for data.
+ * Kanko's face, round-cropped, with the wordmark when asked. The wordmark
+ * replaces the "Canker Core" text call sites used to set beside the old mark;
+ * without it the face carries the accessible name itself.
  */
 const Logo = ({
   className,
   size = 32,
-  ...props
-}: React.SVGProps<SVGSVGElement> & { size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 32 32"
-    fill="none"
-    role="img"
-    aria-label="Canker Core"
-    className={className}
-    {...props}
-  >
-    <ellipse
-      cx="16"
-      cy="16"
-      rx="10.5"
-      ry="13"
-      stroke="currentColor"
-      strokeWidth="2"
-      opacity="0.85"
+  wordmark = false
+}: {
+  className?: string;
+  size?: number;
+  wordmark?: boolean;
+}) => (
+  <span className={cn('inline-flex items-center gap-2.5', className)}>
+    <Image
+      src="/images/kanko/kanko-face.webp"
+      alt={wordmark ? '' : 'Canker Core'}
+      width={size}
+      height={size}
+      className="shrink-0 rounded-full"
+      style={{ width: size, height: size }}
     />
-    <ellipse
-      cx="16"
-      cy="16"
-      rx="5.5"
-      ry="7.5"
-      stroke="currentColor"
-      strokeWidth="1.25"
-      opacity="0.35"
-    />
-    <circle cx="20.5" cy="11.5" r="3" fill="hsl(var(--sev-8))" />
-  </svg>
+    {wordmark && (
+      <span className="font-display text-base font-extrabold tracking-tight">
+        Canker Core
+      </span>
+    )}
+  </span>
 );
 
 export default Logo;

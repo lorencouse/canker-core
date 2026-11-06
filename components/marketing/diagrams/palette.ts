@@ -50,8 +50,8 @@ export const CRUST_EDGE = '#a4907f';
 export const FIBRIN = '#faf7ef';
 export const FIBRIN_EDGE = '#e6ddc6';
 
-export const INK = '#131a21';
-export const INK_SOFT = '#6b7785';
+export const INK = '#16163F';
+export const INK_SOFT = '#4a4a78';
 
 /** Every diagram is drawn at one scale, so the sizes are comparable. */
 export const PX_PER_MM = 7;

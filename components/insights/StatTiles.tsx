@@ -8,7 +8,7 @@ import {
 
 /**
  * The headline figures. Plain numbers in text ink — a stat tile is not a
- * chart, and colouring a number teal would make it look like a link. The
+ * chart, and colouring a number indigo would make it look like a link. The
  * one exception is the pain swatch, which is data and wears the ramp.
  */
 export default function StatTiles({ sores }: { sores: Sore[] }) {
@@ -71,13 +71,16 @@ export default function StatTiles({ sores }: { sores: Sore[] }) {
          * get past before reaching the point.
          *
          * flex-col-reverse keeps <dt> before <dd> in the DOM, so a screen
-         * reader still hears the term before its definition.
+         * reader still hears the term before its definition. Reversed, the
+         * main axis starts at the bottom, so justify-end packs from the top
+         * and every figure in a row sits on the same line whether or not
+         * its tile carries a hint.
          */
         <div
           key={tile.label}
           // Five tiles in two columns leave the last one beside an empty
           // half row on a phone, so it takes the whole row there.
-          className="surface-instrument flex flex-col-reverse px-1 pb-1 last:odd:col-span-2 sm:last:odd:col-span-1"
+          className="surface-instrument flex flex-col-reverse justify-end last:odd:col-span-2 sm:last:odd:col-span-1"
         >
           {/* Sentence case. A tracked-out caps label is chrome dressed as
               information, and five of them in a row is a lot of shouting

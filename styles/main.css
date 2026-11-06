@@ -5,71 +5,89 @@
 /*
  * Canker Core design tokens.
  *
- * Two rules govern colour here:
+ * Three rules govern colour here:
  *   1. Red is data, never decoration. The --sev-* ramp encodes pain level and
  *      is the only place a saturated red is allowed to appear.
- *   2. Everything else is cool slate + a single teal action colour, chosen so
- *      severity dots read at maximum contrast against the chrome around them.
+ *   2. Everything else is the Momentum family: ink and indigo for chrome and
+ *      the one action colour, sunflower for a win, lavender for comfort.
+ *      None of them is red, so severity dots still read at maximum contrast.
+ *   3. Sunflower is a fill or a figure on indigo or ink, never small text on
+ *      white: it measures about 1.5:1 there.
+ * utils/contrast.test.ts holds every text pair below to 4.5:1 in both themes.
  */
 
 @layer base {
   :root {
     /* Ground and ink */
-    --background: 210 17% 95%;
-    --foreground: 212 30% 16%;
+    --background: 240 75% 97%;
+    --foreground: 240 48% 17%;
     --card: 0 0% 100%;
-    --card-foreground: 212 30% 16%;
+    --card-foreground: 240 48% 17%;
     --popover: 0 0% 100%;
-    --popover-foreground: 212 30% 16%;
+    --popover-foreground: 240 48% 17%;
 
-    /* Teal: the one action colour */
-    --primary: 187 60% 26%;
-    --primary-foreground: 190 40% 97%;
+    /* Indigo: the one action colour, with the deeper edge it presses on */
+    --primary: 240 85% 62%;
+    --primary-foreground: 0 0% 100%;
+    --primary-edge: 240 59% 45%;
+
+    /* Sunflower: a win. A fill or a figure, never small text on white. */
+    --win: 46 100% 62%;
+    --win-edge: 46 100% 43%;
+    /* Fixed ink for text on sunflower; it must not follow the theme. */
+    --win-foreground: 240 48% 17%;
+    /* The streak card: indigo, deepened in dark so sunflower reads on it. */
+    --streak: 240 85% 62%;
+    --streak-foreground: 0 0% 100%;
+    --streak-edge: 240 59% 45%;
+
+    /* Lavender: comfort, the bad-day pillow and quiet secondary accents */
+    --comfort: 254 74% 80%;
 
     /* Quiet structural fills */
-    --secondary: 210 18% 93%;
-    --secondary-foreground: 212 30% 20%;
-    --muted: 210 18% 94%;
-    /* 38% clears 4.5:1 on the ground; 45% measured 4.4:1 and failed AA. */
-    --muted-foreground: 212 14% 38%;
-    --accent: 187 35% 92%;
-    --accent-foreground: 187 60% 20%;
+    --secondary: 238 71% 93%;
+    --secondary-foreground: 240 48% 17%;
+    --muted: 240 75% 95%;
+    /* Ink soft: about 7:1 on the ground, 8:1 on a card. */
+    --muted-foreground: 240 24% 38%;
+    --accent: 240 81% 95%;
+    --accent-foreground: 240 59% 35%;
 
     /* Severity red doubles as destructive */
     --destructive: 0 72% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 212 18% 88%;
-    --input: 212 18% 86%;
-    --ring: 187 60% 32%;
+    --border: 238 71% 93%;
+    --input: 238 60% 88%;
+    --ring: 240 85% 62%;
 
     /*
      * Two weights of separation, not one.
      *
-     * --border is a hairline: it divides things that belong to each other,
-     * like the rows of a list. --rule is ink, drawn at --rule-w, and it is
-     * the edge of an object you could pick up: a panel, a data cell, a key
-     * on the severity ladder. Drawing both at the same weight is what made
-     * every screen read as an undifferentiated stack of cards.
+     * --border is the soft lavender line: it edges cards and divides the
+     * rows of a list, and it is also the pressable edge of an outline
+     * button. --rule is ink, drawn at --rule-w, kept for the one place that
+     * still wants a strong divider (the instrument surface's top rule).
      */
-    --rule: 212 30% 9%;
+    --rule: 240 48% 17%;
     --rule-w: 2px;
 
     /*
-     * The edge of a control: buttons, steppers, the pain keys. Dark enough
-     * to clear 3:1 against the ground, so a control is findable by its
-     * outline alone, and quieter than an ink rule.
+     * The edge of a control: steppers, the pain keys. Dark enough to clear
+     * 3:1 against the ground and the card, so a control is findable by its outline
+     * alone, and quieter than an ink rule.
      */
-    --control: 212 14% 55%;
+    --control: 240 19% 58%;
 
     /*
-     * The hard ink offset belongs to the drawings now (the mascot, the
-     * diagrams), not to anything on screen at rest. See ART-DIRECTION.md.
+     * A hard ink offset belongs to the drawings (the mascot, the diagrams),
+     * not to anything on screen at rest. Pressable things use the
+     * shadow-press family in tailwind.config.js instead.
      */
     --drop: 5px 5px 0 hsl(var(--rule));
     --drop-sm: 3px 3px 0 hsl(var(--rule));
 
-    --radius: 0rem;
+    --radius: 1rem;
 
     /*
      * Pain 1-10. Lightness falls and saturation climbs, so a worse sore is
@@ -91,68 +109,86 @@
     --sev-ink-hi: 0 0% 100%;
 
     /*
-     * Mouth-map tissue. Low-chroma rose-grey: reads as mouth, but stays far
-     * enough from the severity ramp that a sore is always the saturated mark.
+     * Mouth-map tissue: the soft-toy mouth. Mauve and violet that read as
+     * mouth and sit in Kanko's indigo world. Hue leans away from red so every
+     * pain colour stays perceptually distinct from every fill:
+     * utils/contrast.test.ts holds each pair to CIEDE2000 >= 12 and to no
+     * less than the old rose-grey tissue managed.
      */
-    --mm-ink: 350 20% 23% / 0.55;
-    --mm-ink-soft: 350 20% 23% / 0.22;
-    --mm-label: 350 6% 40%;
-    --mm-tissue: 355 21% 89%;
-    --mm-tissue-deep: 353 17% 81%;
-    --mm-tissue-light: 0 22% 94%;
-    --mm-gum: 353 19% 83%;
-    --mm-gum-deep: 352 15% 75%;
-    --mm-tongue: 355 21% 86%;
-    --mm-tongue-light: 0 27% 91%;
-    --mm-tongue-deep: 354 16% 78%;
-    --mm-palate: 0 23% 91%;
-    --mm-throat: 354 17% 79%;
-    --mm-tooth: 43 33% 96%;
-    --mm-tooth-shade: 41 24% 87%;
-    --mm-tooth-line: 30 14% 41% / 0.45;
+    --mm-ink: 285 30% 25% / 0.5;
+    --mm-ink-soft: 285 30% 25% / 0.2;
+    --mm-label: 285 25% 26%;
+    --mm-shadow: 265 45% 25% / 0.22;
+    --mm-tissue: 268 44% 91%;
+    --mm-tissue-deep: 292 22% 77%;
+    --mm-tissue-light: 292 32% 95%;
+    --mm-gum: 268 44% 91%;
+    --mm-gum-deep: 300 20% 74%;
+    --mm-tongue: 282 36% 82%;
+    --mm-tongue-light: 268 50% 90%;
+    --mm-tongue-deep: 300 22% 75%;
+    --mm-palate: 292 32% 95%;
+    --mm-throat: 290 20% 76%;
+    --mm-lip: 292 32% 78%;
+    --mm-lip-light: 290 38% 83%;
+    --mm-lip-deep: 284 30% 76%;
+    --mm-tooth: 42 100% 97%;
+    --mm-tooth-shade: 38 42% 90%;
+    --mm-tooth-line: 38 20% 45% / 0.35;
 
     /* Chart series reference the ramp so history matches the map */
     --chart-1: var(--sev-3);
     --chart-2: var(--sev-5);
     --chart-3: var(--sev-7);
     --chart-4: var(--sev-9);
-    --chart-5: 187 60% 26%;
+    --chart-5: 240 85% 62%;
   }
 
   .dark {
-    --background: 212 28% 10%;
-    --foreground: 210 20% 94%;
-    --card: 212 25% 14%;
-    --card-foreground: 210 20% 94%;
-    --popover: 212 25% 14%;
-    --popover-foreground: 210 20% 94%;
+    --background: 238 55% 13%;
+    --foreground: 240 75% 97%;
+    --card: 239 49% 19%;
+    --card-foreground: 240 75% 97%;
+    --popover: 239 49% 19%;
+    --popover-foreground: 240 75% 97%;
 
-    --primary: 187 48% 56%;
-    --primary-foreground: 212 40% 10%;
+    /* Indigo lifted so it holds against the ink ground; ink text on it. */
+    --primary: 240 100% 74%;
+    --primary-foreground: 238 55% 13%;
+    --primary-edge: 240 53% 54%;
 
-    --secondary: 212 20% 20%;
-    --secondary-foreground: 210 20% 92%;
-    --muted: 212 20% 18%;
-    --muted-foreground: 212 12% 62%;
-    --accent: 187 30% 22%;
-    --accent-foreground: 187 45% 82%;
+    /* Sunflower is unchanged: it was already built for an ink ground. */
+    --win: 46 100% 62%;
+    --win-edge: 46 100% 43%;
+    --win-foreground: 240 48% 17%;
+    --streak: 240 60% 38%;
+    --streak-foreground: 0 0% 100%;
+    --streak-edge: 240 55% 28%;
+    --comfort: 254 74% 80%;
+
+    --secondary: 239 47% 25%;
+    --secondary-foreground: 240 75% 97%;
+    --muted: 239 49% 17%;
+    --muted-foreground: 239 48% 81%;
+    --accent: 239 44% 31%;
+    --accent-foreground: 240 81% 96%;
 
     /* Light enough to read as text on a card (52% measured 3.7:1). */
     --destructive: 0 72% 64%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 212 18% 22%;
-    --input: 212 18% 26%;
-    --ring: 187 48% 52%;
+    --border: 239 44% 31%;
+    --input: 239 40% 34%;
+    --ring: 240 100% 74%;
 
     /*
      * On a dark ground an ink rule is invisible and an ink drop shadow is
-     * worse, so the rule inverts to a pale slate and elevation falls back
-     * to the rule alone. The form still reads because the edge is what
-     * carries it, not the shadow.
+     * worse, so the rule inverts to a pale lavender-white and the drop
+     * shadows are off. The pressable edges (--primary-edge, --border) are
+     * what give a button its depth here.
      */
-    --rule: 210 20% 82%;
-    --control: 212 14% 44%;
+    --rule: 240 81% 90%;
+    --control: 240 24% 54%;
     --drop: none;
     --drop-sm: none;
 
@@ -175,21 +211,26 @@
     --sev-ink-lo: 0 0% 100%;
     --sev-ink-hi: 0 0% 100%;
 
-    --mm-ink: 350 30% 91% / 0.5;
-    --mm-ink-soft: 350 30% 91% / 0.18;
-    --mm-label: 347 5% 64%;
-    --mm-tissue: 338 8% 27%;
-    --mm-tissue-deep: 340 8% 21%;
-    --mm-tissue-light: 342 8% 33%;
-    --mm-gum: 346 9% 28%;
-    --mm-gum-deep: 342 9% 22%;
-    --mm-tongue: 342 8% 30%;
-    --mm-tongue-light: 344 8% 35%;
-    --mm-tongue-deep: 333 9% 23%;
-    --mm-palate: 340 7% 31%;
-    --mm-throat: 340 7% 21%;
-    --mm-tooth: 36 13% 78%;
-    --mm-tooth-shade: 34 8% 64%;
+    /* Soft purples, held to the same CIEDE2000 rule as light mode. */
+    --mm-ink: 280 30% 92% / 0.5;
+    --mm-ink-soft: 280 30% 92% / 0.18;
+    --mm-label: 0 0% 100%;
+    --mm-shadow: 0 0% 0% / 0.45;
+    --mm-tissue: 268 20% 36%;
+    --mm-tissue-deep: 264 26% 27%;
+    --mm-tissue-light: 266 18% 43%;
+    --mm-gum: 268 20% 36%;
+    --mm-gum-deep: 264 26% 27%;
+    --mm-tongue: 272 18% 40%;
+    --mm-tongue-light: 274 16% 48%;
+    --mm-tongue-deep: 268 22% 33%;
+    --mm-palate: 266 18% 43%;
+    --mm-throat: 266 28% 24%;
+    --mm-lip: 284 20% 43%;
+    --mm-lip-light: 274 20% 46%;
+    --mm-lip-deep: 290 18% 37%;
+    --mm-tooth: 38 36% 89%;
+    --mm-tooth-shade: 38 18% 77%;
     --mm-tooth-line: 0 0% 0% / 0.35;
   }
 }
@@ -262,10 +303,8 @@
 @layer components {
   /* Labels drawn inside the mouth-map SVG. */
   .mouth-map-label {
-    font-family: var(--font-display), system-ui, sans-serif;
-    font-weight: 500;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
+    font-family: var(--font-sans), system-ui, sans-serif;
+    font-weight: 700;
     fill: hsl(var(--mm-label));
   }
   .mouth-map-small {
@@ -276,19 +315,17 @@
 
   /*
    * The label. Every small piece of text that names a figure rather than
-   * being read as prose: RECORD TODAY, DAY 06 / 11, PAIN. Condensed,
-   * uppercase and tracked out, it is deliberately unlike body copy, so a
-   * label is never mistaken for a sentence.
+   * being read as prose: Record today, Day 6 of 11, Pain. Sentence case in
+   * the rounded body face at heavy weight, so it stays distinct from prose
+   * by weight and colour rather than by shouting.
    *
    * It sits *under* the figure it names, never above it as an eyebrow.
    */
   .label {
-    font-family: var(--font-display), system-ui, sans-serif;
-    font-weight: 600;
-    font-size: 0.75rem;
+    font-family: var(--font-sans), system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 0.8125rem;
     line-height: 1.2;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
     @apply text-muted-foreground;
   }
 
@@ -459,10 +496,11 @@
    * designed, and it wastes the cheapest signal available: a person can tell
    * a thing they read from a thing they fill in before they focus on either.
    *
-   *   instrument  a readout — figures, charts, tables. Ruled, not boxed: a
-   *               single ink rule across the top and nothing else, so
-   *               numbers sit in the page rather than float in a box.
-   *               Nothing on an instrument is interactive.
+   *   instrument  a readout — figures, charts, tables. A quiet rounded
+   *               card fill with no edge at all: it reads as a place to
+   *               look, not a thing to fill in, and no ink rule turns
+   *               screen chrome into a heavy line. Nothing on an
+   *               instrument is interactive.
    *   worksheet   something you fill in — sliders, chips, forms. A card
    *               fill on the ground with a hairline edge: the step in tone
    *               says "this is a thing", the hairline keeps it on a white
@@ -470,21 +508,20 @@
    *   canvas      the mouth map: a worksheet whose content is a drawing, so
    *               it clips its content instead of padding it.
    *
-   * Nothing at rest casts a shadow or wears an ink outline. Chalk used to
-   * box worksheets in 2px of ink on a hard offset; next to the pain data it
-   * was the loudest thing on the screen, so the offset went back to the
-   * drawings and panels sit flat. Shadows remain for what genuinely hovers:
-   * a dialog, a menu, a chart tooltip.
+   * Nothing at rest casts a soft shadow or wears an ink outline: panels sit
+   * flat on a soft lavender line, and only things you press carry an edge
+   * (the shadow-press family). Soft shadows remain for what genuinely
+   * hovers: a dialog, a menu, a chart tooltip.
    */
   .surface-instrument {
-    @apply border-t-2 border-rule bg-transparent pt-3;
+    @apply rounded-worksheet bg-card p-3;
   }
 
   .surface-worksheet {
-    @apply border border-border bg-card;
+    @apply rounded-worksheet border border-border bg-card;
   }
 
   .surface-canvas {
-    @apply relative overflow-hidden border border-border bg-card;
+    @apply relative overflow-hidden rounded-worksheet border border-border bg-card;
   }
 }

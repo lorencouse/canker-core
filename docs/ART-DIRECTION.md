@@ -1,3 +1,9 @@
+> **Superseded.** The brand direction is now the Momentum spec,
+> `docs/superpowers/specs/2026-11-05-brand-overhaul-design.md`. The history
+> below is kept for reference only. The Chalk-era experiment sheets it names
+> under `tools/style-lab/` were retired; `tools/style-lab/kanko.json` is the
+> working example now.
+
 # Canker Core art direction — working draft
 
 Nothing here is settled. This file exists so the first paid draws answer a
