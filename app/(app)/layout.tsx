@@ -1,6 +1,7 @@
 import { PropsWithChildren, Suspense } from 'react';
 import { redirect } from 'next/navigation';
 
+import Kanko from '@/components/kanko/Kanko';
 import AppTopBar from '@/components/shell/AppTopBar';
 import TabBar from '@/components/shell/TabBar';
 import { getOnboardedAt, getUser } from '@/lib/queries';
@@ -44,7 +45,11 @@ function AppSkeleton() {
       className="mx-auto max-w-6xl space-y-4 px-4 py-6 lg:px-6"
       aria-busy="true"
     >
-      <div className="h-6 w-40 animate-pulse rounded-md bg-muted" />
+      {/* A fixed 96px box, so Kanko arriving late moves nothing. */}
+      <div className="flex items-center gap-4">
+        <Kanko mood="neutral" size={96} className="size-24 shrink-0" />
+        <div className="h-6 w-40 animate-pulse rounded-md bg-muted" />
+      </div>
       <div className="h-64 w-full animate-pulse rounded-md bg-muted" />
       <div className="h-32 w-full animate-pulse rounded-md bg-muted" />
     </div>
