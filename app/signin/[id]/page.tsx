@@ -73,7 +73,8 @@ export default async function SignIn({
 }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<{
-    disable_button: boolean;
+    /** "true" once the server has sent an email; a string, as every query value is. */
+    disable_button?: string;
     token?: string;
     error?: string;
     /** Where to go after signing in; set by the proxy. */
@@ -86,7 +87,8 @@ export default async function SignIn({
 
   const paramsId = (await params).id;
   const resolvedSearchParams = await searchParams;
-  const disableButton = resolvedSearchParams.disable_button;
+  // The server sets disable_button only after it has sent the email.
+  const disableButton = resolvedSearchParams.disable_button === 'true';
   // Better Auth appends the one-time reset token to the callback URL.
   const resetToken = resolvedSearchParams.token ?? '';
   const next = safeNext(resolvedSearchParams.next);
@@ -112,8 +114,7 @@ export default async function SignIn({
     return redirect('/signin/forgot_password');
   }
 
-  // The server sets disable_button only after it has sent the email.
-  const sent = String(disableButton) === 'true' ? SENT_COPY[viewProp] : null;
+  const sent = disableButton ? SENT_COPY[viewProp] : null;
   const copy = sent ?? COPY[viewProp] ?? COPY.password_signin;
   const oauthProviders = configuredOAuthProviders();
   const showOauth =
