@@ -3,7 +3,7 @@
 import { useMemo, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 
 import Kanko from '@/components/kanko/Kanko';
 import DayLogForm from '@/components/today/DayLogForm';
@@ -87,6 +87,12 @@ export default function TodayScreen({
    * because a class left on would replay on every re-render.
    */
   const [justSaved, setJustSaved] = useState(false);
+  /*
+   * The sore just marked healed, so its card can be replaced by a moment of
+   * credit instead of simply vanishing. It stays until dismissed or the
+   * screen is left: timing it out would move everything under it.
+   */
+  const [justHealed, setJustHealed] = useState<Sore | null>(null);
 
   const open = useMemo(() => sores.filter((s) => !s.healed_at), [sores]);
   const dirty = changed.size > 0 || logDirty;
@@ -128,6 +134,7 @@ export default function TodayScreen({
     setSores((prev) =>
       prev.map((s) => (s.id === sore.id ? { ...s, healed_at: healedAt } : s))
     );
+    setJustHealed(sore);
     notify('success');
   };
 
@@ -196,6 +203,13 @@ export default function TodayScreen({
       )}
 
       <div className="mt-5 grid grid-cols-1 gap-4 lg:mt-6">
+        {justHealed && (
+          <HealedNote
+            key={justHealed.id}
+            sore={justHealed}
+            onDismiss={() => setJustHealed(null)}
+          />
+        )}
         {/*
           With nothing open there is no list, and the answer line has already
           said so. What is left is the one action, and which verb it wants
@@ -204,7 +218,8 @@ export default function TodayScreen({
         */}
         {open.length === 0 ? (
           <div className="surface-worksheet flex flex-col items-start gap-3 p-4 sm:p-5">
-            <Kanko mood="curious" size={120} />
+            {/* One Kanko at a time: the medal above has the moment. */}
+            {!justHealed && <Kanko mood="curious" size={120} />}
             <p className="prose-measure">
               {sores.length === 0
                 ? 'The map is where a sore starts. It takes about fifteen seconds.'
@@ -290,6 +305,44 @@ export default function TodayScreen({
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+/**
+ * Credit for a sore that has closed: Kanko with a medal and one plain line.
+ * It eases in, unless the person has asked for less motion.
+ */
+function HealedNote({
+  sore,
+  onDismiss
+}: {
+  sore: Sore;
+  onDismiss: () => void;
+}) {
+  return (
+    <div
+      role="status"
+      className="surface-worksheet flex items-center gap-4 p-4 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-500 sm:p-5"
+    >
+      <Kanko mood="medal" size={96} className="size-24 shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-subhead">Healed. Nice work.</p>
+        <p className="prose-measure mt-1 text-muted-foreground">
+          Your {sore.zone.toLowerCase()} sore is closed. Its whole course stays
+          in your history.
+        </p>
+      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="shrink-0 self-start"
+        onClick={onDismiss}
+        aria-label="Dismiss"
+      >
+        <X aria-hidden="true" />
+      </Button>
     </div>
   );
 }
