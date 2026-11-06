@@ -87,8 +87,8 @@ localhost, which inside the simulator means the simulator:
 CAPACITOR_SERVER_URL=http://192.168.0.50:3100 npm run cap:sync
 ```
 
-Icons and splash are generated from Kanko's face (the master named in
-`scripts/generate-app-icons.mjs`):
+Icons and splash are generated from the Kanko art named in
+`scripts/generate-app-icons.mjs`:
 
 ```bash
 npm run cap:assets

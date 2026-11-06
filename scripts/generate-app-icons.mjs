@@ -1,5 +1,5 @@
 /**
- * Generates the PNG app icons and splash screens from Kanko's face.
+ * Generates the PNG app icons and splash screens from Kanko's art.
  *
  * Source: docs/superpowers/specs/assets/2026-11-05-kanko/kanko-app-icon.webp,
  * 1024x1024, the bust on solid indigo (#4B4BF0) edge to edge, with his body cut
