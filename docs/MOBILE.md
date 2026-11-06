@@ -55,10 +55,47 @@ What follows from that:
   iOS hands to this app alone (opened in a browser, that page shows a
   notice and never reads the token). There is no custom-scheme callback,
   since any app can claim a scheme, so older iOS keeps OAuth in the webview
-  as Android and browsers do. The provider callback is still
+  as browsers do. The provider callback is still
   `/api/auth/callback/<provider>`. `utils/native-auth.ts` describes the flow
   and its checks. The webview flows are why the providers are still listed
   in `server.allowNavigation`.
+- **OAuth on Android runs in a Chrome Custom Tab** (the same plugin's
+  Android side), so it can use the Google accounts and passkeys already in
+  Chrome. It is the same server flow and the same confirmation; the tab
+  returns through the App Link `https://cankercore.com/native-auth/callback`,
+  claimed by an `android:autoVerify` intent-filter on `MainActivity` for
+  exactly that path and verified against
+  `public/.well-known/assetlinks.json`, so Android hands it to this app
+  alone. Closing the tab is a cancelled sign-in. Without a Custom Tabs
+  browser, or on Android 12+ before the link is verified, OAuth stays in the
+  webview.
+
+### Android App Link signing certificates
+
+Android verifies the App Link only for an app signed by a certificate that
+`public/.well-known/assetlinks.json` lists, as an uppercase colon-separated
+SHA-256 fingerprint in `sha256_cert_fingerprints`. It lists the debug
+keystore's certificate (`~/.android/debug.keystore` on the machine that
+builds the test installs). When a release build exists, add its
+certificate beside it; with Play App Signing that is the **app signing
+key** from Play Console > Setup > App signing, not the upload key:
+
+```bash
+keytool -list -v -keystore <release.keystore> -alias <alias> | grep SHA256
+```
+
+Then deploy, and check the file and the device:
+
+```bash
+curl -sI https://cankercore.com/.well-known/assetlinks.json   # 200, application/json, no redirect
+adb shell pm verify-app-links --re-verify com.cankercore.app  # Android 12+
+adb shell pm get-app-links com.cankercore.app                 # cankercore.com: verified
+```
+
+On Android 11 and older, `adb shell dumpsys package domain-preferred-apps`
+shows the result, and verification runs once at install, so reinstall after
+a change. Once release builds ship, consider dropping the debug fingerprint:
+anyone holding that keystore could sign a build the link would trust.
 
 ## Building the native projects
 
@@ -83,7 +120,8 @@ on regeneration:
   `webcredentials:cankercore.com` and `applinks:cankercore.com`, referenced
   by `CODE_SIGN_ENTITLEMENTS`.
   Automatic signing enables the capability on the App ID.
-- **Android:** copies the Kanko notification small icon from
+- **Android:** the sign-in App Link intent-filter on `MainActivity` (see
+  above), and the Kanko notification small icon copied from
   `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`.
 
 The script is idempotent, skips a platform whose folder is missing, and stops

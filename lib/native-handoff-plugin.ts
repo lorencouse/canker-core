@@ -1,5 +1,5 @@
 /**
- * Better Auth plugin behind the iOS system sign-in handoff
+ * Better Auth plugin behind the native system sign-in handoff
  * (utils/native-auth.ts has the whole flow).
  *
  * Every endpoint is server-only: they are reachable through `auth.api.*`
@@ -58,7 +58,7 @@ export const nativeHandoff = () =>
        * Ends the caller's session (the one the sign-in sheet just got) at
        * once and holds its user as a pending handoff for this flow, so the
        * confirmation page can be answered without Safari staying signed in.
-       * The sheet shares Safari's cookies, and leaving a 30-day session
+       * The sheet shares Safari's cookies (the Android tab, Chrome's), and leaving a 30-day session
        * behind there is not something the person asked for, even if they
        * close the sheet without answering.
        */

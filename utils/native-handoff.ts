@@ -1,5 +1,5 @@
 /**
- * Handoff tokens for the iOS system sign-in (see utils/native-auth.ts).
+ * Handoff tokens for the native system sign-in (see utils/native-auth.ts).
  *
  * A handoff token stands in for a sign-in for one minute, once. It never
  * carries the session token itself: redemption creates a new session for the

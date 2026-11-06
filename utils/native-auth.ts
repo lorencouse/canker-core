@@ -1,11 +1,12 @@
 /**
- * The iOS system sign-in handoff, the parts both sides share.
+ * The native system sign-in handoff, the parts both sides share.
  *
- * On iOS 17.4+, OAuth runs in Apple's system sign-in sheet
- * (ASWebAuthenticationSession) rather than in the app's webview, so it can use the accounts, passwords and
- * passkeys the person already has in Safari. The sheet and the webview keep
- * separate cookie jars, so the session the sheet ends up with has to be handed
- * across:
+ * OAuth runs outside the app's webview, so it can use the accounts,
+ * passwords and passkeys the person already has: on iOS 17.4+ in Apple's
+ * system sign-in sheet (ASWebAuthenticationSession), which shares Safari's,
+ * and on Android in a Chrome Custom Tab, which shares Chrome's. Both are
+ * "the sheet" below. The sheet and the webview keep separate cookie jars,
+ * so the session the sheet ends up with has to be handed across:
  *
  *   webview  sets a random nonce cookie, opens the sheet at
  *            /api/native-auth/start?provider&next&nonce
@@ -16,10 +17,13 @@
  *            same-origin POST of that page, carrying a CSRF token bound to
  *            the flow cookie, spends the pending handoff on a 60-second,
  *            single-use handoff token and redirects to
- *            https://<site>/native-auth/callback?token&next, a universal
- *            link iOS hands only to this app. There is no custom-scheme
- *            callback: any app can claim a scheme. Older iOS, which cannot
- *            catch an https callback, keeps OAuth in the webview.
+ *            https://<site>/native-auth/callback?token&next, a link only
+ *            this app receives: a universal link on iOS, a verified App
+ *            Link on Android. iOS and Android get the same redirect; there
+ *            is no callback kind to choose, and no custom-scheme callback:
+ *            any app can claim a scheme. An app that cannot catch the https
+ *            callback (iOS before 17.4; Android with no Custom Tabs browser
+ *            or, on 12+, an unverified App Link) keeps OAuth in the webview.
  *   webview  the sheet hands that URL back; the webview loads
  *            /api/native-auth/redeem?token&next, which needs the nonce cookie
  *            from the first step and sets a fresh session cookie
@@ -32,8 +36,10 @@ export type NativeOAuthProvider = 'google' | 'github';
 
 const PROVIDERS: readonly NativeOAuthProvider[] = ['google', 'github'];
 
-/** The universal-link callback. iOS hands it only to an app the site's
- * apple-app-site-association names, so another app cannot receive the token.
+/** The https callback. iOS hands it only to an app the site's
+ * apple-app-site-association names, and Android only to an app whose
+ * signing certificate assetlinks.json lists (the autoVerify filter in
+ * utils/native-patches.mts), so another app cannot receive the token.
  * The page behind it (app/native-auth/callback) never reads the token. */
 export const NATIVE_AUTH_HTTPS_PATH = '/native-auth/callback';
 

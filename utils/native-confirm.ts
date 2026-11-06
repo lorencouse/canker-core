@@ -1,5 +1,5 @@
 /**
- * The page finish shows in the iOS sign-in sheet before it mints a handoff
+ * The page finish shows in the system sign-in (iOS sheet, Android tab) before it mints a handoff
  * token (utils/native-auth.ts has the flow). Any installed app can open a
  * sheet on /api/native-auth/start, and a returning Google or GitHub user
  * passes the provider without a screen, so this is the step that makes the

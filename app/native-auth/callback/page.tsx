@@ -11,12 +11,14 @@ import {
 } from '@/components/ui/card';
 
 /**
- * The https callback of the iOS system sign-in (utils/native-auth.ts). The
- * sign-in sheet catches this URL before it loads, so the page only renders
- * when it is opened anywhere else: a browser, a pasted link, a crawler. Its
- * query carries a handoff token, and the page deliberately never reads it:
- * no searchParams, so it is static and the token cannot reach the markup,
- * a log line, or a request this page makes. next.config.mjs sends it with
+ * The https callback of the native system sign-in (utils/native-auth.ts).
+ * The iOS sign-in sheet catches this URL before it loads, and on Android the
+ * verified App Link opens the app instead, so the page only renders when it
+ * is opened anywhere else: a browser, a pasted link, a crawler, or an Android
+ * tab whose App Link was not verified (the app then reads closing the tab as
+ * a cancelled sign-in). Its query carries a handoff token, and the page
+ * deliberately never reads it: no searchParams, so it is static and the
+ * token cannot reach the markup, a log line, or a request this page makes. next.config.mjs sends it with
  * no referrer, and proxy.ts skips it so the URL is never a first touch.
  */
 export const metadata: Metadata = {
@@ -34,8 +36,9 @@ export default function NativeAuthCallback() {
         <CardHeader>
           <CardTitle>Open the app to finish signing in</CardTitle>
           <CardDescription className="prose-measure">
-            This link finishes a sign-in in the Canker Core iPhone app and does
-            nothing in a browser. Nothing has been signed in here.
+            This link finishes a sign-in in the Canker Core app and does nothing
+            in a browser. Nothing has been signed in here. If you were signing
+            in to the app, close this page and try again.
           </CardDescription>
         </CardHeader>
         <CardContent>

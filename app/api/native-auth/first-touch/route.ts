@@ -2,7 +2,7 @@
  * GET /api/native-auth/first-touch -> { firstTouch: string | null }
  *
  * The first-touch cookie is httpOnly, so the webview asks for it here before
- * it opens the iOS sign-in sheet, and passes it to /api/native-auth/start as
+ * it opens the system sign-in (iOS sheet, Android tab), and passes it to /api/native-auth/start as
  * `ft` (see the comment there). The value is percent-encoded the way it
  * travels in a Cookie header, which is what decodeFirstTouch reads.
  */
