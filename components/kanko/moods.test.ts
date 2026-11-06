@@ -8,13 +8,22 @@ import { KANKO } from './moods';
 const publicDir = path.resolve(__dirname, '../../public');
 
 describe('KANKO', () => {
-  it('has all five moods', () => {
+  it('has every mood', () => {
     expect(Object.keys(KANKO).sort()).toEqual([
+      'clipboard',
       'curious',
+      'envelope',
       'gentle',
       'hello',
+      'lost',
+      'magnify',
+      'medal',
       'neutral',
-      'proud'
+      'offline',
+      'phone',
+      'point',
+      'proud',
+      'reading'
     ]);
   });
 

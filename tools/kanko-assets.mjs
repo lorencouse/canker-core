@@ -27,7 +27,16 @@ const moods = {
   proud: 'kanko-proud-streak.webp',
   hello: 'kanko-hello.webp',
   curious: 'kanko-curious-empty.webp',
-  gentle: 'kanko-gentle-bad-day.webp'
+  gentle: 'kanko-gentle-bad-day.webp',
+  point: 'kanko-point.webp',
+  phone: 'kanko-phone.webp',
+  magnify: 'kanko-magnify.webp',
+  reading: 'kanko-reading.webp',
+  lost: 'kanko-lost.webp',
+  medal: 'kanko-medal.webp',
+  envelope: 'kanko-envelope.webp',
+  clipboard: 'kanko-clipboard.webp',
+  offline: 'kanko-offline.webp'
 };
 
 // The art is painted on a flat lavender ground. The background is the region
@@ -204,7 +213,16 @@ const darkMoods = {
   hello: PAGE_DARK,
   gentle: PAGE_DARK,
   neutral: PAGE_DARK,
-  curious: CARD_DARK
+  curious: CARD_DARK,
+  point: PAGE_DARK,
+  phone: PAGE_DARK,
+  magnify: PAGE_DARK,
+  reading: PAGE_DARK,
+  lost: PAGE_DARK,
+  medal: PAGE_DARK,
+  envelope: PAGE_DARK,
+  clipboard: PAGE_DARK,
+  offline: PAGE_DARK
 };
 const BORDER_COLS = 8;
 const SMOOTH = 24; // rows either side for the moving average
@@ -353,5 +371,5 @@ await copyFile(
 );
 
 console.log(
-  `Wrote 6 images (plus 5 dark) to ${path.relative(root, out)}, plus the shell face`
+  `Wrote ${Object.keys(moods).length + 1} images (plus ${Object.keys(darkMoods).length} dark) to ${path.relative(root, out)}, plus the shell face`
 );
