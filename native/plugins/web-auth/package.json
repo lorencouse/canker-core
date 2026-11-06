@@ -1,0 +1,17 @@
+{
+  "name": "@canker-core/web-auth",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Apple's system sign-in sheet (ASWebAuthenticationSession) for the Canker Core iOS app.",
+  "license": "UNLICENSED",
+  "author": "Canker Core",
+  "files": [
+    "ios/Sources",
+    "CankerCoreWebAuth.podspec"
+  ],
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    }
+  }
+}

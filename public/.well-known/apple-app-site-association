@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["4J28Z4QS4C.com.cankercore.app"],
+        "components": [{ "/": "/native-auth/callback" }]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["4J28Z4QS4C.com.cankercore.app"]
+  }
+}

@@ -23,6 +23,7 @@
     "art:review": "node tools/review-page.mjs --all --serve"
   },
   "dependencies": {
+    "@canker-core/web-auth": "file:native/plugins/web-auth",
     "@capacitor/android": "^7.6.9",
     "@capacitor/app": "^7.1.2",
     "@capacitor/browser": "^7.0.5",

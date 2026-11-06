@@ -3,6 +3,16 @@
 import { authClient } from '@/lib/auth-client';
 import { redirectToPath } from './server';
 import { safeNext } from './settings';
+import { hasSystemSignIn, systemSignIn } from '@/utils/native';
+import {
+  NATIVE_AUTH_COOKIE_PATH,
+  NATIVE_AUTH_FLOW_MAX_AGE,
+  NATIVE_AUTH_HTTPS_PATH,
+  NATIVE_AUTH_NONCE_COOKIE,
+  nativeAuthErrorMessage,
+  parseNativeCallback,
+  randomNonce
+} from '@/utils/native-auth';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 export type OAuthProvider = 'github' | 'google';
@@ -32,17 +42,99 @@ export async function handleRequest(
 }
 
 /**
- * Start an OAuth redirect. Better Auth handles the callback at
- * /api/auth/callback/<provider>, so there is no app-level callback route.
+ * Start an OAuth sign-in. Resolves with a message to show when it could not
+ * start, and with null when it is under way or was cancelled.
+ *
+ * In a browser (and the Android app) this is Better Auth's ordinary redirect,
+ * with the callback at /api/auth/callback/<provider>, and so it is in an iOS
+ * app that cannot catch an https callback (before iOS 17.4). Otherwise the
+ * iOS app runs it in Apple's system sign-in sheet; see utils/native-auth.ts.
  */
-export async function signInWithOAuth(e: React.FormEvent<HTMLFormElement>) {
+export async function signInWithOAuth(
+  e: React.FormEvent<HTMLFormElement>
+): Promise<string | null> {
   e.preventDefault();
   const formData = new FormData(e.currentTarget);
   const provider = String(formData.get('provider')).trim() as OAuthProvider;
+  const next = safeNext(formData.get('next'));
 
-  await authClient.signIn.social({
+  if (await hasSystemSignIn()) return signInWithSystemSheet(provider, next);
+
+  // signIn.social reports failure in its result rather than throwing; left
+  // unread, a server error made the button silently do nothing.
+  const { error } = await authClient.signIn.social({
     provider,
-    callbackURL: safeNext(formData.get('next')),
+    callbackURL: next,
     errorCallbackURL: '/signin'
   });
+  return error ? OAUTH_START_FAILED : null;
+}
+
+const OAUTH_START_FAILED =
+  'That sign-in option is not available right now. Try another way to sign in.';
+
+async function signInWithSystemSheet(
+  provider: OAuthProvider,
+  next: string
+): Promise<string | null> {
+  // Only this webview holds the nonce, and redeem refuses a token minted for
+  // any other, so a token that leaks or is replayed elsewhere signs no one in.
+  const nonce = randomNonce();
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie =
+    `${NATIVE_AUTH_NONCE_COOKIE}=${nonce}; Path=${NATIVE_AUTH_COOKIE_PATH}; ` +
+    `Max-Age=${NATIVE_AUTH_FLOW_MAX_AGE}; SameSite=Strict${secure}`;
+
+  const firstTouch = await webviewFirstTouch();
+  const start = new URL('/api/native-auth/start', window.location.origin);
+  start.search = new URLSearchParams({
+    provider,
+    next,
+    nonce,
+    ...(firstTouch && { ft: firstTouch })
+  }).toString();
+
+  let callback: string;
+  try {
+    ({ url: callback } = await systemSignIn(
+      start.href,
+      NATIVE_AUTH_HTTPS_PATH
+    ));
+  } catch (err) {
+    // Closing the sheet is a choice, not an error: stay put, say nothing.
+    if ((err as { code?: string })?.code === 'CANCELED') return null;
+    return nativeAuthErrorMessage('unknown');
+  }
+
+  const result = parseNativeCallback(callback, window.location.origin);
+  if (!result) return nativeAuthErrorMessage('unknown');
+  // Cancel on finish's confirmation page is a choice too.
+  if ('error' in result)
+    return result.error === 'cancelled'
+      ? null
+      : nativeAuthErrorMessage(result.error);
+
+  const redeem = new URL('/api/native-auth/redeem', window.location.origin);
+  redeem.search = new URLSearchParams({
+    token: result.token,
+    next: safeNext(result.next)
+  }).toString();
+  // A full navigation, so the session cookie redeem sets is in place before
+  // any server component renders.
+  window.location.assign(redeem.href);
+  return null;
+}
+
+/** The webview's first-touch cookie, which is httpOnly, so the server reads
+ * it out. Attribution is a nice-to-have: any failure means none. */
+async function webviewFirstTouch(): Promise<string | null> {
+  try {
+    const res = await fetch('/api/native-auth/first-touch', {
+      cache: 'no-store'
+    });
+    const { firstTouch } = (await res.json()) as { firstTouch?: unknown };
+    return typeof firstTouch === 'string' ? firstTouch : null;
+  } catch {
+    return null;
+  }
 }

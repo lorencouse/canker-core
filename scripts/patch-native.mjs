@@ -8,7 +8,11 @@
  *   - deployment target 15.0 in the Podfile, every pod target and the app
  *     project, because Xcode 27 rejects 14.0;
  *   - a UIScene delegate and scene manifest, because iOS 27 traps at launch
- *     in an app without the scene lifecycle.
+ *     in an app without the scene lifecycle;
+ *   - App.entitlements with Associated Domains (webcredentials: and
+ *     applinks:cankercore.com) and CODE_SIGN_ENTITLEMENTS pointing at it, so
+ *     iCloud Keychain offers the site's saved passwords in the app and the
+ *     system sign-in's universal-link callback reaches only this app.
  * Android: the white Kanko notification small icon from resources/notification.
  *
  * Safe to run repeatedly. A platform whose folder is missing is skipped; a
@@ -26,10 +30,13 @@ import {
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  ENTITLEMENTS_PATH,
   notificationIconCopies,
   patchAppDelegate,
+  patchEntitlements,
   patchInfoPlist,
   patchPbxproj,
+  patchPbxprojEntitlements,
   patchPodfile
 } from '../utils/native-patches.mts';
 
@@ -51,8 +58,22 @@ const patchIos = () => {
   const podChanged = patchFile(path.join(app, 'Podfile'), patchPodfile);
   const projChanged = patchFile(
     path.join(app, 'App.xcodeproj/project.pbxproj'),
-    patchPbxproj
+    (text) => {
+      const target = patchPbxproj(text);
+      const signing = patchPbxprojEntitlements(target.text);
+      return {
+        text: signing.text,
+        changed: target.changed || signing.changed
+      };
+    }
   );
+
+  // The template has no entitlements file, so a missing one is created.
+  const entitlements = path.join(app, ENTITLEMENTS_PATH);
+  if (!existsSync(entitlements)) writeFileSync(entitlements, '');
+  if (patchFile(entitlements, patchEntitlements) && has('plutil')) {
+    execFileSync('plutil', ['-lint', entitlements], { stdio: 'inherit' });
+  }
   patchFile(path.join(app, 'App/AppDelegate.swift'), patchAppDelegate);
   const plist = path.join(app, 'App/Info.plist');
   if (patchFile(plist, patchInfoPlist) && has('plutil')) {

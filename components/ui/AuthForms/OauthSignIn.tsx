@@ -5,6 +5,7 @@ import { Github, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Google } from '@/components/icons/Google';
+import { toast } from '@/components/ui/Toasts/use-toast';
 import {
   signInWithOAuth,
   type OAuthProvider
@@ -21,7 +22,14 @@ const oAuthProviders: OAuthProviders[] = [
   { name: 'github', displayName: 'GitHub', icon: <Github /> }
 ];
 
-export default function OauthSignIn({ next }: { next: string }) {
+export default function OauthSignIn({
+  next,
+  providers
+}: {
+  next: string;
+  /** The providers this deployment has credentials for (lib/auth.ts). */
+  providers: OAuthProvider[];
+}) {
   // Track which provider is in flight so only that button shows a spinner.
   const [pending, setPending] = useState<OAuthProvider | null>(null);
 
@@ -30,34 +38,43 @@ export default function OauthSignIn({ next }: { next: string }) {
     provider: OAuthProvider
   ) => {
     setPending(provider);
-    await signInWithOAuth(e);
+    const problem = await signInWithOAuth(e);
     setPending(null);
+    if (problem) {
+      toast({
+        title: 'Sign in failed.',
+        description: problem,
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
     <div className="grid gap-2">
-      {oAuthProviders.map((provider) => (
-        <form
-          key={provider.name}
-          onSubmit={(e) => handleSubmit(e, provider.name)}
-        >
-          <input type="hidden" name="provider" value={provider.name} />
-          <input type="hidden" name="next" value={next} />
-          <Button
-            variant="outline"
-            type="submit"
-            className="w-full"
-            disabled={pending !== null}
+      {oAuthProviders
+        .filter((provider) => providers.includes(provider.name))
+        .map((provider) => (
+          <form
+            key={provider.name}
+            onSubmit={(e) => handleSubmit(e, provider.name)}
           >
-            {pending === provider.name ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              provider.icon
-            )}
-            Continue with {provider.displayName}
-          </Button>
-        </form>
-      ))}
+            <input type="hidden" name="provider" value={provider.name} />
+            <input type="hidden" name="next" value={next} />
+            <Button
+              variant="outline"
+              type="submit"
+              className="w-full"
+              disabled={pending !== null}
+            >
+              {pending === provider.name ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                provider.icon
+              )}
+              Continue with {provider.displayName}
+            </Button>
+          </form>
+        ))}
     </div>
   );
 }
