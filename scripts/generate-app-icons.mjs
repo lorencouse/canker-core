@@ -59,6 +59,44 @@ const MASKABLE_FILL = 0.66;
 const square = async (size) => (await faceSquare(size, FACE_FILL)).png();
 
 /**
+ * The opaque source's ground is lossy WebP: a level or two off `background`,
+ * with compression blocks, so pasted as is its rectangle shows. Fade each
+ * pixel's alpha with its distance from the ground (smoothstep, 3 to 12
+ * levels) so the near-ground noise vanishes while the shadow still fades
+ * continuously, and feather the outer margin to 0 so no edge can survive.
+ */
+const keyToGround = async (file, background) => {
+  const { data, info } = await sharp(file)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width: W, height: H } = info;
+  const g = [1, 3, 5].map((i) => parseInt(background.slice(i, i + 2), 16));
+  const smooth = (x, lo, hi) => {
+    const t = Math.min(1, Math.max(0, (x - lo) / (hi - lo)));
+    return t * t * (3 - 2 * t);
+  };
+  const margin = Math.round(Math.min(W, H) * 0.08);
+  const rgba = Buffer.alloc(W * H * 4);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const p = y * W + x;
+      let d = 0;
+      for (let c = 0; c < 3; c++) {
+        const v = data[p * 3 + c];
+        rgba[p * 4 + c] = v;
+        d = Math.max(d, Math.abs(v - g[c]));
+      }
+      const edge = Math.min(x, y, W - 1 - x, H - 1 - y);
+      rgba[p * 4 + 3] = Math.round(
+        255 * smooth(d, 3, 12) * smooth(edge, 0, margin)
+      );
+    }
+  }
+  return rgba;
+};
+
+/**
  * Full-body Kanko centred on a flat colour, `fraction` of the width. Small
  * enough that capacitor-assets' arbitrary crops never reach him. `background`
  * must be the source's own ground when the source is opaque.
@@ -86,7 +124,9 @@ const splash = async (size, fraction, source, background) => {
     .trim({ threshold: 10 })
     .toBuffer({ resolveWithObject: true });
   const scale = Math.min(target / box.width, target / box.height);
-  const body = await sharp(file)
+  const body = await sharp(await keyToGround(file, background), {
+    raw: { width, height, channels: 4 }
+  })
     .resize(Math.round(width * scale), Math.round(height * scale))
     .png()
     .toBuffer();
