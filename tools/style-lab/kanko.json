@@ -1,0 +1,21 @@
+{
+  "_comment": "Working example for new Kanko poses (docs/superpowers/specs/2026-11-05-brand-overhaul-design.md). The style and character blocks are the spec's, verbatim; every draw sends the canonical character sheet as its reference frame. Add a subject per pose, price it with --sheet-only, and draw nothing without Loren's go for that batch.",
+  "name": "kanko",
+  "aspect": "1:1",
+  "refs": [
+    "docs/superpowers/specs/assets/2026-11-05-kanko/kanko-character-sheet.webp"
+  ],
+  "subjects": [
+    {
+      "id": "hello",
+      "prompt": "Kanko stands alone in the centre of a plain flat lavender ground #F1F1FD, front-facing, waving one tiny paw in greeting, with generous empty margin all around. A soft contact shadow under the feet; nothing else is in the picture."
+    }
+  ],
+  "variants": [
+    {
+      "id": "vinyl",
+      "refs": "inherit",
+      "style": "Soft 3D render of a collectible vinyl toy: smooth matte plastic surfaces, soft studio lighting, gentle ambient occlusion, rounded chunky forms, like a modern friendly 3D app mascot. No fur strands, no photorealism, clean and simple. Same character as the attached reference images. Kanko is a golden hamster who is very round, almost a ball: head and body merge into one soft chubby shape, with tiny round ears, tiny paws and short stubby feet. Fur colour is honey-apricot #F5B95A on the back, head and ears, with a cream #FFF1D6 belly and two large cream #FFF1D6 cheek pouches that bulge out on both sides of the face. Face: two black oval eyes, each with one small white highlight, a tiny nose, a small simple mouth, and soft light pink #F7A8D0 blush on the cheeks. Kanko never shows teeth. Any prop or accent uses only electric indigo #4B4BF0, lavender #B9A7F2, sunflower yellow #FFD23F. No red anywhere. No text, no letters, no numbers, no labels, no logos, no watermark."
+    }
+  ]
+}

@@ -3,8 +3,8 @@
  * A one-page contact sheet for a style-lab experiment:
  * data/style-lab/<experiment>/_review.html, opened in Chrome.
  *
- *   node tools/review-page.mjs tools/style-lab/mascot.json
- *   node tools/review-page.mjs tools/style-lab/mascot.json --only ink
+ *   node tools/review-page.mjs tools/style-lab/kanko.json
+ *   node tools/review-page.mjs tools/style-lab/kanko.json --only vinyl
  *   node tools/review-page.mjs --all          # every experiment that has cells
  *   node tools/review-page.mjs --all --serve  # and hold it open on 127.0.0.1:4123
  *
@@ -92,7 +92,7 @@ const experiments = args.includes("--all")
   : args.filter((a) => !a.startsWith("--") && a !== flag("only", null)).map((a) => (existsSync(a) ? a : join(ROOT, a)));
 
 if (!experiments.length) {
-  console.error("usage: node tools/review-page.mjs tools/style-lab/<experiment>.json [--only ink] [--all]");
+  console.error("usage: node tools/review-page.mjs tools/style-lab/<experiment>.json [--only vinyl] [--all]");
   process.exit(1);
 }
 
@@ -133,7 +133,7 @@ if (!sections.length) {
 const html = `<!doctype html><meta charset="utf-8"><title>Art review: ${shown.length} cell(s)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  :root { --bg:#121921; --card:#1b232d; --ink:#eef2f6; --dim:#8fa0b0; --teal:#59b8c5; --line:#2a333c; }
+  :root { --bg:#0f1033; --card:#16163F; --ink:#F1F1FD; --dim:#B9A7F2; --indigo:#7a7aff; --line:#2F2FB8; }
   * { box-sizing: border-box; }
   body { margin:0; padding:2rem 1rem 6rem; background:var(--bg); color:var(--ink);
          font:15px/1.55 -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; }
@@ -151,11 +151,11 @@ const html = `<!doctype html><meta charset="utf-8"><title>Art review: ${shown.le
   figcaption b { font-size:1rem; }
   figcaption span { color:var(--dim); font-size:.82rem; }
   details { margin-top:.4rem; }
-  summary { color:var(--teal); font-size:.82rem; cursor:pointer; width:max-content; }
+  summary { color:var(--indigo); font-size:.82rem; cursor:pointer; width:max-content; }
   pre { white-space:pre-wrap; background:var(--card); border:1px solid var(--line); border-radius:8px;
         padding:.9rem 1rem; margin:.6rem 0 0; font-size:.8rem; line-height:1.5; color:var(--dim); }
 </style>
-<h1><b>${shown.length} cell(s)</b> for review &mdash; nothing adopted. Judge against docs/ART-DIRECTION.md: no red anywhere, cool slate plus the one teal, rose is mouth tissue only, nothing gory, no text in the pixels.</h1>
+<h1><b>${shown.length} cell(s)</b> for review &mdash; nothing adopted. Judge against docs/superpowers/specs/2026-11-05-brand-overhaul-design.md: no red anywhere, props only in indigo, lavender or sunflower, Kanko matches the character sheet, nothing gory, no text in the pixels.</h1>
 ${sections.join("\n")}
 `;
 
