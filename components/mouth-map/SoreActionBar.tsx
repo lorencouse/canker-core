@@ -25,6 +25,8 @@ import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
 import { localTimeZone } from '@/utils/readings';
 
+let healedUndo: { dismiss: () => void } | null = null;
+
 /**
  * The map's editing actions: add, log today, mark healed, delete, and the
  * commit pair that closes an editing session.
@@ -63,6 +65,8 @@ function useMapActions() {
 
   const begin = (next: 'add' | 'edit') => {
     tap();
+    healedUndo?.dismiss();
+    healedUndo = null;
     setSnapshot(sores);
     if (next === 'add') setSelectedSore(null);
     setMode(next);
@@ -110,7 +114,7 @@ function useMapActions() {
       notify('success');
       // Healed is one tap, so it is one tap to take back.
       if (healedAt)
-        toast({
+        healedUndo = toast({
           title: 'Marked healed.',
           action: (
             <ToastAction
