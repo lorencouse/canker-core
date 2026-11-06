@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 
 import { getDayLogs, getSores, getUserDetails } from '@/lib/queries';
+import { expectedMood } from '@/utils/momentum';
 import TodayScreen from './today-screen';
 
 export const metadata = {
@@ -17,5 +18,11 @@ export default async function TodayPage() {
     getDayLogs(user.id)
   ]);
 
-  return <TodayScreen sores={sores} dayLogs={dayLogs} />;
+  return (
+    <TodayScreen
+      sores={sores}
+      dayLogs={dayLogs}
+      expectedMood={expectedMood(sores, dayLogs, new Date())}
+    />
+  );
 }

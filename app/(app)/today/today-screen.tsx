@@ -22,7 +22,7 @@ import {
 } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
-import { withSavedLog } from '@/utils/momentum';
+import { type Mood, withSavedLog } from '@/utils/momentum';
 import { dayKey, localTimeZone } from '@/utils/readings';
 
 /**
@@ -39,10 +39,13 @@ import { dayKey, localTimeZone } from '@/utils/readings';
  */
 export default function TodayScreen({
   sores: initialSores,
-  dayLogs
+  dayLogs,
+  expectedMood
 }: {
   sores: Sore[];
   dayLogs: DayLog[];
+  /** The server's guess at the block's mood; sizes the placeholder only. */
+  expectedMood: Mood;
 }) {
   const router = useRouter();
   /*
@@ -189,7 +192,7 @@ export default function TodayScreen({
           answer={answer}
         />
       ) : (
-        <StreakBlockPlaceholder />
+        <StreakBlockPlaceholder mood={expectedMood} answer={answer} />
       )}
 
       <div className="mt-5 grid grid-cols-1 gap-4 lg:mt-6">

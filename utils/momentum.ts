@@ -104,3 +104,40 @@ export const withSavedLog = (
   written: boolean
 ): DayLog[] =>
   written ? [...logs.filter((l) => l.day !== log.day), log] : logs;
+
+const utcKey = (instant: number): string =>
+  new Date(instant).toISOString().slice(0, 10);
+
+/**
+ * Which mood the block will probably show, from a clock that is not the
+ * device's. Only the server can run this before hydration, and it has the
+ * wrong "today" by up to a day either way, so each test is widened to every
+ * day the device could be on (UTC-12 to UTC+14). It sizes the placeholder
+ * and nothing else; the real mood still comes from `todayMood` on the
+ * device.
+ */
+export const expectedMood = (
+  sores: Sore[],
+  logs: DayLog[],
+  serverNow: Date
+): Mood => {
+  const t = serverNow.getTime();
+  const HOUR = 3_600_000;
+  const near = (iso: string) =>
+    Math.abs(new Date(iso).getTime() - t) < 38 * HOUR;
+  const bad = sores.some(
+    (sore) =>
+      near(sore.created_at) ||
+      sore.readings.some(
+        (reading) => near(reading.recorded_at) && reading.pain >= BAD_DAY_PAIN
+      )
+  );
+  if (bad) return 'gentle';
+  // A streak needs today or yesterday logged, so look back one more day.
+  const earliest = utcKey(t - 12 * HOUR - 24 * HOUR);
+  const latest = utcKey(t + 14 * HOUR);
+  const plausible = logs.some(
+    (l) => isTriggerFree(l) && l.day >= earliest && l.day <= latest
+  );
+  return plausible ? 'proud' : 'neutral';
+};
