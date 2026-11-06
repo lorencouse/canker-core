@@ -17,9 +17,11 @@
  *   app/icon.png                             64px favicon, served by Next.
  *   resources/icon.png                       1024 source for capacitor-assets.
  *   resources/splash.png, splash-dark.png    2732 splash: the full-body
- *     Kanko at 22% of the width, centred. Light is the transparent cut-out on
- *     #4B4BF0; dark is his native dark art, opaque on #0F1033, on that same
- *     ground, so no cut-out edge shows.
+ *     Kanko at 22% of the width, centred. Both are opaque art keyed to the
+ *     ground it was painted on, so no cut-out edge shows and his contact
+ *     shadow survives: light is kanko-splash-light.webp (drawn by
+ *     tools/style-lab/kanko-splash-light.json) on #4A52F1, dark is his
+ *     native dark art on #0F1033.
  *   resources/notification/drawable-<density>/ic_stat_kanko.png
  *     Android notification small icon, 24dp at mdpi through xxxhdpi. Android
  *     draws only its alpha (tinted by LocalNotifications.iconColor), so it is
@@ -43,6 +45,10 @@ import { faceSquare } from '../tools/kanko-face-art.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const INDIGO = '#4B4BF0';
 const NIGHT = '#0F1033';
+// The ground the light splash master was painted on (its border median),
+// a shade off INDIGO. The splash is laid on this exact colour, and the
+// native splash background matches it, so no edge of the art can show.
+const SPLASH_LIGHT = '#4A52F1';
 
 const out = (...p) => path.join(ROOT, ...p);
 
@@ -106,7 +112,9 @@ const keyToGround = async (file, background) => {
  * at a straight edge before it has faded into the ground.
  */
 const splash = async (size, fraction, source, background) => {
-  const file = out('public/images/kanko', source);
+  const file = source.includes('/')
+    ? out(source)
+    : out('public/images/kanko', source);
   const target = Math.round(size * fraction);
   const ground = sharp({
     create: { width: size, height: size, channels: 3, background }
@@ -156,7 +164,13 @@ const targets = [
   ['resources/icon.png', () => square(1024)],
   [
     'resources/splash.png',
-    () => splash(2732, 0.22, 'kanko-neutral.webp', INDIGO)
+    () =>
+      splash(
+        2732,
+        0.22,
+        'docs/superpowers/specs/assets/2026-11-05-kanko/kanko-splash-light.webp',
+        SPLASH_LIGHT
+      )
   ],
   [
     'resources/splash-dark.png',

@@ -66,7 +66,8 @@ const config: CapacitorConfig = {
       // enough that a slow but working connection still paints under it.
       launchAutoHide: true,
       launchShowDuration: 5000,
-      backgroundColor: '#4B4BF0',
+      // The light splash art's own ground (scripts/generate-app-icons.mjs).
+      backgroundColor: '#4A52F1',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false
     },
