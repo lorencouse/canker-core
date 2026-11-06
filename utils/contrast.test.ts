@@ -186,7 +186,10 @@ describe('deltaE2000', () => {
     [[50, 2.5, 0], [73, 25, -18], 27.1492]
   ] as const)('matches the published value for %j vs %j', (a, b, want) => {
     expect(
-      deltaE2000([...a] as [number, number, number], [...b] as [number, number, number])
+      deltaE2000(
+        [...a] as [number, number, number],
+        [...b] as [number, number, number]
+      )
     ).toBeCloseTo(want, 4);
   });
 

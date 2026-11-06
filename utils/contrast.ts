@@ -141,5 +141,4 @@ export function deltaE2000(
 }
 
 /** CIEDE2000 between two HSL triplets (alpha ignored). */
-export const deltaE = (a: string, b: string) =>
-  deltaE2000(toLab(a), toLab(b));
+export const deltaE = (a: string, b: string) => deltaE2000(toLab(a), toLab(b));

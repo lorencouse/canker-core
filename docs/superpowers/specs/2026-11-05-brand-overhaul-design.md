@@ -203,9 +203,12 @@ icon still needs iOS/Android variants (maskable safe zone, no transparency
 on iOS) cut from the master. If the face doesn't survive at 48px, ask for a
 tighter crop in a new batch rather than shipping mush.
 
-The shipped art has transparent backgrounds (cut out by
-`tools/kanko-assets.mjs`), so it sits directly on the ground in light and
-dark and no square edge shows; no edge mask is used.
+In light mode the shipped art has transparent backgrounds (cut out by
+`tools/kanko-assets.mjs`), so it sits directly on the ground and no square
+edge shows; no edge mask is used. Dark mode uses separate art drawn natively
+on the dark ground (masters in `assets/2026-11-05-kanko/dark/`), which the
+same script shifts so its ground matches the page (`#0f1033`), or the card
+(`#191a48`) for curious Kanko, which sits inside cards.
 
 ## Voice
 
