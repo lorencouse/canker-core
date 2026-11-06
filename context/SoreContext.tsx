@@ -34,6 +34,12 @@ interface SoreContextProps {
    */
   snapshot: Sore[] | null;
   setSnapshot: React.Dispatch<React.SetStateAction<Sore[] | null>>;
+  /**
+   * Whether the selected sore's quick card is open. Shared so the map's
+   * markers and a list beside it open the same card.
+   */
+  quickOpen: boolean;
+  setQuickOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface SoreProviderProps {
@@ -71,6 +77,8 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
     initialMode === 'view' ? null : initialSores
   );
 
+  const [quickOpen, setQuickOpen] = useState(false);
+
   const visibleSores = useMemo(
     () => (showHealed ? sores : sores.filter((s) => !s.healed_at)),
     [sores, showHealed]
@@ -88,9 +96,11 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
       mode,
       setMode,
       snapshot,
-      setSnapshot
+      setSnapshot,
+      quickOpen,
+      setQuickOpen
     }),
-    [selectedSore, sores, visibleSores, showHealed, mode, snapshot]
+    [selectedSore, sores, visibleSores, showHealed, mode, snapshot, quickOpen]
   );
 
   return (

@@ -1,9 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts';
 
 import Instrument from '@/components/insights/Instrument';
+import SoreQuickCard from '@/components/sore/SoreQuickCard';
+import { Button } from '@/components/ui/button';
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart';
 import { Sore } from '@/types';
 import { getSeverityColor } from '@/utils/getColor';
@@ -60,6 +64,10 @@ function buildChart(sores: Sore[]) {
 
 const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
   const isDark = useIsDark();
+  const router = useRouter();
+  // The sore whose bar was tapped, shown in its quick card.
+  const [tappedId, setTappedId] = useState<string | null>(null);
+  const tapped = sores.find((s) => s.id === tappedId) ?? null;
   const { rows, soreIds, painByDay } = useMemo(
     () => buildChart(sores),
     [sores]
@@ -76,78 +84,99 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
   return (
     <Instrument
       title="Size over time"
-      caption="One bar per sore per day, in millimetres. Colour is that day’s pain level."
+      caption="One bar per sore per day, in millimetres. Colour is that day’s pain level. Tap a bar for that sore."
     >
       {rows.length === 0 ? (
-          <p className="py-12 text-center text-muted-foreground">
-            No readings yet.
-          </p>
-        ) : (
-          // Shorter on a phone: the chart shares the screen with a header
-          // and the tab bar, and a 280px plot leaves nothing else visible.
-          <ChartContainer
-            config={config}
-            className="h-[220px] w-full sm:h-[280px]"
-          >
-            <BarChart data={rows} margin={{ left: 0, right: 4, top: 8 }}>
-              <CartesianGrid
-                vertical={false}
-                stroke="hsl(var(--border))"
-                strokeDasharray="3 3"
-              />
-              <XAxis
-                dataKey="day"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                // Formatted straight off the YYYY-MM-DD key. Re-parsing it
-                // would read as UTC midnight and then print in local time,
-                // shifting every label a day earlier west of Greenwich.
-                tickFormatter={(value: string) => {
-                  const [, month, day] = value.split('-');
-                  return `${Number(month)}/${Number(day)}`;
-                }}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                width={34}
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickFormatter={(value: number) => `${value}`}
-                label={{
-                  value: 'mm',
-                  position: 'insideTopLeft',
-                  fill: 'hsl(var(--muted-foreground))',
-                  fontSize: 12
-                }}
-              />
-              {soreIds.map((id) => (
-                <Bar
-                  key={id}
-                  dataKey={id}
-                  radius={3}
-                  maxBarSize={28}
-                  // recharts' animation layer does not render under React 19;
-                  // without this the bar groups come out empty.
-                  isAnimationActive={false}
-                >
-                  {rows.map((row) => (
-                    <Cell
-                      key={`${id}-${row.day}`}
-                      fill={getSeverityColor(
-                        painByDay.get(id)?.get(row.day) ?? 1,
-                        isDark
-                      )}
-                    />
-                  ))}
-                </Bar>
-              ))}
-            </BarChart>
-          </ChartContainer>
+        <p className="py-12 text-center text-muted-foreground">
+          No readings yet.
+        </p>
+      ) : (
+        // Shorter on a phone: the chart shares the screen with a header
+        // and the tab bar, and a 280px plot leaves nothing else visible.
+        <ChartContainer
+          config={config}
+          className="h-[220px] w-full sm:h-[280px]"
+        >
+          <BarChart data={rows} margin={{ left: 0, right: 4, top: 8 }}>
+            <CartesianGrid
+              vertical={false}
+              stroke="hsl(var(--border))"
+              strokeDasharray="3 3"
+            />
+            <XAxis
+              dataKey="day"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+              // Formatted straight off the YYYY-MM-DD key. Re-parsing it
+              // would read as UTC midnight and then print in local time,
+              // shifting every label a day earlier west of Greenwich.
+              tickFormatter={(value: string) => {
+                const [, month, day] = value.split('-');
+                return `${Number(month)}/${Number(day)}`;
+              }}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              width={34}
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+              tickFormatter={(value: number) => `${value}`}
+              label={{
+                value: 'mm',
+                position: 'insideTopLeft',
+                fill: 'hsl(var(--muted-foreground))',
+                fontSize: 12
+              }}
+            />
+            {soreIds.map((id) => (
+              <Bar
+                key={id}
+                dataKey={id}
+                radius={3}
+                maxBarSize={28}
+                // recharts' animation layer does not render under React 19;
+                // without this the bar groups come out empty.
+                isAnimationActive={false}
+                // A bar is one sore's day: tapping it opens that sore.
+                onClick={() => setTappedId(id)}
+                cursor="pointer"
+              >
+                {rows.map((row) => (
+                  <Cell
+                    key={`${id}-${row.day}`}
+                    fill={getSeverityColor(
+                      painByDay.get(id)?.get(row.day) ?? 1,
+                      isDark
+                    )}
+                  />
+                ))}
+              </Bar>
+            ))}
+          </BarChart>
+        </ChartContainer>
       )}
+      <SoreQuickCard
+        sore={tapped}
+        open={tapped !== null}
+        onOpenChange={(open) => !open && setTappedId(null)}
+        // The page's data comes from the server, so a write refreshes it.
+        onChange={() => router.refresh()}
+        footer={
+          tapped && (
+            <Button
+              asChild
+              variant="link"
+              className="h-11 px-0.5 text-base font-semibold"
+            >
+              <Link href={`/my-sores?sore=${tapped.id}`}>Show on map</Link>
+            </Button>
+          )
+        }
+      />
     </Instrument>
   );
 };

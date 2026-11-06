@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import SoreQuickCard from '@/components/sore/SoreQuickCard';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/utils/cn';
 import { tap } from '@/utils/native';
@@ -56,7 +57,14 @@ const DRAG_THRESHOLD = 4;
 type Camera = { k: number; tx: number; ty: number };
 const HOME: Camera = { k: 1, tx: 0, ty: 0 };
 
-export default function MouthMap({ user }: { user: User }) {
+export default function MouthMap({
+  user,
+  initialView
+}: {
+  user: User;
+  /** The view to open on when no sore is selected. */
+  initialView?: MouthView;
+}) {
   const {
     sores,
     setSores,
@@ -66,10 +74,14 @@ export default function MouthMap({ user }: { user: User }) {
     selectedSore,
     setSelectedSore,
     mode,
-    snapshot
+    snapshot,
+    quickOpen,
+    setQuickOpen
   } = useSoreContext();
   const healedCount = sores.filter((s) => s.healed_at).length;
-  const [view, setView] = useState<MouthView>(selectedSore?.view ?? 'front');
+  const [view, setView] = useState<MouthView>(
+    selectedSore?.view ?? initialView ?? 'front'
+  );
   const [camera, setCamera] = useState<Camera>(HOME);
   const svgRef = useRef<SVGSVGElement>(null);
   const idPrefix = useId().replace(/:/g, '');
@@ -154,6 +166,9 @@ export default function MouthMap({ user }: { user: User }) {
     pinchDist: number | null;
     // The sore being dragged, if the press started on one in an editing mode.
     dragging: Sore | null;
+    // Whether the press started on a sore. Pointer capture retargets the
+    // release to the svg, so the release's own target cannot say.
+    onSore: boolean;
   };
   const gesture = useRef<Gesture | null>(null);
 
@@ -169,9 +184,13 @@ export default function MouthMap({ user }: { user: User }) {
       startCamera: camera,
       moved: false,
       pinchDist: null,
-      dragging: null
+      dragging: null,
+      onSore: false
     };
     g.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    // Only ever set: the press bubbles from the marker to the svg, whose own
+    // handler runs second without a sore.
+    if (g.pointers.size === 1 && sore) g.onSore = true;
     if (g.pointers.size === 1 && sore && mode !== 'view') g.dragging = sore;
     if (g.pointers.size === 2) {
       const [a, b] = Array.from(g.pointers.values());
@@ -237,8 +256,13 @@ export default function MouthMap({ user }: { user: User }) {
     gesture.current = null;
     if (!wasTap) return;
 
-    // A tap. On a sore, the marker's own handler already selected it.
-    if ((e.target as Element).closest('[data-sore]')) return;
+    // A tap. On a sore, the marker's own handler already selected it; in
+    // view mode the tap also opens its quick card. A drag that started on a
+    // sore was a pan, so it never gets here.
+    if (g.onSore || (e.target as Element).closest('[data-sore]')) {
+      if (mode === 'view') setQuickOpen(true);
+      return;
+    }
 
     const p = toDrawing(e.clientX, e.clientY);
     if (mode === 'add') {
@@ -386,6 +410,10 @@ export default function MouthMap({ user }: { user: User }) {
                   draggable={mode !== 'view'}
                   filterId={`${idPrefix}soft`}
                   onSelect={() => selectSore(sore)}
+                  onActivate={() => {
+                    selectSore(sore);
+                    if (mode === 'view') setQuickOpen(true);
+                  }}
                   onNudge={(dx, dy) => nudgeSore(sore, dx, dy)}
                   onPointerDown={(e) => {
                     selectSore(sore);
@@ -447,6 +475,17 @@ export default function MouthMap({ user }: { user: User }) {
           </SelectContent>
         </Select>
       )}
+
+      <SoreQuickCard
+        sore={mode === 'view' ? selectedSore : null}
+        open={quickOpen && mode === 'view' && Boolean(selectedSore)}
+        onOpenChange={setQuickOpen}
+        onChange={(next) => {
+          setSores((prev) => prev.map((s) => (s.id === next.id ? next : s)));
+          // A healed sore leaves the map unless healed ones are shown.
+          setSelectedSore(next.healed_at && !showHealed ? null : next);
+        }}
+      />
 
       <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
         <p>As in a mirror: your left is on the left.</p>
