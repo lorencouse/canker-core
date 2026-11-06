@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { ImpactStyle } from '@capacitor/haptics';
 
 /**
@@ -84,10 +84,11 @@ interface WebAuthPlugin {
 
 let webAuth: WebAuthPlugin | undefined;
 
-const webAuthPlugin = async () => {
-  const { registerPlugin } = await import('@capacitor/core');
-  return (webAuth ??= registerPlugin<WebAuthPlugin>('WebAuth'));
-};
+// Synchronous on purpose: the plugin is a proxy that turns any property,
+// `then` included, into a native call, so resolving a promise with it calls
+// an unimplemented `WebAuth.then()` and the promise never settles.
+const webAuthPlugin = () =>
+  (webAuth ??= registerPlugin<WebAuthPlugin>('WebAuth'));
 
 /**
  * True only where the system sign-in can return through the site's
@@ -100,9 +101,9 @@ const webAuthPlugin = async () => {
 export async function hasSystemSignIn(callbackPath: string): Promise<boolean> {
   if (!isNative() || !['ios', 'android'].includes(platform())) return false;
   try {
-    const { httpsCallback } = await (
-      await webAuthPlugin()
-    ).capabilities({ callbackPath });
+    const { httpsCallback } = await webAuthPlugin().capabilities({
+      callbackPath
+    });
     return httpsCallback === true;
   } catch {
     return false;
@@ -115,5 +116,5 @@ export async function hasSystemSignIn(callbackPath: string): Promise<boolean> {
  * 'CANCELED' when the person closes the sheet or the tab.
  */
 export async function systemSignIn(url: string, callbackPath: string) {
-  return (await webAuthPlugin()).start({ url, callbackPath });
+  return webAuthPlugin().start({ url, callbackPath });
 }
