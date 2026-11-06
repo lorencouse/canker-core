@@ -10,7 +10,6 @@ import { addDays, dayKey, dayNumberOf } from '@/utils/readings';
  * framed as "worth noticing", never "the cause".
  */
 
-
 /** Sores that have lasted this long deserve a professional look. */
 export const LONG_SORE_DAYS = 14;
 
