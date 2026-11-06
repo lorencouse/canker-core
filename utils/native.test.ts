@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { hasSystemSignIn, systemSignIn } from './native';
 
 /**
  * A stand-in for Capacitor's plugin proxy: like the real one, every property
@@ -28,8 +29,6 @@ vi.mock('@capacitor/core', () => ({
       }
     )
 }));
-
-const { hasSystemSignIn, systemSignIn } = await import('./native');
 
 describe('system sign-in on the native app', () => {
   it('settles even though the plugin proxy answers every property', async () => {
