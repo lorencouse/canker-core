@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     const res = noStore(new NextResponse(html, { status: 200 }));
     for (const [name, value] of Object.entries(CONFIRM_PAGE_HEADERS))
       res.headers.set(name, value);
-    // Expires the sheet's session cookie, so Safari is not left signed in.
+    // Expires the sheet's session cookie, so Safari (or Chrome) is not left signed in.
     forwardCookies(res, headers);
     return res;
   } catch (error) {
