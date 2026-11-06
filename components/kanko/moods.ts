@@ -12,7 +12,8 @@ export type KankoMood =
   | 'medal'
   | 'envelope'
   | 'clipboard'
-  | 'offline';
+  | 'offline'
+  | 'sleepy';
 
 /**
  * Square, 640px WebP, built by `npm run art:kanko`. `src` is transparent art
@@ -104,6 +105,12 @@ export const KANKO: Record<
   offline: {
     src: '/images/kanko/kanko-offline.webp',
     darkSrc: '/images/kanko/kanko-offline-dark.webp',
+    width: 640,
+    height: 640
+  },
+  sleepy: {
+    src: '/images/kanko/kanko-sleepy.webp',
+    darkSrc: '/images/kanko/kanko-sleepy-dark.webp',
     width: 640,
     height: 640
   }

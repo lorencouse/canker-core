@@ -23,7 +23,8 @@ describe('KANKO', () => {
       'phone',
       'point',
       'proud',
-      'reading'
+      'reading',
+      'sleepy'
     ]);
   });
 

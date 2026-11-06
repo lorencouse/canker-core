@@ -190,7 +190,7 @@ toward red in a drawing, that drawing is rejected.
 | Waving hello                      | `kanko-hello.webp`          | Welcome / first run (`components/onboarding`)              |
 | Curious, peeking over a box       | `kanko-curious-empty.webp`  | Empty states (no sores yet, empty history)                 |
 | Gentle, hugging a lavender pillow | `kanko-gentle-bad-day.webp` | After logging a high-severity reading or a new sore        |
-| Sleepy, nightcap, moon            | `kanko-sleepy-night.webp`   | Evening check-in reminder                                  |
+| Sleepy, nightcap, moon            | `kanko-sleepy.webp`         | Settings / Reminders, beside the evening reminder          |
 | Puffed-cheek face on indigo       | `kanko-app-icon.webp`       | App icon, PWA icons, notification icon                     |
 | Pointing                          | `kanko-point.webp`          | Marketing home, how-it-works step 1                        |
 | Holding a phone                   | `kanko-phone.webp`          | Marketing home, how-it-works step 2                        |
