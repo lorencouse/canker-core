@@ -3,7 +3,6 @@
  * otherwise vanish every time `ios/` or `android/` is regenerated.
  *
  *   npm run cap:patch                 (also run by cap:add:*, cap:sync, cap:ios, cap:android)
- *   node scripts/patch-native.mjs --pod-install   force `pod install` even if nothing changed
  *
  * iOS (Xcode 27 / iOS 27):
  *   - deployment target 15.0 in the Podfile, every pod target and the app
@@ -36,7 +35,6 @@ import {
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const rel = (p) => path.relative(ROOT, p);
-const forcePod = process.argv.includes('--pod-install');
 
 const has = (cmd) => spawnSync('sh', ['-c', `command -v ${cmd}`]).status === 0;
 
@@ -61,7 +59,7 @@ const patchIos = () => {
     execFileSync('plutil', ['-lint', plist], { stdio: 'inherit' });
   }
 
-  if (!podChanged && !projChanged && !forcePod) return;
+  if (!podChanged && !projChanged) return;
   if (has('pod')) {
     console.log('running  pod install  (ios/App)');
     execFileSync('pod', ['install'], { cwd: app, stdio: 'inherit' });
