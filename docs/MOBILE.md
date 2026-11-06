@@ -39,24 +39,26 @@ What follows from that:
   passwords there because the app claims `webcredentials:cankercore.com`
   (the entitlement below, answered by
   `public/.well-known/apple-app-site-association`).
-- **OAuth on iOS runs in Apple's system sign-in sheet**
+- **OAuth on iOS 17.4+ runs in Apple's system sign-in sheet**
   (ASWebAuthenticationSession, the local plugin in `native/plugins/web-auth`),
   so it can use the Google or GitHub account, password or passkey already in
   Safari. The sheet has its own cookie jar, so `app/api/native-auth/*` hands
   the result back: `start` begins Better Auth's normal flow in the sheet
   (and copies the webview's first-touch cookie into it, so signups keep
-  their attribution), `finish` asks "Continue to the Canker Core app as
-  <email>?" and only that page's same-origin, CSRF-checked POST swaps the
-  sheet's session for a single-use 60-second token and signs the sheet out,
-  and `redeem` turns that token into a new session in the webview. On iOS
-  17.4+ the sheet returns through the universal link
-  `https://cankercore.com/native-auth/callback`, which only this app can
-  receive (opened in a browser, that page shows a notice and never reads
-  the token); older iOS falls back to the `com.cankercore.app://` scheme.
-  The provider callback is still `/api/auth/callback/<provider>`.
-  `utils/native-auth.ts` describes the flow and its checks. Android and
-  browsers keep the ordinary redirect, which is why the providers are still
-  listed in `server.allowNavigation`.
+  their attribution); `finish` deletes the sheet's session at once, holds
+  its user as a five-minute pending handoff keyed by the flow cookie, and
+  asks "Continue to the Canker Core app as <email>?", so Safari is never
+  left signed in; only that page's same-origin, CSRF-checked POST spends the
+  pending handoff on a single-use 60-second token; and `redeem` turns that
+  token into a new session in the webview. The sheet returns only through
+  the universal link `https://cankercore.com/native-auth/callback`, which
+  iOS hands to this app alone (opened in a browser, that page shows a
+  notice and never reads the token). There is no custom-scheme callback,
+  since any app can claim a scheme, so older iOS keeps OAuth in the webview
+  as Android and browsers do. The provider callback is still
+  `/api/auth/callback/<provider>`. `utils/native-auth.ts` describes the flow
+  and its checks. The webview flows are why the providers are still listed
+  in `server.allowNavigation`.
 
 ## Building the native projects
 
@@ -133,12 +135,12 @@ Capacitor's default logo.
 
 Four shells, one per route group, all under the root layout:
 
-| Group | Chrome | Where |
-| --- | --- | --- |
-| `app/(marketing)` | navbar + footer | home, about, legal |
-| `app/(app)` | top bar + bottom tabs | today, map, insights, settings |
-| `app/(onboarding)` | none, just safe areas | the first-run flow |
-| `app/signin` | wordmark only | sign-in and password flows |
+| Group              | Chrome                | Where                          |
+| ------------------ | --------------------- | ------------------------------ |
+| `app/(marketing)`  | navbar + footer       | home, about, legal             |
+| `app/(app)`        | top bar + bottom tabs | today, map, insights, settings |
+| `app/(onboarding)` | none, just safe areas | the first-run flow             |
+| `app/signin`       | wordmark only         | sign-in and password flows     |
 
 The onboarding shell has no chrome on purpose: there is nowhere else to be
 until the flow is done, and a tab bar over four empty screens is a poor first

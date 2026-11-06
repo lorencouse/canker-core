@@ -13,6 +13,12 @@
  *   - Bound to the nonce of the webview that started the flow, compared in
  *     constant time. A mismatch still burns the token.
  *
+ * Before a token is minted, finish holds a pending handoff: the sheet's
+ * session is deleted the moment the provider callback lands, and the user it
+ * belonged to waits here, keyed by the flow cookie, for at most five minutes
+ * until the person answers the confirmation. Continue takes it to mint;
+ * Cancel takes it to discard; otherwise it expires.
+ *
  * Storage is behind HandoffStore so the rules are testable without Postgres;
  * lib/native-handoff-plugin.ts backs it with Better Auth's verification table.
  */
@@ -25,8 +31,10 @@ import {
 import { isRandom32 } from '@/utils/native-auth';
 
 export const HANDOFF_TTL_SECONDS = 60;
+export const PENDING_TTL_SECONDS = 60 * 5;
 
 const IDENTIFIER_PREFIX = 'native-handoff:';
+const PENDING_PREFIX = 'native-pending:';
 
 export interface HandoffStore {
   put(identifier: string, value: string, expiresAt: Date): Promise<void>;
@@ -98,6 +106,53 @@ export async function redeemHandoff(
     return { ok: false, reason: 'wrong_device' };
 
   return { ok: true, userId: data.userId };
+}
+
+export const pendingIdentifier = (flow: string) =>
+  PENDING_PREFIX + sha256(flow).toString('base64url');
+
+/** Holds the user the sheet just signed in as, until the confirmation is
+ * answered. The flow cookie is the nonce, so it binds both. */
+export async function holdPending(
+  store: HandoffStore,
+  { userId, flow }: { userId: string; flow: string },
+  now: Date = new Date()
+): Promise<void> {
+  if (!userId) throw new Error('holdPending: userId is required');
+  if (!isRandom32(flow)) throw new Error('holdPending: malformed flow');
+  const expiresAt = new Date(now.getTime() + PENDING_TTL_SECONDS * 1000);
+  const value = JSON.stringify({
+    userId,
+    nonceHash: sha256(flow).toString('base64url'),
+    createdAt: now.toISOString()
+  });
+  await store.put(pendingIdentifier(flow), value, expiresAt);
+}
+
+/** Takes the pending handoff for this flow, once. Null when there is none,
+ * or it has expired by either its row or its own creation time. */
+export async function takePending(
+  store: HandoffStore,
+  flow: unknown,
+  now: Date = new Date()
+): Promise<{ userId: string } | null> {
+  if (!isRandom32(flow)) return null;
+  const row = await store.take(pendingIdentifier(flow));
+  if (!row) return null;
+  let data: { userId?: unknown; createdAt?: unknown };
+  try {
+    data = JSON.parse(row.value);
+  } catch {
+    return null;
+  }
+  if (typeof data.userId !== 'string' || !data.userId) return null;
+  const created = new Date(String(data.createdAt)).getTime();
+  if (
+    !(row.expiresAt.getTime() > now.getTime()) ||
+    !(created + PENDING_TTL_SECONDS * 1000 > now.getTime())
+  )
+    return null;
+  return { userId: data.userId };
 }
 
 /** Constant-time equality for two short strings (the flow cookie check). */

@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   HANDOFF_TTL_SECONDS,
+  PENDING_TTL_SECONDS,
   handoffIdentifier,
+  holdPending,
   mintHandoff,
+  pendingIdentifier,
   redeemHandoff,
+  takePending,
   sameSecret,
   type HandoffStore
 } from './native-handoff';
@@ -129,6 +133,62 @@ describe('handoff tokens', () => {
     await expect(
       mintHandoff(store, { userId: 'u1', nonce: 'abc' })
     ).rejects.toThrow();
+  });
+});
+
+describe('pending handoffs', () => {
+  it('hold a user for one flow for five minutes, keyed by its hash', async () => {
+    const { store, rows } = memoryStore();
+    const flow = randomNonce();
+    await holdPending(store, { userId: 'u1', flow }, t0);
+    const [[identifier, row]] = Array.from(rows);
+    expect(identifier).toBe(pendingIdentifier(flow));
+    expect(identifier).not.toContain(flow);
+    expect(row.value).not.toContain(flow);
+    expect(row.expiresAt).toEqual(later(PENDING_TTL_SECONDS));
+    expect(PENDING_TTL_SECONDS).toBeLessThanOrEqual(300);
+  });
+
+  it('are taken once, by the same flow only', async () => {
+    const { store } = memoryStore();
+    const flow = randomNonce();
+    await holdPending(store, { userId: 'u1', flow }, t0);
+    expect(await takePending(store, randomNonce(), later(1))).toBeNull();
+    expect(await takePending(store, flow, later(1))).toEqual({ userId: 'u1' });
+    expect(await takePending(store, flow, later(2))).toBeNull();
+  });
+
+  it('expire after five minutes, even in a store that forgets to', async () => {
+    const { store } = memoryStore();
+    const flow = randomNonce();
+    await holdPending(store, { userId: 'u1', flow }, t0);
+    expect(
+      await takePending(store, flow, later(PENDING_TTL_SECONDS))
+    ).toBeNull();
+  });
+
+  it('refuse a forged row whose own time has passed', async () => {
+    const { store } = memoryStore();
+    const flow = randomNonce();
+    await store.put(
+      pendingIdentifier(flow),
+      JSON.stringify({ userId: 'u1', createdAt: t0.toISOString() }),
+      later(3600)
+    );
+    expect(
+      await takePending(store, flow, later(PENDING_TTL_SECONDS + 1))
+    ).toBeNull();
+  });
+
+  it('will not hold without a user or a well-formed flow', async () => {
+    const { store } = memoryStore();
+    await expect(
+      holdPending(store, { userId: '', flow: randomNonce() })
+    ).rejects.toThrow();
+    await expect(
+      holdPending(store, { userId: 'u1', flow: 'short' })
+    ).rejects.toThrow();
+    expect(await takePending(store, 'short')).toBeNull();
   });
 });
 

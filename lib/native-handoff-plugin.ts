@@ -2,7 +2,7 @@
  * Better Auth plugin behind the iOS system sign-in handoff
  * (utils/native-auth.ts has the whole flow).
  *
- * Both endpoints are server-only: they are reachable through `auth.api.*`
+ * Every endpoint is server-only: they are reachable through `auth.api.*`
  * from app/api/native-auth/* and are never mounted under /api/auth, so the
  * only way to mint or redeem is through those route handlers and their
  * cookie checks. They live in a plugin rather than in the route handlers
@@ -18,8 +18,10 @@ import {
 import { deleteSessionCookie, setSessionCookie } from 'better-auth/cookies';
 import { z } from 'zod';
 import {
+  holdPending,
   mintHandoff,
   redeemHandoff,
+  takePending,
   type HandoffStore
 } from '@/utils/native-handoff';
 
@@ -53,29 +55,63 @@ export const nativeHandoff = () =>
     id: 'native-handoff',
     endpoints: {
       /**
-       * Swaps the caller's session (the one the sign-in sheet just got) for
-       * a handoff token, then ends that session. The sheet shares Safari's
-       * cookies, and leaving a 30-day session behind in Safari is not
-       * something the person asked for when they signed in to the app.
+       * Ends the caller's session (the one the sign-in sheet just got) at
+       * once and holds its user as a pending handoff for this flow, so the
+       * confirmation page can be answered without Safari staying signed in.
+       * The sheet shares Safari's cookies, and leaving a 30-day session
+       * behind there is not something the person asked for, even if they
+       * close the sheet without answering.
        */
-      mintNativeHandoff: createAuthEndpoint.serverOnly(
+      holdNativeHandoff: createAuthEndpoint.serverOnly(
         {
           method: 'POST',
-          body: z.object({ nonce: z.string() }),
+          body: z.object({ flow: z.string() }),
           use: [sessionMiddleware]
         },
         async (ctx) => {
           const { session, user } = ctx.context.session;
-          const token = await mintHandoff(
-            storeFor(ctx.context.internalAdapter),
-            {
-              userId: user.id,
-              nonce: ctx.body.nonce
-            }
-          );
           await ctx.context.internalAdapter.deleteSession(session.token);
           deleteSessionCookie(ctx);
+          await holdPending(storeFor(ctx.context.internalAdapter), {
+            userId: user.id,
+            flow: ctx.body.flow
+          });
+          return ctx.json({ email: user.email });
+        }
+      ),
+
+      /** Continue: spends the pending handoff on a handoff token. */
+      mintNativeHandoff: createAuthEndpoint.serverOnly(
+        {
+          method: 'POST',
+          body: z.object({ flow: z.string() })
+        },
+        async (ctx) => {
+          const store = storeFor(ctx.context.internalAdapter);
+          const pending = await takePending(store, ctx.body.flow);
+          if (!pending) {
+            throw new APIError('BAD_REQUEST', { message: 'expired_token' });
+          }
+          const token = await mintHandoff(store, {
+            userId: pending.userId,
+            nonce: ctx.body.flow
+          });
           return ctx.json({ token });
+        }
+      ),
+
+      /** Cancel: throws the pending handoff away. */
+      discardNativeHandoff: createAuthEndpoint.serverOnly(
+        {
+          method: 'POST',
+          body: z.object({ flow: z.string() })
+        },
+        async (ctx) => {
+          await takePending(
+            storeFor(ctx.context.internalAdapter),
+            ctx.body.flow
+          );
+          return ctx.json({ ok: true });
         }
       ),
 

@@ -3,17 +3,12 @@
 import { authClient } from '@/lib/auth-client';
 import { redirectToPath } from './server';
 import { safeNext } from './settings';
-import {
-  hasSystemSignIn,
-  systemSignIn,
-  systemSignInHttpsCallback
-} from '@/utils/native';
+import { hasSystemSignIn, systemSignIn } from '@/utils/native';
 import {
   NATIVE_AUTH_COOKIE_PATH,
   NATIVE_AUTH_FLOW_MAX_AGE,
   NATIVE_AUTH_HTTPS_PATH,
   NATIVE_AUTH_NONCE_COOKIE,
-  NATIVE_AUTH_SCHEME,
   nativeAuthErrorMessage,
   parseNativeCallback,
   randomNonce
@@ -51,8 +46,9 @@ export async function handleRequest(
  * start, and with null when it is under way or was cancelled.
  *
  * In a browser (and the Android app) this is Better Auth's ordinary redirect,
- * with the callback at /api/auth/callback/<provider>. In the iOS app it runs
- * in Apple's system sign-in sheet instead — see utils/native-auth.ts.
+ * with the callback at /api/auth/callback/<provider>, and so it is in an iOS
+ * app that cannot catch an https callback (before iOS 17.4). Otherwise the
+ * iOS app runs it in Apple's system sign-in sheet; see utils/native-auth.ts.
  */
 export async function signInWithOAuth(
   e: React.FormEvent<HTMLFormElement>
@@ -62,7 +58,7 @@ export async function signInWithOAuth(
   const provider = String(formData.get('provider')).trim() as OAuthProvider;
   const next = safeNext(formData.get('next'));
 
-  if (hasSystemSignIn()) return signInWithSystemSheet(provider, next);
+  if (await hasSystemSignIn()) return signInWithSystemSheet(provider, next);
 
   // signIn.social reports failure in its result rather than throwing; left
   // unread, a server error made the button silently do nothing.
@@ -89,23 +85,21 @@ async function signInWithSystemSheet(
     `${NATIVE_AUTH_NONCE_COOKIE}=${nonce}; Path=${NATIVE_AUTH_COOKIE_PATH}; ` +
     `Max-Age=${NATIVE_AUTH_FLOW_MAX_AGE}; SameSite=Strict${secure}`;
 
-  const https = await systemSignInHttpsCallback();
   const firstTouch = await webviewFirstTouch();
   const start = new URL('/api/native-auth/start', window.location.origin);
   start.search = new URLSearchParams({
     provider,
     next,
     nonce,
-    callback: https ? 'https' : 'scheme',
     ...(firstTouch && { ft: firstTouch })
   }).toString();
 
   let callback: string;
   try {
-    ({ url: callback } = await systemSignIn(start.href, {
-      scheme: NATIVE_AUTH_SCHEME,
-      httpsPath: https ? NATIVE_AUTH_HTTPS_PATH : undefined
-    }));
+    ({ url: callback } = await systemSignIn(
+      start.href,
+      NATIVE_AUTH_HTTPS_PATH
+    ));
   } catch (err) {
     // Closing the sheet is a choice, not an error: stay put, say nothing.
     if ((err as { code?: string })?.code === 'CANCELED') return null;

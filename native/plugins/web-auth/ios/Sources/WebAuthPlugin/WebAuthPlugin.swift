@@ -7,17 +7,16 @@ import Foundation
 /// ASWebAuthenticationSession, unlike SFSafariViewController (the Browser
 /// plugin), shares Safari's cookies, saved passwords and passkeys, which is
 /// why sign-in runs here rather than in the app's webview. The sheet loads
-/// `url`, and when a page redirects to the callback it closes and the call
-/// resolves with that URL. The callback is `https://<server host><callbackPath>`
-/// when `callbackPath` is given (iOS 17.4+: iOS hands it only to an app the
-/// host's apple-app-site-association names, so no other app can catch it),
-/// and `callbackScheme://…` otherwise. The sheet captures the scheme itself,
-/// so it is not registered in Info.plist.
+/// `url`, and when a page redirects to `https://<server host><callbackPath>`
+/// it closes and the call resolves with that URL. That callback needs iOS
+/// 17.4, and iOS hands it only to an app the host's
+/// apple-app-site-association names, so no other app can catch it. There is
+/// deliberately no custom-scheme callback: any app can claim a scheme. Where
+/// the https callback is unavailable, the web app keeps OAuth in the webview.
 ///
 /// JS: `WebAuth.capabilities() -> { httpsCallback }`;
-/// `WebAuth.start({ url, callbackScheme, callbackPath? }) -> { url }`, which
-/// rejects with code CANCELED when the person closes the sheet. See
-/// utils/native.ts.
+/// `WebAuth.start({ url, callbackPath }) -> { url }`, which rejects with code
+/// CANCELED when the person closes the sheet. See utils/native.ts.
 @objc(WebAuthPlugin)
 public class WebAuthPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding {
     public let identifier = "WebAuthPlugin"
@@ -49,13 +48,8 @@ public class WebAuthPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPres
             call.reject("Must provide a valid URL", "INVALID")
             return
         }
-        guard let scheme = call.getString("callbackScheme"), !scheme.isEmpty else {
-            call.reject("Must provide a callback scheme", "INVALID")
-            return
-        }
-        let callbackPath = call.getString("callbackPath")
-        if let path = callbackPath, !path.hasPrefix("/") {
-            call.reject("The callback path must start with /", "INVALID")
+        guard let path = call.getString("callbackPath"), path.hasPrefix("/") else {
+            call.reject("Must provide a callback path starting with /", "INVALID")
             return
         }
         // Only the app's own server may be opened: the sheet is a trusted
@@ -89,16 +83,11 @@ public class WebAuthPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPres
                 }
                 call.resolve(["url": callbackURL.absoluteString])
             }
-            let session: ASWebAuthenticationSession
-            if let path = callbackPath {
-                guard #available(iOS 17.4, *), let host = self.httpsCallbackHost else {
-                    call.reject("An https callback needs iOS 17.4 and an https server", "UNAVAILABLE")
-                    return
-                }
-                session = ASWebAuthenticationSession(url: url, callback: .https(host: host, path: path), completionHandler: completion)
-            } else {
-                session = ASWebAuthenticationSession(url: url, callbackURLScheme: scheme, completionHandler: completion)
+            guard #available(iOS 17.4, *), let host = self.httpsCallbackHost else {
+                call.reject("System sign-in needs iOS 17.4 and an https server", "UNAVAILABLE")
+                return
             }
+            let session = ASWebAuthenticationSession(url: url, callback: .https(host: host, path: path), completionHandler: completion)
             session.presentationContextProvider = self
             // Shared, not ephemeral: Safari's accounts and passkeys are the point.
             session.prefersEphemeralWebBrowserSession = false

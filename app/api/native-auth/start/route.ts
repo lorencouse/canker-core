@@ -1,6 +1,6 @@
 /**
  * GET /api/native-auth/start?provider=google|github&next=/today&nonce=…
- *     &callback=https|scheme[&ft=…]
+ *     [&ft=…]
  *
  * The first page the iOS system sign-in sheet loads. Begins Better Auth's
  * ordinary social sign-in here, server side, so its OAuth state cookie lands
@@ -28,7 +28,6 @@ import {
   NATIVE_AUTH_FLOW_MAX_AGE,
   isRandom32,
   nativeCallbackUrl,
-  parseCallbackKind,
   parseProvider
 } from '@/utils/native-auth';
 import { forwardCookies, isHttps, noStore, publicOrigin } from '../shared';
@@ -37,15 +36,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
-  const callback = parseCallbackKind(params.get('callback'));
   /** Closes the sheet with an error the app turns into a message. */
   const fail = (error: string) =>
     noStore(
       NextResponse.redirect(
-        nativeCallbackUrl(
-          { error },
-          { kind: callback, origin: publicOrigin(request) }
-        ),
+        nativeCallbackUrl({ error }, publicOrigin(request)),
         302
       )
     );
@@ -58,7 +53,7 @@ export async function GET(request: NextRequest) {
 
   // Relative, so Better Auth's origin check accepts it, and stored by Better
   // Auth with the OAuth state, so nobody can swap it mid-flight.
-  const finish = `/api/native-auth/finish?${new URLSearchParams({ next, nonce, callback })}`;
+  const finish = `/api/native-auth/finish?${new URLSearchParams({ next, nonce })}`;
 
   let url: string;
   let headers: Headers | null = null;

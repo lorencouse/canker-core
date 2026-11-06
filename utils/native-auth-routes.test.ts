@@ -17,9 +17,9 @@ import {
 // is under test is the handoff's own checks, not Better Auth's.
 const api = vi.hoisted(() => ({
   signInSocial: vi.fn(),
-  getSession: vi.fn(),
+  holdNativeHandoff: vi.fn(),
   mintNativeHandoff: vi.fn(),
-  signOut: vi.fn()
+  discardNativeHandoff: vi.fn()
 }));
 vi.mock('@/lib/auth', () => ({
   auth: { api, $context: Promise.resolve({ secret: 'test-secret' }) },
@@ -27,6 +27,7 @@ vi.mock('@/lib/auth', () => ({
 }));
 
 const ORIGIN = 'https://cankercore.com';
+const SESSION_COOKIE = '__Secure-better-auth.session_token';
 
 function request(
   path: string,
@@ -68,15 +69,12 @@ beforeEach(() => {
     headers: new Headers(),
     response: { url: 'https://accounts.google.com/o/oauth2/auth?state=x' }
   });
-  api.getSession.mockResolvedValue({
-    user: { id: 'u1', email: 'a<b>@example.com' },
-    session: { token: 's' }
+  api.holdNativeHandoff.mockResolvedValue({
+    headers: new Headers({ 'Set-Cookie': `${SESSION_COOKIE}=; Max-Age=0` }),
+    response: { email: 'a<b>@example.com' }
   });
-  api.mintNativeHandoff.mockResolvedValue({
-    headers: new Headers(),
-    response: { token: randomNonce() }
-  });
-  api.signOut.mockResolvedValue({ headers: new Headers(), response: {} });
+  api.mintNativeHandoff.mockResolvedValue({ token: randomNonce() });
+  api.discardNativeHandoff.mockResolvedValue({ ok: true });
 });
 
 describe('first touch across the sign-in sheet', () => {
@@ -121,11 +119,11 @@ describe('first touch across the sign-in sheet', () => {
 });
 
 describe('start', () => {
-  it('sends the callback kind on to finish inside the OAuth state', async () => {
+  it('hands finish the nonce inside the OAuth state, and nothing else', async () => {
     const nonce = randomNonce();
     await start(
       request(
-        `/api/native-auth/start?${new URLSearchParams({ provider: 'github', nonce, callback: 'https' })}`
+        `/api/native-auth/start?${new URLSearchParams({ provider: 'github', nonce, next: '/today' })}`
       )
     );
     const finish = new URL(
@@ -133,13 +131,15 @@ describe('start', () => {
       ORIGIN
     );
     expect(finish.pathname).toBe('/api/native-auth/finish');
-    expect(finish.searchParams.get('callback')).toBe('https');
-    expect(finish.searchParams.get('nonce')).toBe(nonce);
+    expect(Object.fromEntries(finish.searchParams)).toEqual({
+      nonce,
+      next: '/today'
+    });
   });
 
-  it('fails through the callback the app asked for', async () => {
+  it('fails through the https callback, whatever the app asks for', async () => {
     const res = await start(
-      request('/api/native-auth/start?provider=apple&callback=https')
+      request('/api/native-auth/start?provider=apple&callback=scheme')
     );
     expect(res.headers.get('location')).toBe(
       `${ORIGIN}/native-auth/callback?error=invalid_provider`
@@ -150,7 +150,7 @@ describe('start', () => {
 describe('finish', () => {
   const nonce = randomNonce();
   const flowCookie = `native_auth_flow=${nonce}`;
-  const finishUrl = `/api/native-auth/finish?${new URLSearchParams({ nonce, next: '/insights', callback: 'https' })}`;
+  const finishUrl = `/api/native-auth/finish?${new URLSearchParams({ nonce, next: '/insights' })}`;
 
   async function confirmForm() {
     const res = await finishGet(request(finishUrl, { cookie: flowCookie }));
@@ -160,18 +160,32 @@ describe('finish', () => {
     return {
       res,
       html,
-      form: {
-        csrf: field('csrf'),
-        nonce: field('nonce'),
-        next: field('next'),
-        callback: field('callback')
-      }
+      form: { csrf: field('csrf'), nonce: field('nonce'), next: field('next') }
     };
   }
 
-  it('asks before it mints, naming the account, escaped', async () => {
+  const post = (
+    form: object,
+    init: { cookie?: string; origin?: string } = {}
+  ) =>
+    finishPost(
+      request('/api/native-auth/finish', {
+        method: 'POST',
+        cookie: flowCookie,
+        origin: ORIGIN,
+        ...init,
+        form
+      })
+    );
+
+  it('ends the sheet session before it asks, naming the account, escaped', async () => {
     const { res, html } = await confirmForm();
     expect(res.status).toBe(200);
+    expect(api.holdNativeHandoff).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { flow: nonce } })
+    );
+    // The session cookie's clear reaches the sheet with the page itself.
+    expect(setCookie(res, SESSION_COOKIE)).toBe('');
     expect(res.headers.get('content-type')).toMatch(/^text\/html/);
     expect(res.headers.get('x-frame-options')).toBe('DENY');
     expect(res.headers.get('cache-control')).toBe('no-store');
@@ -182,64 +196,63 @@ describe('finish', () => {
     expect(api.mintNativeHandoff).not.toHaveBeenCalled();
   });
 
-  it('refuses a GET without the flow cookie, minting nothing', async () => {
+  it('refuses a GET without the flow cookie, holding nothing', async () => {
     const res = await finishGet(request(finishUrl));
     expect(res.headers.get('location')).toBe(
       `${ORIGIN}/native-auth/callback?error=invalid_request`
     );
-    expect(api.getSession).not.toHaveBeenCalled();
+    expect(api.holdNativeHandoff).not.toHaveBeenCalled();
   });
 
-  it('mints on Continue and returns through the universal link', async () => {
+  it('reports a sheet with no session', async () => {
+    api.holdNativeHandoff.mockRejectedValueOnce(new Error('401'));
+    const { res } = await confirmForm();
+    expect(res.headers.get('location')).toBe(
+      `${ORIGIN}/native-auth/callback?error=no_session`
+    );
+  });
+
+  it('mints from the pending handoff on Continue, through the universal link', async () => {
     const { form } = await confirmForm();
-    const res = await finishPost(
-      request('/api/native-auth/finish', {
-        method: 'POST',
-        cookie: flowCookie,
-        origin: ORIGIN,
-        form: { ...form, action: 'continue' }
-      })
-    );
+    const res = await post({ ...form, action: 'continue' });
     expect(res.status).toBe(303);
-    expect(api.mintNativeHandoff).toHaveBeenCalledWith(
-      expect.objectContaining({ body: { nonce } })
-    );
+    expect(api.mintNativeHandoff).toHaveBeenCalledWith({
+      body: { flow: nonce }
+    });
     const location = new URL(res.headers.get('location')!);
     expect(location.origin + location.pathname).toBe(
       `${ORIGIN}/native-auth/callback`
     );
-    const { token } = (await api.mintNativeHandoff.mock.results[0].value)
-      .response;
+    const { token } = await api.mintNativeHandoff.mock.results[0].value;
     expect(location.searchParams.get('token')).toBe(token);
     expect(location.searchParams.get('next')).toBe('/insights');
   });
 
-  it('uses the custom scheme when the app cannot catch https', async () => {
+  it('never redirects to a custom scheme, whatever the form says', async () => {
     const { form } = await confirmForm();
-    const res = await finishPost(
-      request('/api/native-auth/finish', {
-        method: 'POST',
-        cookie: flowCookie,
-        origin: ORIGIN,
-        form: { ...form, callback: 'scheme', action: 'continue' }
-      })
-    );
+    const res = await post({ ...form, callback: 'scheme', action: 'continue' });
     expect(res.headers.get('location')).toMatch(
-      /^com\.cankercore\.app:\/\/auth\/callback\?token=/
+      /^https:\/\/cankercore\.com\/native-auth\/callback\?token=/
     );
   });
 
-  it('signs the sheet out on Cancel and mints nothing', async () => {
+  it('reports an expired or already-answered confirmation', async () => {
+    api.mintNativeHandoff.mockRejectedValueOnce({
+      body: { message: 'expired_token' }
+    });
     const { form } = await confirmForm();
-    const res = await finishPost(
-      request('/api/native-auth/finish', {
-        method: 'POST',
-        cookie: flowCookie,
-        origin: ORIGIN,
-        form: { ...form, action: 'cancel' }
-      })
+    const res = await post({ ...form, action: 'continue' });
+    expect(res.headers.get('location')).toBe(
+      `${ORIGIN}/native-auth/callback?error=expired_token`
     );
-    expect(api.signOut).toHaveBeenCalled();
+  });
+
+  it('discards the pending handoff on Cancel and mints nothing', async () => {
+    const { form } = await confirmForm();
+    const res = await post({ ...form, action: 'cancel' });
+    expect(api.discardNativeHandoff).toHaveBeenCalledWith({
+      body: { flow: nonce }
+    });
     expect(api.mintNativeHandoff).not.toHaveBeenCalled();
     expect(res.headers.get('location')).toBe(
       `${ORIGIN}/native-auth/callback?error=cancelled`
@@ -254,16 +267,12 @@ describe('finish', () => {
     ['no flow cookie', { cookie: undefined }, {}]
   ])('refuses %s', async (_name, headerOverrides, formOverrides) => {
     const { form } = await confirmForm();
-    const res = await finishPost(
-      request('/api/native-auth/finish', {
-        method: 'POST',
-        cookie: flowCookie,
-        origin: ORIGIN,
-        ...headerOverrides,
-        form: { ...form, action: 'continue', ...formOverrides }
-      })
+    const res = await post(
+      { ...form, action: 'continue', ...formOverrides },
+      headerOverrides
     );
     expect(res.status).toBe(403);
     expect(api.mintNativeHandoff).not.toHaveBeenCalled();
+    expect(api.discardNativeHandoff).not.toHaveBeenCalled();
   });
 });

@@ -9,13 +9,10 @@
  * route handler that holds the flow cookie, which is scoped to
  * /api/native-auth, and it runs in the sheet, outside the app's shell.
  */
-import type { NativeCallbackKind } from '@/utils/native-auth';
-
 export type ConfirmPageInput = {
   email: string;
   nonce: string;
   next: string;
-  callback: NativeCallbackKind;
   csrf: string;
 };
 
@@ -63,7 +60,6 @@ export function confirmPage(input: ConfirmPageInput): string {
 ${hidden('csrf', input.csrf)}
 ${hidden('nonce', input.nonce)}
 ${hidden('next', input.next)}
-${hidden('callback', input.callback)}
 <button class="go" type="submit" name="action" value="continue">Continue</button>
 <button class="stop" type="submit" name="action" value="cancel">Cancel</button>
 </form>

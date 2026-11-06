@@ -73,32 +73,25 @@ interface WebAuthPlugin {
   capabilities(): Promise<{ httpsCallback: boolean }>;
   start(options: {
     url: string;
-    callbackScheme: string;
-    callbackPath?: string;
+    callbackPath: string;
   }): Promise<{ url: string }>;
 }
 
 let webAuth: WebAuthPlugin | undefined;
 
-/** True only where the system sheet exists: the iOS app. */
-export const hasSystemSignIn = () => isNative() && platform() === 'ios';
-
-async function webAuthPlugin() {
-  if (!hasSystemSignIn()) {
-    throw Object.assign(new Error('System sign-in is unavailable here.'), {
-      code: 'UNAVAILABLE'
-    });
-  }
+const webAuthPlugin = async () => {
   const { registerPlugin } = await import('@capacitor/core');
   return (webAuth ??= registerPlugin<WebAuthPlugin>('WebAuth'));
-}
+};
 
 /**
- * Whether the sheet can return through the site's universal link (iOS 17.4+
- * on an https server), which only this app can receive. False on an app
- * build older than that method, so it falls back to the custom scheme.
+ * True only where the system sheet can return through the site's universal
+ * link, which only this app can receive: the iOS app on iOS 17.4+ with an
+ * https server. False on an app build without the plugin's capabilities
+ * method, which then keeps OAuth in the webview.
  */
-export async function systemSignInHttpsCallback(): Promise<boolean> {
+export async function hasSystemSignIn(): Promise<boolean> {
+  if (!isNative() || platform() !== 'ios') return false;
   try {
     const { httpsCallback } = await (await webAuthPlugin()).capabilities();
     return httpsCallback === true;
@@ -108,18 +101,10 @@ export async function systemSignInHttpsCallback(): Promise<boolean> {
 }
 
 /**
- * Opens `url` in the system sign-in sheet and resolves with the callback URL
- * it is redirected to: `https://<server><callbackPath>` when a path is given,
- * else `callbackScheme://…`. Rejects with code 'CANCELED' when the person
- * closes the sheet, and with 'UNAVAILABLE' anywhere but iOS.
+ * Opens `url` in the system sign-in sheet and resolves with the
+ * `https://<server><callbackPath>` URL it is redirected to. Rejects with code
+ * 'CANCELED' when the person closes the sheet.
  */
-export async function systemSignIn(
-  url: string,
-  callback: { scheme: string; httpsPath?: string }
-) {
-  return (await webAuthPlugin()).start({
-    url,
-    callbackScheme: callback.scheme,
-    ...(callback.httpsPath && { callbackPath: callback.httpsPath })
-  });
+export async function systemSignIn(url: string, callbackPath: string) {
+  return (await webAuthPlugin()).start({ url, callbackPath });
 }

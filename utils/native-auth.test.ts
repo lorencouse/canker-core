@@ -4,7 +4,6 @@ import {
   errorCode,
   isRandom32,
   nativeCallbackUrl,
-  parseCallbackKind,
   parseNativeCallback,
   parseProvider,
   randomNonce
@@ -63,50 +62,39 @@ describe('nonces', () => {
 describe('the callback URL', () => {
   const token = randomNonce();
   const origin = 'https://cankercore.com';
-  const scheme = { kind: 'scheme', origin } as const;
-  const https = { kind: 'https', origin } as const;
 
-  it('round-trips a token and next through the custom scheme', () => {
-    const url = nativeCallbackUrl({ token, next: '/map?x=1&y=2' }, scheme);
-    expect(url.startsWith('com.cankercore.app://auth/callback?')).toBe(true);
+  it('round-trips a token and next through the universal link', () => {
+    const url = nativeCallbackUrl({ token, next: '/map?x=1&y=2' }, origin);
+    expect(url.startsWith('https://cankercore.com/native-auth/callback?')).toBe(
+      true
+    );
     expect(parseNativeCallback(url, origin)).toEqual({
       token,
       next: '/map?x=1&y=2'
     });
   });
 
-  it('round-trips a token and next through the universal link', () => {
-    const url = nativeCallbackUrl({ token, next: '/today' }, https);
-    expect(url.startsWith('https://cankercore.com/native-auth/callback?')).toBe(
-      true
-    );
-    expect(parseNativeCallback(url, origin)).toEqual({ token, next: '/today' });
-  });
-
   it('round-trips an error, flattened to a safe code', () => {
-    for (const callback of [scheme, https]) {
-      expect(
-        parseNativeCallback(
-          nativeCallbackUrl({ error: 'access_denied' }, callback),
-          origin
-        )
-      ).toEqual({ error: 'access_denied' });
-      expect(
-        parseNativeCallback(
-          nativeCallbackUrl({ error: '<script>' }, callback),
-          origin
-        )
-      ).toEqual({ error: 'unknown' });
-    }
+    expect(
+      parseNativeCallback(
+        nativeCallbackUrl({ error: 'access_denied' }, origin),
+        origin
+      )
+    ).toEqual({ error: 'access_denied' });
+    expect(
+      parseNativeCallback(
+        nativeCallbackUrl({ error: '<script>' }, origin),
+        origin
+      )
+    ).toEqual({ error: 'unknown' });
   });
 
-  it('ignores URLs that are not our callback', () => {
+  it('ignores URLs that are not our callback, custom schemes included', () => {
     for (const raw of [
       `https://cankercore.com/auth/callback?token=${token}`,
       `https://evil.com/native-auth/callback?token=${token}`,
       `http://cankercore.com/native-auth/callback?token=${token}`,
-      `com.cankercore.app://evil/callback?token=${token}`,
-      `com.cankercore.app://auth/other?token=${token}`,
+      `com.cankercore.app://auth/callback?token=${token}`,
       `other.app://auth/callback?token=${token}`,
       'not a url'
     ])
@@ -115,19 +103,8 @@ describe('the callback URL', () => {
 
   it('flags a malformed token', () => {
     expect(
-      parseNativeCallback(
-        'com.cankercore.app://auth/callback?token=abc',
-        origin
-      )
+      parseNativeCallback(`${origin}/native-auth/callback?token=abc`, origin)
     ).toEqual({ error: 'invalid_token' });
-  });
-});
-
-describe('parseCallbackKind', () => {
-  it('is https only when asked for exactly', () => {
-    expect(parseCallbackKind('https')).toBe('https');
-    for (const raw of ['scheme', 'HTTPS', '', null, undefined])
-      expect(parseCallbackKind(raw)).toBe('scheme');
   });
 });
 
