@@ -21,7 +21,7 @@ export default function AboutPage() {
         intro="Canker Core is a log, not a diagnosis. It records what you tell it about a sore so you can tell whether it is getting better."
         mascot={
           <Kanko
-            mood="hello"
+            mood="neutral"
             size={128}
             priority
             className="size-24 shrink-0 sm:size-32"
