@@ -20,9 +20,6 @@ export default function Kanko({
   priority?: boolean;
 }) {
   const { src, darkSrc } = KANKO[mood];
-  // The theme provider sets class="dark" on <html>, but tailwind.config's
-  // darkMode selector is [data-theme="dark"], so the plain `dark:` variant
-  // never matches here: key off the .dark class directly.
   // Light mode uses transparent art; dark mode uses art drawn natively on the
   // dark ground, so there is no cut-out edge or clipped shadow to show.
   const shared = {
@@ -40,14 +37,14 @@ export default function Kanko({
         {...shared}
         alt=""
         src={src}
-        className={cn('select-none object-cover [.dark_&]:hidden', className)}
+        className={cn('select-none object-cover dark:hidden', className)}
       />
       <Image
         {...shared}
         alt=""
         src={darkSrc}
         className={cn(
-          'hidden select-none object-cover [.dark_&]:block',
+          'hidden select-none object-cover dark:block',
           className
         )}
       />
