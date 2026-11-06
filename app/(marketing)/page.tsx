@@ -50,10 +50,15 @@ export default function HomePage() {
       <section className="container grid items-center gap-10 py-10 sm:py-16 lg:grid-cols-2 lg:gap-16 lg:py-24">
         <div>
           {/* Kanko waves beside the headline rather than above it, so the
-              promise is still the first thing read. The headline is the
+              promise is still the first thing read. A wrapped heading's box
+              stays as wide as the room it was given, which left Kanko far
+              from the words, so the box is capped at the widest line it
+              will set: "it's healing." (about 5em at this face and
+              tracking) where it runs to three lines, "Know whether" (about
+              6.7em) on a tablet, where it fits in two. The headline is the
               page's largest paint; Kanko loads eagerly so it lands with it. */}
-          <div className="flex items-end gap-3 sm:gap-5">
-            <h1 className="min-w-0 flex-1 text-display">
+          <div className="flex items-end gap-3 sm:gap-4">
+            <h1 className="min-w-0 max-w-[5.2em] text-display sm:max-w-[6.8em] lg:max-w-[5.2em]">
               Know whether it&rsquo;s healing.
             </h1>
             <Kanko
