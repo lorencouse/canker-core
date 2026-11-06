@@ -17,8 +17,9 @@
  *   app/icon.png                             64px favicon, served by Next.
  *   resources/icon.png                       1024 source for capacitor-assets.
  *   resources/splash.png, splash-dark.png    2732 splash: the full-body
- *     transparent Kanko at 22% of the width, centred on #4B4BF0 (light) and
- *     #16163F (dark).
+ *     Kanko at 22% of the width, centred. Light is the transparent cut-out on
+ *     #4B4BF0; dark is his native dark art, opaque on #0F1033, on that same
+ *     ground, so no cut-out edge shows.
  *   resources/notification/drawable-<density>/ic_stat_kanko.png
  *     Android notification small icon, 24dp at mdpi through xxxhdpi. Android
  *     draws only its alpha (tinted by LocalNotifications.iconColor), so it is
@@ -41,7 +42,7 @@ import { faceSquare } from '../tools/kanko-face-art.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const INDIGO = '#4B4BF0';
-const INK = '#16163F';
+const NIGHT = '#0F1033';
 
 const out = (...p) => path.join(ROOT, ...p);
 
@@ -58,11 +59,12 @@ const MASKABLE_FILL = 0.66;
 const square = async (size) => (await faceSquare(size, FACE_FILL)).png();
 
 /**
- * The full-body, transparent Kanko centred on a flat colour, `fraction` of the
- * width. Small enough that capacitor-assets' arbitrary crops never reach him.
+ * Full-body Kanko centred on a flat colour, `fraction` of the width. Small
+ * enough that capacitor-assets' arbitrary crops never reach him. `background`
+ * must be the source's own ground when the source is opaque.
  */
-const splash = async (size, fraction, background) => {
-  const body = await sharp(out('public/images/kanko/kanko-neutral.webp'))
+const splash = async (size, fraction, source, background) => {
+  const body = await sharp(out('public/images/kanko', source))
     .trim({ threshold: 10 })
     .resize({
       width: Math.round(size * fraction),
@@ -88,8 +90,14 @@ const targets = [
   ['public/icons/apple-touch-icon.png', () => square(180)],
   ['app/icon.png', () => square(64)],
   ['resources/icon.png', () => square(1024)],
-  ['resources/splash.png', () => splash(2732, 0.22, INDIGO)],
-  ['resources/splash-dark.png', () => splash(2732, 0.22, INK)]
+  [
+    'resources/splash.png',
+    () => splash(2732, 0.22, 'kanko-neutral.webp', INDIGO)
+  ],
+  [
+    'resources/splash-dark.png',
+    () => splash(2732, 0.22, 'kanko-neutral-dark.webp', NIGHT)
+  ]
 ];
 
 /**
