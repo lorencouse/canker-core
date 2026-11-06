@@ -9,6 +9,7 @@ import { copyFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
+import { faceSquare } from './kanko-face-art.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const masters = path.join(
@@ -339,11 +340,10 @@ for (const [mood, target] of Object.entries(darkMoods)) {
   }
 }
 
-// The logo face: the app-icon master is the face on solid indigo, edge to
-// edge, so a plain resize is enough (no transparency work). Logo.tsx
-// round-crops it with CSS.
-await sharp(path.join(masters, 'kanko-app-icon.webp'))
-  .resize(256, 256)
+// The logo face: the app-icon bust with his flat body cut seated on the bottom
+// edge (see kanko-face-art.mjs). Logo.tsx rounds the corners with CSS rather
+// than clipping a circle, so the cut stays flush with the tile's bottom.
+await (await faceSquare(256, 0.82))
   .webp({ quality: QUALITY })
   .toFile(path.join(out, 'kanko-face.webp'));
 
