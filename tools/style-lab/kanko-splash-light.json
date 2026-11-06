@@ -1,0 +1,21 @@
+{
+  "_comment": "Light splash master: the neutral front view painted directly on the light splash ground (indigo #4B4BF0), so the splash can key it to its own ground like the dark one instead of pasting a cut-out. Picked draw is copied to docs/superpowers/specs/assets/2026-11-05-kanko/kanko-splash-light.webp.",
+  "name": "kanko-splash-light",
+  "aspect": "1:1",
+  "refs": [
+    "docs/superpowers/specs/assets/2026-11-05-kanko/kanko-character-sheet.webp"
+  ],
+  "subjects": [
+    {
+      "id": "splash-light",
+      "prompt": "Kanko stands alone in the centre of a plain flat indigo ground, exactly #4B4BF0 edge to edge with no gradient, vignette or texture, front-facing, neutral friendly expression, both paws relaxed at his sides, full body from ears to feet, filling about half the height, with generous empty margin all around. A soft darker-indigo contact shadow under the feet; nothing else is in the picture."
+    }
+  ],
+  "variants": [
+    {
+      "id": "vinyl",
+      "refs": "inherit",
+      "style": "Soft 3D render of a collectible vinyl toy: smooth matte plastic surfaces, soft studio lighting, gentle ambient occlusion, rounded chunky forms, like a modern friendly 3D app mascot. No fur strands, no photorealism, clean and simple. Same character as the attached reference images. Kanko is a golden hamster who is very round, almost a ball: head and body merge into one soft chubby shape, with tiny round ears, tiny paws and short stubby feet. Fur colour is honey-apricot #F5B95A on the back, head and ears, with a cream #FFF1D6 belly and two large cream #FFF1D6 cheek pouches that bulge out on both sides of the face. Face: two black oval eyes, each with one small white highlight, a tiny nose, a small simple mouth, and soft light pink #F7A8D0 blush on the cheeks. Kanko never shows teeth. Any prop or accent uses only electric indigo #4B4BF0, lavender #B9A7F2, sunflower yellow #FFD23F. No red anywhere. No text, no letters, no numbers, no labels, no logos, no watermark."
+    }
+  ]
+}
