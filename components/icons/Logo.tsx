@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { cn } from '@/utils/cn';
 
 /**
- * Kanko's face, round-cropped, with the wordmark when asked. The wordmark
+ * Kanko's bust on an indigo tile with rounded corners (not a circle, so his body sits flush on the bottom edge), with the wordmark when asked. The wordmark
  * replaces the "Canker Core" text call sites used to set beside the old mark;
  * without it the face carries the accessible name itself.
  */
@@ -21,7 +21,7 @@ const Logo = ({
       alt={wordmark ? '' : 'Canker Core'}
       width={size}
       height={size}
-      className="shrink-0 rounded-full"
+      className="shrink-0 rounded-[22%]"
       style={{ width: size, height: size }}
     />
     {wordmark && (

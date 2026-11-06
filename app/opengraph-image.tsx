@@ -47,7 +47,7 @@ export default async function Image() {
             width={72}
             height={72}
             alt=""
-            style={{ borderRadius: 36 }}
+            style={{ borderRadius: 16 }}
           />
           <div
             style={{
