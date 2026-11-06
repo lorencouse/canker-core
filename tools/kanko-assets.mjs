@@ -5,7 +5,7 @@
  *
  *   npm run art:kanko
  */
-import { copyFile, mkdir } from 'node:fs/promises';
+import { copyFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -19,6 +19,8 @@ const out = path.join(root, 'public/images/kanko');
 
 const SIZE = 640;
 const QUALITY = 85;
+// Dark art is large flat ground, where lossy WebP drifts a few levels at q85.
+const DARK_QUALITY = 92;
 
 const moods = {
   proud: 'kanko-proud-streak.webp',
@@ -188,6 +190,155 @@ await write(
   'kanko-neutral.webp'
 );
 
+// Dark mode: the owner-approved masters are drawn natively on the dark ground
+// (page colour, or card colour for curious, which sits inside cards), so there
+// is no cut-out. Each is opaque; we only nudge the ground onto the exact CSS
+// token. The correction is a per-row offset measured from the left/right
+// border columns, which also flattens any slight vertical gradient. Values
+// are the hex of `.dark --background` / `--card` in styles/main.css.
+const PAGE_DARK = [0x0f, 0x10, 0x33];
+const CARD_DARK = [0x19, 0x1a, 0x48];
+const darkMoods = {
+  proud: PAGE_DARK,
+  hello: PAGE_DARK,
+  gentle: PAGE_DARK,
+  neutral: PAGE_DARK,
+  curious: CARD_DARK
+};
+const BORDER_COLS = 8;
+const SMOOTH = 24; // rows either side for the moving average
+
+const groundCorrected = async (pipeline, target) => {
+  const { data, info } = await pipeline
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width, height } = info;
+  // Median of the border columns per row and channel: robust to a stray speck.
+  const measured = [];
+  for (let y = 0; y < height; y++) {
+    const row = [0, 0, 0];
+    for (let c = 0; c < 3; c++) {
+      const v = [];
+      for (let k = 0; k < BORDER_COLS; k++) {
+        v.push(data[(y * width + k) * 3 + c]);
+        v.push(data[(y * width + width - 1 - k) * 3 + c]);
+      }
+      v.sort((a, b) => a - b);
+      row[c] = (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
+    }
+    measured.push(row);
+  }
+  for (let y = 0; y < height; y++) {
+    const lo = Math.max(0, y - SMOOTH);
+    const hi = Math.min(height - 1, y + SMOOTH);
+    for (let c = 0; c < 3; c++) {
+      let sum = 0;
+      for (let r = lo; r <= hi; r++) sum += measured[r][c];
+      const offset = target[c] - sum / (hi - lo + 1);
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 3 + c;
+        data[i] = Math.round(Math.min(255, Math.max(0, data[i] + offset)));
+      }
+    }
+  }
+  // Same again per column from the top/bottom border rows, which flattens
+  // any horizontal drift and the brighter last rows some masters carry.
+  for (let c = 0; c < 3; c++) {
+    const colMeasured = [];
+    for (let x = 0; x < width; x++) {
+      const v = [];
+      for (let k = 0; k < BORDER_COLS; k++) {
+        v.push(data[(k * width + x) * 3 + c]);
+        v.push(data[((height - 1 - k) * width + x) * 3 + c]);
+      }
+      v.sort((a, b) => a - b);
+      colMeasured.push((v[v.length / 2 - 1] + v[v.length / 2]) / 2);
+    }
+    for (let x = 0; x < width; x++) {
+      const lo = Math.max(0, x - SMOOTH);
+      const hi = Math.min(width - 1, x + SMOOTH);
+      let sum = 0;
+      for (let r = lo; r <= hi; r++) sum += colMeasured[r];
+      const offset = target[c] - sum / (hi - lo + 1);
+      for (let y = 0; y < height; y++) {
+        const i = (y * width + x) * 3 + c;
+        data[i] = Math.round(Math.min(255, Math.max(0, data[i] + offset)));
+      }
+    }
+  }
+  return sharp(data, { raw: { width, height, channels: 3 } });
+};
+
+const darkDir = path.join(masters, 'dark');
+for (const [mood, target] of Object.entries(darkMoods)) {
+  let img = sharp(path.join(darkDir, `kanko-dark-${mood}.webp`));
+  if (mood === 'neutral') {
+    // Drawn about 12% larger than the others: shrink onto a padded canvas
+    // (edge pixels copied outward, so the ground stays continuous).
+    const inner = Math.round(1024 * 0.88);
+    const pad = 1024 - inner;
+    const shrunk = await img.resize(inner, inner).png().toBuffer();
+    // Materialise the padded canvas as PNG: sharp runs resize before extend
+    // inside one pipeline, so the final resize must be a separate step.
+    const padded = await sharp(shrunk)
+      .extend({
+        top: Math.floor(pad / 2),
+        bottom: Math.ceil(pad / 2),
+        left: Math.floor(pad / 2),
+        right: Math.ceil(pad / 2),
+        extendWith: 'copy'
+      })
+      .png()
+      .toBuffer();
+    img = sharp(padded);
+  }
+  // Lossy WebP shifts flat dark colour by a few levels (YUV rounding), so
+  // close the loop: encode, re-sample the corners, and bias the next pass by
+  // the error until the written ground lands on the target.
+  const file = path.join(out, `kanko-${mood}-dark.webp`);
+  const base = await img.resize(SIZE, SIZE).removeAlpha().raw().toBuffer();
+  const aim = [...target];
+  let worst = Infinity;
+  for (let pass = 0; pass < 6 && worst > 1; pass++) {
+    const fixed = await groundCorrected(
+      sharp(Buffer.from(base), {
+        raw: { width: SIZE, height: SIZE, channels: 3 }
+      }),
+      aim
+    );
+    // Encode to memory and re-read from the buffer: libvips caches reads by
+    // path, which would hand back the previous pass's pixels.
+    const encoded = await fixed
+      .webp({ quality: DARK_QUALITY, smartSubsample: true })
+      .toBuffer();
+    await writeFile(file, encoded);
+    const { data, info } = await sharp(encoded)
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const got = [0, 0, 0];
+    worst = 0;
+    const corners = [
+      [0, 0],
+      [info.width - 1, 0],
+      [0, info.height - 1],
+      [info.width - 1, info.height - 1]
+    ];
+    for (const [x, y] of corners) {
+      for (let c = 0; c < 3; c++) {
+        const v = data[(y * info.width + x) * 3 + c];
+        got[c] += v / corners.length;
+        worst = Math.max(worst, Math.abs(v - target[c]));
+      }
+    }
+    for (let c = 0; c < 3; c++) aim[c] += target[c] - got[c];
+  }
+  if (worst > 2) {
+    throw new Error(`${mood} dark ground is ${worst} levels off its target`);
+  }
+}
+
 // The logo face: the app-icon master is the face on solid indigo, edge to
 // edge, so a plain resize is enough (no transparency work). Logo.tsx
 // round-crops it with CSS.
@@ -202,5 +353,5 @@ await copyFile(
 );
 
 console.log(
-  `Wrote 6 images to ${path.relative(root, out)}, plus the shell face`
+  `Wrote 6 images (plus 5 dark) to ${path.relative(root, out)}, plus the shell face`
 );

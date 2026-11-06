@@ -19,19 +19,38 @@ export default function Kanko({
   className?: string;
   priority?: boolean;
 }) {
-  const { src } = KANKO[mood];
+  const { src, darkSrc } = KANKO[mood];
+  // The theme provider sets class="dark" on <html>, but tailwind.config's
+  // darkMode selector is [data-theme="dark"], so the plain `dark:` variant
+  // never matches here: key off the .dark class directly.
+  // Light mode uses transparent art; dark mode uses art drawn natively on the
+  // dark ground, so there is no cut-out edge or clipped shadow to show.
+  const shared = {
+    'aria-hidden': true as const,
+    width: size,
+    height: size,
+    priority,
+    // Already sized, compressed WebP; the optimizer would re-encode it
+    // (and drop the light art's transparency).
+    unoptimized: true
+  };
   return (
-    <Image
-      src={src}
-      alt=""
-      aria-hidden="true"
-      width={size}
-      height={size}
-      priority={priority}
-      // Already sized, compressed WebP with an alpha channel; the optimizer
-      // would re-encode it without transparency.
-      unoptimized
-      className={cn('select-none object-cover', className)}
-    />
+    <>
+      <Image
+        {...shared}
+        alt=""
+        src={src}
+        className={cn('select-none object-cover [.dark_&]:hidden', className)}
+      />
+      <Image
+        {...shared}
+        alt=""
+        src={darkSrc}
+        className={cn(
+          'hidden select-none object-cover [.dark_&]:block',
+          className
+        )}
+      />
+    </>
   );
 }
