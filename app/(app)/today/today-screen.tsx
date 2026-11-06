@@ -3,11 +3,13 @@
 import { useMemo, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Loader2, X } from 'lucide-react';
+import { Check, Loader2, X } from 'lucide-react';
 
 import Kanko from '@/components/kanko/Kanko';
 import DayLogForm from '@/components/today/DayLogForm';
-import SoreCheckInCard from '@/components/today/SoreCheckInCard';
+import SoreCheckInCard, {
+  lastWasYesterday
+} from '@/components/today/SoreCheckInCard';
 import StreakBlock, {
   StreakBlockPlaceholder
 } from '@/components/today/StreakBlock';
@@ -21,9 +23,17 @@ import {
   upsertSores
 } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
+import { useUnsavedGuard } from '@/utils/hooks/useUnsavedGuard';
 import { notify, tap } from '@/utils/native';
 import { type Mood, withSavedLog } from '@/utils/momentum';
-import { dayKey, localTimeZone } from '@/utils/readings';
+import {
+  addDays,
+  dayKey,
+  hasReadingOn,
+  latestReading,
+  localTimeZone,
+  withReading
+} from '@/utils/readings';
 
 /**
  * The daily check-in.
@@ -93,9 +103,38 @@ export default function TodayScreen({
    * screen is left: timing it out would move everything under it.
    */
   const [justHealed, setJustHealed] = useState<Sore | null>(null);
+  /** Bumped to fold every card that has today's reading. */
+  const [collapseSignal, setCollapseSignal] = useState(0);
 
   const open = useMemo(() => sores.filter((s) => !s.healed_at), [sores]);
   const dirty = changed.size > 0 || logDirty;
+  useUnsavedGuard(dirty);
+
+  /*
+   * The open sores still waiting for today's reading that have a last one
+   * to repeat. With two or more, one tap says "nothing changed" for all of
+   * them, which is the commonest morning there is.
+   */
+  const repeatable = useMemo(
+    () =>
+      now ? open.filter((s) => !hasReadingOn(s, now) && latestReading(s)) : [],
+    [open, now]
+  );
+  const allSame = () => {
+    tap();
+    for (const sore of repeatable) updateSore(withReading(sore, {}));
+    setCollapseSignal((n) => n + 1);
+  };
+
+  /*
+   * Yesterday's treatments, offered back while today has none: a rinse or a
+   * paste is usually a course, not a one-off.
+   */
+  const yesterdaysTreatments = useMemo(() => {
+    if (!now) return [];
+    const yesterday = dayKey(addDays(now, -1));
+    return dayLogs.find((l) => l.day === yesterday)?.treatments ?? [];
+  }, [dayLogs, now]);
 
   const updateSore = (next: Sore) => {
     setSores((prev) => prev.map((s) => (s.id === next.id ? next : s)));
@@ -138,6 +177,20 @@ export default function TodayScreen({
     notify('success');
   };
 
+  /** Healed is one tap, so it is one tap to take back. */
+  const unheal = async (sore: Sore) => {
+    const result = await setSoreHealed(sore.id, null);
+    if (!result.ok) {
+      toast({ variant: 'destructive', title: result.error });
+      return;
+    }
+    setSores((prev) =>
+      prev.map((s) => (s.id === sore.id ? { ...s, healed_at: null } : s))
+    );
+    setJustHealed(null);
+    tap();
+  };
+
   const save = async () => {
     setSaving(true);
     // Whether this Save writes the day log, fixed now: the log can be
@@ -164,6 +217,7 @@ export default function TodayScreen({
       setSaved(true);
       notify('success');
       setJustSaved(true);
+      setCollapseSignal((n) => n + 1);
       setTimeout(() => setJustSaved(false), 400);
       toast({ title: 'Saved today’s check-in.' });
       router.refresh();
@@ -209,7 +263,22 @@ export default function TodayScreen({
             key={justHealed.id}
             sore={justHealed}
             onDismiss={() => setJustHealed(null)}
+            onUndo={() => unheal(justHealed)}
           />
+        )}
+        {repeatable.length >= 2 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="touch"
+            className="w-full"
+            onClick={allSame}
+          >
+            <Check aria-hidden="true" />
+            {repeatable.every(lastWasYesterday)
+              ? 'All the same as yesterday'
+              : 'All the same as last time'}
+          </Button>
         )}
         {/*
           With nothing open there is no list, and the answer line has already
@@ -247,6 +316,7 @@ export default function TodayScreen({
               onChange={updateSore}
               onHeal={() => heal(sore)}
               justSaved={justSaved}
+              collapseSignal={collapseSignal}
             />
           ))
         )}
@@ -265,7 +335,11 @@ export default function TodayScreen({
           What else happened today?
         </h2>
         <div className="mt-3.5">
-          <DayLogForm log={log} onChange={updateLog} />
+          <DayLogForm
+            log={log}
+            onChange={updateLog}
+            yesterdaysTreatments={yesterdaysTreatments}
+          />
         </div>
 
         {/*
@@ -317,10 +391,12 @@ export default function TodayScreen({
  */
 function HealedNote({
   sore,
-  onDismiss
+  onDismiss,
+  onUndo
 }: {
   sore: Sore;
   onDismiss: () => void;
+  onUndo: () => void;
 }) {
   return (
     <div
@@ -333,6 +409,14 @@ function HealedNote({
           Your {sore.zone.toLowerCase()} sore is closed. Its whole course stays
           in your history.
         </p>
+        <Button
+          type="button"
+          variant="link"
+          className="mt-1 h-11 px-0.5 text-base font-semibold"
+          onClick={onUndo}
+        >
+          Undo
+        </Button>
       </div>
       <Button
         type="button"

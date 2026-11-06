@@ -6,6 +6,7 @@ import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SeverityLadder from '@/components/ui/SeverityLadder';
 import { Slider } from '@/components/ui/slider';
+import { cn } from '@/utils/cn';
 import { tap } from '@/utils/native';
 
 /**
@@ -64,6 +65,14 @@ function FieldHead({
   );
 }
 
+/**
+ * The widths most sores actually are, offered as one-tap answers. The
+ * slider runs to 20mm for the rare major ulcer, which leaves the common
+ * range a few pixels per step under a thumb; these land it in one tap, and
+ * the slider and steppers stay for anything in between.
+ */
+export const WIDTH_PRESETS = [1, 2, 3, 5, 8] as const;
+
 export function WidthField({
   id,
   label = 'Width today',
@@ -79,6 +88,46 @@ export function WidthField({
   return (
     <div>
       <FieldHead label={label} htmlFor={id} value={value} unit="mm" />
+      <div
+        role="group"
+        aria-label={`${label}, common sizes`}
+        className="mt-2 grid grid-cols-5 gap-1.5"
+      >
+        {WIDTH_PRESETS.map((mm) => {
+          const picked = value === mm;
+          return (
+            <button
+              key={mm}
+              type="button"
+              aria-pressed={picked}
+              aria-label={`${mm} mm`}
+              onClick={() => {
+                tap();
+                set(mm);
+              }}
+              className={cn(
+                // Dot over figure; 56px tall so the 8mm dot has room.
+                'flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-cell border-2 bg-card transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                picked
+                  ? 'border-primary bg-accent text-foreground'
+                  : 'border-control text-muted-foreground hover:bg-muted'
+              )}
+            >
+              {/* Drawn in CSS millimetres, so on most screens each dot is
+                  about the size it names: easier to match than a number. */}
+              <span
+                aria-hidden="true"
+                className="block shrink-0 rounded-full bg-current"
+                style={{ width: `${mm}mm`, height: `${mm}mm` }}
+              />
+              <span className="tabular text-xs font-semibold leading-none">
+                {mm}
+              </span>
+            </button>
+          );
+        })}
+      </div>
       <div className="mt-2 grid grid-cols-[3.25rem_minmax(0,1fr)_3.25rem] items-center gap-2.5">
         <Stepper
           label="Half a millimetre narrower"

@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { DayLog } from '@/types';
@@ -16,10 +17,13 @@ import { tap } from '@/utils/native';
  */
 export default function DayLogForm({
   log,
-  onChange
+  onChange,
+  yesterdaysTreatments = []
 }: {
   log: DayLog;
   onChange: (next: DayLog) => void;
+  /** Offered back in one tap while today has no treatments of its own. */
+  yesterdaysTreatments?: readonly string[];
 }) {
   const toggle = (field: 'triggers' | 'treatments', value: string) => {
     tap();
@@ -45,6 +49,17 @@ export default function DayLogForm({
         options={TREATMENTS}
         selected={log.treatments}
         onToggle={(v) => toggle('treatments', v)}
+        repeat={
+          yesterdaysTreatments.length > 0 && log.treatments.length === 0
+            ? {
+                label: `Repeat yesterday’s (${yesterdaysTreatments.length})`,
+                onRepeat: () => {
+                  tap();
+                  onChange({ ...log, treatments: [...yesterdaysTreatments] });
+                }
+              }
+            : undefined
+        }
       />
       <div className="space-y-1.5">
         <Label htmlFor="day-note" className="text-base font-semibold">
@@ -68,16 +83,28 @@ function ChipGroup({
   label,
   options,
   selected,
-  onToggle
+  onToggle,
+  repeat
 }: {
   label: string;
   options: readonly string[];
   selected: string[];
   onToggle: (value: string) => void;
+  repeat?: { label: string; onRepeat: () => void };
 }) {
   return (
     <fieldset className="space-y-2">
       <legend className="text-base font-semibold">{label}</legend>
+      {repeat && (
+        <Button
+          type="button"
+          variant="link"
+          className="h-11 px-0.5 text-base font-semibold"
+          onClick={repeat.onRepeat}
+        >
+          {repeat.label}
+        </Button>
+      )}
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const on = selected.includes(option);

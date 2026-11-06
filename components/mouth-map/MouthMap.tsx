@@ -65,7 +65,8 @@ export default function MouthMap({ user }: { user: User }) {
     setShowHealed,
     selectedSore,
     setSelectedSore,
-    mode
+    mode,
+    snapshot
   } = useSoreContext();
   const healedCount = sores.filter((s) => s.healed_at).length;
   const [view, setView] = useState<MouthView>(selectedSore?.view ?? 'front');
@@ -247,11 +248,31 @@ export default function MouthMap({ user }: { user: User }) {
     }
   };
 
+  /*
+   * The sore placed in this add session, if one has been. A second tap is
+   * almost always "no, there", so it moves this one rather than adding
+   * another: two taps used to leave two sores where the person meant one.
+   */
+  const placed =
+    mode === 'add' &&
+    selectedSore &&
+    snapshot &&
+    !snapshot.some((s) => s.id === selectedSore.id)
+      ? selectedSore
+      : null;
+
   /** Add a sore at a point in drawing units; nothing happens off the tissue. */
   const placeSore = (p: Point) => {
     const zone = zoneAt(view, p);
     if (!zone) return;
     const pct = toPercent(p);
+    if (placed) {
+      const moved = { ...placed, view, x: pct.x, y: pct.y, zone };
+      setSores((prev) => prev.map((s) => (s.id === moved.id ? moved : s)));
+      setSelectedSore(moved);
+      tap();
+      return;
+    }
     const now = new Date();
     const sore: Sore = {
       id: uuidv4(),
@@ -391,7 +412,9 @@ export default function MouthMap({ user }: { user: User }) {
         // Under the drawing, not on it: a floating hint covered the floor
         // of the mouth on a phone, which is exactly where people tap.
         <p className="text-base font-semibold">
-          Tap where the sore is, or name the place.
+          {placed
+            ? 'Tap again to move it, or set its reading below.'
+            : 'Tap where the sore is, or name the place.'}
         </p>
       )}
 
@@ -409,7 +432,11 @@ export default function MouthMap({ user }: { user: User }) {
             className="h-11 lg:h-10"
             aria-label="Place a sore by naming the part of the mouth"
           >
-            <SelectValue placeholder="Or place it by name…" />
+            <SelectValue
+              placeholder={
+                placed ? 'Or move it by name…' : 'Or place it by name…'
+              }
+            />
           </SelectTrigger>
           <SelectContent>
             {ZONE_ANCHORS[view].map((a) => (

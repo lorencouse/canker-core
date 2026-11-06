@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import CourseBars, { courseSlots } from '@/components/sore/CourseBars';
@@ -45,19 +46,30 @@ export default function SoreCheckInCard({
   sore,
   onChange,
   onHeal,
-  justSaved = false
+  justSaved = false,
+  collapseSignal = 0
 }: {
   sore: Sore;
   onChange: (next: Sore) => void;
   onHeal: () => void;
   /** True for a moment after a successful save. */
   justSaved?: boolean;
+  /**
+   * Bumped by the screen when every card should fold up if it has today's
+   * reading: after "All the same" and after Save.
+   */
+  collapseSignal?: number;
 }) {
   const now = new Date();
   const logged = hasReadingOn(sore, now);
   // Open while editing, so the controls do not vanish the moment a reading
   // exists; a logged sore starts closed.
   const [editing, setEditing] = useState(!logged);
+  const [seenSignal, setSeenSignal] = useState(collapseSignal);
+  if (collapseSignal !== seenSignal) {
+    setSeenSignal(collapseSignal);
+    if (logged) setEditing(false);
+  }
   const size = currentSize(sore);
   const pain = currentPain(sore);
   const day = dayNumberOf(sore);
@@ -97,7 +109,7 @@ export default function SoreCheckInCard({
           type="button"
           variant="ghost"
           size="sm"
-          className="font-display text-base normal-case tracking-normal text-primary"
+          className="font-display text-base normal-case tracking-normal text-primary coarse:h-11"
           onClick={onHeal}
           aria-label={`Mark the ${sore.zone.toLowerCase()} sore healed`}
         >
@@ -119,6 +131,27 @@ export default function SoreCheckInCard({
 
       {editing ? (
         <div className="mt-5 grid gap-5">
+          {/*
+            First, because it is the commonest answer: most days a sore is
+            much as it was. It logs the reading and folds the card, so the
+            next card that still needs something is the one in view.
+          */}
+          {!logged && last && (
+            <Button
+              type="button"
+              variant="outline"
+              size="touch"
+              className="w-full"
+              onClick={() => {
+                tap();
+                onChange(withReading(sore, {}));
+                setEditing(false);
+              }}
+            >
+              <Check aria-hidden="true" />
+              {sameLabel(sore)}
+            </Button>
+          )}
           <WidthField
             id={`size-${sore.id}`}
             value={size}
@@ -129,17 +162,6 @@ export default function SoreCheckInCard({
             value={pain}
             onChange={(v) => onChange(withReading(sore, { pain: v }))}
           />
-
-          {!logged && last && (
-            <Button
-              type="button"
-              variant="link"
-              className="h-11 justify-self-start px-0.5 text-base font-semibold underline"
-              onClick={() => onChange(withReading(sore, {}))}
-            >
-              {sameLabel(sore)}
-            </Button>
-          )}
         </div>
       ) : (
         <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
@@ -183,14 +205,17 @@ function courseCaption(sore: Sore): string {
   return 'Width by day, coloured by pain';
 }
 
-/** "Same as yesterday", or "Same as last time" after a gap. */
-function sameLabel(sore: Sore): string {
+/** Whether the sore's last reading was taken yesterday. */
+export function lastWasYesterday(sore: Sore): boolean {
   const last = latestReading(sore);
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  return last && isSameLocalDay(last.recorded_at, yesterday)
-    ? 'Same as yesterday'
-    : 'Same as last time';
+  return Boolean(last && isSameLocalDay(last.recorded_at, yesterday));
+}
+
+/** "Same as yesterday", or "Same as last time" after a gap. */
+function sameLabel(sore: Sore): string {
+  return lastWasYesterday(sore) ? 'Same as yesterday' : 'Same as last time';
 }
 
 /**
