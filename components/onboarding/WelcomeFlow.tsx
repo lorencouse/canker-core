@@ -120,13 +120,23 @@ function Flow({ user }: { user: User }) {
   const copy = useMemo(() => COPY[step], [step]);
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-5 lg:py-10">
+    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-3 min-[400px]:py-5 lg:py-10">
       <Progress index={index} />
 
-      <header className="mt-5">
+      <header className="mt-3 [@media(min-height:700px)]:mt-5">
         {step === 'place' && (
-          <div className="mb-3 flex flex-col items-center gap-2 text-center">
-            <Kanko mood="hello" size={160} priority />
+          <div className="mb-2 flex flex-col items-center gap-1 text-center [@media(min-height:700px)]:mb-3 [@media(min-height:700px)]:gap-2">
+            {/*
+              120px by default: on a 320px or 667px-tall phone the full-size
+              Kanko plus this line pushed the map below the fold. Full size
+              only where there is room for both.
+            */}
+            <Kanko
+              mood="hello"
+              size={160}
+              priority
+              className="-my-2 size-[120px] [@media(min-width:360px)_and_(min-height:700px)]:my-0 [@media(min-width:360px)_and_(min-height:700px)]:size-40"
+            />
             <p className="prose-measure text-foreground">
               Hi, I’m Kanko. Let’s work out what sets your mouth sores off, one
               day at a time.
@@ -137,7 +147,7 @@ function Flow({ user }: { user: User }) {
         <p className="prose-measure mt-2 text-muted-foreground">{copy.body}</p>
       </header>
 
-      <div className="mt-6 flex-1">
+      <div className="mt-4 flex-1 [@media(min-height:700px)]:mt-6">
         {step === 'place' && <MouthMap user={user} />}
 
         {step === 'measure' && sore && (
