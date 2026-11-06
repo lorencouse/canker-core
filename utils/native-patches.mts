@@ -200,6 +200,108 @@ export function patchInfoPlist(text: string): PatchResult {
   return { text: out, changed: true };
 }
 
+/**
+ * Associated Domains, so iOS trusts the app with cankercore.com's saved
+ * passwords: iCloud Keychain autofill and strong-password suggestions in the
+ * sign-in forms. The other half is public/.well-known/apple-app-site-association,
+ * which names this app (team 4J28Z4QS4C) back.
+ */
+export const ENTITLEMENTS_PATH = 'App/App.entitlements';
+export const ASSOCIATED_DOMAINS = ['webcredentials:cankercore.com'];
+const ASSOCIATED_DOMAINS_KEY =
+  '<key>com.apple.developer.associated-domains</key>';
+
+const domainStrings = (domains: string[]) =>
+  domains.map((d) => `\t\t<string>${d}</string>\n`).join('');
+
+const domainsBlock = (domains: string[]) =>
+  `\t${ASSOCIATED_DOMAINS_KEY}\n\t<array>\n${domainStrings(domains)}\t</array>\n`;
+
+/**
+ * Writes or completes ios/App/App/App.entitlements. Empty input means the file
+ * does not exist yet (the Capacitor template has none). An existing file
+ * keeps everything it has; only missing domains are added.
+ */
+export function patchEntitlements(text: string): PatchResult {
+  if (text.trim() === '') {
+    const out =
+      '<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n' +
+      '<plist version="1.0">\n<dict>\n' +
+      domainsBlock(ASSOCIATED_DOMAINS) +
+      '</dict>\n</plist>\n';
+    return { text: out, changed: true };
+  }
+
+  const missing = ASSOCIATED_DOMAINS.filter(
+    (d) => !text.includes(`<string>${d}</string>`)
+  );
+  if (missing.length === 0) return { text, changed: false };
+
+  if (text.includes(ASSOCIATED_DOMAINS_KEY)) {
+    const array =
+      /(<key>com\.apple\.developer\.associated-domains<\/key>\s*<array>\n)/;
+    if (!array.test(text)) {
+      throw new PatchAnchorError(
+        'App.entitlements',
+        'associated-domains <array>'
+      );
+    }
+    const out = text.replace(array, (head) => head + domainStrings(missing));
+    return { text: out, changed: true };
+  }
+
+  const anchor = /\n<\/dict>\s*\n<\/plist>\s*$/;
+  if (!anchor.test(text)) {
+    throw new PatchAnchorError('App.entitlements', 'closing </dict></plist>');
+  }
+  const out = text.replace(
+    anchor,
+    (tail) => `\n${domainsBlock(missing)}${tail.slice(1)}`
+  );
+  return { text: out, changed: true };
+}
+
+const ENTITLEMENTS_SETTING = `CODE_SIGN_ENTITLEMENTS = ${ENTITLEMENTS_PATH};`;
+
+/**
+ * Points the App target's Debug and Release configurations at the
+ * entitlements file. Those are the two configurations that name the app's
+ * Info.plist, so the setting goes on the line before each of them. A
+ * different CODE_SIGN_ENTITLEMENTS is refused rather than overwritten.
+ */
+export function patchPbxprojEntitlements(text: string): PatchResult {
+  const anchor = /^([ \t]*)INFOPLIST_FILE = App\/Info\.plist;$/gm;
+  const anchors = text.match(anchor)?.length ?? 0;
+  if (anchors === 0) {
+    throw new PatchAnchorError(
+      'project.pbxproj',
+      'INFOPLIST_FILE = App/Info.plist;'
+    );
+  }
+  const all = text.match(/CODE_SIGN_ENTITLEMENTS = [^;]*;/g) ?? [];
+  if (all.some((setting) => setting !== ENTITLEMENTS_SETTING)) {
+    throw new Error(
+      'project.pbxproj already sets a CODE_SIGN_ENTITLEMENTS that ' +
+        'scripts/patch-native.mjs did not write. Regenerate the iOS project ' +
+        '(rm -rf ios && npm run cap:add:ios) so the script can apply its own.'
+    );
+  }
+  if (all.length === anchors) return { text, changed: false };
+  if (all.length !== 0) {
+    throw new Error(
+      `project.pbxproj has ${ENTITLEMENTS_SETTING} on only some of the ` +
+        "app's configurations. Regenerate the iOS project " +
+        '(rm -rf ios && npm run cap:add:ios).'
+    );
+  }
+  const out = text.replace(
+    anchor,
+    (line, indent: string) => `${indent}${ENTITLEMENTS_SETTING}\n${line}`
+  );
+  return { text: out, changed: true };
+}
+
 /** Android notification small icon: densities and their pixel sizes. */
 export const NOTIFICATION_ICON_NAME = 'ic_stat_kanko';
 

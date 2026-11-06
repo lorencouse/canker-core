@@ -105,8 +105,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - .well-known (apple-app-site-association: fetched by Apple's CDN,
+     *   which needs a plain 200 and has no use for the first-touch cookie)
      * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
   ]
 };

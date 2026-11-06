@@ -79,7 +79,7 @@ export default function SignUp({ allowEmail }: SignUpProps) {
           label="Email"
           type="email"
           placeholder="you@example.com"
-          autoComplete="email"
+          autoComplete="username"
         />
         <AuthField
           id="password"

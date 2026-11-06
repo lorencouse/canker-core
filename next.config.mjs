@@ -16,6 +16,23 @@ const nextConfig = {
   // into the server build breaks their dynamic requires.
   serverExternalPackages: ['pg', 'nodemailer'],
 
+  async headers() {
+    return [
+      {
+        // Apple fetches this (through its CDN) to trust the iOS app with the
+        // site's saved passwords: iCloud Keychain autofill and strong-password
+        // suggestions in the app's sign-in forms. The file has no extension,
+        // so without this it is served as application/octet-stream, which
+        // Apple rejects.
+        source: '/.well-known/apple-app-site-association',
+        headers: [
+          { key: 'Content-Type', value: 'application/json' },
+          { key: 'Cache-Control', value: 'public, max-age=3600' }
+        ]
+      }
+    ];
+  },
+
   async redirects() {
     return [
       // /history became /insights when the screen stopped being a list of

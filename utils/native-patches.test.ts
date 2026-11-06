@@ -4,8 +4,10 @@ import {
   PatchAnchorError,
   notificationIconCopies,
   patchAppDelegate,
+  patchEntitlements,
   patchInfoPlist,
   patchPbxproj,
+  patchPbxprojEntitlements,
   patchPodfile,
   type PatchResult
 } from './native-patches.mjs';
@@ -59,7 +61,8 @@ const cases: [string, string, (text: string) => PatchResult][] = [
   ['Podfile', PODFILE, patchPodfile],
   ['project.pbxproj', PBXPROJ, patchPbxproj],
   ['AppDelegate.swift', APP_DELEGATE, patchAppDelegate],
-  ['Info.plist', INFO_PLIST, patchInfoPlist]
+  ['Info.plist', INFO_PLIST, patchInfoPlist],
+  ['project.pbxproj (entitlements)', PBXPROJ, patchPbxprojEntitlements]
 ];
 
 describe.each(cases)('%s patch', (_name, fixture, patch) => {
@@ -168,6 +171,113 @@ describe('patchInfoPlist', () => {
     );
     expect(text).toMatch(/<\/dict>\n<\/dict>\n<\/plist>\n$/);
     expect(text.match(/<dict>/g)?.length).toBe(text.match(/<\/dict>/g)?.length);
+  });
+});
+
+// The App target's two configurations, as `cap add ios` writes them.
+const TARGET_CONFIGS = `
+		504EC3171FED79650016851F /* Debug */ = {
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+			};
+		};
+		504EC3181FED79650016851F /* Release */ = {
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+			};
+		};
+`;
+
+describe('patchPbxprojEntitlements', () => {
+  it('points Debug and Release at App.entitlements', () => {
+    const { text } = patchPbxprojEntitlements(TARGET_CONFIGS);
+    expect(
+      text.match(
+        /\t\t\t\tCODE_SIGN_ENTITLEMENTS = App\/App\.entitlements;\n\t\t\t\tINFOPLIST_FILE/g
+      )
+    ).toHaveLength(2);
+    expect(patchPbxprojEntitlements(text).changed).toBe(false);
+  });
+
+  it('composes with the deployment-target patch in either order', () => {
+    const a = patchPbxprojEntitlements(patchPbxproj(TARGET_CONFIGS).text).text;
+    const b = patchPbxproj(patchPbxprojEntitlements(TARGET_CONFIGS).text).text;
+    expect(a).toBe(b);
+  });
+
+  it('refuses an entitlements file it did not set', () => {
+    const other = TARGET_CONFIGS.replace(
+      'CODE_SIGN_STYLE = Automatic;',
+      'CODE_SIGN_ENTITLEMENTS = App/Other.entitlements;'
+    );
+    expect(() => patchPbxprojEntitlements(other)).toThrow(/did not write/);
+  });
+
+  it('refuses a half-applied state', () => {
+    const half = TARGET_CONFIGS.replace(
+      'CODE_SIGN_STYLE = Automatic;',
+      'CODE_SIGN_ENTITLEMENTS = App/App.entitlements;'
+    );
+    expect(() => patchPbxprojEntitlements(half)).toThrow(/only some/);
+  });
+});
+
+describe('patchEntitlements', () => {
+  const DOMAIN = '<string>webcredentials:cankercore.com</string>';
+
+  it('creates the file when there is none, once', () => {
+    const first = patchEntitlements('');
+    expect(first.changed).toBe(true);
+    expect(first.text).toContain(
+      '<key>com.apple.developer.associated-domains</key>'
+    );
+    expect(first.text).toContain(DOMAIN);
+    expect(first.text).toMatch(/<\/dict>\n<\/plist>\n$/);
+    expect(patchEntitlements(first.text)).toEqual({
+      text: first.text,
+      changed: false
+    });
+  });
+
+  it('adds the key to an existing file and keeps what it had', () => {
+    const existing = `<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>
+`;
+    const { text, changed } = patchEntitlements(existing);
+    expect(changed).toBe(true);
+    expect(text).toContain('<key>aps-environment</key>');
+    expect(text).toContain(DOMAIN);
+    expect(text.match(/<dict>/g)?.length).toBe(text.match(/<\/dict>/g)?.length);
+    expect(patchEntitlements(text).changed).toBe(false);
+  });
+
+  it('adds the domain to an existing associated-domains array', () => {
+    const existing = `<plist version="1.0">
+<dict>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:example.com</string>
+	</array>
+</dict>
+</plist>
+`;
+    const { text } = patchEntitlements(existing);
+    expect(text).toContain('<string>applinks:example.com</string>');
+    expect(text).toContain(DOMAIN);
+    expect(text.match(/associated-domains/g)).toHaveLength(1);
+  });
+
+  it('throws when an existing file has no closing dict', () => {
+    expect(() => patchEntitlements('<plist>')).toThrow(PatchAnchorError);
   });
 });
 
