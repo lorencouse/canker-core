@@ -9,9 +9,10 @@
  *     project, because Xcode 27 rejects 14.0;
  *   - a UIScene delegate and scene manifest, because iOS 27 traps at launch
  *     in an app without the scene lifecycle;
- *   - App.entitlements with Associated Domains (webcredentials:cankercore.com)
- *     and CODE_SIGN_ENTITLEMENTS pointing at it, so iCloud Keychain offers
- *     the site's saved passwords in the app.
+ *   - App.entitlements with Associated Domains (webcredentials: and
+ *     applinks:cankercore.com) and CODE_SIGN_ENTITLEMENTS pointing at it, so
+ *     iCloud Keychain offers the site's saved passwords in the app and the
+ *     system sign-in's universal-link callback reaches only this app.
  * Android: the white Kanko notification small icon from resources/notification.
  *
  * Safe to run repeatedly. A platform whose folder is missing is skipped; a

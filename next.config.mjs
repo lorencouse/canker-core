@@ -20,14 +20,26 @@ const nextConfig = {
     return [
       {
         // Apple fetches this (through its CDN) to trust the iOS app with the
-        // site's saved passwords: iCloud Keychain autofill and strong-password
-        // suggestions in the app's sign-in forms. The file has no extension,
+        // site's saved passwords (iCloud Keychain autofill and strong-password
+        // suggestions in the app's sign-in forms) and with the universal link
+        // the iOS sign-in returns through. The file has no extension,
         // so without this it is served as application/octet-stream, which
         // Apple rejects.
         source: '/.well-known/apple-app-site-association',
         headers: [
           { key: 'Content-Type', value: 'application/json' },
           { key: 'Cache-Control', value: 'public, max-age=3600' }
+        ]
+      },
+      {
+        // The iOS sign-in's https callback carries a handoff token in its
+        // query (app/native-auth/callback). Opened in a browser, the page's
+        // one link must not send that URL on as a referrer, and nothing may
+        // keep a copy.
+        source: '/native-auth/callback',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' }
         ]
       }
     ];

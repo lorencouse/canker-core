@@ -16,7 +16,12 @@
  * Storage is behind HandoffStore so the rules are testable without Postgres;
  * lib/native-handoff-plugin.ts backs it with Better Auth's verification table.
  */
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import {
+  createHash,
+  createHmac,
+  randomBytes,
+  timingSafeEqual
+} from 'node:crypto';
 import { isRandom32 } from '@/utils/native-auth';
 
 export const HANDOFF_TTL_SECONDS = 60;
@@ -100,4 +105,26 @@ export function sameSecret(a: string, b: string): boolean {
   const x = sha256(a);
   const y = sha256(b);
   return timingSafeEqual(x, y);
+}
+
+/**
+ * The CSRF token on finish's confirmation page: an HMAC of the flow cookie
+ * under the auth secret. Only a page rendered for this sheet's flow carries
+ * it, so another site cannot post a Continue on the person's behalf.
+ */
+export function confirmToken(secret: string, flow: string): string {
+  return createHmac('sha256', secret)
+    .update(`native-auth-confirm:${flow}`)
+    .digest('base64url');
+}
+
+export function isConfirmToken(
+  secret: string,
+  flow: string,
+  presented: unknown
+): boolean {
+  return (
+    typeof presented === 'string' &&
+    sameSecret(confirmToken(secret, flow), presented)
+  );
 }

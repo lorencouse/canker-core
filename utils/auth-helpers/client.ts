@@ -3,10 +3,15 @@
 import { authClient } from '@/lib/auth-client';
 import { redirectToPath } from './server';
 import { safeNext } from './settings';
-import { hasSystemSignIn, systemSignIn } from '@/utils/native';
+import {
+  hasSystemSignIn,
+  systemSignIn,
+  systemSignInHttpsCallback
+} from '@/utils/native';
 import {
   NATIVE_AUTH_COOKIE_PATH,
   NATIVE_AUTH_FLOW_MAX_AGE,
+  NATIVE_AUTH_HTTPS_PATH,
   NATIVE_AUTH_NONCE_COOKIE,
   NATIVE_AUTH_SCHEME,
   nativeAuthErrorMessage,
@@ -84,21 +89,36 @@ async function signInWithSystemSheet(
     `${NATIVE_AUTH_NONCE_COOKIE}=${nonce}; Path=${NATIVE_AUTH_COOKIE_PATH}; ` +
     `Max-Age=${NATIVE_AUTH_FLOW_MAX_AGE}; SameSite=Strict${secure}`;
 
+  const https = await systemSignInHttpsCallback();
+  const firstTouch = await webviewFirstTouch();
   const start = new URL('/api/native-auth/start', window.location.origin);
-  start.search = new URLSearchParams({ provider, next, nonce }).toString();
+  start.search = new URLSearchParams({
+    provider,
+    next,
+    nonce,
+    callback: https ? 'https' : 'scheme',
+    ...(firstTouch && { ft: firstTouch })
+  }).toString();
 
   let callback: string;
   try {
-    ({ url: callback } = await systemSignIn(start.href, NATIVE_AUTH_SCHEME));
+    ({ url: callback } = await systemSignIn(start.href, {
+      scheme: NATIVE_AUTH_SCHEME,
+      httpsPath: https ? NATIVE_AUTH_HTTPS_PATH : undefined
+    }));
   } catch (err) {
     // Closing the sheet is a choice, not an error: stay put, say nothing.
     if ((err as { code?: string })?.code === 'CANCELED') return null;
     return nativeAuthErrorMessage('unknown');
   }
 
-  const result = parseNativeCallback(callback);
+  const result = parseNativeCallback(callback, window.location.origin);
   if (!result) return nativeAuthErrorMessage('unknown');
-  if ('error' in result) return nativeAuthErrorMessage(result.error);
+  // Cancel on finish's confirmation page is a choice too.
+  if ('error' in result)
+    return result.error === 'cancelled'
+      ? null
+      : nativeAuthErrorMessage(result.error);
 
   const redeem = new URL('/api/native-auth/redeem', window.location.origin);
   redeem.search = new URLSearchParams({
@@ -109,4 +129,18 @@ async function signInWithSystemSheet(
   // any server component renders.
   window.location.assign(redeem.href);
   return null;
+}
+
+/** The webview's first-touch cookie, which is httpOnly, so the server reads
+ * it out. Attribution is a nice-to-have: any failure means none. */
+async function webviewFirstTouch(): Promise<string | null> {
+  try {
+    const res = await fetch('/api/native-auth/first-touch', {
+      cache: 'no-store'
+    });
+    const { firstTouch } = (await res.json()) as { firstTouch?: unknown };
+    return typeof firstTouch === 'string' ? firstTouch : null;
+  } catch {
+    return null;
+  }
 }

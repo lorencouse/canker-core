@@ -107,8 +107,10 @@ export const config = {
      * - favicon.ico (favicon file)
      * - .well-known (apple-app-site-association: fetched by Apple's CDN,
      *   which needs a plain 200 and has no use for the first-touch cookie)
+     * - native-auth/ (the iOS sign-in's https callback; its URL carries a
+     *   handoff token and is never anyone's first touch)
      * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|\\.well-known|native-auth/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
   ]
 };

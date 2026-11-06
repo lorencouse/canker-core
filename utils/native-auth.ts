@@ -10,8 +10,12 @@
  *   webview  sets a random nonce cookie, opens the sheet at
  *            /api/native-auth/start?provider&next&nonce
  *   sheet    start -> provider -> Better Auth's normal callback -> finish
- *   finish   swaps the sheet's session for a 60-second, single-use handoff
- *            token, signs the sheet out, and redirects to
+ *   finish   asks "Continue to the Canker Core app as <email>?"; only the
+ *            same-origin POST of that page, carrying a CSRF token bound to
+ *            the flow cookie, swaps the sheet's session for a 60-second,
+ *            single-use handoff token, signs the sheet out, and redirects to
+ *            the callback: https://<site>/native-auth/callback?token&next
+ *            (a universal link only this app can claim, iOS 17.4+) or else
  *            com.cankercore.app://auth/callback?token&next
  *   webview  the sheet hands that URL back; the webview loads
  *            /api/native-auth/redeem?token&next, which needs the nonce cookie
@@ -26,10 +30,23 @@ export type NativeOAuthProvider = 'google' | 'github';
 const PROVIDERS: readonly NativeOAuthProvider[] = ['google', 'github'];
 
 /** The app id doubles as the callback scheme. Never registered in Info.plist:
- * the sign-in sheet captures it itself, so no other app can be handed it and
- * a stray link to it outside a sign-in goes nowhere. */
+ * the sign-in sheet captures it itself. Any app can open a sheet naming the
+ * same scheme, though, which is why the https callback is preferred and why
+ * finish asks before it mints. */
 export const NATIVE_AUTH_SCHEME = 'com.cankercore.app';
 export const NATIVE_AUTH_CALLBACK = `${NATIVE_AUTH_SCHEME}://auth/callback`;
+
+/** The universal-link callback. iOS hands it only to an app the site's
+ * apple-app-site-association names, so another app cannot receive the token.
+ * The page behind it (app/native-auth/callback) never reads the token. */
+export const NATIVE_AUTH_HTTPS_PATH = '/native-auth/callback';
+
+/** Which callback the app's sheet can catch, as the app tells start. */
+export type NativeCallbackKind = 'https' | 'scheme';
+
+export function parseCallbackKind(raw: unknown): NativeCallbackKind {
+  return raw === 'https' ? 'https' : 'scheme';
+}
 
 /** Set in the sheet by start, required by finish: only a flow this server
  * began can mint a token. */
@@ -60,21 +77,29 @@ export function errorCode(raw: unknown): string {
     : 'unknown';
 }
 
-/** Where finish sends the sheet. */
+/** Where the sheet is sent at the end: the https callback on `origin`, or
+ * the custom scheme. */
 export function nativeCallbackUrl(
-  result: { token: string; next: string } | { error: string }
+  result: { token: string; next: string } | { error: string },
+  callback: { kind: NativeCallbackKind; origin: string }
 ): string {
   const params = new URLSearchParams(
     'error' in result
       ? { error: errorCode(result.error) }
       : { token: result.token, next: result.next }
   );
-  return `${NATIVE_AUTH_CALLBACK}?${params}`;
+  const base =
+    callback.kind === 'https'
+      ? new URL(NATIVE_AUTH_HTTPS_PATH, callback.origin).href
+      : NATIVE_AUTH_CALLBACK;
+  return `${base}?${params}`;
 }
 
-/** What the sheet handed back, or null when it is not our callback at all. */
+/** What the sheet handed back, or null when it is not our callback at all.
+ * `origin` is the site's, the only host an https callback may be on. */
 export function parseNativeCallback(
-  raw: string
+  raw: string,
+  origin: string
 ): { token: string; next: string } | { error: string } | null {
   let url: URL;
   try {
@@ -82,12 +107,15 @@ export function parseNativeCallback(
   } catch {
     return null;
   }
-  if (
-    url.protocol !== `${NATIVE_AUTH_SCHEME}:` ||
-    url.host !== 'auth' ||
-    url.pathname !== '/callback'
-  )
-    return null;
+  const isScheme =
+    url.protocol === `${NATIVE_AUTH_SCHEME}:` &&
+    url.host === 'auth' &&
+    url.pathname === '/callback';
+  const isHttps =
+    url.protocol === 'https:' &&
+    url.origin === origin &&
+    url.pathname === NATIVE_AUTH_HTTPS_PATH;
+  if (!isScheme && !isHttps) return null;
   const error = url.searchParams.get('error');
   if (error) return { error: errorCode(error) };
   const token = url.searchParams.get('token');

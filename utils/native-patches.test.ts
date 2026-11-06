@@ -228,6 +228,30 @@ describe('patchPbxprojEntitlements', () => {
 
 describe('patchEntitlements', () => {
   const DOMAIN = '<string>webcredentials:cankercore.com</string>';
+  const APPLINKS = '<string>applinks:cankercore.com</string>';
+
+  it('claims both the passwords and the sign-in universal link', () => {
+    const { text } = patchEntitlements('');
+    expect(text).toContain(DOMAIN);
+    expect(text).toContain(APPLINKS);
+  });
+
+  it('adds applinks to a file an earlier version wrote, once', () => {
+    const earlier = `<plist version="1.0">
+<dict>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		${DOMAIN}
+	</array>
+</dict>
+</plist>
+`;
+    const upgraded = patchEntitlements(earlier);
+    expect(upgraded.changed).toBe(true);
+    expect(upgraded.text.match(/<string>/g)).toHaveLength(2);
+    expect(upgraded.text).toContain(APPLINKS);
+    expect(patchEntitlements(upgraded.text).changed).toBe(false);
+  });
 
   it('creates the file when there is none, once', () => {
     const first = patchEntitlements('');

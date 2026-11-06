@@ -1,5 +1,5 @@
 /**
- * Response plumbing shared by the three native sign-in routes. The rules
+ * Response plumbing shared by the native sign-in routes. The rules
  * (validation, tokens) are in utils/native-auth.ts and utils/native-handoff.ts.
  */
 import { NextResponse, type NextRequest } from 'next/server';
@@ -17,6 +17,12 @@ export function isHttps(request: NextRequest): boolean {
   return (
     request.headers.get('x-forwarded-proto') ?? request.nextUrl.protocol
   ).startsWith('https');
+}
+
+/** The origin the browser sees: Traefik keeps the Host header. */
+export function publicOrigin(request: NextRequest): string {
+  const host = request.headers.get('host') ?? request.nextUrl.host;
+  return `${isHttps(request) ? 'https' : 'http'}://${host}`;
 }
 
 export function clearCookie(

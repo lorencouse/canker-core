@@ -70,9 +70,11 @@ export async function openExternal(url: string) {
  * exists for the native build.
  */
 interface WebAuthPlugin {
+  capabilities(): Promise<{ httpsCallback: boolean }>;
   start(options: {
     url: string;
     callbackScheme: string;
+    callbackPath?: string;
   }): Promise<{ url: string }>;
 }
 
@@ -81,18 +83,43 @@ let webAuth: WebAuthPlugin | undefined;
 /** True only where the system sheet exists: the iOS app. */
 export const hasSystemSignIn = () => isNative() && platform() === 'ios';
 
-/**
- * Opens `url` in the system sign-in sheet and resolves with the callback URL
- * it is redirected to. Rejects with code 'CANCELED' when the person closes
- * the sheet, and with 'UNAVAILABLE' anywhere but iOS.
- */
-export async function systemSignIn(url: string, callbackScheme: string) {
+async function webAuthPlugin() {
   if (!hasSystemSignIn()) {
     throw Object.assign(new Error('System sign-in is unavailable here.'), {
       code: 'UNAVAILABLE'
     });
   }
   const { registerPlugin } = await import('@capacitor/core');
-  webAuth ??= registerPlugin<WebAuthPlugin>('WebAuth');
-  return webAuth.start({ url, callbackScheme });
+  return (webAuth ??= registerPlugin<WebAuthPlugin>('WebAuth'));
+}
+
+/**
+ * Whether the sheet can return through the site's universal link (iOS 17.4+
+ * on an https server), which only this app can receive. False on an app
+ * build older than that method, so it falls back to the custom scheme.
+ */
+export async function systemSignInHttpsCallback(): Promise<boolean> {
+  try {
+    const { httpsCallback } = await (await webAuthPlugin()).capabilities();
+    return httpsCallback === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Opens `url` in the system sign-in sheet and resolves with the callback URL
+ * it is redirected to: `https://<server><callbackPath>` when a path is given,
+ * else `callbackScheme://…`. Rejects with code 'CANCELED' when the person
+ * closes the sheet, and with 'UNAVAILABLE' anywhere but iOS.
+ */
+export async function systemSignIn(
+  url: string,
+  callback: { scheme: string; httpsPath?: string }
+) {
+  return (await webAuthPlugin()).start({
+    url,
+    callbackScheme: callback.scheme,
+    ...(callback.httpsPath && { callbackPath: callback.httpsPath })
+  });
 }

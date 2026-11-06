@@ -43,10 +43,17 @@ What follows from that:
   (ASWebAuthenticationSession, the local plugin in `native/plugins/web-auth`),
   so it can use the Google or GitHub account, password or passkey already in
   Safari. The sheet has its own cookie jar, so `app/api/native-auth/*` hands
-  the result back: `start` begins Better Auth's normal flow in the sheet,
-  `finish` swaps the sheet's session for a single-use 60-second token and
-  signs the sheet out, and `redeem` turns that token into a new session in
-  the webview. The provider callback is still `/api/auth/callback/<provider>`.
+  the result back: `start` begins Better Auth's normal flow in the sheet
+  (and copies the webview's first-touch cookie into it, so signups keep
+  their attribution), `finish` asks "Continue to the Canker Core app as
+  <email>?" and only that page's same-origin, CSRF-checked POST swaps the
+  sheet's session for a single-use 60-second token and signs the sheet out,
+  and `redeem` turns that token into a new session in the webview. On iOS
+  17.4+ the sheet returns through the universal link
+  `https://cankercore.com/native-auth/callback`, which only this app can
+  receive (opened in a browser, that page shows a notice and never reads
+  the token); older iOS falls back to the `com.cankercore.app://` scheme.
+  The provider callback is still `/api/auth/callback/<provider>`.
   `utils/native-auth.ts` describes the flow and its checks. Android and
   browsers keep the ordinary redirect, which is why the providers are still
   listed in `server.allowNavigation`.
@@ -70,8 +77,9 @@ on regeneration:
   app project (Xcode 27 rejects 14.0), then `pod install`; and a
   `SceneDelegate` plus `UIApplicationSceneManifest` in `Info.plist` (iOS 27
   crashes at launch in an app without the scene lifecycle); and
-  `App/App.entitlements` with the Associated Domains entry
-  `webcredentials:cankercore.com`, referenced by `CODE_SIGN_ENTITLEMENTS`.
+  `App/App.entitlements` with the Associated Domains entries
+  `webcredentials:cankercore.com` and `applinks:cankercore.com`, referenced
+  by `CODE_SIGN_ENTITLEMENTS`.
   Automatic signing enables the capability on the App ID.
 - **Android:** copies the Kanko notification small icon from
   `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`.

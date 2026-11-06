@@ -201,13 +201,19 @@ export function patchInfoPlist(text: string): PatchResult {
 }
 
 /**
- * Associated Domains, so iOS trusts the app with cankercore.com's saved
- * passwords: iCloud Keychain autofill and strong-password suggestions in the
- * sign-in forms. The other half is public/.well-known/apple-app-site-association,
- * which names this app (team 4J28Z4QS4C) back.
+ * Associated Domains, so iOS trusts the app with cankercore.com: its saved
+ * passwords (webcredentials: iCloud Keychain autofill and strong-password
+ * suggestions in the sign-in forms) and the universal link the iOS system
+ * sign-in returns through (applinks: /native-auth/callback, which only this
+ * app can then receive). The other half is
+ * public/.well-known/apple-app-site-association, which names this app
+ * (team 4J28Z4QS4C) back.
  */
 export const ENTITLEMENTS_PATH = 'App/App.entitlements';
-export const ASSOCIATED_DOMAINS = ['webcredentials:cankercore.com'];
+export const ASSOCIATED_DOMAINS = [
+  'webcredentials:cankercore.com',
+  'applinks:cankercore.com'
+];
 const ASSOCIATED_DOMAINS_KEY =
   '<key>com.apple.developer.associated-domains</key>';
 
