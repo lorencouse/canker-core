@@ -20,6 +20,7 @@ export default function SoreMarker({
   filterId,
   onPointerDown,
   onSelect,
+  onActivate,
   onNudge
 }: {
   x: number;
@@ -33,6 +34,8 @@ export default function SoreMarker({
   filterId: string;
   onPointerDown: (e: React.PointerEvent<SVGGElement>) => void;
   onSelect: () => void;
+  /** Enter or Space: what a tap does, for a keyboard. */
+  onActivate?: () => void;
   /** Arrow-key movement in percent of the view, only while draggable. */
   onNudge?: (dx: number, dy: number) => void;
 }) {
@@ -42,7 +45,7 @@ export default function SoreMarker({
   const onKeyDown = (e: React.KeyboardEvent<SVGGElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onSelect();
+      (onActivate ?? onSelect)();
       return;
     }
     if (!draggable || !onNudge) return;
