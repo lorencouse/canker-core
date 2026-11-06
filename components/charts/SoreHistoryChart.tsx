@@ -7,7 +7,7 @@ import { ChartContainer, ChartTooltip, type ChartConfig } from '@/components/ui/
 import type { Sore } from '@/types';
 import { getSeverityColor } from '@/utils/getColor';
 import { useIsDark } from '@/utils/hooks/useIsDark';
-import { dayKey } from '@/utils/readings';
+import { dayKey, daysBetween } from '@/utils/readings';
 
 /**
  * One sore's course: width by day as a line, each point coloured by that
@@ -21,7 +21,7 @@ export default function SoreHistoryChart({ sore }: { sore: Sore }) {
     () =>
       sore.readings.map((r, i) => ({
         day: dayKey(new Date(r.recorded_at)),
-        n: Math.floor((new Date(r.recorded_at).getTime() - new Date(sore.created_at).getTime()) / 86_400_000) + 1,
+        n: daysBetween(new Date(sore.created_at), new Date(r.recorded_at)) + 1,
         size: r.size,
         pain: r.pain,
         note: r.note,
