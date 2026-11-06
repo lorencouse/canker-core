@@ -9,10 +9,13 @@ Canker Core is a web app for tracking and managing your mouth sores. It is built
 - **Daily readings** — width in mm and pain 1–10, one reading per sore per
   day, with an optional note. Same-day changes correct the reading; a new day
   appends one.
-- **Today** — the check-in screen: every open sore with its sliders, a
-  "same as last time" shortcut, and the day's log of suspected triggers and
-  treatments tried. A daily reminder on iOS/Android.
-- **Healed / reopen**, with healed sores hidden from the map by default.
+- **Today** — the check-in screen: every open sore with its sliders and
+  one-tap width presets, a "same as last time" shortcut per sore (and one for
+  all of them), and the day's log of suspected triggers and treatments tried,
+  with a link to repeat yesterday's treatments. Leaving with unsaved changes
+  asks first. A daily reminder on iOS/Android.
+- **Healed / reopen**, with an Undo straight after marking healed, and healed
+  sores hidden from the map by default.
 - **History** — headline figures (open now, typical days to heal, worst pain,
   most common spot), size-over-time chart, a patterns tally of what was
   logged before each sore, and each sore's own course with its notes.

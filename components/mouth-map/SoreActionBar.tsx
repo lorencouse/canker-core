@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Check, Plus, RotateCcw, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { ToastAction } from '@/components/ui/Toasts/toast';
 import {
   Dialog,
   DialogContent,
@@ -20,8 +21,11 @@ import {
   upsertSores,
   type ActionResult
 } from '@/utils/actions/soreActions';
+import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
 import { localTimeZone } from '@/utils/readings';
+
+let healedUndo: { dismiss: () => void } | null = null;
 
 /**
  * The map's editing actions: add, log today, mark healed, delete, and the
@@ -61,6 +65,8 @@ function useMapActions() {
 
   const begin = (next: 'add' | 'edit') => {
     tap();
+    healedUndo?.dismiss();
+    healedUndo = null;
     setSnapshot(sores);
     if (next === 'add') setSelectedSore(null);
     setMode(next);
@@ -94,18 +100,32 @@ function useMapActions() {
     setMode('view');
   };
 
-  const setHealed = async (healedAt: string | null) => {
-    if (!selectedSore) return;
+  const setHealed = async (healedAt: string | null, sore = selectedSore) => {
+    if (!sore) return;
     setBusy(true);
     try {
-      const result = await setSoreHealed(selectedSore.id, healedAt);
+      const result = await setSoreHealed(sore.id, healedAt);
       if (failed(result)) return;
-      const updated = { ...selectedSore, healed_at: healedAt };
+      const updated = { ...sore, healed_at: healedAt };
       setSores((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
       // A healed sore leaves the map (unless healed ones are shown), so
       // keeping it selected would leave the details pointing at nothing.
       setSelectedSore(healedAt ? null : updated);
       notify('success');
+      // Healed is one tap, so it is one tap to take back.
+      if (healedAt)
+        healedUndo = toast({
+          title: 'Marked healed.',
+          action: (
+            <ToastAction
+              altText="Undo marking this sore healed"
+              className="tap-target"
+              onClick={() => setHealed(null, sore)}
+            >
+              Undo
+            </ToastAction>
+          )
+        });
     } finally {
       setBusy(false);
     }
@@ -166,7 +186,18 @@ export function EditingBar({ place }: { place: 'map' | 'detail' }) {
   if (!editing) return null;
   if ((place === 'detail') !== Boolean(selectedSore)) return null;
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div
+      className={cn(
+        'grid grid-cols-2 gap-2',
+        /*
+         * Once a sore is being placed or logged, its reading runs below the
+         * map and Done would be a scroll away; on a phone it floats over the
+         * tab bar instead, like Today's Save.
+         */
+        place === 'detail' &&
+          'fixed inset-x-0 bottom-[calc(var(--tab-bar-h)+var(--safe-bottom))] z-30 border-t border-border bg-background px-4 py-2.5 lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:p-0'
+      )}
+    >
       <Button
         type="button"
         variant="outline"

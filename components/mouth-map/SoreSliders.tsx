@@ -64,7 +64,7 @@ const SoreSliders: React.FC = () => {
       */}
       <p className="text-sm text-muted-foreground">
         {mode === 'add'
-          ? 'Set its first reading. Drag the mark to move it.'
+          ? 'Set its first reading. Tap the map to move it.'
           : loggedToday
             ? 'Correcting today’s reading. Drag the mark to move it.'
             : 'Any change logs today’s reading. Drag the mark to move it.'}

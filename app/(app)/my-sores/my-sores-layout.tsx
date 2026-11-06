@@ -8,6 +8,8 @@ import {
 import { OpenSoresList, SoreDetail } from '@/components/SoreDetails';
 import { SoreProvider, useSoreContext } from '@/context/SoreContext';
 import { User, Sore } from '@/types';
+import { cn } from '@/utils/cn';
+import { useUnsavedGuard } from '@/utils/hooks/useUnsavedGuard';
 
 /**
  * The mouth map screen. Its question is "where are my sores, and how is
@@ -44,12 +46,27 @@ export const MySoresLayout = ({
 );
 
 function MySoresScreen({ user }: { user: User }) {
-  const { sores, selectedSore } = useSoreContext();
+  const { sores, selectedSore, mode, snapshot } = useSoreContext();
+  // Anything placed, moved or logged since the session opened. State
+  // updates replace a sore's object, so an untouched one is still in the
+  // snapshot by reference.
+  const dirty =
+    mode !== 'view' &&
+    snapshot !== null &&
+    (sores.length !== snapshot.length ||
+      sores.some((s) => !snapshot.includes(s)));
+  useUnsavedGuard(dirty);
   const open = sores.filter((s) => !s.healed_at).length;
   const healed = sores.length - open;
 
   return (
-    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-x-8 px-4 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:px-6 lg:py-8">
+    <div
+      className={cn(
+        'mx-auto grid max-w-6xl grid-cols-1 gap-x-8 px-4 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:px-6 lg:py-8',
+        // Room under the reading for the Done bar that floats over it.
+        mode !== 'view' && selectedSore && 'pb-28 lg:pb-8'
+      )}
+    >
       <header className="flex flex-col gap-3.5 lg:col-span-2 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <div>
           <h1 className="text-2xl leading-tight lg:text-3xl">Your mouth map</h1>

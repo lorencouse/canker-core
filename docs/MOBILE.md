@@ -211,8 +211,9 @@ One layout in CSS, two arrangements:
 
 The editing session's undo snapshot lives in `SoreContext` rather than in a
 component, because its controls are split across the screen: the add button
-under the title, Cancel and Done under the map, the sore's own actions in
-its detail.
+under the title, Cancel and Done under the map (floating over the tab bar
+on a phone once a sore's reading is open, like Today's Save), the sore's
+own actions in its detail.
 
 ## Conventions
 
