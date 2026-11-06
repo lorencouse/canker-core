@@ -51,7 +51,9 @@ export default function PrivacyPage() {
           create an account, those two facts are saved with it, which is how
           Canker Core tells which articles help people start tracking. The only
           other measure is a count of how many accounts go on to log a reading,
-          worked out from the readings themselves.
+          worked out from the readings themselves. A second cookie, named tz,
+          stores only your device’s time zone so dates show correctly; it is not
+          used for tracking.
         </p>
       </section>
 

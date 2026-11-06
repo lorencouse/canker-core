@@ -10,6 +10,7 @@ import {
 } from '@/components/seo/JsonLd';
 import { Toaster } from '@/components/ui/Toasts/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
+import TimeZoneCookie from '@/components/time-zone/TimeZoneCookie';
 import { getURL } from '@/utils/helpers';
 import 'styles/main.css';
 
@@ -130,6 +131,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
           <JsonLd schema={organizationSchema} />
           <JsonLd schema={webSiteSchema} />
           <NativeBridge />
+          <TimeZoneCookie />
           {/* Toaster reads search params, which needs a boundary. */}
           <Suspense>
             <Toaster />

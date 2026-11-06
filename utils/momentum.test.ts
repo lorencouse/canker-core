@@ -229,4 +229,58 @@ describe('expectedMood', () => {
     const logs = [log('2026-11-04'), log('2026-11-05', ['coffee'])];
     expect(expectedMood([sore()], logs, server)).toBe('neutral');
   });
+
+  describe('with the device zone', () => {
+    it('is proud when a sore was placed yesterday evening on the device', () => {
+      // 20:00 in Los Angeles on Nov 4, seen at 10:00 there on Nov 5.
+      const lastNight = sore({ created_at: '2026-11-05T04:00:00.000Z' });
+      const morning = new Date('2026-11-05T18:00:00.000Z');
+      const logs = [log('2026-11-04')];
+      expect(expectedMood([lastNight], logs, morning)).toBe('gentle');
+      expect(
+        expectedMood([lastNight], logs, morning, 'America/Los_Angeles')
+      ).toBe('proud');
+    });
+
+    it('is gentle for a sore placed earlier on the device day', () => {
+      const fresh = sore({ created_at: '2026-11-05T16:00:00.000Z' });
+      const morning = new Date('2026-11-05T18:00:00.000Z');
+      expect(
+        expectedMood(
+          [fresh],
+          [log('2026-11-04')],
+          morning,
+          'America/Los_Angeles'
+        )
+      ).toBe('gentle');
+    });
+
+    it('counts the streak from the device day', () => {
+      // 00:30 on Nov 6 in Kolkata, still Nov 5 on the server.
+      const justAfterMidnight = new Date('2026-11-05T19:00:00.000Z');
+      const logs = [log('2026-11-03')];
+      expect(
+        expectedMood([sore()], logs, justAfterMidnight, 'Asia/Kolkata')
+      ).toBe('neutral');
+      expect(
+        expectedMood(
+          [sore()],
+          [log('2026-11-05')],
+          justAfterMidnight,
+          'Asia/Kolkata'
+        )
+      ).toBe('proud');
+    });
+
+    it('falls back to the guess for a zone that is not real', () => {
+      const lastNight = sore({ created_at: '2026-11-05T04:00:00.000Z' });
+      const morning = new Date('2026-11-05T18:00:00.000Z');
+      expect(
+        expectedMood([lastNight], [log('2026-11-04')], morning, 'Mars/Olympus')
+      ).toBe('gentle');
+      expect(expectedMood([lastNight], [log('2026-11-04')], morning, '')).toBe(
+        'gentle'
+      );
+    });
+  });
 });
