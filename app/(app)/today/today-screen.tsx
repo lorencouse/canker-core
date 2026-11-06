@@ -108,12 +108,15 @@ function Today({
     now !== null &&
     sores.some((s) => s.healed_at && isSameLocalDay(s.healed_at, now));
 
-  // Open on the view holding the most open sores, so the diagram is not
-  // empty when they are all on the cheeks.
-  const busiestView = useMemo<MouthView>(() => {
+  /*
+   * Open on the view holding the most open sores, so the diagram is not
+   * empty when they are all on the cheeks. Chosen once: a heal from the
+   * quick card must not move the map off the view the user is on.
+   */
+  const [busiestView] = useState<MouthView>(() => {
     const count = (v: MouthView) => open.filter((s) => s.view === v).length;
     return MOUTH_VIEWS.reduce((a, b) => (count(b) > count(a) ? b : a));
-  }, [open]);
+  });
 
   /*
    * The open sores still waiting for today's reading that have a last one
@@ -247,8 +250,7 @@ function Today({
               </Button>
             )}
 
-            {/* Keyed on the busiest view so it opens there once the day is known. */}
-            <MouthMap key={busiestView} user={user} initialView={busiestView} />
+            <MouthMap user={user} initialView={busiestView} />
 
             <section
               aria-labelledby="open-sores"
@@ -276,8 +278,8 @@ function Today({
                             {sore.zone}
                           </span>
                           <span className="tabular block truncate text-sm text-muted-foreground">
-                            Day {dayNumberOf(sore)} · {currentSize(sore)} mm,
-                            pain {currentPain(sore)}
+                            {now && `Day ${dayNumberOf(sore, now)} · `}
+                            {currentSize(sore)} mm, pain {currentPain(sore)}
                           </span>
                         </span>
                         <span

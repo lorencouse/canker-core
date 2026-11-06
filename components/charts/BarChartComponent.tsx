@@ -67,7 +67,20 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
   const router = useRouter();
   // The sore whose bar was tapped, shown in its quick card.
   const [tappedId, setTappedId] = useState<string | null>(null);
-  const tapped = sores.find((s) => s.id === tappedId) ?? null;
+  /*
+   * The card's last write, shown until the refreshed server props arrive,
+   * so it never offers a second write built from the stale sore.
+   */
+  const [written, setWritten] = useState<Sore | null>(null);
+  const [writtenFor, setWrittenFor] = useState(sores);
+  if (writtenFor !== sores) {
+    setWrittenFor(sores);
+    setWritten(null);
+  }
+  const tapped =
+    (written?.id === tappedId ? written : null) ??
+    sores.find((s) => s.id === tappedId) ??
+    null;
   const { rows, soreIds, painByDay } = useMemo(
     () => buildChart(sores),
     [sores]
@@ -164,7 +177,10 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
         open={tapped !== null}
         onOpenChange={(open) => !open && setTappedId(null)}
         // The page's data comes from the server, so a write refreshes it.
-        onChange={() => router.refresh()}
+        onChange={(next) => {
+          setWritten(next);
+          router.refresh();
+        }}
         footer={
           tapped && (
             <Button
