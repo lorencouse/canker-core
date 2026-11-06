@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import Kanko from '@/components/kanko/Kanko';
 import Prose from '@/components/marketing/Prose';
 import SeverityScale from '@/components/marketing/SeverityScale';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,14 @@ export default function AboutPage() {
       <Prose
         title="How it works"
         intro="Canker Core is a log, not a diagnosis. It records what you tell it about a sore so you can tell whether it is getting better."
+        mascot={
+          <Kanko
+            mood="neutral"
+            size={128}
+            priority
+            className="size-24 shrink-0 sm:size-32"
+          />
+        }
       >
         <section>
           <h2>Marking a sore</h2>
