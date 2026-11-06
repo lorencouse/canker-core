@@ -184,14 +184,28 @@ toward red in a drawing, that drawing is rejected.
 
 ### Moods and where they're used
 
-| Mood                              | Asset                       | Screen                                              |
-| --------------------------------- | --------------------------- | --------------------------------------------------- |
-| Proud, cheeks full, confetti      | `kanko-proud-streak.webp`   | Today, on a streak                                  |
-| Waving hello                      | `kanko-hello.webp`          | Welcome / first run (`components/onboarding`)       |
-| Curious, peeking over a box       | `kanko-curious-empty.webp`  | Empty states (no sores yet, empty history)          |
-| Gentle, hugging a lavender pillow | `kanko-gentle-bad-day.webp` | After logging a high-severity reading or a new sore |
-| Sleepy, nightcap, moon            | `kanko-sleepy-night.webp`   | Evening check-in reminder                           |
-| Puffed-cheek face on indigo       | `kanko-app-icon.webp`       | App icon, PWA icons, notification icon              |
+| Mood                              | Asset                       | Screen                                                     |
+| --------------------------------- | --------------------------- | ---------------------------------------------------------- |
+| Proud, cheeks full, confetti      | `kanko-proud-streak.webp`   | Today, on a streak                                         |
+| Waving hello                      | `kanko-hello.webp`          | Welcome / first run (`components/onboarding`)              |
+| Curious, peeking over a box       | `kanko-curious-empty.webp`  | Empty states (no sores yet, empty history)                 |
+| Gentle, hugging a lavender pillow | `kanko-gentle-bad-day.webp` | After logging a high-severity reading or a new sore        |
+| Sleepy, nightcap, moon            | `kanko-sleepy-night.webp`   | Evening check-in reminder                                  |
+| Puffed-cheek face on indigo       | `kanko-app-icon.webp`       | App icon, PWA icons, notification icon                     |
+| Pointing                          | `kanko-point.webp`          | Marketing home, how-it-works step 1                        |
+| Holding a phone                   | `kanko-phone.webp`          | Marketing home, how-it-works step 2                        |
+| Magnifying glass                  | `kanko-magnify.webp`        | Marketing home, how-it-works step 3                        |
+| Reading                           | `kanko-reading.webp`        | Blog listing only (never inside an article)                |
+| Lost, map in paw                  | `kanko-lost.webp`           | Not-found and error pages (`LostScreen`)                   |
+| Medal                             | `kanko-medal.webp`          | Today, after marking a sore healed (replaces streak Kanko) |
+| Envelope                          | `kanko-envelope.webp`       | Sign-in "Check your email" screens                         |
+| Clipboard                         | `kanko-clipboard.webp`      | Settings / Profile                                         |
+| Holding a cut cable               | `kanko-offline.webp`        | Native offline shell (`native/shell/index.html`)           |
+
+Waving hello also sits beside the marketing home headline; plain front-facing
+Kanko (neutral) is on About and the loading skeleton. All Kanko images are
+decorative (`alt=""`, `aria-hidden`). `components/kanko/moods.ts` lists what
+ships.
 
 Loren chose the original gentle drawing (half-closed, calm eyes) over a
 wide-eyed redraw. Don't "fix" it.
@@ -208,7 +222,10 @@ In light mode the shipped art has transparent backgrounds (cut out by
 edge shows; no edge mask is used. Dark mode uses separate art drawn natively
 on the dark ground (masters in `assets/2026-11-05-kanko/dark/`), which the
 same script shifts so its ground matches the page (`#0f1033`), or the card
-(`#191a48`) for curious Kanko, which sits inside cards.
+(`#191a48`) for curious Kanko, which sits inside cards. The masters carry a faint vignette, so
+ground within a few levels of the target is then set to it exactly (and eased
+a little further out), and the script fails if any keyed block drifts after
+encoding.
 
 ## Voice
 
@@ -247,7 +264,8 @@ Loren's answers to the builder check:
   cleaner face crop may need one small image batch (Loren's go first).
 - **Articles and blog: a quieter version, no Kanko.** Content and medical
   pages get the new colours and fonts, toned down (less sunflower, no
-  celebration styling), and Kanko does not appear on them. The SVG diagrams
+  celebration styling), and Kanko does not appear on them. The one exception
+  is the blog listing page, which carries reading Kanko; articles never do. The SVG diagrams
   keep their job.
 
 My calls, settled without Loren because they don't change what gets built:

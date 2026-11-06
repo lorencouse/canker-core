@@ -1,4 +1,5 @@
 import Kanko from '@/components/kanko/Kanko';
+import type { KankoMood } from '@/components/kanko/moods';
 import type { DayLog, Sore } from '@/types';
 import type { Answer } from '@/utils/course';
 import {
@@ -17,17 +18,23 @@ import { dayKey } from '@/utils/readings';
  * in, which the caller keeps to what has been saved, so dragging a slider
  * never changes them. In the neutral state the headline and note come from
  * `answer`, which deliberately follows unsaved edits.
+ *
+ * `celebrate` swaps Kanko's pose for a moment (the medal, just after a sore
+ * is marked healed) at the same size, so nothing moves and there is only
+ * ever one Kanko on the screen.
  */
 export default function StreakBlock({
   sores,
   logs,
   now,
-  answer
+  answer,
+  celebrate
 }: {
   sores: Sore[];
   logs: DayLog[];
   now: Date;
   answer: Answer;
+  celebrate?: KankoMood;
 }) {
   const today = dayKey(now);
   const mood = todayMood(sores, logs, now);
@@ -57,7 +64,12 @@ export default function StreakBlock({
       <time dateTime={today} className="text-sm text-muted-foreground">
         {dateLine}
       </time>
-      <Kanko mood={mood} size={176} priority className="-my-1 size-44" />
+      <Kanko
+        mood={celebrate ?? mood}
+        size={176}
+        priority
+        className="-my-1 size-44"
+      />
       <h1 className="text-balance text-2xl leading-tight lg:text-3xl">
         {headline}
       </h1>

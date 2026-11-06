@@ -8,13 +8,22 @@ import { KANKO } from './moods';
 const publicDir = path.resolve(__dirname, '../../public');
 
 describe('KANKO', () => {
-  it('has all five moods', () => {
+  it('has every mood', () => {
     expect(Object.keys(KANKO).sort()).toEqual([
+      'clipboard',
       'curious',
+      'envelope',
       'gentle',
       'hello',
+      'lost',
+      'magnify',
+      'medal',
       'neutral',
-      'proud'
+      'offline',
+      'phone',
+      'point',
+      'proud',
+      'reading'
     ]);
   });
 
@@ -50,6 +59,37 @@ describe('KANKO', () => {
         for (let c = 0; c < 3; c++) {
           const v = data[(y * info.width + x) * 3 + c];
           expect(Math.abs(v - target[c])).toBeLessThanOrEqual(3);
+        }
+      }
+
+      // No patch of ground drifts: every 16px block of plain ground in the
+      // top third (above the contact shadow) averages within 2 levels, so
+      // the art shows no square on the page. Blocks touching the figure,
+      // stars or props are skipped.
+      const B = 16;
+      for (let by = 0; by + B <= info.height / 3; by += B) {
+        for (let bx = 0; bx + B <= info.width; bx += B) {
+          const sum = [0, 0, 0];
+          let ground = true;
+          for (let y = by; y < by + B && ground; y++) {
+            for (let x = bx; x < bx + B; x++) {
+              const i = (y * info.width + x) * 3;
+              const d = Math.hypot(
+                data[i] - target[0],
+                data[i + 1] - target[1],
+                data[i + 2] - target[2]
+              );
+              if (d > 12) {
+                ground = false;
+                break;
+              }
+              for (let c = 0; c < 3; c++) sum[c] += data[i + c];
+            }
+          }
+          if (!ground) continue;
+          for (let c = 0; c < 3; c++) {
+            expect(Math.abs(sum[c] / (B * B) - target[c])).toBeLessThan(2);
+          }
         }
       }
     }

@@ -27,7 +27,16 @@ const moods = {
   proud: 'kanko-proud-streak.webp',
   hello: 'kanko-hello.webp',
   curious: 'kanko-curious-empty.webp',
-  gentle: 'kanko-gentle-bad-day.webp'
+  gentle: 'kanko-gentle-bad-day.webp',
+  point: 'kanko-point.webp',
+  phone: 'kanko-phone.webp',
+  magnify: 'kanko-magnify.webp',
+  reading: 'kanko-reading.webp',
+  lost: 'kanko-lost.webp',
+  medal: 'kanko-medal.webp',
+  envelope: 'kanko-envelope.webp',
+  clipboard: 'kanko-clipboard.webp',
+  offline: 'kanko-offline.webp'
 };
 
 // The art is painted on a flat lavender ground. The background is the region
@@ -204,10 +213,27 @@ const darkMoods = {
   hello: PAGE_DARK,
   gentle: PAGE_DARK,
   neutral: PAGE_DARK,
-  curious: CARD_DARK
+  curious: CARD_DARK,
+  point: PAGE_DARK,
+  phone: PAGE_DARK,
+  magnify: PAGE_DARK,
+  reading: PAGE_DARK,
+  lost: PAGE_DARK,
+  medal: PAGE_DARK,
+  envelope: PAGE_DARK,
+  clipboard: PAGE_DARK,
+  offline: PAGE_DARK
 };
 const BORDER_COLS = 8;
 const SMOOTH = 24; // rows either side for the moving average
+// The masters carry a faint vignette inside the border, a few levels off the
+// ground, which showed as a square on the page. Ground within KEY_EXACT of
+// the target is set to it exactly; up to KEY_SOFT it is eased towards it, so
+// the contact shadow and fur edges keep their shape.
+const KEY_EXACT = 6;
+const KEY_SOFT = 14;
+const KEY_BLOCK = 16; // px; verified ground blocks
+const KEY_MAX_DRIFT = 2; // mean levels a keyed block may sit off after encoding (lossy WebP leaves about 1)
 
 const groundCorrected = async (pipeline, target) => {
   const { data, info } = await pipeline
@@ -268,7 +294,52 @@ const groundCorrected = async (pipeline, target) => {
       }
     }
   }
-  return sharp(data, { raw: { width, height, channels: 3 } });
+  const keyed = new Uint8Array(width * height);
+  for (let p = 0; p < width * height; p++) {
+    const i = p * 3;
+    const d = Math.hypot(
+      data[i] - target[0],
+      data[i + 1] - target[1],
+      data[i + 2] - target[2]
+    );
+    if (d >= KEY_SOFT) continue;
+    const t = d <= KEY_EXACT ? 0 : (d - KEY_EXACT) / (KEY_SOFT - KEY_EXACT);
+    for (let c = 0; c < 3; c++) {
+      data[i + c] = Math.round(target[c] + t * (data[i + c] - target[c]));
+    }
+    if (d <= KEY_EXACT) keyed[p] = 1;
+  }
+  return { img: sharp(data, { raw: { width, height, channels: 3 } }), keyed };
+};
+
+/**
+ * Worst mean drift from the target, in levels, over the KEY_BLOCK squares
+ * that are wholly keyed ground: what an eye would see as a patch.
+ */
+const groundDrift = (data, width, height, keyed, target) => {
+  let worst = 0;
+  for (let by = 0; by + KEY_BLOCK <= height; by += KEY_BLOCK) {
+    for (let bx = 0; bx + KEY_BLOCK <= width; bx += KEY_BLOCK) {
+      const sum = [0, 0, 0];
+      let whole = true;
+      for (let y = by; y < by + KEY_BLOCK && whole; y++) {
+        for (let x = bx; x < bx + KEY_BLOCK; x++) {
+          const p = y * width + x;
+          if (!keyed[p]) {
+            whole = false;
+            break;
+          }
+          for (let c = 0; c < 3; c++) sum[c] += data[p * 3 + c];
+        }
+      }
+      if (!whole) continue;
+      for (let c = 0; c < 3; c++) {
+        const mean = sum[c] / (KEY_BLOCK * KEY_BLOCK);
+        worst = Math.max(worst, Math.abs(mean - target[c]));
+      }
+    }
+  }
+  return worst;
 };
 
 const darkDir = path.join(masters, 'dark');
@@ -301,8 +372,9 @@ for (const [mood, target] of Object.entries(darkMoods)) {
   const base = await img.resize(SIZE, SIZE).removeAlpha().raw().toBuffer();
   const aim = [...target];
   let worst = Infinity;
-  for (let pass = 0; pass < 6 && worst > 1; pass++) {
-    const fixed = await groundCorrected(
+  let drift = Infinity;
+  for (let pass = 0; pass < 6 && (worst > 1 || drift > KEY_MAX_DRIFT); pass++) {
+    const { img: fixed, keyed } = await groundCorrected(
       sharp(Buffer.from(base), {
         raw: { width: SIZE, height: SIZE, channels: 3 }
       }),
@@ -334,9 +406,13 @@ for (const [mood, target] of Object.entries(darkMoods)) {
       }
     }
     for (let c = 0; c < 3; c++) aim[c] += target[c] - got[c];
+    drift = groundDrift(data, info.width, info.height, keyed, target);
   }
   if (worst > 2) {
     throw new Error(`${mood} dark ground is ${worst} levels off its target`);
+  }
+  if (drift > KEY_MAX_DRIFT) {
+    throw new Error(`${mood} dark ground drifts ${drift.toFixed(2)} levels`);
   }
 }
 
@@ -352,6 +428,12 @@ await copyFile(
   path.join(root, 'native/shell/kanko-face.webp')
 );
 
+// The offline shell is static and served without the site, so it carries
+// its own copy of the offline pose, light and dark.
+for (const name of ['kanko-offline.webp', 'kanko-offline-dark.webp']) {
+  await copyFile(path.join(out, name), path.join(root, 'native/shell', name));
+}
+
 console.log(
-  `Wrote 6 images (plus 5 dark) to ${path.relative(root, out)}, plus the shell face`
+  `Wrote ${Object.keys(moods).length + 1} images (plus ${Object.keys(darkMoods).length} dark) to ${path.relative(root, out)}, plus the shell face`
 );

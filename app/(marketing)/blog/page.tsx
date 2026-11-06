@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import Kanko from '@/components/kanko/Kanko';
 import RecurrenceSketch from '@/components/marketing/RecurrenceSketch';
 import {
   groupedArticles,
@@ -49,7 +50,17 @@ export default function BlogIndexPage() {
   return (
     <div className="container py-12 sm:py-16 lg:py-20">
       <header className="max-w-3xl animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
-        <h1 className="text-display">Writing</h1>
+        {/* Kanko reads here, on the index only; the articles themselves are
+            medical writing and carry no mascot. */}
+        <div className="flex items-end justify-between gap-4">
+          <h1 className="min-w-0 text-display">Writing</h1>
+          <Kanko
+            mood="reading"
+            size={144}
+            priority
+            className="size-24 shrink-0 sm:size-36"
+          />
+        </div>
         <p className="mt-5 text-xl leading-snug sm:text-2xl">
           Every health site explains what a canker sore is. These are about the
           part that is hard to find out: what happens to one over the next
