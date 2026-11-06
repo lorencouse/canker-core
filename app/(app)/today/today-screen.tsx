@@ -311,7 +311,8 @@ export default function TodayScreen({
 
 /**
  * Credit for a sore that has closed: Kanko with a medal and one plain line.
- * It eases in, unless the person has asked for less motion.
+ * It eases in, unless the person has asked for less motion. No card fill:
+ * the dark medal art is drawn on the page colour, not the card colour.
  */
 function HealedNote({
   sore,
@@ -323,7 +324,7 @@ function HealedNote({
   return (
     <div
       role="status"
-      className="surface-worksheet flex items-center gap-4 p-4 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-500 sm:p-5"
+      className="flex items-center gap-4 rounded-worksheet border border-border p-4 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-500 sm:p-5"
     >
       <Kanko mood="medal" size={96} className="size-24 shrink-0" />
       <div className="min-w-0 flex-1">
