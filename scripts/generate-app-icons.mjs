@@ -62,21 +62,45 @@ const square = async (size) => (await faceSquare(size, FACE_FILL)).png();
  * Full-body Kanko centred on a flat colour, `fraction` of the width. Small
  * enough that capacitor-assets' arbitrary crops never reach him. `background`
  * must be the source's own ground when the source is opaque.
+ *
+ * The figure is sized and centred by its trimmed box. An opaque source is
+ * pasted whole, untrimmed: cropping it to that box would cut his soft contact shadow off
+ * at a straight edge before it has faded into the ground.
  */
 const splash = async (size, fraction, source, background) => {
-  const body = await sharp(out('public/images/kanko', source))
+  const file = out('public/images/kanko', source);
+  const target = Math.round(size * fraction);
+  const ground = sharp({
+    create: { width: size, height: size, channels: 3, background }
+  });
+  const { hasAlpha, width, height } = await sharp(file).metadata();
+  if (hasAlpha) {
+    const body = await sharp(file)
+      .trim({ threshold: 10 })
+      .resize({ width: target, height: target, fit: 'inside' })
+      .png()
+      .toBuffer();
+    return ground.composite([{ input: body, gravity: 'centre' }]).png();
+  }
+  const { info: box } = await sharp(file)
     .trim({ threshold: 10 })
-    .resize({
-      width: Math.round(size * fraction),
-      height: Math.round(size * fraction),
-      fit: 'inside'
-    })
+    .toBuffer({ resolveWithObject: true });
+  const scale = Math.min(target / box.width, target / box.height);
+  const body = await sharp(file)
+    .resize(Math.round(width * scale), Math.round(height * scale))
     .png()
     .toBuffer();
-  return sharp({
-    create: { width: size, height: size, channels: 3, background }
-  })
-    .composite([{ input: body, gravity: 'centre' }])
+  // Centre the figure's box, not the whole pasted image.
+  const cx = (-box.trimOffsetLeft + box.width / 2) * scale;
+  const cy = (-box.trimOffsetTop + box.height / 2) * scale;
+  return ground
+    .composite([
+      {
+        input: body,
+        left: Math.round(size / 2 - cx),
+        top: Math.round(size / 2 - cy)
+      }
+    ])
     .png();
 };
 
