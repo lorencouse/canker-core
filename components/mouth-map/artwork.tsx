@@ -203,8 +203,8 @@ function Lip({
       <path
         d={`M ${x0 + w * 0.12} ${seamY} Q ${cx} ${seamC} ${x1 - w * 0.12} ${seamY}`}
         fill="none"
-        // The lips are kept pale (see styles/main.css), too pale for a
-        // lip-deep seam to show, so the seam takes the soft ink instead.
+        // Soft ink rather than lip-deep: the lip gradient's stops sit too
+        // close together for a seam drawn in one of them to show.
         stroke={mm('ink-soft')}
         strokeWidth="2.5"
         strokeLinecap="round"

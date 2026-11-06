@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
-import { contrastRatio, readTokens } from './contrast';
+import { contrastRatio, deltaE, deltaE2000, readTokens } from './contrast';
 
 const css = readFileSync(join(process.cwd(), 'styles/main.css'), 'utf8');
 
@@ -77,9 +77,12 @@ describe('palette anchors', () => {
 
 /*
  * The mouth map's tissue against the severity ramp. A sore is found by its
- * colour, so no tissue may make any pain level harder to see than the old
- * rose-grey tissue did. The old fills are frozen here as the baseline: for
- * each pain level, its weakest contrast against any old fill, per theme.
+ * colour, so every pain level must stay perceptually distinct from every
+ * fill it can sit on: CIEDE2000 of at least 12, and never less than the old
+ * rose-grey tissue gave the same pair. WCAG luminance contrast is the wrong
+ * yardstick here because it ignores hue. The old fills are frozen below;
+ * the lips, which had no tokens of their own, were drawn in the old tissue
+ * stops, so they answer to the weakest of those.
  */
 const MM_FILLS = [
   'tissue',
@@ -93,10 +96,22 @@ const MM_FILLS = [
   'palate',
   'throat',
   'tooth',
-  'tooth-shade'
+  'tooth-shade',
+  'lip',
+  'lip-light',
+  'lip-deep'
 ];
-const LIP_FILLS = ['lip', 'lip-light', 'lip-deep'];
+/* The fills a map label is drawn on (roof, tongue, floor). */
+const LABELLED = [
+  'tissue',
+  'tissue-light',
+  'palate',
+  'tongue',
+  'tongue-light',
+  'tongue-deep'
+];
 const SEV = Array.from({ length: 10 }, (_, i) => `sev-${i + 1}`);
+const MIN_DELTA_E = 12;
 
 const OLD_MM: Record<':root' | '.dark', Record<string, string>> = {
   ':root': {
@@ -129,29 +144,29 @@ const OLD_MM: Record<':root' | '.dark', Record<string, string>> = {
   }
 };
 
-/* The approved sketch's lip pink (#E9C2D0), which sat too near pale pain. */
-const SKETCH_LIP = '338 47% 84%';
-
-const weakest = (sev: string, fills: string[]) =>
-  Math.min(...fills.map((fill) => contrastRatio(sev, fill)));
+/** What the old palette gave this sev colour on the same fill. */
+const oldDeltaE = (scope: ':root' | '.dark', sev: string, fill: string) => {
+  const old = OLD_MM[scope];
+  const stops = fill.startsWith('lip')
+    ? [old['tissue-light'], old.tissue, old['tissue-deep']]
+    : [old[fill]];
+  return Math.min(...stops.map((stop) => deltaE(sev, stop)));
+};
 
 describe.each([':root', '.dark'] as const)('mouth map in %s', (scope) => {
   const tokens = readTokens(css, scope);
-  const fills = [...MM_FILLS, ...LIP_FILLS];
 
-  it.each(SEV)('keeps %s at least as findable as on the old tissue', (sev) => {
-    const baseline = weakest(tokens[sev], Object.values(OLD_MM[scope]));
-    for (const fill of fills) {
+  it.each(SEV)('keeps %s distinct from every tissue fill', (sev) => {
+    for (const fill of MM_FILLS) {
       expect(tokens[`mm-${fill}`], `--mm-${fill}`).toBeDefined();
-      expect(
-        contrastRatio(tokens[sev], tokens[`mm-${fill}`]),
-        `${sev} on --mm-${fill}`
-      ).toBeGreaterThanOrEqual(baseline);
+      const now = deltaE(tokens[sev], tokens[`mm-${fill}`]);
+      const floor = Math.max(MIN_DELTA_E, oldDeltaE(scope, tokens[sev], fill));
+      expect(now, `${sev} on --mm-${fill}`).toBeGreaterThanOrEqual(floor);
     }
   });
 
-  it('keeps map labels at 4.5:1 on every fill they can sit on', () => {
-    for (const fill of fills.filter((f) => !f.startsWith('tooth'))) {
+  it('keeps map labels at 4.5:1 on the fills they sit on and on the card', () => {
+    for (const fill of LABELLED) {
       expect(
         contrastRatio(tokens['mm-label'], tokens[`mm-${fill}`]),
         `--mm-label on --mm-${fill}`
@@ -163,15 +178,24 @@ describe.each([':root', '.dark'] as const)('mouth map in %s', (scope) => {
   });
 });
 
-describe('mouth map lips', () => {
-  it('keep pale pain easier to see than the sketch pink did', () => {
-    const tokens = readTokens(css, ':root');
-    const sevs = SEV.map((sev) => tokens[sev]);
-    const sketch = Math.min(...sevs.map((sev) => contrastRatio(sev, SKETCH_LIP)));
-    const lips = Math.min(
-      ...sevs.map((sev) => weakest(sev, LIP_FILLS.map((f) => tokens[`mm-${f}`])))
+describe('deltaE2000', () => {
+  // Sharma, Wu and Dalal (2005), test data pairs 1, 7 and 17.
+  it.each([
+    [[50, 2.6772, -79.7751], [50, 0, -82.7485], 2.0425],
+    [[50, 0, 0], [50, -1, 2], 2.3669],
+    [[50, 2.5, 0], [73, 25, -18], 27.1492]
+  ] as const)('matches the published value for %j vs %j', (a, b, want) => {
+    expect(
+      deltaE2000([...a] as [number, number, number], [...b] as [number, number, number])
+    ).toBeCloseTo(want, 4);
+  });
+
+  it('is zero for one colour and symmetric', () => {
+    expect(deltaE('240 85% 62%', '240 85% 62%')).toBeCloseTo(0, 6);
+    expect(deltaE('0 62% 88%', '268 44% 91%')).toBeCloseTo(
+      deltaE('268 44% 91%', '0 62% 88%'),
+      6
     );
-    expect(lips).toBeGreaterThan(sketch);
   });
 });
 
