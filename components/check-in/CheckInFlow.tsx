@@ -5,8 +5,9 @@ import { Loader2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/Toasts/use-toast';
-import type { Sore } from '@/types';
-import { setCheckInStatus } from '@/utils/actions/checkInActions';
+import type { DayLog, Sore } from '@/types';
+import { saveDayPatch, setCheckInStatus } from '@/utils/actions/checkInActions';
+import { applyPatchToLogs, type DayPatch } from '@/utils/check-in/patch';
 import {
   clearProgress,
   readProgress,
@@ -14,6 +15,7 @@ import {
 } from '@/utils/check-in/progress';
 import {
   buildSteps,
+  defaultDay,
   nextStepAfter,
   stepKey,
   type Step
@@ -21,9 +23,14 @@ import {
 import { notify, tap } from '@/utils/native';
 import { dayKey } from '@/utils/readings';
 
+import FinishStep from './FinishStep';
 import NewSoreAsk from './NewSoreAsk';
+import SleepStep from './SleepStep';
 import SoreStep from './SoreStep';
 import StepHeading from './StepHeading';
+import TagStep from './TagStep';
+
+const STATUS_FAILED = 'Could not save your check-in. Try again.';
 
 /**
  * The daily check-in: every open sore, then "Any new sores?", then the
@@ -36,20 +43,28 @@ import StepHeading from './StepHeading';
  * check-in starting again on any device.
  *
  * Mount it on the client only: the day and the resume point are read from
- * the device when it first renders.
+ * the device when it first renders. That clock is read once, so every write
+ * in one check-in (readings, habits, the status) lands on the same day even
+ * if it runs past midnight.
  */
 export default function CheckInFlow({
   sores: initialSores,
+  dayLogs,
+  manual,
   onClose
 }: {
   sores: Sore[];
+  /** Recent day logs, so habit screens open on what is already saved. */
+  dayLogs: DayLog[];
   /** Opened from the button rather than on its own; habit steps use it for their default day. */
   manual: boolean;
   onClose: (result: 'done' | 'skipped' | 'left') => void;
 }) {
-  const [today] = useState(() => dayKey(new Date()));
-  // Sores as this check-in has written them, including any added in it.
+  const [now] = useState(() => new Date());
+  const today = dayKey(now);
+  // Sores and logs as this check-in has written them, including any added in it.
   const [sores, setSores] = useState(initialSores);
+  const [logs, setLogs] = useState(dayLogs);
   const [steps, setSteps] = useState(() => buildSteps(initialSores));
   const [current, setCurrent] = useState(() => {
     const saved = readProgress(today);
@@ -77,6 +92,8 @@ export default function CheckInFlow({
         const result = await setCheckInStatus(today, 'done');
         if (!result.ok) return fail(result.error);
         clearProgress();
+      } catch {
+        return fail(STATUS_FAILED);
       } finally {
         setBusy(false);
       }
@@ -93,9 +110,35 @@ export default function CheckInFlow({
       if (!result.ok) return fail(result.error);
       clearProgress();
       onClose('skipped');
+    } catch {
+      fail(STATUS_FAILED);
     } finally {
       setBusy(false);
     }
+  };
+
+  /** One habit answer, written and then folded into the local logs. */
+  const saveHabit = async (day: string, patch: DayPatch): Promise<boolean> => {
+    try {
+      const result = await saveDayPatch(day, patch);
+      if (!result.ok) {
+        fail(result.error);
+        return false;
+      }
+    } catch {
+      fail('Could not save that answer. Try again.');
+      return false;
+    }
+    notify('success');
+    setLogs((prev) => applyPatchToLogs(prev, day, patch));
+    return true;
+  };
+
+  const habit = {
+    logs,
+    now,
+    onSave: saveHabit,
+    onNext: () => go('next')
   };
 
   const replaceSore = (next: Sore) =>
@@ -120,6 +163,7 @@ export default function CheckInFlow({
         return (
           <SoreStep
             sore={sore}
+            now={now}
             onChange={replaceSore}
             onNext={() => go('next')}
           />
@@ -136,38 +180,27 @@ export default function CheckInFlow({
             onNext={() => go('next')}
           />
         );
-      // Placeholders until the habit screens land; each takes `manual` for its default day.
       case 'sleep':
         return (
-          <Placeholder title="Sleep" onNext={() => go('next')} busy={busy} />
+          <SleepStep {...habit} initialDay={defaultDay('sleep', now, manual)} />
         );
       case 'food':
-        return (
-          <Placeholder title="Food" onNext={() => go('next')} busy={busy} />
-        );
       case 'health':
-        return (
-          <Placeholder
-            title="Health and mood"
-            onNext={() => go('next')}
-            busy={busy}
-          />
-        );
       case 'treatments':
         return (
-          <Placeholder
-            title="Treatments"
-            onNext={() => go('next')}
-            busy={busy}
+          <TagStep
+            {...habit}
+            kind={step.kind}
+            initialDay={defaultDay(step.kind, now, manual)}
           />
         );
       case 'finish':
         return (
-          <Placeholder
-            title="All logged"
-            nextLabel="Done"
-            onNext={() => onClose('done')}
-            busy={busy}
+          <FinishStep
+            sores={sores}
+            logs={logs}
+            now={now}
+            onDone={() => onClose('done')}
           />
         );
     }
@@ -188,10 +221,15 @@ export default function CheckInFlow({
           type="button"
           variant="ghost"
           size="icon"
-          aria-label="Close the check-in and finish it later"
+          aria-label={
+            step.kind === 'finish'
+              ? 'Close the check-in'
+              : 'Close the check-in and finish it later'
+          }
           onClick={() => {
             tap();
-            onClose('left');
+            // On the last screen the day is already recorded as done.
+            onClose(step.kind === 'finish' ? 'done' : 'left');
           }}
         >
           <X aria-hidden="true" className="!size-5" />
@@ -222,15 +260,13 @@ export default function CheckInFlow({
   );
 }
 
-/** A step whose screen is still to come: its title and a way past it. */
+/** A step with nothing to ask, such as a sore deleted elsewhere: its title and a way past it. */
 function Placeholder({
   title,
-  nextLabel = 'Next',
   onNext,
   busy
 }: {
   title: string;
-  nextLabel?: string;
   onNext: () => void;
   busy: boolean;
 }) {
@@ -248,7 +284,7 @@ function Placeholder({
         }}
       >
         {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
-        {nextLabel}
+        Next
       </Button>
     </div>
   );

@@ -65,15 +65,18 @@ function Placement({
     if (!placed) return;
     tap();
     setBusy(true);
+    const fail = (error: string) => {
+      notify('error');
+      toast({ variant: 'destructive', title: error });
+    };
     try {
       const result = await upsertSores([placed], localTimeZone());
-      if (!result.ok) {
-        notify('error');
-        toast({ variant: 'destructive', title: result.error });
-        return;
-      }
+      if (!result.ok) return fail(result.error);
       notify('success');
       onPlaced(placed);
+    } catch {
+      // The request itself failed (offline, server down): stay on the map.
+      fail('Could not save your changes. Try again.');
     } finally {
       setBusy(false);
     }
@@ -82,7 +85,10 @@ function Placement({
   return (
     <div className="grid gap-4">
       <StepHeading>Where is it?</StepHeading>
-      <MouthMap user={NO_USER} />
+      <MouthMap
+        user={NO_USER}
+        placedHint="Tap again to move it. Its reading comes next."
+      />
       <div className="grid grid-cols-2 gap-2">
         <Button
           type="button"

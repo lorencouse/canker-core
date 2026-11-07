@@ -1,4 +1,5 @@
 import type { CheckIn, Sore } from '@/types';
+import { addDays, dayKey } from '@/utils/readings';
 
 export type Step =
   | { kind: 'sore'; soreId: string }
@@ -41,6 +42,11 @@ export function defaultDay(
   if (manual && now.getHours() >= 12) return 'today';
   return kind === 'sleep' || kind === 'treatments' ? 'today' : 'yesterday';
 }
+
+/** The local day a habit screen's Today / Yesterday choice names. Steps the
+ * calendar, not 24 hours, so a daylight-saving night cannot skip or repeat a day. */
+export const resolveDay = (choice: 'today' | 'yesterday', now: Date): string =>
+  dayKey(choice === 'today' ? now : addDays(now, -1));
 
 export const shouldAutoStart = (checkIns: CheckIn[], today: string): boolean =>
   !checkIns.some((c) => c.day === today);

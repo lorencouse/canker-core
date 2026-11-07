@@ -4,6 +4,7 @@ import type { DayLog } from '@/types';
 import { FOOD_TRIGGERS, emptyDayLog } from '@/utils/day-log';
 import {
   applyPatch,
+  applyPatchToLogs,
   isBlankDayLog,
   mergeTriggers,
   validatePatch
@@ -122,5 +123,33 @@ describe('isBlankDayLog', () => {
       false
     );
     expect(isBlankDayLog({ ...emptyDayLog(DAY), note: 'x' })).toBe(false);
+  });
+});
+
+describe('applyPatchToLogs', () => {
+  const other = { ...emptyDayLog('2026-11-05'), treatments: ['Painkiller'] };
+
+  it('adds a row for a day with none', () => {
+    const logs = applyPatchToLogs([other], DAY, { food: [] });
+    expect(logs).toHaveLength(2);
+    expect(logs.find((l) => l.day === DAY)?.food_answered).toBe(true);
+    expect(logs[0]).toBe(other);
+  });
+
+  it('merges into the existing row', () => {
+    const today = { ...emptyDayLog(DAY), treatments: ['Numbing gel'] };
+    const logs = applyPatchToLogs([other, today], DAY, {
+      sleep: { hours: 7, quality: 4, source: 'manual' }
+    });
+    expect(logs).toHaveLength(2);
+    expect(logs[1]).toMatchObject({
+      sleep_hours: 7,
+      treatments: ['Numbing gel']
+    });
+  });
+
+  it('drops a row the patch leaves blank, as the server deletes it', () => {
+    const logs = applyPatchToLogs([other], '2026-11-05', { treatments: [] });
+    expect(logs).toEqual([]);
   });
 });

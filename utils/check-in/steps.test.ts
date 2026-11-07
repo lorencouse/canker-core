@@ -4,6 +4,7 @@ import {
   buildSteps,
   defaultDay,
   nextStepAfter,
+  resolveDay,
   shouldAutoStart,
   stepKey
 } from './steps';
@@ -101,5 +102,15 @@ describe('nextStepAfter', () => {
 
   it('leaves an unknown current step where it is', () => {
     expect(nextStepAfter(steps, 'sore:gone', 'next').current).toBe('sore:gone');
+  });
+});
+
+describe('resolveDay', () => {
+  it('is the local day for today', () => {
+    expect(resolveDay('today', new Date(2026, 10, 6, 23, 30))).toBe('2026-11-06');
+  });
+  it('steps back a calendar day for yesterday, across DST', () => {
+    expect(resolveDay('yesterday', new Date(2026, 2, 8, 8))).toBe('2026-03-07');
+    expect(resolveDay('yesterday', new Date(2026, 10, 2, 0, 30))).toBe('2026-11-01');
   });
 });

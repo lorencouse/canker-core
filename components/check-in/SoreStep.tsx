@@ -32,18 +32,20 @@ import StepHeading from './StepHeading';
  */
 export default function SoreStep({
   sore,
+  now,
   onChange,
   onNext,
   photoSlot
 }: {
   sore: Sore;
+  /** The check-in's clock, so every write in one check-in lands on the same day. */
+  now: Date;
   /** The sore as written, after a save or a heal. */
   onChange: (next: Sore) => void;
   onNext: () => void;
   /** Where the on-device photo control goes once there is one. */
   photoSlot?: ReactNode;
 }) {
-  const [now] = useState(() => new Date());
   const loggedToday = hasReadingOn(sore, now);
   // A note describes its own day, so only today's is brought back.
   const initialNote = loggedToday ? (latestReading(sore)?.note ?? '') : '';
@@ -84,6 +86,9 @@ export default function SoreStep({
         notify('success');
         onNext();
       }
+    } catch {
+      // The request itself failed (offline, server down): stay on the step.
+      fail('Could not save your changes. Try again.');
     } finally {
       setBusy(false);
     }

@@ -149,3 +149,21 @@ export const isBlankDayLog = (log: DayLog): boolean =>
   log.stress === null &&
   !log.food_answered &&
   !log.health_answered;
+
+/**
+ * The day logs with `patch` folded into `day`'s row, the way the server
+ * stores it: a row left blank is dropped, as the server deletes it. Lets the
+ * check-in keep its own copy current after each save without a refetch.
+ */
+export function applyPatchToLogs(
+  logs: DayLog[],
+  day: string,
+  patch: DayPatch
+): DayLog[] {
+  const next = applyPatch(logs.find((l) => l.day === day) ?? null, day, patch);
+  const rest = logs.filter((l) => l.day !== day);
+  if (isBlankDayLog(next)) return rest;
+  return logs.some((l) => l.day === day)
+    ? logs.map((l) => (l.day === day ? next : l))
+    : [...logs, next];
+}

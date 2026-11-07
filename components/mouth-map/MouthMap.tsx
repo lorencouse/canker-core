@@ -59,11 +59,14 @@ const HOME: Camera = { k: 1, tx: 0, ty: 0 };
 
 export default function MouthMap({
   user,
-  initialView
+  initialView,
+  placedHint = 'Tap again to move it, or set its reading below.'
 }: {
   user: User;
   /** The view to open on when no sore is selected. */
   initialView?: MouthView;
+  /** The add-mode line once a sore is placed, for screens that take its reading elsewhere. */
+  placedHint?: string;
 }) {
   const {
     sores,
@@ -440,9 +443,7 @@ export default function MouthMap({
         // Under the drawing, not on it: a floating hint covered the floor
         // of the mouth on a phone, which is exactly where people tap.
         <p className="text-base font-semibold">
-          {placed
-            ? 'Tap again to move it, or set its reading below.'
-            : 'Tap where the sore is, or name the place.'}
+          {placed ? placedHint : 'Tap where the sore is, or name the place.'}
         </p>
       )}
 
