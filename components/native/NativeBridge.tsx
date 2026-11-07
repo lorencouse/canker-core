@@ -178,13 +178,16 @@ export default function NativeBridge() {
 
   /* --- daily reminder ------------------------------------------------------ */
   useEffect(() => {
-    if (!isNative() || !Capacitor.isPluginAvailable('LocalNotifications')) return;
+    if (!isNative() || !Capacitor.isPluginAvailable('LocalNotifications'))
+      return;
     let remove: (() => void) | undefined;
     let gone = false;
 
     // Re-assert the schedule on launch (an OS update or a reinstall can drop
     // it) and open the check-in when the notification is tapped.
-    syncReminders().catch((error) => console.error('reminder sync failed', error));
+    syncReminders().catch((error) =>
+      console.error('reminder sync failed', error)
+    );
     (async () => {
       const { LocalNotifications } = await import(
         '@capacitor/local-notifications'

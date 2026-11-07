@@ -52,7 +52,10 @@ export function readReminder(slot: ReminderSlot): ReminderPref {
     const raw = window.localStorage.getItem(KEYS[slot]);
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<ReminderPref>;
-      if (typeof parsed.enabled === 'boolean' && /^\d{2}:\d{2}$/.test(parsed.time ?? ''))
+      if (
+        typeof parsed.enabled === 'boolean' &&
+        /^\d{2}:\d{2}$/.test(parsed.time ?? '')
+      )
         return { enabled: parsed.enabled, time: parsed.time! };
     }
   } catch {
@@ -89,7 +92,13 @@ function writeDeferredDay(day: string) {
 function tomorrowAt(time: string): Date {
   const [hour, minute] = time.split(':').map(Number);
   const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, hour, minute);
+  return new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    hour,
+    minute
+  );
 }
 
 type LocalNotificationsPlugin =
@@ -99,7 +108,7 @@ async function scheduleSlot(
   plugin: LocalNotificationsPlugin,
   slot: ReminderSlot,
   time: string,
-  once: boolean
+  startTomorrow: boolean
 ) {
   const [hour, minute] = time.split(':').map(Number);
   await plugin.schedule({
@@ -107,8 +116,13 @@ async function scheduleSlot(
       {
         id: IDS[slot],
         ...COPY[slot],
-        schedule: once
-          ? { at: tomorrowAt(time), allowWhileIdle: true }
+        schedule: startTomorrow
+          ? {
+              at: tomorrowAt(time),
+              repeats: true,
+              every: 'day' as const,
+              allowWhileIdle: true
+            }
           : { on: { hour, minute }, allowWhileIdle: true },
         extra: { path: PATH }
       }
@@ -136,14 +150,16 @@ export async function applyReminder(
 
   if (pref.enabled) {
     let { display } = await LocalNotifications.checkPermissions();
-    if (display !== 'granted') display = (await LocalNotifications.requestPermissions()).display;
+    if (display !== 'granted')
+      display = (await LocalNotifications.requestPermissions()).display;
     if (display !== 'granted') {
       writeReminder(slot, { ...pref, enabled: false });
       return false;
     }
     // Checked in today: keep tonight's nudge skipped, whatever just changed.
-    const skipTonight = slot === 'evening' && readDeferredDay() === dayKey(new Date());
-    await scheduleSlot(LocalNotifications, slot, pref.time, skipTonight);
+    const startTomorrow =
+      slot === 'evening' && readDeferredDay() === dayKey(new Date());
+    await scheduleSlot(LocalNotifications, slot, pref.time, startTomorrow);
   }
 
   writeReminder(slot, pref);
@@ -164,8 +180,8 @@ export async function syncReminders() {
 
 /**
  * Today's check-in is done, so skip tonight's evening nudge: cancel it and
- * schedule a one-shot for tomorrow. The next launch's syncReminders restores
- * the repeating schedule.
+ * schedule a daily repeat starting tomorrow. A later launch's syncReminders
+ * normalises it back to the plain repeating schedule.
  */
 export async function deferEveningReminder() {
   if (!remindersSupported()) return;
@@ -173,6 +189,12 @@ export async function deferEveningReminder() {
   if (!pref.enabled) return;
   const { LocalNotifications } = await import('@capacitor/local-notifications');
   await LocalNotifications.cancel({ notifications: [{ id: IDS.evening }] });
-  await scheduleSlot(LocalNotifications, 'evening', pref.time, true);
+  try {
+    await scheduleSlot(LocalNotifications, 'evening', pref.time, true);
+  } catch (error) {
+    // Don't leave the user with no evening nudge at all.
+    await scheduleSlot(LocalNotifications, 'evening', pref.time, false);
+    throw error;
+  }
   writeDeferredDay(dayKey(new Date()));
 }

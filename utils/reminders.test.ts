@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const plugin = vi.hoisted(() => ({
   cancel: vi.fn(async () => {}),
@@ -6,7 +6,9 @@ const plugin = vi.hoisted(() => ({
   checkPermissions: vi.fn(async () => ({ display: 'granted' })),
   requestPermissions: vi.fn(async () => ({ display: 'granted' }))
 }));
-vi.mock('@capacitor/local-notifications', () => ({ LocalNotifications: plugin }));
+vi.mock('@capacitor/local-notifications', () => ({
+  LocalNotifications: plugin
+}));
 vi.mock('@/utils/native', () => ({ isNative: () => true }));
 
 import {
@@ -30,10 +32,14 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 const scheduled = () =>
-  (plugin.schedule.mock.calls as unknown as Array<[{ notifications: any[] }]>).map(
-    (c) => c[0].notifications[0]
-  );
+  (
+    plugin.schedule.mock.calls as unknown as Array<[{ notifications: any[] }]>
+  ).map((c) => c[0].notifications[0]);
 
 describe('reminders', () => {
   it('schedules the morning reminder with its copy and deep link', async () => {
@@ -60,7 +66,10 @@ describe('reminders', () => {
   });
 
   it('reads the existing evening key and per-slot defaults', () => {
-    store.set('canker-core:reminder', JSON.stringify({ enabled: true, time: '21:30' }));
+    store.set(
+      'canker-core:reminder',
+      JSON.stringify({ enabled: true, time: '21:30' })
+    );
     expect(readReminder('evening')).toEqual({ enabled: true, time: '21:30' });
     expect(readReminder('morning')).toEqual({ enabled: false, time: '08:00' });
     store.clear();
@@ -74,8 +83,18 @@ describe('reminders', () => {
     expect(plugin.cancel).toHaveBeenCalledWith({ notifications: [{ id: 1 }] });
     const at: Date = scheduled()[0].schedule.at;
     const t = new Date();
-    const tomorrow = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1, 20, 0);
+    const tomorrow = new Date(
+      t.getFullYear(),
+      t.getMonth(),
+      t.getDate() + 1,
+      20,
+      0
+    );
     expect(at.getTime()).toBe(tomorrow.getTime());
+    expect(scheduled()[0].schedule).toMatchObject({
+      repeats: true,
+      every: 'day'
+    });
     expect(scheduled()[0].id).toBe(1);
   });
 
@@ -90,6 +109,10 @@ describe('reminders', () => {
     await deferEveningReminder();
     vi.clearAllMocks();
     await syncReminders();
+    expect(scheduled()[0].schedule).toMatchObject({
+      repeats: true,
+      every: 'day'
+    });
     expect(scheduled()[0].schedule.at).toBeInstanceOf(Date);
 
     store.set('canker-core:reminder-evening-deferred', '2000-01-01');
@@ -99,13 +122,37 @@ describe('reminders', () => {
       on: { hour: 20, minute: 0 },
       allowWhileIdle: true
     });
-    expect(store.get('canker-core:reminder-evening-deferred')).not.toBe(dayKey(new Date()));
+    expect(store.get('canker-core:reminder-evening-deferred')).not.toBe(
+      dayKey(new Date())
+    );
   });
 
   it('sync re-applies both enabled slots', async () => {
-    store.set('canker-core:reminder-morning', JSON.stringify({ enabled: true, time: '07:15' }));
-    store.set('canker-core:reminder', JSON.stringify({ enabled: true, time: '20:00' }));
+    store.set(
+      'canker-core:reminder-morning',
+      JSON.stringify({ enabled: true, time: '07:15' })
+    );
+    store.set(
+      'canker-core:reminder',
+      JSON.stringify({ enabled: true, time: '20:00' })
+    );
     await syncReminders();
-    expect(scheduled().map((n) => n.id).sort()).toEqual([1, 2]);
+    expect(
+      scheduled()
+        .map((n) => n.id)
+        .sort()
+    ).toEqual([1, 2]);
+  });
+
+  it('restores the repeating schedule when deferring fails', async () => {
+    await applyReminder('evening', { enabled: true, time: '20:00' });
+    vi.clearAllMocks();
+    plugin.schedule.mockRejectedValueOnce(new Error('boom'));
+    await expect(deferEveningReminder()).rejects.toThrow('boom');
+    expect(scheduled().at(-1)?.schedule).toEqual({
+      on: { hour: 20, minute: 0 },
+      allowWhileIdle: true
+    });
+    expect(store.get('canker-core:reminder-evening-deferred')).toBeUndefined();
   });
 });

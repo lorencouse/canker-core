@@ -87,7 +87,9 @@ export function ReminderForm() {
               <Switch
                 id={`reminder-${slot}-enabled`}
                 checked={pref.enabled}
-                onCheckedChange={(enabled) => update(slot, { ...pref, enabled })}
+                onCheckedChange={(enabled) =>
+                  update(slot, { ...pref, enabled })
+                }
               />
             </div>
             <div className="grid gap-1.5">
