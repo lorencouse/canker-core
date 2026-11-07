@@ -71,8 +71,16 @@ const config: CapacitorConfig = {
       androidScaleType: 'CENTER_CROP',
       showSpinner: false
     },
+    SystemBars: {
+      // app/layout.tsx and native/shell/index.html both ask for
+      // viewport-fit=cover; saying so up front saves Android a first-paint
+      // inset jump while SystemBars waits to read the meta tag.
+      initialViewportFitValueHint: 'cover'
+    },
     StatusBar: {
       // Style is set per theme at runtime; this is only the cold-start value.
+      // On Android, overlaysWebView no longer decides the insets: Capacitor
+      // 8's SystemBars plugin does (see docs/MOBILE.md, Safe areas).
       overlaysWebView: true,
       style: 'DARK'
     },

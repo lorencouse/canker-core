@@ -265,7 +265,7 @@ directly — the variables are one place to adjust for a device the insets get
 wrong. On Android, Capacitor 8's built-in SystemBars plugin owns edge-to-edge:
 with `viewportFit: 'cover'` (set in `app/layout.tsx`) and Android System
 WebView 140 or newer, `env()` reports the real insets; on an older WebView it
-pads the webview itself and `env()` reads 0.
+pads the app window and `env()` reads 0.
 
 **Viewport units.** `dvh`, never `vh`. `vh` is the tallest the viewport ever
 gets, which on a phone is the state with the address bar hidden.
@@ -289,4 +289,9 @@ the app must use `openExternal` — the webview has no URL bar to get back
 from github.com with.
 
 **Keyboard.** Surfaces that a soft keyboard would cover pad themselves by
-`--keyboard-h`, which `NativeBridge` maintains. The webview is not resized.
+`--keyboard-h`, which `NativeBridge` maintains. On iOS the webview is not
+resized. On Android, Capacitor 8's SystemBars plugin pads the app window by
+the keyboard's height and offers no setting to stop that alone, so the
+webview shrinks and `--keyboard-h` stays `0px` there to avoid lifting twice.
+The consequence: with the keyboard up on Android, the fixed tab bar sits on
+top of the keyboard instead of staying hidden behind it.

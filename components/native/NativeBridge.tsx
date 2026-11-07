@@ -113,14 +113,22 @@ export default function NativeBridge() {
     (async () => {
       if (!Capacitor.isPluginAvailable('Keyboard')) return;
       const { Keyboard } = await import('@capacitor/keyboard');
+      // On Android, Capacitor 8's SystemBars plugin pads the app window by
+      // the keyboard's height whenever it shows, and no setting turns that
+      // off without also dropping its status and navigation bar handling.
+      // The webview has already shrunk there, so a --keyboard-h lift on top
+      // would lift twice; it stays 0px and only iOS publishes it.
+      const liftByVariable = Capacitor.getPlatform() !== 'android';
       const show = await Keyboard.addListener('keyboardWillShow', (info) => {
         // Published as a variable rather than resizing the webview: the
         // fixed chrome is positioned against the viewport, and resizing it
         // makes the tab bar jump into the middle of the screen.
-        document.documentElement.style.setProperty(
-          '--keyboard-h',
-          `${info.keyboardHeight}px`
-        );
+        if (liftByVariable) {
+          document.documentElement.style.setProperty(
+            '--keyboard-h',
+            `${info.keyboardHeight}px`
+          );
+        }
         document.documentElement.dataset.keyboard = 'open';
       });
       const hide = await Keyboard.addListener('keyboardWillHide', () => {
