@@ -46,6 +46,26 @@ describe('withReading', () => {
     expect(next.readings[1].id).not.toBe('r1');
   });
 
+  it('names an appended reading with the id it is given', () => {
+    const next = withReading(
+      sore(),
+      { pain: 7 },
+      at('2026-09-09T09:00:00'),
+      'r9'
+    );
+    expect(next.readings[1].id).toBe('r9');
+  });
+
+  it('keeps the existing id when correcting, whatever id it is given', () => {
+    const next = withReading(
+      sore(),
+      { pain: 7 },
+      at('2026-09-08T13:00:00'),
+      'r9'
+    );
+    expect(next.readings[0].id).toBe('r1');
+  });
+
   it('corrects the reading in place on the same day', () => {
     const first = withReading(sore(), { pain: 7 }, at('2026-09-09T09:00:00'));
     const second = withReading(first, { size: 5 }, at('2026-09-09T21:00:00'));

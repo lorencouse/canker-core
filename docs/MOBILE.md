@@ -119,7 +119,9 @@ on regeneration:
   `App/App.entitlements` with the Associated Domains entries
   `webcredentials:cankercore.com` and `applinks:cankercore.com`, referenced
   by `CODE_SIGN_ENTITLEMENTS`.
-  Automatic signing enables the capability on the App ID.
+  Automatic signing enables the capability on the App ID. Also the
+  `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription` strings in
+  `Info.plist` for sore photos (below).
 - **Android:** the sign-in App Link intent-filter on `MainActivity` (see
   above), and the Kanko notification small icon copied from
   `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`.
@@ -127,6 +129,23 @@ on regeneration:
 The script is idempotent, skips a platform whose folder is missing, and stops
 with an error if a template no longer has the text it patches. The patches
 live in `utils/native-patches.mts`.
+
+### Sore photos (`@capacitor/camera`, `@capacitor/filesystem`)
+
+The check-in's sore step can take a photo, and the sore's detail shows
+them. Photos never leave the phone: `utils/sore-photos.ts` writes each one to
+the app's private data folder as `sore-photos/<reading id>.jpg`, with no
+upload, no database column and nothing in the CSV export. Deleting a sore or
+the account in the app deletes its photos on that device; photos taken on
+another phone, or files left when the app is deleted, are out of reach.
+
+These two plugins are native code, so they arrive only with a new app
+binary. The controls check `photosSupported()`, which needs the native
+platform **and** both plugins actually present (`Capacitor.isPluginAvailable`),
+so an installed app built before the plugins were added, and the website,
+show no photo control at all. Android needs no manifest change: the camera
+asks for no permission without `saveToGallery`, and `Directory.Data` is
+app-private.
 
 Gradle 8.11 here needs JDK 21. A newer JDK — including the one Android
 Studio now bundles — fails the settings script with "Unsupported class file

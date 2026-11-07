@@ -24,6 +24,7 @@ import {
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
 import { localTimeZone } from '@/utils/readings';
+import { deletePhotosFor } from '@/utils/sore-photos';
 
 let healedUndo: { dismiss: () => void } | null = null;
 
@@ -137,6 +138,8 @@ function useMapActions() {
     try {
       const result = await deleteSore(selectedSore.id);
       if (failed(result)) return false;
+      // Photos never reached the server, so only this device can delete them.
+      await deletePhotosFor(selectedSore.readings.map((r) => r.id));
       setSores((prev) => prev.filter((s) => s.id !== selectedSore.id));
       setSelectedSore(null);
       notify('warning');

@@ -12,13 +12,17 @@
  *   - App.entitlements with Associated Domains (webcredentials: and
  *     applinks:cankercore.com) and CODE_SIGN_ENTITLEMENTS pointing at it, so
  *     iCloud Keychain offers the site's saved passwords in the app and the
- *     system sign-in's universal-link callback reaches only this app.
+ *     system sign-in's universal-link callback reaches only this app;
+ *   - camera and photo library usage strings in Info.plist, which iOS needs
+ *     before it lets the sore photo control open either.
  * Android:
  *   - an autoVerify App Link intent-filter on MainActivity for
  *     https://cankercore.com/native-auth/callback, so the system sign-in's
  *     Custom Tab returns to this app (public/.well-known/assetlinks.json is
  *     the other half);
  *   - the white Kanko notification small icon from resources/notification.
+ *   (Sore photos need nothing in the manifest: the camera plugin asks for no
+ *   permission without saveToGallery, and Directory.Data is app-private.)
  *
  * Safe to run repeatedly. A platform whose folder is missing is skipped; a
  * file whose expected anchor is missing stops the run with an error.
@@ -41,6 +45,7 @@ import {
   patchAppDelegate,
   patchEntitlements,
   patchInfoPlist,
+  patchInfoPlistPhotoUsage,
   patchPbxproj,
   patchPbxprojEntitlements,
   patchPodfile
@@ -82,7 +87,12 @@ const patchIos = () => {
   }
   patchFile(path.join(app, 'App/AppDelegate.swift'), patchAppDelegate);
   const plist = path.join(app, 'App/Info.plist');
-  if (patchFile(plist, patchInfoPlist) && has('plutil')) {
+  const plistChanged = patchFile(plist, (text) => {
+    const scenes = patchInfoPlist(text);
+    const photos = patchInfoPlistPhotoUsage(scenes.text);
+    return { text: photos.text, changed: scenes.changed || photos.changed };
+  });
+  if (plistChanged && has('plutil')) {
     execFileSync('plutil', ['-lint', plist], { stdio: 'inherit' });
   }
 

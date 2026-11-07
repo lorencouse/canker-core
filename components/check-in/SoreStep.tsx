@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { Check, Loader2 } from 'lucide-react';
 
 import { PainField, WidthField } from '@/components/sore/ReadingFields';
@@ -12,6 +13,7 @@ import { toast } from '@/components/ui/Toasts/use-toast';
 import type { Sore } from '@/types';
 import { setSoreHealed, upsertSores } from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
+import { deletePhotosFor } from '@/utils/sore-photos';
 import {
   currentPain,
   currentSize,
@@ -22,6 +24,7 @@ import {
   withReading
 } from '@/utils/readings';
 
+import PhotoControl from './PhotoControl';
 import StepHeading from './StepHeading';
 import { useReportBusy } from './useReportBusy';
 
@@ -30,14 +33,17 @@ import { useReportBusy } from './useReportBusy';
  * is one and on the last one otherwise, so "no change" is a single tap on
  * Next. Next and Healed write before the flow moves on; Not now moves on and
  * writes nothing.
+ *
+ * A photo is keyed to today's reading. With no reading yet today, that is
+ * the one Next will append, so its id is chosen up front; a photo taken for
+ * it and then left unsaved (Not now, closing the check-in) is deleted.
  */
 export default function SoreStep({
   sore,
   now,
   onChange,
   onNext,
-  onBusy,
-  photoSlot
+  onBusy
 }: {
   sore: Sore;
   /** The check-in's clock, so every write in one check-in lands on the same day. */
@@ -47,8 +53,6 @@ export default function SoreStep({
   onNext: () => void;
   /** Reports a save in flight, so the flow holds its close and skip. */
   onBusy?: (busy: boolean) => void;
-  /** Where the on-device photo control goes once there is one. */
-  photoSlot?: ReactNode;
 }) {
   const loggedToday = hasReadingOn(sore, now);
   // A note describes its own day, so only today's is brought back.
@@ -59,10 +63,27 @@ export default function SoreStep({
   const [busy, setBusy] = useState(false);
   useReportBusy(busy, onBusy);
 
+  const [appendId] = useState(() => uuidv4());
+  const readingId = loggedToday ? latestReading(sore)!.id : appendId;
+  const [pendingPhoto, setPendingPhoto] = useState(false);
+  // Read by the unmount cleanup, which sees only the first render's values.
+  const unsavedPhoto = useRef(false);
+  useEffect(() => {
+    unsavedPhoto.current = pendingPhoto && !loggedToday;
+  }, [pendingPhoto, loggedToday]);
+  useEffect(
+    () => () => {
+      if (unsavedPhoto.current) deletePhotosFor([appendId]);
+    },
+    [appendId]
+  );
+
   const changed =
     size !== currentSize(sore) ||
     pain !== currentPain(sore) ||
-    note.trim() !== initialNote.trim();
+    note.trim() !== initialNote.trim() ||
+    // A photo for a reading that does not exist yet needs the reading.
+    (pendingPhoto && !loggedToday);
 
   const fail = (error: string) => {
     notify('error');
@@ -71,7 +92,7 @@ export default function SoreStep({
 
   /** Today's reading as entered; the one-per-day rule lives in withReading. */
   const entered = () =>
-    withReading(sore, { size, pain, note: note.trim() || null }, now);
+    withReading(sore, { size, pain, note: note.trim() || null }, now, appendId);
 
   const save = async (): Promise<Sore | null> => {
     const next = entered();
@@ -80,6 +101,7 @@ export default function SoreStep({
       fail(result.error);
       return null;
     }
+    unsavedPhoto.current = false;
     onChange(next);
     return next;
   };
@@ -165,7 +187,10 @@ export default function SoreStep({
         />
       </div>
 
-      {photoSlot}
+      <PhotoControl
+        readingId={readingId}
+        onTaken={() => setPendingPhoto(true)}
+      />
 
       <div className="grid gap-2">
         <Button

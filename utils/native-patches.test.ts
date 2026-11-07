@@ -10,6 +10,8 @@ import {
   patchAppDelegate,
   patchEntitlements,
   patchInfoPlist,
+  patchInfoPlistPhotoUsage,
+  PHOTO_USAGE_STRINGS,
   patchPbxproj,
   patchPbxprojEntitlements,
   patchPodfile,
@@ -99,6 +101,7 @@ const cases: [string, string, (text: string) => PatchResult][] = [
   ['project.pbxproj', PBXPROJ, patchPbxproj],
   ['AppDelegate.swift', APP_DELEGATE, patchAppDelegate],
   ['Info.plist', INFO_PLIST, patchInfoPlist],
+  ['Info.plist (photo usage)', INFO_PLIST, patchInfoPlistPhotoUsage],
   ['project.pbxproj (entitlements)', PBXPROJ, patchPbxprojEntitlements],
   ['AndroidManifest.xml', ANDROID_MANIFEST, patchAndroidManifest]
 ];
@@ -209,6 +212,42 @@ describe('patchInfoPlist', () => {
     );
     expect(text).toMatch(/<\/dict>\n<\/dict>\n<\/plist>\n$/);
     expect(text.match(/<dict>/g)?.length).toBe(text.match(/<\/dict>/g)?.length);
+  });
+});
+
+describe('patchInfoPlistPhotoUsage', () => {
+  it('adds both usage strings inside the top-level dict', () => {
+    const { text } = patchInfoPlistPhotoUsage(INFO_PLIST);
+    for (const [key, value] of Object.entries(PHOTO_USAGE_STRINGS)) {
+      expect(text).toContain(`<key>${key}</key>\n\t<string>${value}</string>`);
+    }
+    expect(text).toMatch(/<\/string>\n<\/dict>\n<\/plist>\n$/);
+  });
+
+  it('says photos stay on the device', () => {
+    for (const value of Object.values(PHOTO_USAGE_STRINGS)) {
+      expect(value).toMatch(/never uploaded/);
+      expect(value).not.toMatch(/[<>&\u2014]/);
+    }
+  });
+
+  it('rewrites a usage string that differs, leaving the rest alone', () => {
+    const stale = INFO_PLIST.replace(
+      '</dict>\n</plist>',
+      '\t<key>NSCameraUsageDescription</key>\n\t<string>Old copy</string>\n</dict>\n</plist>'
+    );
+    const { text, changed } = patchInfoPlistPhotoUsage(stale);
+    expect(changed).toBe(true);
+    expect(text).not.toContain('Old copy');
+    expect(text.match(/NSCameraUsageDescription/g)).toHaveLength(1);
+    expect(text).toContain(PHOTO_USAGE_STRINGS.NSPhotoLibraryUsageDescription);
+  });
+
+  it('composes with the scene manifest patch in either order', () => {
+    const a = patchInfoPlistPhotoUsage(patchInfoPlist(INFO_PLIST).text).text;
+    expect(patchInfoPlist(a).changed).toBe(false);
+    expect(patchInfoPlistPhotoUsage(a).changed).toBe(false);
+    expect(a.match(/<dict>/g)?.length).toBe(a.match(/<\/dict>/g)?.length);
   });
 });
 

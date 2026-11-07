@@ -19,6 +19,7 @@ import { toast } from '@/components/ui/Toasts/use-toast';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { deleteAccount, updatePassword } from '@/utils/auth-helpers/server';
 import { getRedirectMethod } from '@/utils/auth-helpers/settings';
+import { deleteAllPhotos } from '@/utils/sore-photos';
 
 /**
  * Account: change password, export, delete.
@@ -52,6 +53,8 @@ export function AccountForm() {
       toast({ variant: 'destructive', title: result.error });
       return;
     }
+    // Sore photos live only on this device, out of the server's reach.
+    await deleteAllPhotos();
     // The session is gone; a hard navigation drops every cached
     // server component that still believes someone is signed in, which
     // router.push would keep.

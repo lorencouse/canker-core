@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 import { useSoreContext } from '@/context/SoreContext';
@@ -12,6 +12,7 @@ import SoreSigil from '@/components/sore/SoreSigil';
 import type { Sore } from '@/types';
 import { courseOf, verdictOf } from '@/utils/course';
 import { shortDate } from '@/utils/dates';
+import { useMounted } from '@/utils/hooks/useMounted';
 import { isLongRunning, LONG_SORE_DAYS } from '@/utils/insights';
 import { NEARBY_MM, nearbySores } from '@/utils/mouth-map/nearby';
 import {
@@ -21,6 +22,7 @@ import {
   hasReadingOn,
   latestReading
 } from '@/utils/readings';
+import { photoFor, photosSupported } from '@/utils/sore-photos';
 
 /**
  * The selected sore, inline beside the map on a desktop and under it on a
@@ -50,6 +52,67 @@ function Figure({
           {unit}
         </small>
       </dd>
+    </div>
+  );
+}
+
+/**
+ * The sore's photos, oldest first, from this device's own storage. Nothing
+ * renders on the web, where there are none, or when no reading has one.
+ */
+function SorePhotos({ sore, now }: { sore: Sore; now: Date }) {
+  const supported = useMounted() && photosSupported();
+  const [photos, setPhotos] = useState<
+    { id: string; at: string; src: string }[]
+  >([]);
+
+  useEffect(() => {
+    if (!photosSupported()) return;
+    let live = true;
+    Promise.all(
+      sore.readings.map(async (r) => ({
+        id: r.id,
+        at: r.recorded_at,
+        src: await photoFor(r.id)
+      }))
+    ).then((found) => {
+      if (!live) return;
+      setPhotos(
+        found.filter((p): p is { id: string; at: string; src: string } =>
+          Boolean(p.src)
+        )
+      );
+    });
+    return () => {
+      live = false;
+    };
+  }, [sore.readings]);
+
+  if (!supported || photos.length === 0) return null;
+
+  return (
+    <div className="mt-5">
+      <h3 className="font-sans text-base font-semibold tracking-normal">
+        Photos on this phone
+      </h3>
+      <ul className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {photos.map((p) => (
+          <li key={p.id} className="min-w-0">
+            <figure>
+              {/* A file on this device; next/image cannot reach it. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={p.src}
+                alt={`The sore on ${shortDate(new Date(p.at), now)}`}
+                className="aspect-square w-full rounded-xl object-cover"
+              />
+              <figcaption className="tabular mt-1 truncate text-sm text-muted-foreground">
+                {shortDate(new Date(p.at), now)}
+              </figcaption>
+            </figure>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -168,6 +231,8 @@ export function SoreDetail() {
         </p>
       )}
       {isLongRunning(sore) && <LongSoreNote className="mt-4" />}
+
+      <SorePhotos sore={sore} now={now} />
 
       <div className="mt-4">
         <SoreActions />

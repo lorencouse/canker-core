@@ -75,11 +75,15 @@ export const newReading = (when: Date = new Date()): Reading => ({
  * The sore with size, pain and/or a note recorded at `when`. Whatever is
  * omitted carries forward from the previous reading — a pain change alone
  * still needs a size on the same row.
+ *
+ * `appendId` names the reading if one is appended, for a caller that has
+ * already keyed something to it (an on-device photo) before saving.
  */
 export function withReading(
   sore: Sore,
   values: { size?: number; pain?: number; note?: string | null },
-  when: Date = new Date()
+  when: Date = new Date(),
+  appendId?: string
 ): Sore {
   const last = latestReading(sore);
 
@@ -94,7 +98,7 @@ export function withReading(
   }
 
   const appended: Reading = {
-    id: uuidv4(),
+    id: appendId ?? uuidv4(),
     recorded_at: when.toISOString(),
     size: values.size ?? last?.size ?? DEFAULT_SIZE,
     pain: values.pain ?? last?.pain ?? DEFAULT_PAIN,

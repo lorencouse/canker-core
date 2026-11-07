@@ -201,6 +201,55 @@ export function patchInfoPlist(text: string): PatchResult {
 }
 
 /**
+ * Why the app asks for the camera and the photo library, which iOS shows in
+ * the permission prompt and refuses to open either without. Sore photos stay
+ * in the app's own storage, so the copy says so.
+ */
+export const PHOTO_USAGE_STRINGS: Record<string, string> = {
+  NSCameraUsageDescription:
+    'Take a photo of a sore to see how it changes. Photos stay on this device and are never uploaded.',
+  NSPhotoLibraryUsageDescription:
+    'Pick a photo of a sore from your library. It is copied into the app on this device and never uploaded.'
+};
+
+const plistString = (key: string, value: string) =>
+  `\t<key>${key}</key>\n\t<string>${value}</string>\n`;
+
+/**
+ * Sets the photo usage strings in the top-level dict: rewrites a key whose
+ * text differs from PHOTO_USAGE_STRINGS (this file is the source of truth)
+ * and adds a missing one before the closing tag.
+ */
+export function patchInfoPlistPhotoUsage(text: string): PatchResult {
+  let out = text;
+  const missing: string[] = [];
+  for (const [key, value] of Object.entries(PHOTO_USAGE_STRINGS)) {
+    const existing = new RegExp(
+      `(<key>${key}</key>\\s*<string>)([^<]*)(</string>)`
+    );
+    const match = out.match(existing);
+    if (!match) missing.push(key);
+    else if (match[2] !== value) {
+      out = out.replace(
+        existing,
+        (_all, open, _old, close) => `${open}${value}${close}`
+      );
+    }
+  }
+  if (missing.length) {
+    const anchor = /\n<\/dict>\s*\n<\/plist>\s*$/;
+    if (!anchor.test(out)) {
+      throw new PatchAnchorError('Info.plist', 'closing </dict></plist>');
+    }
+    const added = missing
+      .map((key) => plistString(key, PHOTO_USAGE_STRINGS[key]))
+      .join('');
+    out = out.replace(anchor, (tail) => `\n${added}${tail.slice(1)}`);
+  }
+  return { text: out, changed: out !== text };
+}
+
+/**
  * Associated Domains, so iOS trusts the app with cankercore.com: its saved
  * passwords (webcredentials: iCloud Keychain autofill and strong-password
  * suggestions in the sign-in forms) and the universal link the iOS system
