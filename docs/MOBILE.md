@@ -293,5 +293,8 @@ from github.com with.
 resized. On Android, Capacitor 8's SystemBars plugin pads the app window by
 the keyboard's height and offers no setting to stop that alone, so the
 webview shrinks and `--keyboard-h` stays `0px` there to avoid lifting twice.
-The consequence: with the keyboard up on Android, the fixed tab bar sits on
-top of the keyboard instead of staying hidden behind it.
+Viewport-fixed chrome would then ride up on top of the keyboard, so on
+Android the tab bar and the floating Save and Done bars carry
+`.keyboard-hides`, which hides them below `lg` while `data-keyboard="open"`
+(both attributes are set by `NativeBridge`). Give any new fixed bottom chrome
+the same class.

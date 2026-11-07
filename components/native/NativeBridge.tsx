@@ -109,6 +109,9 @@ export default function NativeBridge() {
   useEffect(() => {
     if (!isNative()) return;
     const removers: Array<() => void> = [];
+    // CSS hides fixed bottom chrome under the keyboard on Android only
+    // (.keyboard-hides in styles/main.css).
+    document.documentElement.dataset.platform = Capacitor.getPlatform();
 
     (async () => {
       if (!Capacitor.isPluginAvailable('Keyboard')) return;
