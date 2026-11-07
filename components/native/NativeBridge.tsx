@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Capacitor } from '@capacitor/core';
 import { useTheme } from 'next-themes';
 
+import { DEFAULT_AFTER_SIGN_IN } from '@/utils/auth-helpers/settings';
 import { releaseAutoStart } from '@/utils/check-in/auto-start-hold';
 import { isNative } from '@/utils/native';
 import { syncReminders } from '@/utils/reminders';
@@ -82,6 +83,21 @@ export default function NativeBridge() {
       gone = true;
       remove?.();
     };
+  }, [router]);
+
+  /* --- launch screen -------------------------------------------------------- */
+  // The webview loads the site's root, which is the marketing home page, and
+  // its button goes to the map, so Today never mounted and the check-in never
+  // started on its own. An app opens on its working screen: Today when signed
+  // in, and the proxy sends it on to sign-in otherwise. Only at launch, so
+  // Home stays reachable from the menu.
+  const launched = useRef(false);
+  useEffect(() => {
+    if (launched.current) return;
+    launched.current = true;
+    if (isNative() && window.location.pathname === '/') {
+      router.replace(DEFAULT_AFTER_SIGN_IN);
+    }
   }, [router]);
 
   /* --- foreground ----------------------------------------------------------- */
