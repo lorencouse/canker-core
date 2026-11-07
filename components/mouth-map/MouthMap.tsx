@@ -60,13 +60,16 @@ const HOME: Camera = { k: 1, tx: 0, ty: 0 };
 export default function MouthMap({
   user,
   initialView,
-  placedHint = 'Tap again to move it, or set its reading below.'
+  placedHint = 'Tap again to move it, or set its reading below.',
+  compact = false
 }: {
   user: User;
   /** The view to open on when no sore is selected. */
   initialView?: MouthView;
   /** The add-mode line once a sore is placed, for screens that take its reading elsewhere. */
   placedHint?: string;
+  /** Short enough to pin above a form: a capped drawing and no hint or footer lines. */
+  compact?: boolean;
 }) {
   const {
     sores,
@@ -383,6 +386,7 @@ export default function MouthMap({
           viewBox={viewBoxAttr}
           className={cn(
             'block w-full select-none',
+            compact && 'max-h-[28dvh]',
             mode === 'add'
               ? 'cursor-crosshair'
               : 'cursor-grab active:cursor-grabbing'
@@ -439,7 +443,7 @@ export default function MouthMap({
         />
       </div>
 
-      {mode === 'add' && (
+      {mode === 'add' && !compact && (
         // Under the drawing, not on it: a floating hint covered the floor
         // of the mouth on a phone, which is exactly where people tap.
         <p className="text-base font-semibold">
@@ -488,7 +492,12 @@ export default function MouthMap({
         }}
       />
 
-      <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+      <div
+        className={cn(
+          'flex items-center justify-between gap-3 text-sm text-muted-foreground',
+          compact && 'hidden'
+        )}
+      >
         <p>As in a mirror: your left is on the left.</p>
         {/*
           Only offered once there is something to show. A toggle for an
