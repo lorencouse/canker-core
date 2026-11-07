@@ -28,13 +28,16 @@ export default function StreakBlock({
   logs,
   now,
   answer,
-  celebrate
+  celebrate,
+  headingLevel: Heading = 'h1'
 }: {
   sores: Sore[];
   logs: DayLog[];
   now: Date;
   answer: Answer;
   celebrate?: KankoMood;
+  /** The headline's level: it tops Today, but sits under a heading elsewhere. */
+  headingLevel?: 'h1' | 'h2' | 'h3';
 }) {
   const today = dayKey(now);
   const mood = todayMood(sores, logs, now);
@@ -70,9 +73,9 @@ export default function StreakBlock({
         priority
         className="-my-1 size-44"
       />
-      <h1 className="text-balance text-2xl leading-tight lg:text-3xl">
+      <Heading className="text-balance text-2xl leading-tight lg:text-3xl">
         {headline}
-      </h1>
+      </Heading>
       {line && <p className="prose-measure mt-1.5">{line}</p>}
 
       {mood === 'proud' && (

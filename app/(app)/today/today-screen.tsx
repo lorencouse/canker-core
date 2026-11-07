@@ -1,10 +1,19 @@
 'use client';
 
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react';
+import { Capacitor } from '@capacitor/core';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Check, ChevronRight, Loader2, Plus } from 'lucide-react';
 
+import CheckInFlow from '@/components/check-in/CheckInFlow';
+import CheckInHost from '@/components/check-in/CheckInHost';
 import Kanko from '@/components/kanko/Kanko';
 import MouthMap from '@/components/mouth-map/MouthMap';
 import SoreSigil from '@/components/sore/SoreSigil';
@@ -15,13 +24,16 @@ import StreakBlock, {
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import { SoreProvider, useSoreContext } from '@/context/SoreContext';
-import type { DayLog, Sore, User } from '@/types';
+import type { CheckIn, DayLog, Sore, User } from '@/types';
 import { answerLine } from '@/utils/course';
 import { saveDayLog, upsertSores } from '@/utils/actions/soreActions';
+import { holdAutoStart, isAutoStartHeld } from '@/utils/check-in/auto-start-hold';
+import { shouldAutoStart } from '@/utils/check-in/steps';
 import { cn } from '@/utils/cn';
+import { emptyDayLog } from '@/utils/day-log';
 import { useUnsavedGuard } from '@/utils/hooks/useUnsavedGuard';
 import { MOUTH_VIEWS, type MouthView } from '@/utils/mouth-map/geometry';
-import { notify, tap } from '@/utils/native';
+import { isNative, notify, tap } from '@/utils/native';
 import { type Mood, withSavedLog } from '@/utils/momentum';
 import {
   addDays,
@@ -50,32 +62,52 @@ export default function TodayScreen({
   user,
   sores,
   dayLogs,
+  checkIns,
+  openCheckIn,
   expectedMood
 }: {
   user: User;
   sores: Sore[];
   dayLogs: DayLog[];
+  /** The last few days' check-ins, newest first. */
+  checkIns: CheckIn[];
+  /** Arrived by the check-in link: open it whether or not today is done. */
+  openCheckIn: boolean;
   /** The server's guess at the block's mood; sizes the placeholder only. */
   expectedMood: Mood;
 }) {
   return (
     <SoreProvider initialSores={sores}>
-      <Today user={user} dayLogs={dayLogs} expectedMood={expectedMood} />
+      <Today
+        user={user}
+        serverSores={sores}
+        dayLogs={dayLogs}
+        serverCheckIns={checkIns}
+        openCheckIn={openCheckIn}
+        expectedMood={expectedMood}
+      />
     </SoreProvider>
   );
 }
 
 function Today({
   user,
+  serverSores,
   dayLogs,
+  serverCheckIns,
+  openCheckIn,
   expectedMood
 }: {
   user: User;
+  serverSores: Sore[];
   dayLogs: DayLog[];
+  serverCheckIns: CheckIn[];
+  openCheckIn: boolean;
   expectedMood: Mood;
 }) {
   const router = useRouter();
-  const { sores, setSores, setSelectedSore, setQuickOpen } = useSoreContext();
+  const { sores, setSores, setSelectedSore, setQuickOpen, snapshot } =
+    useSoreContext();
   /*
    * Which day it is belongs to the device, not the server: a server on UTC
    * is already on tomorrow during a US evening. So the clock is read on the
@@ -89,13 +121,110 @@ function Today({
   const log =
     editedLog ??
     (today
-      ? (dayLogs.find((l) => l.day === today) ?? blankLog(today))
-      : blankLog(''));
+      ? (dayLogs.find((l) => l.day === today) ?? emptyDayLog(today))
+      : emptyDayLog(''));
   const [logDirty, setLogDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
   useUnsavedGuard(logDirty);
+
+  /*
+   * The check-in. It opens on its own once the device's day is known and
+   * today has no done or skipped check-in, and from the button or the
+   * reminder's link by hand. `day` is the day it opened on, which is the
+   * day its outcome is recorded against.
+   */
+  const [checkIn, setCheckIn] = useState<{
+    manual: boolean;
+    day: string;
+  } | null>(null);
+  // Outcomes recorded since this page loaded, ahead of the server's list.
+  const [recorded, setRecorded] = useState<CheckIn[]>([]);
+  const checkIns = useMemo(
+    () => [...recorded, ...serverCheckIns],
+    [recorded, serverCheckIns]
+  );
+  // Done wins: skipping a reopened, finished day leaves it finished.
+  const todayDone =
+    today !== null &&
+    checkIns.some((c) => c.day === today && c.status === 'done');
+
+  const linkHandled = useRef(false);
+  useEffect(() => {
+    if (!openCheckIn) {
+      linkHandled.current = false;
+      return;
+    }
+    if (!now || linkHandled.current) return;
+    linkHandled.current = true;
+    setCheckIn((open) => open ?? { manual: true, day: dayKey(new Date()) });
+    router.replace('/today', { scroll: false });
+  }, [openCheckIn, now, router]);
+
+  useEffect(() => {
+    if (!now || checkIn || openCheckIn || isAutoStartHeld()) return;
+    // Read afresh: the app may have come back on a later day.
+    const day = dayKey(new Date());
+    // Deciding needs the device clock and the hold, which live outside React.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (shouldAutoStart(checkIns, day)) setCheckIn({ manual: false, day });
+  }, [now, checkIn, openCheckIn, checkIns]);
+
+  // However the check-in goes away, closed or unmounted with the page.
+  useEffect(() => {
+    if (!checkIn) return;
+    return () => {
+      holdAutoStart();
+    };
+  }, [checkIn]);
+
+  /*
+   * Back in the foreground is an open. The hold is cleared app-wide by
+   * NativeBridge; the refresh here brings today's check-ins as they are now,
+   * perhaps finished on another device, and their arrival is what decides.
+   */
+  useEffect(() => {
+    if (!isNative() || !Capacitor.isPluginAvailable('App')) return;
+    let remove: (() => void) | undefined;
+    let gone = false;
+    (async () => {
+      const { App } = await import('@capacitor/app');
+      const handle = await App.addListener('resume', () => router.refresh());
+      if (gone) handle.remove();
+      else remove = () => handle.remove();
+    })().catch((error) => console.error('resume listener failed', error));
+    return () => {
+      gone = true;
+      remove?.();
+    };
+  }, [router]);
+
+  /*
+   * The check-in kept its own copy of the sores and logs. Once it closes,
+   * the page is refetched and the next server data replaces what this
+   * screen holds, so its readings, heals and habits show here. A map edit
+   * in progress keeps its sores; it saves or cancels against them.
+   */
+  const syncAfterCheckIn = useRef(false);
+  useEffect(() => {
+    if (!syncAfterCheckIn.current) return;
+    syncAfterCheckIn.current = false;
+    if (!snapshot) setSores(serverSores);
+    setSavedLogs(dayLogs);
+    // Only the server's data arriving should run this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverSores, dayLogs]);
+
+  const closeCheckIn = (result: 'done' | 'skipped' | 'left') => {
+    const day = checkIn?.day;
+    setCheckIn(null);
+    if (day && result !== 'left') {
+      setRecorded((prev) => [{ day, status: result }, ...prev]);
+    }
+    syncAfterCheckIn.current = true;
+    router.refresh();
+  };
 
   const open = useMemo(() => sores.filter((s) => !s.healed_at), [sores]);
   const answer = useMemo(() => answerLine(sores), [sores]);
@@ -169,7 +298,11 @@ function Today({
         toast({ variant: 'destructive', title: result.error });
         return;
       }
-      setSavedLogs((prev) => withSavedLog(prev, log, true));
+      setSavedLogs((prev) => withSavedLog(
+          prev,
+          { ...log, food_answered: true, health_answered: true },
+          true
+        ));
       setLogDirty(false);
       setSaved(true);
       notify('success');
@@ -206,6 +339,21 @@ function Today({
         ) : (
           <StreakBlockPlaceholder mood={expectedMood} answer={answer} />
         )}
+
+        <div className="mt-4 flex justify-center">
+          <Button
+            type="button"
+            size="touch"
+            variant={todayDone ? 'outline' : 'default'}
+            disabled={!now}
+            onClick={() => {
+              tap();
+              setCheckIn({ manual: true, day: dayKey(new Date()) });
+            }}
+          >
+            {todayDone ? 'Done ✓, edit' : 'Check in'}
+          </Button>
+        </div>
 
         {open.length === 0 ? (
           <div className="surface-worksheet mt-5 flex flex-col items-start gap-3 p-4 sm:p-5">
@@ -375,6 +523,17 @@ function Today({
           )}
         </div>
       </section>
+
+      {checkIn && (
+        <CheckInHost>
+          <CheckInFlow
+            sores={sores}
+            dayLogs={savedLogs}
+            manual={checkIn.manual}
+            onClose={closeCheckIn}
+          />
+        </CheckInHost>
+      )}
     </div>
   );
 }
@@ -411,13 +570,6 @@ const readDeviceNow = () => (deviceNow ??= new Date());
 const readServerNow = () => null;
 const useDeviceNow = () =>
   useSyncExternalStore(subscribeToNow, readDeviceNow, readServerNow);
-
-const blankLog = (day: string): DayLog => ({
-  day,
-  triggers: [],
-  treatments: [],
-  note: null
-});
 
 const count = (n: number, noun: string) =>
   n ? `${n} ${noun}${n === 1 ? '' : 's'}` : null;

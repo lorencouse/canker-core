@@ -1,15 +1,25 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   APP_LINK_FILTER,
   APP_LINK_HOST,
   APP_LINK_PATH,
   NOTIFICATION_ICON_SIZES,
+  BACKUP_ATTRIBUTES,
+  BACKUP_RULES_XML,
+  DATA_EXTRACTION_RULES_XML,
   PatchAnchorError,
+  SORE_PHOTO_FOLDER,
+  backupRuleFiles,
+  patchAndroidBackupRules,
   notificationIconCopies,
   patchAndroidManifest,
   patchAppDelegate,
   patchEntitlements,
   patchInfoPlist,
+  patchInfoPlistPhotoUsage,
+  PHOTO_USAGE_STRINGS,
   patchPbxproj,
   patchPbxprojEntitlements,
   patchPodfile,
@@ -99,8 +109,14 @@ const cases: [string, string, (text: string) => PatchResult][] = [
   ['project.pbxproj', PBXPROJ, patchPbxproj],
   ['AppDelegate.swift', APP_DELEGATE, patchAppDelegate],
   ['Info.plist', INFO_PLIST, patchInfoPlist],
+  ['Info.plist (photo usage)', INFO_PLIST, patchInfoPlistPhotoUsage],
   ['project.pbxproj (entitlements)', PBXPROJ, patchPbxprojEntitlements],
-  ['AndroidManifest.xml', ANDROID_MANIFEST, patchAndroidManifest]
+  ['AndroidManifest.xml', ANDROID_MANIFEST, patchAndroidManifest],
+  [
+    'AndroidManifest.xml (backup rules)',
+    ANDROID_MANIFEST,
+    patchAndroidBackupRules
+  ]
 ];
 
 describe.each(cases)('%s patch', (_name, fixture, patch) => {
@@ -209,6 +225,42 @@ describe('patchInfoPlist', () => {
     );
     expect(text).toMatch(/<\/dict>\n<\/dict>\n<\/plist>\n$/);
     expect(text.match(/<dict>/g)?.length).toBe(text.match(/<\/dict>/g)?.length);
+  });
+});
+
+describe('patchInfoPlistPhotoUsage', () => {
+  it('adds both usage strings inside the top-level dict', () => {
+    const { text } = patchInfoPlistPhotoUsage(INFO_PLIST);
+    for (const [key, value] of Object.entries(PHOTO_USAGE_STRINGS)) {
+      expect(text).toContain(`<key>${key}</key>\n\t<string>${value}</string>`);
+    }
+    expect(text).toMatch(/<\/string>\n<\/dict>\n<\/plist>\n$/);
+  });
+
+  it('says photos stay on the device', () => {
+    for (const value of Object.values(PHOTO_USAGE_STRINGS)) {
+      expect(value).toMatch(/never uploaded/);
+      expect(value).not.toMatch(/[<>&\u2014]/);
+    }
+  });
+
+  it('rewrites a usage string that differs, leaving the rest alone', () => {
+    const stale = INFO_PLIST.replace(
+      '</dict>\n</plist>',
+      '\t<key>NSCameraUsageDescription</key>\n\t<string>Old copy</string>\n</dict>\n</plist>'
+    );
+    const { text, changed } = patchInfoPlistPhotoUsage(stale);
+    expect(changed).toBe(true);
+    expect(text).not.toContain('Old copy');
+    expect(text.match(/NSCameraUsageDescription/g)).toHaveLength(1);
+    expect(text).toContain(PHOTO_USAGE_STRINGS.NSPhotoLibraryUsageDescription);
+  });
+
+  it('composes with the scene manifest patch in either order', () => {
+    const a = patchInfoPlistPhotoUsage(patchInfoPlist(INFO_PLIST).text).text;
+    expect(patchInfoPlist(a).changed).toBe(false);
+    expect(patchInfoPlistPhotoUsage(a).changed).toBe(false);
+    expect(a.match(/<dict>/g)?.length).toBe(a.match(/<\/dict>/g)?.length);
   });
 });
 
@@ -395,5 +447,78 @@ describe('patchAndroidManifest', () => {
       'android:pathPrefix="/"'
     );
     expect(() => patchAndroidManifest(edited)).toThrow(/Regenerate/);
+  });
+});
+
+describe('patchAndroidBackupRules', () => {
+  it('points <application> at both rule files', () => {
+    const { text } = patchAndroidBackupRules(ANDROID_MANIFEST);
+    const tag = text.match(/<application\b[^>]*>/)![0];
+    for (const [name, value] of Object.entries(BACKUP_ATTRIBUTES)) {
+      expect(tag).toContain(`${name}="${value}"`);
+    }
+    expect(tag).toContain('android:theme="@style/AppTheme"');
+  });
+
+  it('works on the real template, which sets allowBackup', () => {
+    const template = ANDROID_MANIFEST.replace(
+      '<application\n',
+      '<application\n        android:allowBackup="true"\n'
+    );
+    const first = patchAndroidBackupRules(template);
+    expect(first.text).toContain('android:allowBackup="true"');
+    expect(patchAndroidBackupRules(first.text).changed).toBe(false);
+  });
+
+  it('composes with the app link patch', () => {
+    const both = patchAndroidBackupRules(
+      patchAndroidManifest(ANDROID_MANIFEST).text
+    ).text;
+    expect(patchAndroidManifest(both).changed).toBe(false);
+    expect(patchAndroidBackupRules(both).changed).toBe(false);
+  });
+
+  it('stops rather than replace a different rule set', () => {
+    const other = ANDROID_MANIFEST.replace(
+      '<application\n',
+      '<application\n        android:fullBackupContent="@xml/theirs"\n'
+    );
+    expect(() => patchAndroidBackupRules(other)).toThrow(/@xml\/theirs/);
+  });
+});
+
+describe('backup rule files', () => {
+  const exclude = `<exclude domain="file" path="${SORE_PHOTO_FOLDER}" />`;
+
+  it('excludes the folder sore-photos.ts writes to', () => {
+    const source = readFileSync(
+      fileURLToPath(new URL('./sore-photos.ts', import.meta.url)),
+      'utf8'
+    );
+    expect(source).toContain(`const FOLDER = '${SORE_PHOTO_FOLDER}';`);
+  });
+
+  it('excludes the photos from full backup', () => {
+    expect(BACKUP_RULES_XML).toMatch(
+      new RegExp(
+        `<full-backup-content>\\s*${exclude}\\s*</full-backup-content>`
+      )
+    );
+  });
+
+  it('excludes the photos from cloud backup and device transfer', () => {
+    for (const section of ['cloud-backup', 'device-transfer']) {
+      expect(DATA_EXTRACTION_RULES_XML).toMatch(
+        new RegExp(`<${section}>\\s*${exclude}\\s*</${section}>`)
+      );
+    }
+  });
+
+  it('lands where the manifest attributes point', () => {
+    const paths = backupRuleFiles().map((f) => f.path);
+    for (const value of Object.values(BACKUP_ATTRIBUTES)) {
+      const name = value.replace('@xml/', '');
+      expect(paths).toContain(`android/app/src/main/res/xml/${name}.xml`);
+    }
   });
 });

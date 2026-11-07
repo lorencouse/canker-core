@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { DayLog, Reading, Sore } from '@/types';
+import { emptyDayLog } from '@/utils/day-log';
 import {
   BAD_DAY_PAIN,
   expectedMood,
@@ -18,10 +19,10 @@ const now = new Date(2026, 10, 5, 14, 0, 0);
 const today = '2026-11-05';
 
 const log = (day: string, triggers: string[] = []): DayLog => ({
-  day,
-  triggers,
-  treatments: [],
-  note: null
+  ...emptyDayLog(day),
+  food_answered: true,
+  health_answered: true,
+  triggers
 });
 
 const reading = (overrides: Partial<Reading> = {}): Reading => ({
@@ -49,6 +50,23 @@ const sore = (overrides: Partial<Sore> = {}): Sore => ({
 });
 
 describe('triggerFreeStreak', () => {
+  it('does not count a day whose only data is sleep', () => {
+    const sleepOnly = {
+      ...emptyDayLog(today),
+      sleep_hours: 8,
+      sleep_quality: 4
+    };
+    expect(triggerFreeStreak([sleepOnly], today)).toBe(0);
+  });
+
+  it('counts a day answered clean with nothing ticked', () => {
+    expect(triggerFreeStreak([log(today)], today)).toBe(1);
+  });
+
+  it('does not count a day whose stress was high', () => {
+    expect(triggerFreeStreak([{ ...log(today), stress: 5 }], today)).toBe(0);
+  });
+
   it('counts consecutive trigger-free logged days', () => {
     const logs = [log('2026-11-03'), log('2026-11-04'), log('2026-11-05')];
     expect(triggerFreeStreak(logs, today)).toBe(3);
@@ -76,6 +94,36 @@ describe('triggerFreeStreak', () => {
   it('crosses a month boundary', () => {
     const logs = [log('2026-10-30'), log('2026-10-31'), log('2026-11-01')];
     expect(triggerFreeStreak(logs, '2026-11-01')).toBe(3);
+  });
+
+  describe('with a partly answered today', () => {
+    const before = [log('2026-11-03'), log('2026-11-04')];
+    const sleepOnly = {
+      ...emptyDayLog(today),
+      sleep_hours: 8,
+      sleep_quality: 4,
+      treatments: ['Painkiller']
+    };
+
+    it('counts from yesterday while today is not answered', () => {
+      expect(triggerFreeStreak([...before, sleepOnly], today)).toBe(2);
+      expect(
+        triggerFreeStreak(
+          [...before, { ...sleepOnly, food_answered: true }],
+          today
+        )
+      ).toBe(2);
+    });
+
+    it('counts an answered clean today', () => {
+      expect(triggerFreeStreak([...before, log(today)], today)).toBe(3);
+    });
+
+    it('an answered today with a trigger is 0', () => {
+      expect(
+        triggerFreeStreak([...before, log(today, ['Citrus'])], today)
+      ).toBe(0);
+    });
   });
 
   it('zero streak is neutral', () => {
@@ -228,6 +276,13 @@ describe('expectedMood', () => {
   it('is neutral when the newest log in range had triggers', () => {
     const logs = [log('2026-11-04'), log('2026-11-05', ['coffee'])];
     expect(expectedMood([sore()], logs, server)).toBe('neutral');
+  });
+
+  it('looks past a newest log that is not answered yet', () => {
+    const partial = { ...emptyDayLog('2026-11-05'), sleep_hours: 8 };
+    expect(expectedMood([sore()], [log('2026-11-04'), partial], server)).toBe(
+      'proud'
+    );
   });
 
   describe('with the device zone', () => {

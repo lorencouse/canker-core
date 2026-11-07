@@ -1,13 +1,21 @@
 'use server';
 
-import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import type { PoolClient } from 'pg';
 
-import { auth } from '@/lib/auth';
 import { pool } from '@/lib/db/pool';
+import {
+  NOT_SIGNED_IN,
+  requireUserId,
+  type ActionResult
+} from '@/utils/actions/session';
 import type { DayLog, Sore } from '@/types';
-import { TREATMENTS, TRIGGERS, pickKnown } from '@/utils/day-log';
+import {
+  TREATMENTS,
+  TRIGGERS,
+  buildSaveDayLogSql,
+  pickKnown
+} from '@/utils/day-log';
 import { isTimeZone, parseSores, sameDayReading } from '@/utils/sore-payload';
 
 /**
@@ -22,17 +30,7 @@ import { isTimeZone, parseSores, sameDayReading } from '@/utils/sore-payload';
  * the database never received.
  */
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
-
-const NOT_SIGNED_IN: ActionResult = {
-  ok: false,
-  error: 'Your session has expired. Sign in again to save.'
-};
-
-async function requireUserId(): Promise<string | null> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  return session?.user?.id ?? null;
-}
+export type { ActionResult };
 
 function revalidate() {
   revalidatePath('/my-sores');
@@ -217,8 +215,10 @@ export async function deleteSore(soreId: string): Promise<ActionResult> {
 }
 
 /**
- * Save the log for one day. An empty log (no tags, no note) deletes the row
- * rather than storing a blank, so "days with a log" stays a meaningful count.
+ * Save the form's part of one day's log: triggers, treatments and note. Saving
+ * is an explicit answer to both check-in questions, so an empty form is kept as
+ * a "clean day" row rather than deleted; the answered flags are data. Sleep and
+ * stress are never written here (see `buildSaveDayLogSql`).
  */
 export async function saveDayLog(log: DayLog): Promise<ActionResult> {
   const userId = await requireUserId();
@@ -232,22 +232,13 @@ export async function saveDayLog(log: DayLog): Promise<ActionResult> {
   const note = log.note?.trim() ? log.note.trim().slice(0, 1000) : null;
 
   try {
-    if (!triggers.length && !treatments.length && !note) {
-      await pool.query('delete from day_logs where user_id = $1 and day = $2', [
-        userId,
-        log.day
-      ]);
-    } else {
-      await pool.query(
-        `insert into day_logs (user_id, day, triggers, treatments, note)
-         values ($1, $2, $3, $4, $5)
-         on conflict (user_id, day) do update set
-           triggers   = excluded.triggers,
-           treatments = excluded.treatments,
-           note       = excluded.note`,
-        [userId, log.day, triggers, treatments, note]
-      );
-    }
+    await pool.query(buildSaveDayLogSql(), [
+      userId,
+      log.day,
+      triggers,
+      treatments,
+      note
+    ]);
   } catch (error) {
     console.error('Error saving day log:', error);
     return { ok: false, error: 'Could not save today’s log. Try again.' };

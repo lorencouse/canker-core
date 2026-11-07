@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <Prose
       title="Privacy"
       intro="Canker Core holds health information, so it keeps as little as it can."
-      updated="12 October 2026"
+      updated="6 November 2026"
     >
       <section>
         <h2>What is stored</h2>
@@ -21,7 +21,9 @@ export default function PrivacyPage() {
           Your email address and password hash, so you can sign in. Anything you
           choose to put in your profile, which is only a name. And your sores:
           position on the mouth map, size and pain readings, and the dates those
-          readings were taken.
+          readings were taken. Your daily logs, too: the triggers and treatments
+          you tick, any note, your sleep hours and quality, your stress, and
+          whether you finished or skipped each day&rsquo;s check-in.
         </p>
       </section>
 
@@ -30,6 +32,13 @@ export default function PrivacyPage() {
         <p>
           On a self-hosted Postgres database on the same server that runs the
           site. Your sores are readable only by your own account.
+        </p>
+        <p>
+          Photos of a sore, which you can take in the iPhone and Android apps,
+          are the exception: they are saved only on your phone, inside the app,
+          and are never uploaded. They are not on the server, so they are not in
+          the CSV download, and deleting a sore or your account in the app
+          deletes them from that phone.
         </p>
       </section>
 

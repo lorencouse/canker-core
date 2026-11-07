@@ -13,7 +13,7 @@ import { cache } from 'react';
 import { headers } from 'next/headers';
 import { query } from '@/lib/db/pool';
 import { auth } from '@/lib/auth';
-import type { DayLog, Sore, User } from '@/types';
+import type { CheckIn, DayLog, Sore, User } from '@/types';
 import { isMouthView, zoneFor } from '@/utils/mouth-map/geometry';
 
 /** The signed-in user, or null. */
@@ -99,10 +99,24 @@ export const getSores = cache(async (userId: string): Promise<Sore[]> => {
 /** The user's daily logs, newest first. */
 export const getDayLogs = cache(async (userId: string): Promise<DayLog[]> => {
   return query<DayLog>(
-    `select to_char(day, 'YYYY-MM-DD') as day, triggers, treatments, note
+    `select to_char(day, 'YYYY-MM-DD') as day, triggers, treatments, note,
+            sleep_hours::float8 as sleep_hours, sleep_quality, sleep_source, stress,
+            food_answered, health_answered
      from day_logs
      where user_id = $1
      order by day desc`,
+    [userId]
+  );
+});
+
+/** How the user's last three check-ins ended, newest first. */
+export const getRecentCheckIns = cache(async (userId: string): Promise<CheckIn[]> => {
+  return query<CheckIn>(
+    `select to_char(day, 'YYYY-MM-DD') as day, status
+     from check_ins
+     where user_id = $1
+     order by day desc
+     limit 3`,
     [userId]
   );
 });

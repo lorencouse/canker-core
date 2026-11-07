@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { DayLog, Sore } from '@/types';
+import { emptyDayLog } from '@/utils/day-log';
 import {
   isLongRunning,
   medianDaysToHeal,
@@ -24,10 +25,9 @@ const sore = (overrides: Partial<Sore>): Sore => ({
 });
 
 const log = (day: string, triggers: string[] = [], treatments: string[] = []): DayLog => ({
-  day,
+  ...emptyDayLog(day),
   triggers,
-  treatments,
-  note: null
+  treatments
 });
 
 describe('medianDaysToHeal', () => {
@@ -88,11 +88,39 @@ describe('triggersBeforeSores', () => {
       log('2026-09-18', ['Stress']),
       log('2026-09-30', ['Nuts'])
     ];
-    const { tally, soresWithLogs } = triggersBeforeSores(sores, logs, 3);
+    const answered = logs.map((l) => ({ ...l, food_answered: true, health_answered: true }));
+    const { tally, soresWithLogs } = triggersBeforeSores(sores, answered, 3);
     expect(soresWithLogs).toBe(2);
     expect(tally).toEqual([
       { label: 'Stress', count: 2 },
       { label: 'Coffee', count: 1 }
+    ]);
+  });
+});
+
+describe('triggersBeforeSores (partial rows)', () => {
+  it('counts a sore as logged only when its window has an answered row', () => {
+    const sores = [
+      sore({ created_at: '2026-09-10T12:00:00' }),
+      sore({ created_at: '2026-09-20T12:00:00' }),
+      sore({ created_at: '2026-09-25T12:00:00' })
+    ];
+    const logs = [
+      // Sleep or treatments only: one question, or neither, answered.
+      { ...log('2026-09-10'), sleep_hours: 7 },
+      { ...log('2026-09-19'), food_answered: true },
+      { ...log('2026-09-25'), food_answered: true, health_answered: true }
+    ];
+    expect(triggersBeforeSores(sores, logs, 3).soresWithLogs).toBe(1);
+  });
+});
+
+describe('triggersBeforeSores (derived)', () => {
+  it('tallies a derived Stress from a stress of 5', () => {
+    const sores = [sore({ created_at: '2026-09-10T12:00:00' })];
+    const logs = [{ ...log('2026-09-10'), stress: 5 }];
+    expect(triggersBeforeSores(sores, logs, 3).tally).toEqual([
+      { label: 'Stress', count: 1 }
     ]);
   });
 });

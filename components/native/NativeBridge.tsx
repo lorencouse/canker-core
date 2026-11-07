@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { Capacitor } from '@capacitor/core';
 import { useTheme } from 'next-themes';
 
+import { releaseAutoStart } from '@/utils/check-in/auto-start-hold';
 import { isNative } from '@/utils/native';
-import { syncReminder } from '@/utils/reminders';
+import { syncReminders } from '@/utils/reminders';
 
 /**
  * Wires the web app to the native shell.
@@ -57,8 +59,9 @@ export default function NativeBridge() {
 
   /* --- hardware back button --------------------------------------------- */
   useEffect(() => {
-    if (!isNative()) return;
+    if (!isNative() || !Capacitor.isPluginAvailable('App')) return;
     let remove: (() => void) | undefined;
+    let gone = false;
 
     (async () => {
       const { App } = await import('@capacitor/app');
@@ -71,11 +74,36 @@ export default function NativeBridge() {
           App.exitApp();
         }
       });
-      remove = () => handle.remove();
-    })();
+      if (gone) handle.remove();
+      else remove = () => handle.remove();
+    })().catch((error) => console.error('back button listener failed', error));
 
-    return () => remove?.();
+    return () => {
+      gone = true;
+      remove?.();
+    };
   }, [router]);
+
+  /* --- foreground ----------------------------------------------------------- */
+  // Coming back to the foreground is an open: let the check-in auto-start
+  // again. App-level so it works wherever the app was left, not only Today.
+  useEffect(() => {
+    if (!isNative() || !Capacitor.isPluginAvailable('App')) return;
+    let remove: (() => void) | undefined;
+    let gone = false;
+
+    (async () => {
+      const { App } = await import('@capacitor/app');
+      const handle = await App.addListener('resume', releaseAutoStart);
+      if (gone) handle.remove();
+      else remove = () => handle.remove();
+    })().catch((error) => console.error('resume listener failed', error));
+
+    return () => {
+      gone = true;
+      remove?.();
+    };
+  }, []);
 
   /* --- soft keyboard ----------------------------------------------------- */
   useEffect(() => {
@@ -83,6 +111,7 @@ export default function NativeBridge() {
     const removers: Array<() => void> = [];
 
     (async () => {
+      if (!Capacitor.isPluginAvailable('Keyboard')) return;
       const { Keyboard } = await import('@capacitor/keyboard');
       const show = await Keyboard.addListener('keyboardWillShow', (info) => {
         // Published as a variable rather than resizing the webview: the
@@ -102,7 +131,7 @@ export default function NativeBridge() {
         () => show.remove(),
         () => hide.remove()
       );
-    })();
+    })().catch((error) => console.error('keyboard listener failed', error));
 
     return () => removers.forEach((fn) => fn());
   }, []);
@@ -149,12 +178,16 @@ export default function NativeBridge() {
 
   /* --- daily reminder ------------------------------------------------------ */
   useEffect(() => {
-    if (!isNative()) return;
+    if (!isNative() || !Capacitor.isPluginAvailable('LocalNotifications'))
+      return;
     let remove: (() => void) | undefined;
+    let gone = false;
 
     // Re-assert the schedule on launch (an OS update or a reinstall can drop
     // it) and open the check-in when the notification is tapped.
-    syncReminder().catch(() => {});
+    syncReminders().catch((error) =>
+      console.error('reminder sync failed', error)
+    );
     (async () => {
       const { LocalNotifications } = await import(
         '@capacitor/local-notifications'
@@ -167,10 +200,14 @@ export default function NativeBridge() {
           if (path) router.push(path);
         }
       );
-      remove = () => handle.remove();
-    })();
+      if (gone) handle.remove();
+      else remove = () => handle.remove();
+    })().catch((error) => console.error('notification listener failed', error));
 
-    return () => remove?.();
+    return () => {
+      gone = true;
+      remove?.();
+    };
   }, [router]);
 
   /* --- scroll restoration ------------------------------------------------- */

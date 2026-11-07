@@ -1,4 +1,5 @@
 import type { DayLog, Sore } from '@/types';
+import { isAnsweredClean } from '@/utils/day-log';
 import { dayKey } from '@/utils/readings';
 import { dayKeyIn, isTimeZone } from '@/utils/sore-payload';
 
@@ -22,16 +23,23 @@ const shiftDay = (day: string, offset: number): string => {
   return dayKey(date);
 };
 
-const isTriggerFree = (log: DayLog | undefined): boolean =>
-  log !== undefined && log.triggers.length === 0;
+const isTriggerFree = isAnsweredClean;
 
 /**
- * Consecutive local days logged with no triggers. An unlogged today does not
- * break the run; it just starts counting from yesterday.
+ * Whether a day has both trigger questions answered. A row can exist
+ * without that (a morning check-in saves today's sleep and treatments), and
+ * such a day is still open, not logged.
+ */
+export const isAnswered = (log: DayLog | undefined): boolean =>
+  log !== undefined && log.food_answered && log.health_answered;
+
+/**
+ * Consecutive local days logged with no triggers. A today not yet answered
+ * does not break the run; it just starts counting from yesterday.
  */
 export const triggerFreeStreak = (logs: DayLog[], today: string): number => {
   const byDay = new Map(logs.map((log) => [log.day, log]));
-  let cursor = byDay.has(today) ? today : shiftDay(today, -1);
+  let cursor = isAnswered(byDay.get(today)) ? today : shiftDay(today, -1);
   let count = 0;
   while (isTriggerFree(byDay.get(cursor))) {
     count += 1;
@@ -154,8 +162,9 @@ export const expectedMood = (
   // A streak needs today or yesterday logged, so look back one more day.
   const earliest = utcKey(t - 12 * HOUR - 24 * HOUR);
   const latest = utcKey(t + 14 * HOUR);
+  // Only an answered day can decide it, as in `triggerFreeStreak`.
   const newest = logs
-    .filter((l) => l.day >= earliest && l.day <= latest)
+    .filter((l) => l.day >= earliest && l.day <= latest && isAnswered(l))
     .reduce<
       DayLog | undefined
     >((best, l) => (best === undefined || l.day > best.day ? l : best), undefined);

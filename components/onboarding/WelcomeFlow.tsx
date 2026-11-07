@@ -100,7 +100,7 @@ function Flow({ user }: { user: User }) {
           toast({ variant: 'destructive', title: saved.error });
           return;
         }
-        if (canRemind && reminder.enabled) await applyReminder(reminder);
+        if (canRemind && reminder.enabled) await applyReminder('evening', reminder);
       }
 
       // Marked seen either way. Someone who skips has still been introduced,
