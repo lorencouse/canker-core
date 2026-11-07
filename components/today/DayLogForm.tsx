@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { DayLog } from '@/types';
 import { cn } from '@/utils/cn';
-import { TREATMENTS, TRIGGERS } from '@/utils/day-log';
+import { FOOD_TRIGGERS, HEALTH_TRIGGERS, TREATMENTS } from '@/utils/day-log';
 import { tap } from '@/utils/native';
 
 /**
@@ -36,14 +36,34 @@ export default function DayLogForm({
     });
   };
 
+  // Stress and Poor sleep now come from the habit fields, and older logs may
+  // carry them (or other retired tags) as ticked values; keep those visible so
+  // they can still be unticked.
+  const offered: readonly string[] = [...FOOD_TRIGGERS, ...HEALTH_TRIGGERS];
+  const legacyTicked = log.triggers.filter((t) => !offered.includes(t));
+
   return (
     <div className="space-y-5">
       <ChipGroup
-        label="Anything that might have set one off"
-        options={TRIGGERS}
+        label="Food and drink that might have set one off"
+        options={FOOD_TRIGGERS}
         selected={log.triggers}
         onToggle={(v) => toggle('triggers', v)}
       />
+      <ChipGroup
+        label="Anything else that might have set one off"
+        options={HEALTH_TRIGGERS}
+        selected={log.triggers}
+        onToggle={(v) => toggle('triggers', v)}
+      />
+      {legacyTicked.length > 0 && (
+        <ChipGroup
+          label="Tagged earlier"
+          options={legacyTicked}
+          selected={log.triggers}
+          onToggle={(v) => toggle('triggers', v)}
+        />
+      )}
       <ChipGroup
         label="Anything you tried"
         options={TREATMENTS}

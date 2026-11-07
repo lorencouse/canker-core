@@ -20,6 +20,8 @@ const today = '2026-11-05';
 
 const log = (day: string, triggers: string[] = []): DayLog => ({
   ...emptyDayLog(day),
+  food_answered: true,
+  health_answered: true,
   triggers
 });
 
@@ -48,6 +50,19 @@ const sore = (overrides: Partial<Sore> = {}): Sore => ({
 });
 
 describe('triggerFreeStreak', () => {
+  it('does not count a day whose only data is sleep', () => {
+    const sleepOnly = { ...emptyDayLog(today), sleep_hours: 8, sleep_quality: 4 };
+    expect(triggerFreeStreak([sleepOnly], today)).toBe(0);
+  });
+
+  it('counts a day answered clean with nothing ticked', () => {
+    expect(triggerFreeStreak([log(today)], today)).toBe(1);
+  });
+
+  it('does not count a day whose stress was high', () => {
+    expect(triggerFreeStreak([{ ...log(today), stress: 5 }], today)).toBe(0);
+  });
+
   it('counts consecutive trigger-free logged days', () => {
     const logs = [log('2026-11-03'), log('2026-11-04'), log('2026-11-05')];
     expect(triggerFreeStreak(logs, today)).toBe(3);

@@ -97,6 +97,16 @@ describe('triggersBeforeSores', () => {
   });
 });
 
+describe('triggersBeforeSores (derived)', () => {
+  it('tallies a derived Stress from a stress of 5', () => {
+    const sores = [sore({ created_at: '2026-09-10T12:00:00' })];
+    const logs = [{ ...log('2026-09-10'), stress: 5 }];
+    expect(triggersBeforeSores(sores, logs, 3).tally).toEqual([
+      { label: 'Stress', count: 1 }
+    ]);
+  });
+});
+
 describe('treatmentDays', () => {
   it('counts days per treatment, most used first', () => {
     const logs = [log('2026-09-01', [], ['Salt-water rinse']), log('2026-09-02', [], ['Salt-water rinse', 'Numbing gel'])];

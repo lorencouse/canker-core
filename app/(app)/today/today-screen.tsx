@@ -170,7 +170,11 @@ function Today({
         toast({ variant: 'destructive', title: result.error });
         return;
       }
-      setSavedLogs((prev) => withSavedLog(prev, log, true));
+      setSavedLogs((prev) => withSavedLog(
+          prev,
+          { ...log, food_answered: true, health_answered: true },
+          true
+        ));
       setLogDirty(false);
       setSaved(true);
       notify('success');

@@ -1,4 +1,5 @@
 import type { DayLog, Sore } from '@/types';
+import { isAnsweredClean } from '@/utils/day-log';
 import { dayKey } from '@/utils/readings';
 import { dayKeyIn, isTimeZone } from '@/utils/sore-payload';
 
@@ -22,8 +23,7 @@ const shiftDay = (day: string, offset: number): string => {
   return dayKey(date);
 };
 
-const isTriggerFree = (log: DayLog | undefined): boolean =>
-  log !== undefined && log.triggers.length === 0;
+const isTriggerFree = isAnsweredClean;
 
 /**
  * Consecutive local days logged with no triggers. An unlogged today does not

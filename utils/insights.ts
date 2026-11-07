@@ -1,4 +1,5 @@
 import type { DayLog, Sore } from '@/types';
+import { effectiveTriggers } from '@/utils/day-log';
 import { addDays, dayKey, dayNumberOf } from '@/utils/readings';
 
 /**
@@ -75,7 +76,7 @@ export function triggersBeforeSores(
       const log = byDay.get(dayKey(addDays(start, -i)));
       if (!log) continue;
       any = true;
-      for (const t of log.triggers) seen.add(t);
+      for (const t of effectiveTriggers(log)) seen.add(t);
     }
     if (any) soresWithLogs++;
     seen.forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1));
