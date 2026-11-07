@@ -22,6 +22,7 @@ import {
 } from '@/utils/check-in/steps';
 import { notify, tap } from '@/utils/native';
 import { dayKey } from '@/utils/readings';
+import { deferEveningReminder } from '@/utils/reminders';
 
 import FinishStep from './FinishStep';
 import NewSoreAsk from './NewSoreAsk';
@@ -95,6 +96,10 @@ export default function CheckInFlow({
         const result = await setCheckInStatus(today, 'done');
         if (!result.ok) return fail(result.error);
         clearProgress();
+        // Best-effort: a reminder problem never blocks or toasts the check-in.
+        deferEveningReminder().catch((error) =>
+          console.error('could not skip tonight’s reminder', error)
+        );
       } catch {
         return fail(STATUS_FAILED);
       } finally {

@@ -7,6 +7,7 @@ import {
   useState,
   useSyncExternalStore
 } from 'react';
+import { Capacitor } from '@capacitor/core';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Check, ChevronRight, Loader2, Plus } from 'lucide-react';
@@ -26,6 +27,7 @@ import { SoreProvider, useSoreContext } from '@/context/SoreContext';
 import type { CheckIn, DayLog, Sore, User } from '@/types';
 import { answerLine } from '@/utils/course';
 import { saveDayLog, upsertSores } from '@/utils/actions/soreActions';
+import { holdAutoStart, isAutoStartHeld } from '@/utils/check-in/auto-start-hold';
 import { shouldAutoStart } from '@/utils/check-in/steps';
 import { cn } from '@/utils/cn';
 import { emptyDayLog } from '@/utils/day-log';
@@ -87,14 +89,6 @@ export default function TodayScreen({
     </SoreProvider>
   );
 }
-
-/*
- * Set once the check-in has been shown and closed, so it does not start
- * again on its own until the next open: a page load starts with it clear,
- * and so does the app coming back to the foreground. It outlives Today, so
- * leaving the tab and coming back is not an open.
- */
-let autoStartHeld = false;
 
 function Today({
   user,
@@ -168,7 +162,7 @@ function Today({
   }, [openCheckIn, now, router]);
 
   useEffect(() => {
-    if (!now || checkIn || openCheckIn || autoStartHeld) return;
+    if (!now || checkIn || openCheckIn || isAutoStartHeld()) return;
     // Read afresh: the app may have come back on a later day.
     const day = dayKey(new Date());
     // Deciding needs the device clock and the hold, which live outside React.
@@ -180,28 +174,25 @@ function Today({
   useEffect(() => {
     if (!checkIn) return;
     return () => {
-      autoStartHeld = true;
+      holdAutoStart();
     };
   }, [checkIn]);
 
   /*
-   * Back in the foreground is an open. Clearing the hold is not enough on
-   * its own: the refresh brings today's check-ins as they are now, perhaps
-   * finished on another device, and their arrival is what decides.
+   * Back in the foreground is an open. The hold is cleared app-wide by
+   * NativeBridge; the refresh here brings today's check-ins as they are now,
+   * perhaps finished on another device, and their arrival is what decides.
    */
   useEffect(() => {
-    if (!isNative()) return;
+    if (!isNative() || !Capacitor.isPluginAvailable('App')) return;
     let remove: (() => void) | undefined;
     let gone = false;
     (async () => {
       const { App } = await import('@capacitor/app');
-      const handle = await App.addListener('resume', () => {
-        autoStartHeld = false;
-        router.refresh();
-      });
+      const handle = await App.addListener('resume', () => router.refresh());
       if (gone) handle.remove();
       else remove = () => handle.remove();
-    })();
+    })().catch((error) => console.error('resume listener failed', error));
     return () => {
       gone = true;
       remove?.();

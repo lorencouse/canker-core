@@ -11,38 +11,44 @@ import {
   applyReminder,
   readReminder,
   remindersSupported,
-  type ReminderPref
+  type ReminderPref,
+  type ReminderSlot
 } from '@/utils/reminders';
 
+const SLOTS: Array<{
+  slot: ReminderSlot;
+  label: string;
+  hint: string;
+}> = [
+  {
+    slot: 'morning',
+    label: 'Morning check-in',
+    hint: 'A minute to log how your sores are today.'
+  },
+  {
+    slot: 'evening',
+    label: 'Evening nudge',
+    hint: 'Only if you have not checked in yet.'
+  }
+];
+
 /**
- * The daily reminder switch and time.
+ * The morning and evening reminders, each a switch and a time.
  *
  * Saves on change — there is nothing to review before committing, and a Save
- * button under a single switch reads as a form that failed to submit.
+ * button under a switch reads as a form that failed to submit.
  */
 export function ReminderForm() {
-  // Both values live in the browser, so read them after mount rather than
-  // during the server render. Until the first change, the stored preference
-  // is the answer.
+  // Values live in the browser, so read them after mount rather than during
+  // the server render. Until the first change, the stored preference is the
+  // answer.
   const mounted = useMounted();
-  const [changed, setPref] = useState<ReminderPref | null>(null);
-  const pref = mounted ? (changed ?? readReminder()) : null;
+  const [changed, setChanged] = useState<
+    Partial<Record<ReminderSlot, ReminderPref>>
+  >({});
   const supported = mounted && remindersSupported();
 
-  if (!pref) return null;
-
-  const update = async (next: ReminderPref) => {
-    setPref(next);
-    const ok = await applyReminder(next);
-    if (!ok) {
-      setPref({ ...next, enabled: false });
-      toast({
-        variant: 'destructive',
-        title: 'Notifications are turned off for Canker Core.',
-        description: 'Allow them in your phone’s settings, then try again.'
-      });
-    }
-  };
+  if (!mounted) return null;
 
   if (!supported) {
     return (
@@ -54,40 +60,53 @@ export function ReminderForm() {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <Label htmlFor="reminder-enabled">Remind me every day</Label>
-          <p className="text-sm text-muted-foreground">
-            One notification, at the time below.
-          </p>
-        </div>
-        <Switch
-          id="reminder-enabled"
-          checked={pref.enabled}
-          onCheckedChange={(enabled) => update({ ...pref, enabled })}
-        />
-      </div>
+  const update = async (slot: ReminderSlot, next: ReminderPref) => {
+    setChanged((c) => ({ ...c, [slot]: next }));
+    const ok = await applyReminder(slot, next);
+    if (!ok) {
+      setChanged((c) => ({ ...c, [slot]: { ...next, enabled: false } }));
+      toast({
+        variant: 'destructive',
+        title: 'Notifications are turned off for Canker Core.',
+        description: 'Allow them in your phone’s settings, then try again.'
+      });
+    }
+  };
 
-      <div className="grid gap-1.5">
-        <Label htmlFor="reminder-time">Time</Label>
-        <Input
-          id="reminder-time"
-          type="time"
-          className="w-40"
-          value={pref.time}
-          disabled={!pref.enabled}
-          onChange={(e) => {
-            if (/^\d{2}:\d{2}$/.test(e.target.value))
-              update({ ...pref, time: e.target.value });
-          }}
-        />
-        <p className="text-xs text-muted-foreground">
-          Evenings work best: the day’s eating is done and the sore has had its
-          say.
-        </p>
-      </div>
+  return (
+    <div className="space-y-8">
+      {SLOTS.map(({ slot, label, hint }) => {
+        const pref = changed[slot] ?? readReminder(slot);
+        return (
+          <div key={slot} className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <Label htmlFor={`reminder-${slot}-enabled`}>{label}</Label>
+                <p className="text-sm text-muted-foreground">{hint}</p>
+              </div>
+              <Switch
+                id={`reminder-${slot}-enabled`}
+                checked={pref.enabled}
+                onCheckedChange={(enabled) => update(slot, { ...pref, enabled })}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor={`reminder-${slot}-time`}>Time</Label>
+              <Input
+                id={`reminder-${slot}-time`}
+                type="time"
+                className="w-40"
+                value={pref.time}
+                disabled={!pref.enabled}
+                onChange={(e) => {
+                  if (/^\d{2}:\d{2}$/.test(e.target.value))
+                    update(slot, { ...pref, time: e.target.value });
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
