@@ -19,8 +19,19 @@ import {
   notificationIconCopies,
   patchAndroidManifest,
   patchEntitlements,
+  patchEntitlementsHealthKit,
+  patchInfoPlistHealthUsage,
   patchInfoPlistPhotoUsage,
   PHOTO_USAGE_STRINGS,
+  HEALTH_MIN_SDK,
+  HEALTH_PRIVACY_POLICY_URL,
+  HEALTH_READ_PERMISSION,
+  HEALTH_USAGE_STRINGS,
+  HEALTHKIT_ENTITLEMENTS,
+  patchAndroidHealthPermissions,
+  patchAndroidMinSdk,
+  patchAndroidStrings,
+  unwantedHealthPermissions,
   patchPbxprojEntitlements,
   type PatchResult
 } from './native-patches.mjs';
@@ -124,8 +135,42 @@ const ANDROID_MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
 </manifest>
 `;
 
+// android/variables.gradle and res/values/strings.xml as `cap add android`
+// (Capacitor 8) writes them.
+const VARIABLES_GRADLE = `ext {
+    minSdkVersion = 24
+    compileSdkVersion = 36
+    targetSdkVersion = 36
+}`;
+
+const STRINGS_XML = `<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Canker Core</string>
+    <string name="title_activity_main">Canker Core</string>
+</resources>
+`;
+
+const ENTITLEMENTS = patchEntitlements('').text;
+
+// Two of the library's permissions, enough to see the block's shape.
+const REMOVE = [
+  'android.permission.health.READ_STEPS',
+  'android.permission.health.WRITE_SLEEP'
+];
+const patchHealthPermissions = (text: string) =>
+  patchAndroidHealthPermissions(text, REMOVE);
+
 const cases: [string, string, (text: string) => PatchResult][] = [
   ['Info.plist (photo usage)', INFO_PLIST, patchInfoPlistPhotoUsage],
+  ['Info.plist (health usage)', INFO_PLIST, patchInfoPlistHealthUsage],
+  ['App.entitlements (HealthKit)', ENTITLEMENTS, patchEntitlementsHealthKit],
+  [
+    'AndroidManifest.xml (health permissions)',
+    ANDROID_MANIFEST,
+    patchHealthPermissions
+  ],
+  ['variables.gradle (minSdk)', VARIABLES_GRADLE, patchAndroidMinSdk],
+  ['strings.xml (privacy policy)', STRINGS_XML, patchAndroidStrings],
   ['project.pbxproj (entitlements)', TARGET_CONFIGS, patchPbxprojEntitlements],
   ['AndroidManifest.xml', ANDROID_MANIFEST, patchAndroidManifest],
   [
@@ -297,6 +342,150 @@ describe('patchEntitlements', () => {
   });
 });
 
+describe('patchInfoPlistHealthUsage', () => {
+  it('says sleep is read only on request and only hours are kept', () => {
+    const { text } = patchInfoPlistHealthUsage(INFO_PLIST);
+    const copy = HEALTH_USAGE_STRINGS.NSHealthShareUsageDescription;
+    expect(text).toContain(
+      `<key>NSHealthShareUsageDescription</key>\n\t<string>${copy}</string>`
+    );
+    expect(copy).toMatch(/only when you tap Import from Health/);
+    expect(copy).toMatch(/Only the total hours are saved/);
+  });
+
+  it('asks to read only, so declares no update (write) string', () => {
+    const { text } = patchInfoPlistHealthUsage(INFO_PLIST);
+    expect(text).not.toContain('NSHealthUpdateUsageDescription');
+  });
+
+  it('composes with the photo strings', () => {
+    const photo = patchInfoPlistPhotoUsage(INFO_PLIST).text;
+    const both = patchInfoPlistHealthUsage(photo).text;
+    for (const key of [
+      ...Object.keys(PHOTO_USAGE_STRINGS),
+      ...Object.keys(HEALTH_USAGE_STRINGS)
+    ]) {
+      expect(both.match(new RegExp(`<key>${key}</key>`, 'g'))).toHaveLength(1);
+    }
+    expect(patchInfoPlistPhotoUsage(both).changed).toBe(false);
+  });
+});
+
+describe('patchEntitlementsHealthKit', () => {
+  it('adds the HealthKit capability beside the associated domains', () => {
+    const { text } = patchEntitlementsHealthKit(ENTITLEMENTS);
+    expect(text).toContain(
+      '<key>com.apple.developer.healthkit</key>\n\t<true/>'
+    );
+    expect(text).toContain(
+      '<key>com.apple.developer.healthkit.access</key>\n\t<array/>'
+    );
+    expect(text).toContain('<key>com.apple.developer.associated-domains</key>');
+    expect(text).toMatch(/<\/dict>\n<\/plist>\n$/);
+    expect(patchEntitlements(text).changed).toBe(false);
+  });
+
+  it('refuses HealthKit keys it did not write', () => {
+    const other = ENTITLEMENTS.replace(
+      '</dict>',
+      '\t<key>com.apple.developer.healthkit</key>\n\t<false/>\n</dict>'
+    );
+    expect(() => patchEntitlementsHealthKit(other)).toThrow(/Regenerate/);
+  });
+});
+
+describe('patchAndroidHealthPermissions', () => {
+  it('declares READ_SLEEP and removes the rest', () => {
+    const { text } = patchHealthPermissions(ANDROID_MANIFEST);
+    expect(text).toContain(
+      `<uses-permission android:name="${HEALTH_READ_PERMISSION}" />`
+    );
+    for (const name of REMOVE) {
+      expect(text).toContain(
+        `<uses-permission android:name="${name}" tools:node="remove" />`
+      );
+    }
+    expect(text).toMatch(
+      /^<manifest xmlns:tools="http:\/\/schemas\.android\.com\/tools" xmlns:android=/m
+    );
+    expect(text).toMatch(/<\/manifest>\n$/);
+  });
+
+  it('rewrites its own block when the library list changes', () => {
+    const first = patchHealthPermissions(ANDROID_MANIFEST).text;
+    const next = patchAndroidHealthPermissions(first, [REMOVE[0]]);
+    expect(next.changed).toBe(true);
+    expect(next.text).not.toContain(REMOVE[1]);
+    expect(next.text.match(/patch-native: health permissions/g)).toHaveLength(
+      2
+    );
+    expect(next.text.match(/xmlns:tools=/g)).toHaveLength(1);
+  });
+
+  it('composes with the app link and backup patches', () => {
+    const linked = patchAndroidBackupRules(
+      patchAndroidManifest(ANDROID_MANIFEST).text
+    ).text;
+    const { text } = patchHealthPermissions(linked);
+    expect(text).toContain(APP_LINK_FILTER);
+    expect(patchAndroidManifest(text).changed).toBe(false);
+    expect(patchAndroidBackupRules(text).changed).toBe(false);
+  });
+});
+
+describe('unwantedHealthPermissions', () => {
+  it('lists every health permission except READ_SLEEP, once', () => {
+    const manifest = `<manifest>
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.WRITE_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>`;
+    expect(unwantedHealthPermissions(manifest)).toEqual([
+      'android.permission.health.READ_STEPS',
+      'android.permission.health.WRITE_SLEEP'
+    ]);
+  });
+});
+
+describe('patchAndroidMinSdk', () => {
+  it('raises the template minimum to what Health Connect needs', () => {
+    const { text } = patchAndroidMinSdk(VARIABLES_GRADLE);
+    expect(text).toContain(`minSdkVersion = ${HEALTH_MIN_SDK}\n`);
+    expect(text).toContain('compileSdkVersion = 36');
+  });
+
+  it('leaves a higher minimum alone', () => {
+    const higher = VARIABLES_GRADLE.replace('= 24', '= 28');
+    expect(patchAndroidMinSdk(higher)).toEqual({
+      text: higher,
+      changed: false
+    });
+  });
+});
+
+describe('patchAndroidStrings', () => {
+  it('points the Health Connect privacy policy at the privacy page', () => {
+    const { text } = patchAndroidStrings(STRINGS_XML);
+    expect(text).toContain(
+      `    <string name="health_connect_privacy_policy_url">${HEALTH_PRIVACY_POLICY_URL}</string>\n</resources>\n`
+    );
+    expect(text).toContain('<string name="app_name">Canker Core</string>');
+  });
+
+  it('rewrites a different URL', () => {
+    const old = patchAndroidStrings(STRINGS_XML).text.replace(
+      HEALTH_PRIVACY_POLICY_URL,
+      'https://example.com'
+    );
+    const { text, changed } = patchAndroidStrings(old);
+    expect(changed).toBe(true);
+    expect(text).toContain(HEALTH_PRIVACY_POLICY_URL);
+    expect(text).not.toContain('example.com');
+  });
+});
+
 describe('notificationIconCopies', () => {
   it('maps each committed density into the Android res tree', () => {
     const copies = notificationIconCopies();
@@ -462,17 +651,69 @@ describe('the installed Capacitor templates', () => {
     expect(run(first.text)).toEqual({ text: first.text, changed: false });
   };
 
+  // The Health plugin's own library manifest, as installed.
+  const healthLibrary = () =>
+    readFileSync(
+      fileURLToPath(
+        new URL(
+          '../node_modules/@capgo/capacitor-health/android/src/main/AndroidManifest.xml',
+          import.meta.url
+        )
+      ),
+      'utf8'
+    );
+
   it('patches the iOS project once', () => {
     twice(ios('App/App.xcodeproj/project.pbxproj'), [patchPbxprojEntitlements]);
-    twice(ios('App/App/Info.plist'), [patchInfoPlistPhotoUsage]);
-    twice('', [patchEntitlements]);
+    twice(ios('App/App/Info.plist'), [
+      patchInfoPlistPhotoUsage,
+      patchInfoPlistHealthUsage
+    ]);
+    twice('', [patchEntitlements, patchEntitlementsHealthKit]);
   });
 
-  it('patches the Android manifest once', () => {
+  it('patches the Android project once', () => {
+    const remove = unwantedHealthPermissions(healthLibrary());
     twice(android('app/src/main/AndroidManifest.xml'), [
       patchAndroidManifest,
-      patchAndroidBackupRules
+      patchAndroidBackupRules,
+      (text) => patchAndroidHealthPermissions(text, remove)
     ]);
+    twice(android('variables.gradle'), [patchAndroidMinSdk]);
+    twice(android('app/src/main/res/values/strings.xml'), [
+      patchAndroidStrings
+    ]);
+  });
+
+  it('strips every health permission the plugin declares except READ_SLEEP', () => {
+    const library = healthLibrary();
+    const remove = unwantedHealthPermissions(library);
+    expect(library).toContain(HEALTH_READ_PERMISSION);
+    expect(remove).not.toContain(HEALTH_READ_PERMISSION);
+    // Every declared health permission but one goes, digits and all.
+    const declared = new Set(
+      library.match(/android\.permission\.health\.[A-Z0-9_]+/g)
+    );
+    expect(remove).toHaveLength(declared.size - 1);
+    expect(remove).toContain('android.permission.health.WRITE_SLEEP');
+    expect(remove).toContain('android.permission.health.READ_VO2_MAX');
+  });
+
+  it("relies on the plugin's own rationale activity, alias and queries", () => {
+    const library = healthLibrary();
+    expect(library).toContain(
+      'androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE'
+    );
+    expect(library).toMatch(
+      /<activity-alias[\s\S]*android\.intent\.action\.VIEW_PERMISSION_USAGE[\s\S]*android\.intent\.category\.HEALTH_PERMISSIONS/
+    );
+    expect(library).toContain(
+      '<package android:name="com.google.android.apps.healthdata" />'
+    );
+  });
+
+  it('starts Android below the minimum Health Connect needs', () => {
+    expect(android('variables.gradle')).toMatch(/minSdkVersion = 24\b/);
   });
 
   it('already targets iOS 15.0 everywhere', () => {

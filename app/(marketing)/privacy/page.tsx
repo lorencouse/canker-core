@@ -43,6 +43,20 @@ export default function PrivacyPage() {
       </section>
 
       <section>
+        <h2>Sleep from Apple Health or Health Connect</h2>
+        <p>
+          In the iPhone and Android apps, the check-in can fill in your hours of
+          sleep from Apple Health or Health Connect. Your sleep is read only
+          when you tap Import from Health, and nothing else in Health is read.
+          Canker Core adds up the time you were asleep last night and saves only
+          that total and where it came from, alongside your other sleep answers.
+          It never writes to Health, and Health data is never shared, sold, or
+          used for advertising. You can turn off access at any time in the
+          Health app or Health Connect settings.
+        </p>
+      </section>
+
+      <section>
         <h2>What is not done with it</h2>
         <p>
           Your records are not sold, shared with advertisers, or used to train

@@ -120,13 +120,16 @@ on regeneration:
   by `CODE_SIGN_ENTITLEMENTS`. Automatic signing enables the capability on
   the App ID. Also the `NSCameraUsageDescription` and
   `NSPhotoLibraryUsageDescription` strings in `Info.plist` for sore photos
-  (below). The template already targets iOS 15.0 (Capacitor's Podfile hook
+  (below), and the HealthKit capability and `NSHealthShareUsageDescription`
+  for the sleep import (below). The template already targets iOS 15.0 (Capacitor's Podfile hook
   lifts every pod to 15.0 too) and ships the `SceneDelegate` and scene
   manifest iOS 27 requires, so the script no longer patches those.
 - **Android:** the sign-in App Link intent-filter on `MainActivity` (see
   above), the backup rules that keep sore photos out of Auto Backup (below),
-  and the Kanko notification small icon copied from
-  `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`.
+  the Kanko notification small icon copied from
+  `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`, and the
+  Health Connect setup for the sleep import (below): `READ_SLEEP`, the other
+  health permissions removed, `minSdkVersion` 26 and the privacy-policy URL.
 
 `cap:add:ios` asks for the CocoaPods template (`--packagemanager
 CocoaPods`). Capacitor 8 otherwise generates a Swift Package Manager
@@ -167,6 +170,98 @@ platform **and** both plugins actually present (`Capacitor.isPluginAvailable`),
 so an installed app built before the plugins were added, and the website,
 show no photo control at all. Android needs no permission: the camera asks
 for none without `saveToGallery`, and the files dir is app-private.
+
+### Sleep import (`@capgo/capacitor-health`)
+
+The check-in's Sleep screen has an **Import from Health** button that fills
+in last night's hours from Apple Health (iOS) or Health Connect (Android).
+`utils/health-sleep.ts` asks to read sleep, and nothing else, the first time
+the button is tapped, never up front. It reads sleep segments ending between
+18:00 the previous day and now, counts only asleep stages (asleep, core or
+light, deep, REM; not awake or in bed), merges overlaps so a watch and a
+phone recording the same night count once, and rounds to a quarter hour.
+Only the hours are kept, with `sleep_source` set to `apple_health` or
+`health_connect`; quality stays manual, and changing the hours makes the
+source `manual` again. A refusal, an empty night or any error shows "No
+sleep found for last night" and nothing else. HealthKit never tells an app
+that reading was refused, so on iOS a refusal looks exactly like an empty
+night.
+
+`@capgo/capacitor-health` 8.11 was picked over `@capacitor/health-fitness`
+1.0 because it returns sleep as stage segments on both platforms
+(`readSamples({ dataType: 'sleep' })`), asks per type, ships a podspec (the
+iOS project is CocoaPods), and adds nothing to `cap sync`; health-fitness
+only returns aggregated buckets for `SLEEP` and rewrites native files from a
+`capacitor:sync:after` hook.
+
+The button shows only where `sleepImportSupported()` (native platform and
+the `Health` plugin present) and the plugin's `isAvailable()` agree, so the
+website, app versions built before the plugin, and Android phones without
+Health Connect show nothing.
+
+What `cap:patch` adds for it:
+
+- **iOS:** `com.apple.developer.healthkit` (true) and an empty
+  `com.apple.developer.healthkit.access` in `App.entitlements`, as Xcode's
+  HealthKit capability writes them; automatic signing enables HealthKit on
+  the App ID. `NSHealthShareUsageDescription` in `Info.plist`: "Reads your
+  sleep only when you tap Import from Health, to fill in hours asleep. Only
+  the total hours are saved." There is no `NSHealthUpdateUsageDescription`:
+  the app requests no write types, and HealthKit only requires that key for
+  an app that asks to write.
+- **Android:** `android.permission.health.READ_SLEEP`, and every other
+  health permission the plugin's library manifest declares (read and write
+  for about twenty types, read from the installed package at patch time)
+  marked `tools:node="remove"`, so the merged manifest carries only
+  `READ_SLEEP`. `minSdkVersion` goes from the template's 24 to 26, which
+  Health Connect and the plugin need. `health_connect_privacy_policy_url` in
+  `strings.xml` points at https://cankercore.com/privacy. The plugin's own
+  manifest supplies the rest Health Connect requires: the rationale activity
+  for `ACTION_SHOW_PERMISSIONS_RATIONALE` (Android 13 and older), the
+  `VIEW_PERMISSION_USAGE` activity-alias with the `HEALTH_PERMISSIONS`
+  category (Android 14 and newer), which both open that URL, and the
+  `<queries>` entry for `com.google.android.apps.healthdata`.
+
+#### App Store review notes
+
+Paste into App Review Information > Notes, and tick HealthKit under the App
+Privacy health data types (Health, used for App Functionality, linked to the
+user, not used for tracking):
+
+> Canker Core reads sleep analysis from HealthKit, read-only, and only when
+> the user taps "Import from Health" on the Sleep step of the daily
+> check-in (Today > Check in, then continue to Sleep). It asks for sleep
+> permission at that moment, never at launch. It adds up the time asleep
+> for the night that ended this morning and fills in the "Hours asleep"
+> field; the user can change it before saving. Only that total, and the fact
+> that it came from Apple Health, is stored on our server with the user's
+> daily log. No other Health data is read, nothing is written to Health,
+> and Health data is never shared with third parties or used for
+> advertising. If permission is refused or there is no sleep recorded, the
+> screen shows "No sleep found for last night" and stays manual. To test,
+> add a sleep sample in the Health app (Browse > Sleep > Add Data) for last
+> night, then use the button.
+
+#### Play Console health declaration
+
+Play Console > App content > Health apps declaration, and the Health
+Connect permissions declaration for `READ_SLEEP`:
+
+> Canker Core helps people track recurring mouth ulcers (canker sores) and
+> the habits that may trigger them, including sleep. The app reads Health
+> Connect sleep sessions (READ_SLEEP) only when the user taps "Import from
+> Health" on the Sleep step of the daily check-in. It sums the time asleep
+> for the night that ended that morning and pre-fills the "Hours asleep"
+> field, which the user can edit. Only that total number of hours, and the
+> fact that it came from Health Connect, is stored with the user's daily log
+> so they can compare sleep with flare-ups. The app requests no other
+> health permission, never writes to Health Connect, does not read in the
+> background, and does not share or sell health data or use it for
+> advertising. Privacy policy: https://cankercore.com/privacy
+
+Data safety form: Health and fitness > Health info collected, required for
+app functionality, not shared, user can request deletion (Settings >
+Account > Delete account).
 
 Gradle 8.14 (the Capacitor 8 template's wrapper) needs JDK 21. If a newer
 JDK, such as the one Android Studio bundles, fails the settings script with

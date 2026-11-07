@@ -26,6 +26,7 @@ import { deferEveningReminder } from '@/utils/reminders';
 
 import FinishStep from './FinishStep';
 import NewSoreAsk from './NewSoreAsk';
+import SleepImport from './SleepImport';
 import SleepStep from './SleepStep';
 import SoreStep from './SoreStep';
 import StepHeading from './StepHeading';
@@ -193,7 +194,20 @@ export default function CheckInFlow({
         );
       case 'sleep':
         return (
-          <SleepStep {...habit} initialDay={defaultDay('sleep', now, manual)} />
+          <SleepStep
+            {...habit}
+            initialDay={defaultDay('sleep', now, manual)}
+            importSlot={(fill, day, busy) => (
+              // Keyed by day, so switching days clears a "no sleep found" line.
+              <SleepImport
+                key={day}
+                day={day}
+                now={now}
+                onImport={fill}
+                disabled={busy}
+              />
+            )}
+          />
         );
       case 'food':
       case 'health':

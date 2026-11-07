@@ -44,9 +44,14 @@ export default function SleepStep({
   onBusy,
   importSlot
 }: HabitStepProps & {
-  /** Where "Import from Health" goes once there is one; `fill` sets the hours and their source. */
+  /**
+   * Where "Import from Health" goes: `fill` sets the hours and their source,
+   * `day` is the day being saved to, and `busy` is true while it saves.
+   */
   importSlot?: (
-    fill: (hours: number, source: Exclude<Source, 'manual'>) => void
+    fill: (hours: number, source: Exclude<Source, 'manual'>) => void,
+    day: string,
+    busy: boolean
   ) => ReactNode;
 }) {
   const [choice, setChoice] = useState<DayChoice>(initialDay);
@@ -156,8 +161,11 @@ export default function SleepStep({
             <Plus aria-hidden="true" />
           </Button>
         </div>
-        {importSlot?.((hours, source) =>
-          setFields((f) => ({ ...f, hours: clampHours(hours), source }))
+        {importSlot?.(
+          (hours, source) =>
+            setFields((f) => ({ ...f, hours: clampHours(hours), source })),
+          day,
+          busy
         )}
       </div>
 
