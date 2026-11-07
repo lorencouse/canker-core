@@ -202,7 +202,6 @@ export default function CheckInFlow({
               <SleepImport
                 key={day}
                 day={day}
-                now={now}
                 onImport={fill}
                 disabled={busy}
               />

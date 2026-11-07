@@ -212,9 +212,11 @@ What `cap:patch` adds for it:
   HealthKit capability writes them; automatic signing enables HealthKit on
   the App ID. `NSHealthShareUsageDescription` in `Info.plist`: "Reads your
   sleep only when you tap Import from Health, to fill in hours asleep. Only
-  the total hours are saved to your check-in." There is no `NSHealthUpdateUsageDescription`:
-  the app requests no write types, and HealthKit only requires that key for
-  an app that asks to write.
+  the total hours are saved to your check-in." `NSHealthUpdateUsageDescription` too: "Canker Core never
+  writes to Health. It only reads your sleep when you tap Import from
+  Health." The app requests no write types, so HealthKit never shows it; it
+  is there because App Store Connect's purpose-string check (ITMS-90683)
+  expects both keys on a binary that links HealthKit.
 - **Android:** `android.permission.health.READ_SLEEP`, and every other
   health permission the plugin's library manifest declares (read and write
   for about twenty types, read from the installed package at patch time)

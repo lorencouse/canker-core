@@ -218,6 +218,14 @@ describe('sleepImportAvailable', () => {
     expect(mocks.isAvailable).not.toHaveBeenCalled();
   });
 
+  it('exposes a settled answer synchronously, null before', async () => {
+    vi.resetModules();
+    const mod = await import('./health-sleep');
+    expect(mod.sleepImportAvailableNow()).toBeNull();
+    await mod.sleepImportAvailable();
+    expect(mod.sleepImportAvailableNow()).toBe(true);
+  });
+
   it('is false when the availability check fails', async () => {
     const sleepImportAvailable = await fresh();
     mocks.isAvailable.mockRejectedValue(new Error('boom'));

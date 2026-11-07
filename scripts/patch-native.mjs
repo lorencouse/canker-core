@@ -13,7 +13,8 @@
  *   - camera and photo library usage strings in Info.plist, which iOS needs
  *     before it lets the sore photo control open either;
  *   - the HealthKit capability in App.entitlements and the Health read usage
- *     string (NSHealthShareUsageDescription) for the sleep import.
+ *     string (NSHealthShareUsageDescription, plus NSHealthUpdateUsageDescription for
+ *     App Store Connect's purpose-string check) for the sleep import.
  * Android:
  *   - an autoVerify App Link intent-filter on MainActivity for
  *     https://cankercore.com/native-auth/callback, so the system sign-in's
@@ -47,6 +48,7 @@ import {
   backupRuleFiles,
   ENTITLEMENTS_PATH,
   notificationIconCopies,
+  assertCapacitor8Android,
   patchAndroidBackupRules,
   patchAndroidHealthPermissions,
   patchAndroidManifest,
@@ -140,6 +142,9 @@ const HEALTH_LIBRARY_MANIFEST = path.join(
 );
 
 const patchAndroid = () => {
+  const variables = path.join(ROOT, 'android/variables.gradle');
+  if (!existsSync(variables)) throw new Error(`${rel(variables)} is missing`);
+  assertCapacitor8Android(readFileSync(variables, 'utf8'));
   if (!existsSync(HEALTH_LIBRARY_MANIFEST)) {
     throw new Error(
       `${rel(HEALTH_LIBRARY_MANIFEST)} is missing; run npm install`

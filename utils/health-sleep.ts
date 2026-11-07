@@ -35,6 +35,15 @@ export const sleepImportSupported = (): boolean =>
   Capacitor.isNativePlatform() && Capacitor.isPluginAvailable(PLUGIN);
 
 let availability: Promise<boolean> | null = null;
+let resolvedAvailability: boolean | null = null;
+
+/**
+ * The answer sleepImportAvailable already settled on, or null while it is
+ * unknown. Lets a remounting control start from the known answer instead of
+ * hiding for a tick.
+ */
+export const sleepImportAvailableNow = (): boolean | null =>
+  resolvedAvailability;
 
 /**
  * Whether this phone has a health store to read: false on an Android phone
@@ -48,6 +57,9 @@ export function sleepImportAvailable(): Promise<boolean> {
     (result) => result.available,
     () => false
   );
+  availability.then((yes) => {
+    resolvedAvailability = yes;
+  });
   return availability;
 }
 

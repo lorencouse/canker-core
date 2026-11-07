@@ -8,6 +8,7 @@ import {
   importLastNight,
   nightEndFor,
   sleepImportAvailable,
+  sleepImportAvailableNow,
   type ImportedSleep
 } from '@/utils/health-sleep';
 import { tap } from '@/utils/native';
@@ -22,17 +23,19 @@ import { tap } from '@/utils/native';
  */
 export default function SleepImport({
   day,
-  now,
   onImport,
   disabled
 }: {
   /** The day the Sleep screen is saving to. */
   day: string;
-  now: Date;
   onImport: (hours: number, source: ImportedSleep['source']) => void;
   disabled?: boolean;
 }) {
-  const [available, setAvailable] = useState(false);
+  // Starts from an answer a previous mount already got (null on first load,
+  // and always on the server, so hydration matches the web render).
+  const [available, setAvailable] = useState(
+    () => sleepImportAvailableNow() ?? false
+  );
   const [busy, setBusy] = useState(false);
   const [missing, setMissing] = useState(false);
 
@@ -50,10 +53,11 @@ export default function SleepImport({
 
   const run = async () => {
     tap();
+    // The clock at the tap: today's window ends now, not when the flow opened.
     setBusy(true);
     setMissing(false);
     try {
-      const night = await importLastNight(nightEndFor(day, now));
+      const night = await importLastNight(nightEndFor(day, new Date()));
       if (night) onImport(night.hours, night.source);
       // A refusal looks the same as an empty night on iOS, so both get the
       // same quiet line and the screen stays manual.

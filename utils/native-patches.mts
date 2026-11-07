@@ -40,14 +40,17 @@ export const PHOTO_USAGE_STRINGS: Record<string, string> = {
 
 /**
  * Why the app asks to read Health (iOS shows this in the permission sheet and
- * refuses to ask without it). Read-only, so there is no
- * NSHealthUpdateUsageDescription: utils/health-sleep.ts requests no write
- * types, and HealthKit only requires that key when an app asks to share
- * (write) data.
+ * refuses to ask without it). utils/health-sleep.ts requests no write types,
+ * so HealthKit itself never asks for NSHealthUpdateUsageDescription; it is
+ * declared anyway because App Store Connect's purpose-string check
+ * (ITMS-90683) wants both keys on a HealthKit-linked binary. The copy says
+ * truthfully that the app never writes.
  */
 export const HEALTH_USAGE_STRINGS: Record<string, string> = {
   NSHealthShareUsageDescription:
-    'Reads your sleep only when you tap Import from Health, to fill in hours asleep. Only the total hours are saved to your check-in.'
+    'Reads your sleep only when you tap Import from Health, to fill in hours asleep. Only the total hours are saved to your check-in.',
+  NSHealthUpdateUsageDescription:
+    'Canker Core never writes to Health. It only reads your sleep when you tap Import from Health.'
 };
 
 const plistString = (key: string, value: string) =>
@@ -236,6 +239,27 @@ export function patchPbxprojEntitlements(text: string): PatchResult {
     (line, indent: string) => `${indent}${ENTITLEMENTS_SETTING}\n${line}`
   );
   return { text: out, changed: true };
+}
+
+/**
+ * The Capacitor 8 Android template raised compileSdkVersion to 36 (the
+ * Capacitor 7 one had 35), which makes variables.gradle a reliable marker of
+ * which template generated android/. Older projects stop the run: the other
+ * patches assume the Capacitor 8 layout.
+ */
+export const ANDROID_MIN_COMPILE_SDK = 36;
+
+export function assertCapacitor8Android(variablesGradle: string): void {
+  const match = variablesGradle.match(
+    /^[ \t]*compileSdkVersion[ \t]*=[ \t]*(\d+)\b/m
+  );
+  if (!match || Number(match[1]) < ANDROID_MIN_COMPILE_SDK) {
+    throw new Error(
+      `android/ predates Capacitor 8 (compileSdkVersion ${match?.[1] ?? 'not found'} in variables.gradle, ` +
+        `expected ${ANDROID_MIN_COMPILE_SDK} or higher). ` +
+        'Regenerate it: rm -rf android && npm run cap:add:android'
+    );
+  }
 }
 
 /** Android notification small icon: densities and their pixel sizes. */

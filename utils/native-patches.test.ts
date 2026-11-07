@@ -29,6 +29,7 @@ import {
   HEALTH_USAGE_STRINGS,
   HEALTHKIT_ENTITLEMENTS,
   patchAndroidHealthPermissions,
+  assertCapacitor8Android,
   patchAndroidMinSdk,
   patchAndroidStrings,
   unwantedHealthPermissions,
@@ -353,9 +354,14 @@ describe('patchInfoPlistHealthUsage', () => {
     expect(copy).toMatch(/Only the total hours are saved to your check-in\.$/);
   });
 
-  it('asks to read only, so declares no update (write) string', () => {
+  it('declares an update string that says the app never writes', () => {
     const { text } = patchInfoPlistHealthUsage(INFO_PLIST);
-    expect(text).not.toContain('NSHealthUpdateUsageDescription');
+    const copy = HEALTH_USAGE_STRINGS.NSHealthUpdateUsageDescription;
+    expect(text).toContain(
+      `<key>NSHealthUpdateUsageDescription</key>\n\t<string>${copy}</string>`
+    );
+    expect(copy).toMatch(/^Canker Core never writes to Health\./);
+    expect(copy).not.toMatch(/\u2014/);
   });
 
   it('composes with the photo strings', () => {
@@ -712,6 +718,12 @@ describe('the installed Capacitor templates', () => {
     );
   });
 
+  it('ships the compileSdkVersion the Capacitor 8 marker expects', () => {
+    expect(() =>
+      assertCapacitor8Android(android('variables.gradle'))
+    ).not.toThrow();
+  });
+
   it('starts Android below the minimum Health Connect needs', () => {
     expect(android('variables.gradle')).toMatch(/minSdkVersion = 24\b/);
   });
@@ -751,6 +763,28 @@ describe('the installed Capacitor templates', () => {
     );
     expect(ios('App/App/Info.plist')).toContain(
       '<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>'
+    );
+  });
+});
+
+describe('assertCapacitor8Android', () => {
+  it('accepts the Capacitor 8 template', () => {
+    expect(() => assertCapacitor8Android(VARIABLES_GRADLE)).not.toThrow();
+  });
+
+  it('refuses a Capacitor 7 project and says how to regenerate', () => {
+    const cap7 = VARIABLES_GRADLE.replace(
+      'compileSdkVersion = 36',
+      'compileSdkVersion = 35'
+    );
+    expect(() => assertCapacitor8Android(cap7)).toThrow(
+      /predates Capacitor 8.*rm -rf android && npm run cap:add:android/
+    );
+  });
+
+  it('refuses a variables.gradle with no compileSdkVersion', () => {
+    expect(() => assertCapacitor8Android('ext {}')).toThrow(
+      /predates Capacitor 8/
     );
   });
 });
