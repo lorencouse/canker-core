@@ -41,15 +41,13 @@ export function buildSteps(sores: Sore[]): Step[] {
   ];
 }
 
-/** Sleep and treatments describe today; food and health describe yesterday,
- * unless the check-in is opened by hand from midday on. */
-export function defaultDay(
-  kind: HabitKind,
-  now: Date,
-  manual: boolean
-): 'today' | 'yesterday' {
-  if (manual && now.getHours() >= 12) return 'today';
-  return kind === 'sleep' || kind === 'treatments' ? 'today' : 'yesterday';
+/**
+ * The day a habit screen opens on: yesterday for a morning check-in, since
+ * the day being looked back on is the one just gone, and today from midday
+ * on. Sleep is not asked this way; it is always last night.
+ */
+export function defaultDay(now: Date): 'today' | 'yesterday' {
+  return now.getHours() < 12 ? 'yesterday' : 'today';
 }
 
 /** The local day a habit screen's Today / Yesterday choice names. Steps the

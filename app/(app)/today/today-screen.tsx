@@ -529,7 +529,6 @@ function Today({
           <CheckInFlow
             sores={sores}
             dayLogs={savedLogs}
-            manual={checkIn.manual}
             onClose={closeCheckIn}
           />
         </CheckInHost>

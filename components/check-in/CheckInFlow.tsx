@@ -53,14 +53,11 @@ const STATUS_FAILED = 'Could not save your check-in. Try again.';
 export default function CheckInFlow({
   sores: initialSores,
   dayLogs,
-  manual,
   onClose
 }: {
   sores: Sore[];
   /** Recent day logs, so habit screens open on what is already saved. */
   dayLogs: DayLog[];
-  /** Opened from the button rather than on its own; habit steps use it for their default day. */
-  manual: boolean;
   onClose: (result: 'done' | 'skipped' | 'left') => void;
 }) {
   const [now] = useState(() => new Date());
@@ -230,7 +227,7 @@ export default function CheckInFlow({
           <TagStep
             {...habit}
             kind={step.kind}
-            initialDay={defaultDay(step.kind, now, manual)}
+            initialDay={defaultDay(now)}
           />
         );
       case 'finish':
