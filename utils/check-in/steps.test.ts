@@ -65,17 +65,13 @@ describe('buildSteps', () => {
 
 describe('defaultDay', () => {
   const at = (h: number) => new Date(2026, 10, 6, h);
-  it('maps kinds to days', () => {
-    expect(defaultDay('food', at(8), false)).toBe('yesterday');
-    expect(defaultDay('health', at(8), false)).toBe('yesterday');
-    expect(defaultDay('sleep', at(8), false)).toBe('today');
-    expect(defaultDay('treatments', at(8), false)).toBe('today');
-  });
-  it('uses today for everything when manual from midday', () => {
-    expect(defaultDay('food', at(15), true)).toBe('today');
-    expect(defaultDay('food', at(12), true)).toBe('today');
-    expect(defaultDay('food', at(11), true)).toBe('yesterday');
-    expect(defaultDay('food', at(15), false)).toBe('yesterday');
+  it('is yesterday in the morning and today from midday on', () => {
+    expect(defaultDay(at(0))).toBe('yesterday');
+    expect(defaultDay(at(8))).toBe('yesterday');
+    expect(defaultDay(at(11))).toBe('yesterday');
+    expect(defaultDay(at(12))).toBe('today');
+    expect(defaultDay(at(19))).toBe('today');
+    expect(defaultDay(at(23))).toBe('today');
   });
 });
 
