@@ -22,7 +22,7 @@ export default function TabBar() {
     <nav
       aria-label="Main"
       className={cn(
-        'fixed inset-x-0 bottom-0 z-40 lg:hidden',
+        'keyboard-hides fixed inset-x-0 bottom-0 z-40 lg:hidden',
         // Opaque: a frosted bar lets the content under it compete with the
         // labels.
         'border-t border-border bg-card',

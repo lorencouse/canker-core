@@ -461,6 +461,21 @@
     }
   }
 
+  /*
+   * Fixed bottom chrome (tab bar, floating Save and Done bars) that would
+   * ride up over the soft keyboard on Android. Capacitor 8 shrinks the
+   * Android window by the keyboard's height, so viewport-fixed chrome lands
+   * on top of the keyboard; on iOS the webview keeps its size and the
+   * keyboard simply covers it, so the rule is Android only and moves
+   * nothing there. NativeBridge sets both attributes. Below lg only: from lg
+   * up the floating bars are back in the page flow.
+   */
+  @media not all and (min-width: theme('screens.lg')) {
+    [data-platform='android'][data-keyboard='open'] .keyboard-hides {
+      display: none;
+    }
+  }
+
   /* Fixed chrome that sits inside the safe area rather than under it. */
   .safe-t {
     padding-top: var(--safe-top);

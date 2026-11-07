@@ -16,9 +16,6 @@
 
 export type PatchResult = { text: string; changed: boolean };
 
-/** Xcode 27 refuses iOS 14; 15 is the lowest target it builds. */
-export const IOS_DEPLOYMENT_TARGET = '15.0';
-
 export class PatchAnchorError extends Error {
   constructor(file: string, anchor: string) {
     super(
@@ -27,177 +24,6 @@ export class PatchAnchorError extends Error {
     );
     this.name = 'PatchAnchorError';
   }
-}
-
-const below = (version: string, floor: string) =>
-  parseFloat(version) < parseFloat(floor);
-
-/** `platform :ios, '14.0'` -> 15.0, and pin every pod target to 15.0. */
-export const POD_MARKER = '# patch-native: pod deployment target';
-
-export function patchPodfile(text: string): PatchResult {
-  let out = text;
-
-  const platform = /^platform :ios, '([\d.]+)'/m;
-  const match = out.match(platform);
-  if (!match) throw new PatchAnchorError('Podfile', "platform :ios, '<x>'");
-  if (below(match[1], IOS_DEPLOYMENT_TARGET)) {
-    out = out.replace(platform, `platform :ios, '${IOS_DEPLOYMENT_TARGET}'`);
-  }
-
-  // Pods carry their own podspec minimum (14.0 for Capacitor 7), which Xcode
-  // 27 rejects per target, so the app's target alone is not enough.
-  if (!out.includes(POD_MARKER)) {
-    const anchor =
-      /^(post_install do \|installer\|\n\s*assertDeploymentTarget\(installer\)\n)/m;
-    if (!anchor.test(out)) {
-      throw new PatchAnchorError(
-        'Podfile',
-        'post_install do |installer| assertDeploymentTarget(installer)'
-      );
-    }
-    out = out.replace(
-      anchor,
-      `$1  ${POD_MARKER}\n` +
-        '  installer.pods_project.targets.each do |target|\n' +
-        '    target.build_configurations.each do |config|\n' +
-        `      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '${IOS_DEPLOYMENT_TARGET}'\n` +
-        '    end\n' +
-        '  end\n'
-    );
-  }
-
-  return { text: out, changed: out !== text };
-}
-
-/** Every `IPHONEOS_DEPLOYMENT_TARGET` under 15.0 in the app project -> 15.0. */
-export function patchPbxproj(text: string): PatchResult {
-  const setting = /IPHONEOS_DEPLOYMENT_TARGET = ([\d.]+);/g;
-  if (!setting.test(text)) {
-    throw new PatchAnchorError(
-      'project.pbxproj',
-      'IPHONEOS_DEPLOYMENT_TARGET = <x>;'
-    );
-  }
-  const out = text.replace(setting, (whole, version: string) =>
-    below(version, IOS_DEPLOYMENT_TARGET)
-      ? `IPHONEOS_DEPLOYMENT_TARGET = ${IOS_DEPLOYMENT_TARGET};`
-      : whole
-  );
-  return { text: out, changed: out !== text };
-}
-
-/**
- * iOS 27 traps at launch in an app that has not adopted the scene lifecycle,
- * and the Capacitor 7 template has not. The scene delegate forwards URL opens
- * and universal links to Capacitor, which the app delegate did before scenes
- * took them over — including the URL or activity that cold-launched the app,
- * which arrives in the connection options rather than a later callback.
- *
- * The block carries a versioned marker. An older version of this patch is
- * replaced in place; a SceneDelegate this script did not write is refused,
- * because merging into hand-written Swift is not safe to do blind.
- */
-export const SCENE_DELEGATE_MARKER = '// patch-native: SceneDelegate v2';
-
-/** First line of the v1 block, appended last in the file by earlier runs. */
-const SCENE_DELEGATE_V1_START =
-  '// Added by scripts/patch-native.mjs: iOS 27 requires the UIScene lifecycle.';
-
-export const SCENE_DELEGATE_SWIFT = `
-${SCENE_DELEGATE_MARKER}
-// Added by scripts/patch-native.mjs: iOS 27 requires the UIScene lifecycle.
-// Info.plist's UIApplicationSceneManifest names this class.
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-
-    var window: UIWindow?
-
-    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        if let url = connectionOptions.urlContexts.first?.url {
-            _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: url, options: [:])
-        }
-        if let userActivity = connectionOptions.userActivities.first {
-            _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, continue: userActivity, restorationHandler: { _ in })
-        }
-    }
-
-    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        for context in URLContexts {
-            _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, open: context.url, options: [:])
-        }
-    }
-
-    func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
-        _ = ApplicationDelegateProxy.shared.application(UIApplication.shared, continue: userActivity, restorationHandler: { _ in })
-    }
-
-}
-`;
-
-export function patchAppDelegate(text: string): PatchResult {
-  if (text.includes(SCENE_DELEGATE_MARKER)) return { text, changed: false };
-  const v1 = text.indexOf(SCENE_DELEGATE_V1_START);
-  if (v1 !== -1) {
-    // v1 was appended last, so everything from its first line on is ours.
-    const out = text.slice(0, v1).replace(/\s*$/, '\n') + SCENE_DELEGATE_SWIFT;
-    return { text: out, changed: true };
-  }
-  if (/class SceneDelegate\b/.test(text)) {
-    throw new Error(
-      'AppDelegate.swift already has a SceneDelegate that scripts/patch-native.mjs ' +
-        'did not write (probably a hand edit). Regenerate the iOS project ' +
-        '(rm -rf ios && npm run cap:add:ios) so the script can apply its own.'
-    );
-  }
-  if (!/class AppDelegate\b/.test(text) || !text.includes('import Capacitor')) {
-    throw new PatchAnchorError(
-      'AppDelegate.swift',
-      'import Capacitor + class AppDelegate'
-    );
-  }
-  const out = text.replace(/\s*$/, '\n') + SCENE_DELEGATE_SWIFT;
-  return { text: out, changed: true };
-}
-
-export const SCENE_MANIFEST_KEY = '<key>UIApplicationSceneManifest</key>';
-
-const SCENE_MANIFEST_PLIST = `	${SCENE_MANIFEST_KEY}
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-		<key>UISceneConfigurations</key>
-		<dict>
-			<key>UIWindowSceneSessionRoleApplication</key>
-			<array>
-				<dict>
-					<key>UISceneConfigurationName</key>
-					<string>Default</string>
-					<key>UISceneDelegateClassName</key>
-					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
-					<key>UISceneStoryboardFile</key>
-					<string>Main</string>
-				</dict>
-			</array>
-		</dict>
-	</dict>
-`;
-
-/**
- * Adds the scene manifest as the last key of the top-level dict. A text edit
- * rather than PlistBuddy so it is testable without macOS; the script lints
- * the result with plutil where it exists.
- */
-export function patchInfoPlist(text: string): PatchResult {
-  if (text.includes(SCENE_MANIFEST_KEY)) return { text, changed: false };
-  const anchor = /\n<\/dict>\s*\n<\/plist>\s*$/;
-  if (!anchor.test(text)) {
-    throw new PatchAnchorError('Info.plist', 'closing </dict></plist>');
-  }
-  const out = text.replace(
-    anchor,
-    (tail) => `\n${SCENE_MANIFEST_PLIST}${tail.slice(1)}`
-  );
-  return { text: out, changed: true };
 }
 
 /**
@@ -212,42 +38,67 @@ export const PHOTO_USAGE_STRINGS: Record<string, string> = {
     'Pick a photo of a sore from your library. It is copied into the app on this device and never uploaded.'
 };
 
+/**
+ * Why the app asks to read Health (iOS shows this in the permission sheet and
+ * refuses to ask without it). utils/health-sleep.ts requests no write types,
+ * so HealthKit itself never asks for NSHealthUpdateUsageDescription; it is
+ * declared anyway because App Store Connect's purpose-string check
+ * (ITMS-90683) wants both keys on a HealthKit-linked binary. The copy says
+ * truthfully that the app never writes.
+ */
+export const HEALTH_USAGE_STRINGS: Record<string, string> = {
+  NSHealthShareUsageDescription:
+    'Reads your sleep only when you tap Import from Health, to fill in hours asleep. Only the total hours are saved to your check-in.',
+  NSHealthUpdateUsageDescription:
+    'Canker Core never writes to Health. It only reads your sleep when you tap Import from Health.'
+};
+
 const plistString = (key: string, value: string) =>
   `\t<key>${key}</key>\n\t<string>${value}</string>\n`;
 
 /**
- * Sets the photo usage strings in the top-level dict: rewrites a key whose
- * text differs from PHOTO_USAGE_STRINGS (this file is the source of truth)
- * and adds a missing one before the closing tag.
+ * A patch that sets usage strings in the top-level dict: rewrites a key whose
+ * text differs from `strings` (this file is the source of truth) and adds a
+ * missing one before the closing tag.
  */
-export function patchInfoPlistPhotoUsage(text: string): PatchResult {
-  let out = text;
-  const missing: string[] = [];
-  for (const [key, value] of Object.entries(PHOTO_USAGE_STRINGS)) {
-    const existing = new RegExp(
-      `(<key>${key}</key>\\s*<string>)([^<]*)(</string>)`
-    );
-    const match = out.match(existing);
-    if (!match) missing.push(key);
-    else if (match[2] !== value) {
-      out = out.replace(
-        existing,
-        (_all, open, _old, close) => `${open}${value}${close}`
+const infoPlistUsagePatch =
+  (strings: Record<string, string>) =>
+  (text: string): PatchResult => {
+    let out = text;
+    const missing: string[] = [];
+    for (const [key, value] of Object.entries(strings)) {
+      const existing = new RegExp(
+        `(<key>${key}</key>\\s*<string>)([^<]*)(</string>)`
       );
+      const match = out.match(existing);
+      if (!match) missing.push(key);
+      else if (match[2] !== value) {
+        out = out.replace(
+          existing,
+          (_all, open, _old, close) => `${open}${value}${close}`
+        );
+      }
     }
-  }
-  if (missing.length) {
-    const anchor = /\n<\/dict>\s*\n<\/plist>\s*$/;
-    if (!anchor.test(out)) {
-      throw new PatchAnchorError('Info.plist', 'closing </dict></plist>');
+    if (missing.length) {
+      const anchor = /\n<\/dict>\s*\n<\/plist>\s*$/;
+      if (!anchor.test(out)) {
+        throw new PatchAnchorError('Info.plist', 'closing </dict></plist>');
+      }
+      const added = missing
+        .map((key) => plistString(key, strings[key]))
+        .join('');
+      out = out.replace(anchor, (tail) => `\n${added}${tail.slice(1)}`);
     }
-    const added = missing
-      .map((key) => plistString(key, PHOTO_USAGE_STRINGS[key]))
-      .join('');
-    out = out.replace(anchor, (tail) => `\n${added}${tail.slice(1)}`);
-  }
-  return { text: out, changed: out !== text };
-}
+    return { text: out, changed: out !== text };
+  };
+
+/** The camera and photo library usage strings (PHOTO_USAGE_STRINGS). */
+export const patchInfoPlistPhotoUsage =
+  infoPlistUsagePatch(PHOTO_USAGE_STRINGS);
+
+/** The Health read usage string (HEALTH_USAGE_STRINGS). */
+export const patchInfoPlistHealthUsage =
+  infoPlistUsagePatch(HEALTH_USAGE_STRINGS);
 
 /**
  * Associated Domains, so iOS trusts the app with cankercore.com: its saved
@@ -317,6 +168,39 @@ export function patchEntitlements(text: string): PatchResult {
   return { text: out, changed: true };
 }
 
+/**
+ * The HealthKit capability, as Xcode writes it when the capability is ticked:
+ * the healthkit flag, and an empty access list (no clinical records). The
+ * Health sleep import (utils/health-sleep.ts) cannot ask without it.
+ */
+export const HEALTHKIT_ENTITLEMENTS =
+  '\t<key>com.apple.developer.healthkit</key>\n\t<true/>\n' +
+  '\t<key>com.apple.developer.healthkit.access</key>\n\t<array/>\n';
+
+/**
+ * Adds HEALTHKIT_ENTITLEMENTS to App.entitlements (runs after
+ * patchEntitlements, so the file exists). A healthkit key already set some
+ * other way stops the run rather than being rewritten.
+ */
+export function patchEntitlementsHealthKit(text: string): PatchResult {
+  if (text.includes(HEALTHKIT_ENTITLEMENTS)) return { text, changed: false };
+  if (text.includes('<key>com.apple.developer.healthkit')) {
+    throw new Error(
+      'App.entitlements has HealthKit keys that scripts/patch-native.mjs did ' +
+        'not write. Regenerate the iOS project (rm -rf ios && npm run cap:add:ios).'
+    );
+  }
+  const anchor = /\n<\/dict>\s*\n<\/plist>\s*$/;
+  if (!anchor.test(text)) {
+    throw new PatchAnchorError('App.entitlements', 'closing </dict></plist>');
+  }
+  const out = text.replace(
+    anchor,
+    (tail) => `\n${HEALTHKIT_ENTITLEMENTS}${tail.slice(1)}`
+  );
+  return { text: out, changed: true };
+}
+
 const ENTITLEMENTS_SETTING = `CODE_SIGN_ENTITLEMENTS = ${ENTITLEMENTS_PATH};`;
 
 /**
@@ -355,6 +239,27 @@ export function patchPbxprojEntitlements(text: string): PatchResult {
     (line, indent: string) => `${indent}${ENTITLEMENTS_SETTING}\n${line}`
   );
   return { text: out, changed: true };
+}
+
+/**
+ * The Capacitor 8 Android template raised compileSdkVersion to 36 (the
+ * Capacitor 7 one had 35), which makes variables.gradle a reliable marker of
+ * which template generated android/. Older projects stop the run: the other
+ * patches assume the Capacitor 8 layout.
+ */
+export const ANDROID_MIN_COMPILE_SDK = 36;
+
+export function assertCapacitor8Android(variablesGradle: string): void {
+  const match = variablesGradle.match(
+    /^[ \t]*compileSdkVersion[ \t]*=[ \t]*(\d+)\b/m
+  );
+  if (!match || Number(match[1]) < ANDROID_MIN_COMPILE_SDK) {
+    throw new Error(
+      `android/ predates Capacitor 8 (compileSdkVersion ${match?.[1] ?? 'not found'} in variables.gradle, ` +
+        `expected ${ANDROID_MIN_COMPILE_SDK} or higher). ` +
+        'Regenerate it: rm -rf android && npm run cap:add:android'
+    );
+  }
 }
 
 /** Android notification small icon: densities and their pixel sizes. */
@@ -513,4 +418,131 @@ export function patchAndroidBackupRules(text: string): PatchResult {
   }
   if (tag === match[0]) return { text, changed: false };
   return { text: text.replace(match[0], tag), changed: true };
+}
+
+/**
+ * Health Connect, for the sleep import (utils/health-sleep.ts). The app reads
+ * sleep and nothing else, so it declares READ_SLEEP itself, and strips every
+ * other health permission the @capgo/capacitor-health library manifest
+ * merges in (it declares read and write for some twenty types). Google Play
+ * makes an app justify each health permission it declares, so the merged
+ * manifest has to carry only the one in use.
+ *
+ * The library manifest also brings its own privacy-policy rationale activity
+ * (ACTION_SHOW_PERMISSIONS_RATIONALE, Android 13 and older), the
+ * VIEW_PERMISSION_USAGE activity-alias (Android 14 and newer) and the
+ * <queries> entry for com.google.android.apps.healthdata, so none of those
+ * are added here; that activity shows HEALTH_PRIVACY_POLICY_URL.
+ */
+export const HEALTH_READ_PERMISSION = 'android.permission.health.READ_SLEEP';
+export const HEALTH_PERMISSIONS_MARKER =
+  '<!-- patch-native: health permissions -->';
+const HEALTH_PERMISSIONS_END = '<!-- /patch-native: health permissions -->';
+const TOOLS_NS = 'xmlns:tools="http://schemas.android.com/tools"';
+
+/**
+ * Every health permission a library manifest declares, other than READ_SLEEP.
+ * A health permission another plugin needs must be filtered out of this list
+ * too, or this patch strips it from the merged manifest.
+ */
+export function unwantedHealthPermissions(libraryManifest: string): string[] {
+  const names: string[] =
+    libraryManifest.match(
+      /(?<=<uses-permission\s+android:name=")android\.permission\.health\.[^"]+/g
+    ) ?? [];
+  return names
+    .filter((n, i) => n !== HEALTH_READ_PERMISSION && names.indexOf(n) === i)
+    .sort();
+}
+
+export const healthPermissionsBlock = (remove: string[]) =>
+  `    ${HEALTH_PERMISSIONS_MARKER}\n` +
+  `    <uses-permission android:name="${HEALTH_READ_PERMISSION}" />\n` +
+  remove
+    .map(
+      (name) =>
+        `    <uses-permission android:name="${name}" tools:node="remove" />\n`
+    )
+    .join('') +
+  `    ${HEALTH_PERMISSIONS_END}\n`;
+
+/**
+ * Writes the health permission block before </manifest>, replacing an earlier
+ * one (the library's list can change between versions), and declares the
+ * tools namespace the removals need.
+ */
+export function patchAndroidHealthPermissions(
+  text: string,
+  remove: string[]
+): PatchResult {
+  const block = healthPermissionsBlock(remove);
+  let out = text;
+  const open = out.match(/<manifest\b[^>]*>/);
+  if (!open) throw new PatchAnchorError('AndroidManifest.xml', '<manifest …>');
+  if (!open[0].includes(TOOLS_NS)) {
+    out = out.replace(
+      open[0],
+      open[0].replace(/^<manifest\b/, `<manifest ${TOOLS_NS}`)
+    );
+  }
+
+  const existing = new RegExp(
+    `[ \\t]*${HEALTH_PERMISSIONS_MARKER}\\n[\\s\\S]*?${HEALTH_PERMISSIONS_END}\\n`
+  );
+  if (existing.test(out)) {
+    out = out.replace(existing, () => block);
+  } else {
+    const anchor = /\n<\/manifest>\s*$/;
+    if (!anchor.test(out)) {
+      throw new PatchAnchorError('AndroidManifest.xml', 'closing </manifest>');
+    }
+    out = out.replace(anchor, (tail) => `\n${block}${tail.slice(1)}`);
+  }
+  return { text: out, changed: out !== text };
+}
+
+/**
+ * Health Connect needs Android 8.0 (API 26), and the plugin's library
+ * manifest says so, which fails the manifest merge against the Capacitor 8
+ * template's minSdkVersion 24. Raised to 26 in android/variables.gradle; a
+ * higher value is left alone.
+ */
+export const HEALTH_MIN_SDK = 26;
+
+export function patchAndroidMinSdk(text: string): PatchResult {
+  const anchor = /^([ \t]*minSdkVersion[ \t]*=[ \t]*)(\d+)\b/m;
+  const match = text.match(anchor);
+  if (!match) {
+    throw new PatchAnchorError('variables.gradle', 'minSdkVersion = <n>');
+  }
+  if (Number(match[2]) >= HEALTH_MIN_SDK) return { text, changed: false };
+  const out = text.replace(
+    anchor,
+    (_all, head: string) => `${head}${HEALTH_MIN_SDK}`
+  );
+  return { text: out, changed: true };
+}
+
+/**
+ * What Health Connect shows when the person taps "Privacy policy" in its
+ * permission sheet: the plugin's rationale activity loads this string
+ * resource in a WebView (JavaScript off, which the server-rendered page does
+ * not need).
+ */
+export const HEALTH_PRIVACY_POLICY_URL = 'https://cankercore.com/privacy';
+const PRIVACY_STRING = `<string name="health_connect_privacy_policy_url">${HEALTH_PRIVACY_POLICY_URL}</string>`;
+
+export function patchAndroidStrings(text: string): PatchResult {
+  const existing =
+    /<string name="health_connect_privacy_policy_url">[^<]*<\/string>/;
+  if (existing.test(text)) {
+    const out = text.replace(existing, PRIVACY_STRING);
+    return { text: out, changed: out !== text };
+  }
+  const anchor = /\n<\/resources>\s*$/;
+  if (!anchor.test(text)) {
+    throw new PatchAnchorError('strings.xml', 'closing </resources>');
+  }
+  const out = text.replace(anchor, (tail) => `\n    ${PRIVACY_STRING}${tail}`);
+  return { text: out, changed: true };
 }

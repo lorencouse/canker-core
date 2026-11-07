@@ -99,6 +99,9 @@ anyone holding that keystore could sign a build the link would trust.
 
 ## Building the native projects
 
+The apps are on Capacitor 8, which needs Node 22+, Xcode 26+ (Xcode 27 here)
+with CocoaPods, and Android Studio Otter (2025.2.1) or newer with JDK 21.
+
 The `ios/` and `android/` directories are generated and untracked. Create
 them once per machine:
 
@@ -108,28 +111,40 @@ npm run cap:add:android    # needs Android Studio
 ```
 
 Each of those runs `npm run cap:patch` (`scripts/patch-native.mjs`) after
-`cap add`, because the generated projects need fixes the Capacitor 7
+`cap add`, because the generated projects need fixes the Capacitor 8
 templates lack, and anything edited by hand in `ios/` or `android/` is lost
 on regeneration:
 
-- **iOS:** deployment target 15.0 in the Podfile, every pod target and the
-  app project (Xcode 27 rejects 14.0), then `pod install`; and a
-  `SceneDelegate` plus `UIApplicationSceneManifest` in `Info.plist` (iOS 27
-  crashes at launch in an app without the scene lifecycle); and
-  `App/App.entitlements` with the Associated Domains entries
+- **iOS:** `App/App.entitlements` with the Associated Domains entries
   `webcredentials:cankercore.com` and `applinks:cankercore.com`, referenced
-  by `CODE_SIGN_ENTITLEMENTS`.
-  Automatic signing enables the capability on the App ID. Also the
-  `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription` strings in
-  `Info.plist` for sore photos (below).
+  by `CODE_SIGN_ENTITLEMENTS`. Automatic signing enables the capability on
+  the App ID. Also the `NSCameraUsageDescription` and
+  `NSPhotoLibraryUsageDescription` strings in `Info.plist` for sore photos
+  (below), and the HealthKit capability and `NSHealthShareUsageDescription`
+  for the sleep import (below). The template already targets iOS 15.0 (Capacitor's Podfile hook
+  lifts every pod to 15.0 too) and ships the `SceneDelegate` and scene
+  manifest iOS 27 requires, so the script no longer patches those.
 - **Android:** the sign-in App Link intent-filter on `MainActivity` (see
   above), the backup rules that keep sore photos out of Auto Backup (below),
-  and the Kanko notification small icon copied from
-  `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`.
+  the Kanko notification small icon copied from
+  `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`, and the
+  Health Connect setup for the sleep import (below): `READ_SLEEP`, the other
+  health permissions removed, `minSdkVersion` 26 and the privacy-policy URL.
+
+`cap:add:ios` asks for the CocoaPods template (`--packagemanager
+CocoaPods`). Capacitor 8 otherwise generates a Swift Package Manager
+project, which leaves out the local `native/plugins/web-auth` plugin
+because it ships only a podspec; `cap:patch` refuses such a project.
+
+Projects generated before Capacitor 8 do not upgrade in place. Delete and
+regenerate both (`rm -rf ios android`, then the two commands above, then
+`npm run cap:assets`). `cap:patch` refuses an `ios/` without the Capacitor 8
+`SceneDelegate.swift`.
 
 The script is idempotent, skips a platform whose folder is missing, and stops
 with an error if a template no longer has the text it patches. The patches
-live in `utils/native-patches.mts`.
+live in `utils/native-patches.mts`; their tests also run them on the
+templates inside the installed `@capacitor/cli`.
 
 ### Sore photos (`@capacitor/camera`, `@capacitor/filesystem`)
 
@@ -156,10 +171,111 @@ so an installed app built before the plugins were added, and the website,
 show no photo control at all. Android needs no permission: the camera asks
 for none without `saveToGallery`, and the files dir is app-private.
 
-Gradle 8.11 here needs JDK 21. A newer JDK — including the one Android
-Studio now bundles — fails the settings script with "Unsupported class file
-major version", so point `JAVA_HOME` at a JDK 21 (for example Homebrew's
-`openjdk@21`):
+### Sleep import (`@capgo/capacitor-health`)
+
+The check-in's Sleep screen has an **Import from Health** button that fills
+in last night's hours from Apple Health (iOS) or Health Connect (Android).
+`utils/health-sleep.ts` asks to read sleep, and nothing else, the first time
+the button is tapped, never up front. It reads sleep segments from 18:00
+the previous day up to now (up to 14:00 when the screen is on Yesterday, so
+that day's nap is left out), counts only asleep stages (asleep, core or
+light, deep, REM; not awake or in bed), and rounds to a quarter hour. It
+takes one source's night rather than blending them: each source (an Apple
+Watch, the iPhone, a Health Connect app) is summed on its own, overlaps
+within it merged, and the source with stage detail (light, deep or REM)
+wins, the longest breaking ties; with no staged source, the longest. A
+blend would let a phone's coarse "asleep" span fill the awake gaps a watch
+recorded.
+Only the hours are kept, with `sleep_source` set to `apple_health` or
+`health_connect`; quality stays manual, and changing the hours makes the
+source `manual` again. A refusal, an empty night or any error shows "No
+sleep found for last night" and nothing else. HealthKit never tells an app
+that reading was refused, so on iOS a refusal looks exactly like an empty
+night.
+
+`@capgo/capacitor-health` 8.11 was picked over `@capacitor/health-fitness`
+1.0 because it returns sleep as stage segments on both platforms
+(`readSamples({ dataType: 'sleep' })`), asks per type, ships a podspec (the
+iOS project is CocoaPods), and adds nothing to `cap sync`; health-fitness
+only returns aggregated buckets for `SLEEP` and rewrites native files from a
+`capacitor:sync:after` hook.
+
+The button shows only where `sleepImportSupported()` (native platform and
+the `Health` plugin present) and the plugin's `isAvailable()` agree, so the
+website, app versions built before the plugin, and Android phones without
+Health Connect show nothing.
+
+What `cap:patch` adds for it:
+
+- **iOS:** `com.apple.developer.healthkit` (true) and an empty
+  `com.apple.developer.healthkit.access` in `App.entitlements`, as Xcode's
+  HealthKit capability writes them; automatic signing enables HealthKit on
+  the App ID. `NSHealthShareUsageDescription` in `Info.plist`: "Reads your
+  sleep only when you tap Import from Health, to fill in hours asleep. Only
+  the total hours are saved to your check-in." `NSHealthUpdateUsageDescription` too: "Canker Core never
+  writes to Health. It only reads your sleep when you tap Import from
+  Health." The app requests no write types, so HealthKit never shows it; it
+  is there because App Store Connect's purpose-string check (ITMS-90683)
+  expects both keys on a binary that links HealthKit.
+- **Android:** `android.permission.health.READ_SLEEP`, and every other
+  health permission the plugin's library manifest declares (read and write
+  for about twenty types, read from the installed package at patch time)
+  marked `tools:node="remove"`, so the merged manifest carries only
+  `READ_SLEEP`. A health permission another plugin needs has to be excluded
+  from that strip list (`unwantedHealthPermissions`), or it is removed too. `minSdkVersion` goes from the template's 24 to 26, which
+  Health Connect and the plugin need. `health_connect_privacy_policy_url` in
+  `strings.xml` points at https://cankercore.com/privacy. The plugin's own
+  manifest supplies the rest Health Connect requires: the rationale activity
+  for `ACTION_SHOW_PERMISSIONS_RATIONALE` (Android 13 and older), the
+  `VIEW_PERMISSION_USAGE` activity-alias with the `HEALTH_PERMISSIONS`
+  category (Android 14 and newer), which both open that URL, and the
+  `<queries>` entry for `com.google.android.apps.healthdata`.
+
+#### App Store review notes
+
+Paste into App Review Information > Notes, and tick HealthKit under the App
+Privacy health data types (Health, used for App Functionality, linked to the
+user, not used for tracking):
+
+> Canker Core reads sleep analysis from HealthKit, read-only, and only when
+> the user taps "Import from Health" on the Sleep step of the daily
+> check-in (Today > Check in, then continue to Sleep). It asks for sleep
+> permission at that moment, never at launch. It adds up the time asleep
+> for the night that ended this morning and fills in the "Hours asleep"
+> field; the user can change it before saving. Only that total, and the fact
+> that it came from Apple Health, is stored on our server with the user's
+> daily log. No other Health data is read, nothing is written to Health,
+> and Health data is never shared with third parties or used for
+> advertising. If permission is refused or there is no sleep recorded, the
+> screen shows "No sleep found for last night" and stays manual. To test,
+> add a sleep sample in the Health app (Browse > Sleep > Add Data) for last
+> night, then use the button.
+
+#### Play Console health declaration
+
+Play Console > App content > Health apps declaration, and the Health
+Connect permissions declaration for `READ_SLEEP`:
+
+> Canker Core helps people track recurring mouth ulcers (canker sores) and
+> the habits that may trigger them, including sleep. The app reads Health
+> Connect sleep sessions (READ_SLEEP) only when the user taps "Import from
+> Health" on the Sleep step of the daily check-in. It sums the time asleep
+> for the night that ended that morning and pre-fills the "Hours asleep"
+> field, which the user can edit. Only that total number of hours, and the
+> fact that it came from Health Connect, is stored with the user's daily log
+> so they can compare sleep with flare-ups. The app requests no other
+> health permission, never writes to Health Connect, does not read in the
+> background, and does not share or sell health data or use it for
+> advertising. Privacy policy: https://cankercore.com/privacy
+
+Data safety form: Health and fitness > Health info collected, required for
+app functionality, not shared, user can request deletion (Settings >
+Account > Delete account).
+
+Gradle 8.14 (the Capacitor 8 template's wrapper) needs JDK 21. If a newer
+JDK, such as the one Android Studio bundles, fails the settings script with
+"Unsupported class file major version", point `JAVA_HOME` at a JDK 21 (for
+example Homebrew's `openjdk@21`):
 
 ```bash
 export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
@@ -250,7 +366,10 @@ Anything new should hold to these.
 **Safe areas.** Read `--safe-top` / `--safe-bottom` / `--safe-left` /
 `--safe-right`, or use `.safe-t` / `.safe-b` / `.safe-x`. Never call `env()`
 directly — the variables are one place to adjust for a device the insets get
-wrong.
+wrong. On Android, Capacitor 8's built-in SystemBars plugin owns edge-to-edge:
+with `viewportFit: 'cover'` (set in `app/layout.tsx`) and Android System
+WebView 140 or newer, `env()` reports the real insets; on an older WebView it
+pads the app window and `env()` reads 0.
 
 **Viewport units.** `dvh`, never `vh`. `vh` is the tallest the viewport ever
 gets, which on a phone is the state with the address bar hidden.
@@ -274,4 +393,12 @@ the app must use `openExternal` — the webview has no URL bar to get back
 from github.com with.
 
 **Keyboard.** Surfaces that a soft keyboard would cover pad themselves by
-`--keyboard-h`, which `NativeBridge` maintains. The webview is not resized.
+`--keyboard-h`, which `NativeBridge` maintains. On iOS the webview is not
+resized. On Android, Capacitor 8's SystemBars plugin pads the app window by
+the keyboard's height and offers no setting to stop that alone, so the
+webview shrinks and `--keyboard-h` stays `0px` there to avoid lifting twice.
+Viewport-fixed chrome would then ride up on top of the keyboard, so on
+Android the tab bar and the floating Save and Done bars carry
+`.keyboard-hides`, which hides them below `lg` while `data-keyboard="open"`
+(both attributes are set by `NativeBridge`). Give any new fixed bottom chrome
+the same class.

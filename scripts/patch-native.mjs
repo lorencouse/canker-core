@@ -4,17 +4,17 @@
  *
  *   npm run cap:patch                 (also run by cap:add:*, cap:sync, cap:ios, cap:android)
  *
- * iOS (Xcode 27 / iOS 27):
- *   - deployment target 15.0 in the Podfile, every pod target and the app
- *     project, because Xcode 27 rejects 14.0;
- *   - a UIScene delegate and scene manifest, because iOS 27 traps at launch
- *     in an app without the scene lifecycle;
+ * iOS (the Capacitor 8 CocoaPods template, which already targets iOS 15.0
+ * and ships the UIScene lifecycle that iOS 27 requires):
  *   - App.entitlements with Associated Domains (webcredentials: and
  *     applinks:cankercore.com) and CODE_SIGN_ENTITLEMENTS pointing at it, so
  *     iCloud Keychain offers the site's saved passwords in the app and the
  *     system sign-in's universal-link callback reaches only this app;
  *   - camera and photo library usage strings in Info.plist, which iOS needs
- *     before it lets the sore photo control open either.
+ *     before it lets the sore photo control open either;
+ *   - the HealthKit capability in App.entitlements and the Health read usage
+ *     string (NSHealthShareUsageDescription, plus NSHealthUpdateUsageDescription for
+ *     App Store Connect's purpose-string check) for the sleep import.
  * Android:
  *   - an autoVerify App Link intent-filter on MainActivity for
  *     https://cankercore.com/native-auth/callback, so the system sign-in's
@@ -24,7 +24,11 @@
  *   - backup rules that keep the sore-photos folder out of Auto Backup and
  *     device transfer (res/xml/backup_rules.xml, data_extraction_rules.xml,
  *     referenced from <application>), because the filesystem plugin's
- *     LibraryNoCloud is the ordinary, backed-up files dir on Android.
+ *     LibraryNoCloud is the ordinary, backed-up files dir on Android;
+ *   - Health Connect for the sleep import: READ_SLEEP declared, every other
+ *     health permission the @capgo/capacitor-health library merges in
+ *     removed (read from its installed manifest), minSdkVersion raised to 26,
+ *     and the privacy-policy URL its rationale screen shows.
  *
  * Safe to run repeatedly. A platform whose folder is missing is skipped; a
  * file whose expected anchor is missing stops the run with an error.
@@ -44,21 +48,36 @@ import {
   backupRuleFiles,
   ENTITLEMENTS_PATH,
   notificationIconCopies,
+  assertCapacitor8Android,
   patchAndroidBackupRules,
+  patchAndroidHealthPermissions,
   patchAndroidManifest,
-  patchAppDelegate,
+  patchAndroidMinSdk,
+  patchAndroidStrings,
   patchEntitlements,
-  patchInfoPlist,
+  patchEntitlementsHealthKit,
+  patchInfoPlistHealthUsage,
   patchInfoPlistPhotoUsage,
-  patchPbxproj,
   patchPbxprojEntitlements,
-  patchPodfile
+  unwantedHealthPermissions
 } from '../utils/native-patches.mts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const rel = (p) => path.relative(ROOT, p);
 
 const has = (cmd) => spawnSync('sh', ['-c', `command -v ${cmd}`]).status === 0;
+
+/** Runs patches in order on one text, changed if any of them changed it. */
+const compose =
+  (...patches) =>
+  (input) =>
+    patches.reduce(
+      (acc, patch) => {
+        const next = patch(acc.text);
+        return { text: next.text, changed: acc.changed || next.changed };
+      },
+      { text: input, changed: false }
+    );
 
 const patchFile = (file, patch) => {
   if (!existsSync(file)) throw new Error(`${rel(file)} is missing`);
@@ -70,55 +89,80 @@ const patchFile = (file, patch) => {
 
 const patchIos = () => {
   const app = path.join(ROOT, 'ios/App');
-  const podChanged = patchFile(path.join(app, 'Podfile'), patchPodfile);
-  const projChanged = patchFile(
+  // Capacitor 8 defaults `cap add ios` to Swift Package Manager, which
+  // leaves out native/plugins/web-auth (it ships only a podspec), so system
+  // sign-in would silently vanish from the app.
+  if (existsSync(path.join(app, 'CapApp-SPM'))) {
+    throw new Error(
+      'ios/ is a Swift Package Manager project, which drops the web-auth ' +
+        'plugin. Regenerate it with CocoaPods: rm -rf ios && npm run cap:add:ios'
+    );
+  }
+  // A project from the Capacitor 7 template has no scene lifecycle of its
+  // own; these patches no longer add one.
+  if (!existsSync(path.join(app, 'App/SceneDelegate.swift'))) {
+    throw new Error(
+      'ios/ predates Capacitor 8 (no App/SceneDelegate.swift). ' +
+        'Regenerate it: rm -rf ios && npm run cap:add:ios'
+    );
+  }
+
+  patchFile(
     path.join(app, 'App.xcodeproj/project.pbxproj'),
-    (text) => {
-      const target = patchPbxproj(text);
-      const signing = patchPbxprojEntitlements(target.text);
-      return {
-        text: signing.text,
-        changed: target.changed || signing.changed
-      };
-    }
+    patchPbxprojEntitlements
   );
 
   // The template has no entitlements file, so a missing one is created.
   const entitlements = path.join(app, ENTITLEMENTS_PATH);
   if (!existsSync(entitlements)) writeFileSync(entitlements, '');
-  if (patchFile(entitlements, patchEntitlements) && has('plutil')) {
+  if (
+    patchFile(
+      entitlements,
+      compose(patchEntitlements, patchEntitlementsHealthKit)
+    ) &&
+    has('plutil')
+  ) {
     execFileSync('plutil', ['-lint', entitlements], { stdio: 'inherit' });
   }
-  patchFile(path.join(app, 'App/AppDelegate.swift'), patchAppDelegate);
   const plist = path.join(app, 'App/Info.plist');
-  const plistChanged = patchFile(plist, (text) => {
-    const scenes = patchInfoPlist(text);
-    const photos = patchInfoPlistPhotoUsage(scenes.text);
-    return { text: photos.text, changed: scenes.changed || photos.changed };
-  });
-  if (plistChanged && has('plutil')) {
+  if (
+    patchFile(
+      plist,
+      compose(patchInfoPlistPhotoUsage, patchInfoPlistHealthUsage)
+    ) &&
+    has('plutil')
+  ) {
     execFileSync('plutil', ['-lint', plist], { stdio: 'inherit' });
-  }
-
-  if (!podChanged && !projChanged) return;
-  if (has('pod')) {
-    console.log('running  pod install  (ios/App)');
-    execFileSync('pod', ['install'], { cwd: app, stdio: 'inherit' });
-  } else {
-    console.log(
-      'CocoaPods not found. Install it, then run:\n  cd ios/App && pod install'
-    );
   }
 };
 
+const HEALTH_LIBRARY_MANIFEST = path.join(
+  ROOT,
+  'node_modules/@capgo/capacitor-health/android/src/main/AndroidManifest.xml'
+);
+
 const patchAndroid = () => {
+  const variables = path.join(ROOT, 'android/variables.gradle');
+  if (!existsSync(variables)) throw new Error(`${rel(variables)} is missing`);
+  assertCapacitor8Android(readFileSync(variables, 'utf8'));
+  if (!existsSync(HEALTH_LIBRARY_MANIFEST)) {
+    throw new Error(
+      `${rel(HEALTH_LIBRARY_MANIFEST)} is missing; run npm install`
+    );
+  }
+  const remove = unwantedHealthPermissions(
+    readFileSync(HEALTH_LIBRARY_MANIFEST, 'utf8')
+  );
   patchFile(
     path.join(ROOT, 'android/app/src/main/AndroidManifest.xml'),
-    (text) => {
-      const link = patchAndroidManifest(text);
-      const backup = patchAndroidBackupRules(link.text);
-      return { text: backup.text, changed: link.changed || backup.changed };
-    }
+    compose(patchAndroidManifest, patchAndroidBackupRules, (text) =>
+      patchAndroidHealthPermissions(text, remove)
+    )
+  );
+  patchFile(path.join(ROOT, 'android/variables.gradle'), patchAndroidMinSdk);
+  patchFile(
+    path.join(ROOT, 'android/app/src/main/res/values/strings.xml'),
+    patchAndroidStrings
   );
   for (const { path: file, text } of backupRuleFiles()) {
     const dest = path.join(ROOT, file);

@@ -90,7 +90,7 @@ function writeDeferredDay(day: string) {
 
 /*
  * A skipped evening is a run of one-shot nudges from tomorrow, not a repeat
- * that starts tomorrow: in @capacitor/local-notifications 7, `every` is
+ * that starts tomorrow: in @capacitor/local-notifications (7 and 8) `every` is
  * ignored once `at` is set, and both platforms repeat at the gap between
  * scheduling and `at`, so a "daily" repeat drifts. The run is bounded; any
  * launch on a later day replaces it with the plain daily repeat, and a

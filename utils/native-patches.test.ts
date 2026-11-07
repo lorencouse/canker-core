@@ -1,6 +1,9 @@
-import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   APP_LINK_FILTER,
   APP_LINK_HOST,
@@ -15,55 +18,53 @@ import {
   patchAndroidBackupRules,
   notificationIconCopies,
   patchAndroidManifest,
-  patchAppDelegate,
   patchEntitlements,
-  patchInfoPlist,
+  patchEntitlementsHealthKit,
+  patchInfoPlistHealthUsage,
   patchInfoPlistPhotoUsage,
   PHOTO_USAGE_STRINGS,
-  patchPbxproj,
+  HEALTH_MIN_SDK,
+  HEALTH_PRIVACY_POLICY_URL,
+  HEALTH_READ_PERMISSION,
+  HEALTH_USAGE_STRINGS,
+  HEALTHKIT_ENTITLEMENTS,
+  patchAndroidHealthPermissions,
+  assertCapacitor8Android,
+  patchAndroidMinSdk,
+  patchAndroidStrings,
+  unwantedHealthPermissions,
   patchPbxprojEntitlements,
-  patchPodfile,
   type PatchResult
 } from './native-patches.mjs';
 import { NATIVE_AUTH_HTTPS_PATH } from './native-auth';
 
-// Trimmed from what `cap add ios` (Capacitor 7) generates.
-const PODFILE = `require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
-
-platform :ios, '14.0'
-use_frameworks!
-
-target 'App' do
-  capacitor_pods
-end
-
-post_install do |installer|
-  assertDeploymentTarget(installer)
-end
-`;
-
-const PBXPROJ = `
-				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-				SDKROOT = iphoneos;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-`;
-
-const APP_DELEGATE = `import UIKit
-import Capacitor
-
-@UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
-
-    var window: UIWindow?
-
-}
-`;
-
+// Trimmed from what `cap add ios --packagemanager CocoaPods` (Capacitor 8)
+// generates, scene manifest and its indentation included.
 const INFO_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+    <false/>
+    <key>UISceneConfigurations</key>
+    <dict>
+      <key>UIWindowSceneSessionRoleApplication</key>
+      <array>
+        <dict>
+            <key>UISceneConfigurationName</key>
+            <string>Default Configuration</string>
+            <key>UISceneDelegateClassName</key>
+            <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+            <key>UISceneStoryboardFile</key>
+            <string>Main</string>
+        </dict>
+      </array>
+    </dict>
+	</dict>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
@@ -72,15 +73,42 @@ const INFO_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 `;
 
-// What `cap add android` (Capacitor 7) generates, trimmed.
+// The App target's two configurations, as `cap add ios` (Capacitor 8) writes them.
+const TARGET_CONFIGS = `
+		504EC3171FED79650016851F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+			};
+			name = Debug;
+		};
+		504EC3181FED79650016851F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+			};
+			name = Release;
+		};
+`;
+
+// What `cap add android` (Capacitor 8) generates, trimmed.
 const ANDROID_MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
         <activity
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
@@ -96,21 +124,55 @@ const ANDROID_MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:exported="false">
+            android:authorities="\${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
         </provider>
     </application>
+
+    <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
 `;
 
+// android/variables.gradle and res/values/strings.xml as `cap add android`
+// (Capacitor 8) writes them.
+const VARIABLES_GRADLE = `ext {
+    minSdkVersion = 24
+    compileSdkVersion = 36
+    targetSdkVersion = 36
+}`;
+
+const STRINGS_XML = `<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Canker Core</string>
+    <string name="title_activity_main">Canker Core</string>
+</resources>
+`;
+
+const ENTITLEMENTS = patchEntitlements('').text;
+
+// Two of the library's permissions, enough to see the block's shape.
+const REMOVE = [
+  'android.permission.health.READ_STEPS',
+  'android.permission.health.WRITE_SLEEP'
+];
+const patchHealthPermissions = (text: string) =>
+  patchAndroidHealthPermissions(text, REMOVE);
+
 const cases: [string, string, (text: string) => PatchResult][] = [
-  ['Podfile', PODFILE, patchPodfile],
-  ['project.pbxproj', PBXPROJ, patchPbxproj],
-  ['AppDelegate.swift', APP_DELEGATE, patchAppDelegate],
-  ['Info.plist', INFO_PLIST, patchInfoPlist],
   ['Info.plist (photo usage)', INFO_PLIST, patchInfoPlistPhotoUsage],
-  ['project.pbxproj (entitlements)', PBXPROJ, patchPbxprojEntitlements],
+  ['Info.plist (health usage)', INFO_PLIST, patchInfoPlistHealthUsage],
+  ['App.entitlements (HealthKit)', ENTITLEMENTS, patchEntitlementsHealthKit],
+  [
+    'AndroidManifest.xml (health permissions)',
+    ANDROID_MANIFEST,
+    patchHealthPermissions
+  ],
+  ['variables.gradle (minSdk)', VARIABLES_GRADLE, patchAndroidMinSdk],
+  ['strings.xml (privacy policy)', STRINGS_XML, patchAndroidStrings],
+  ['project.pbxproj (entitlements)', TARGET_CONFIGS, patchPbxprojEntitlements],
   ['AndroidManifest.xml', ANDROID_MANIFEST, patchAndroidManifest],
   [
     'AndroidManifest.xml (backup rules)',
@@ -131,100 +193,6 @@ describe.each(cases)('%s patch', (_name, fixture, patch) => {
     expect(() => patch('// an unrecognisable template\n')).toThrow(
       PatchAnchorError
     );
-  });
-});
-
-describe('patchPodfile', () => {
-  it('raises the platform and pins every pod target to 15.0', () => {
-    const { text } = patchPodfile(PODFILE);
-    expect(text).toContain("platform :ios, '15.0'");
-    expect(text).toContain(
-      "config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'"
-    );
-    // Inside post_install, after Capacitor's own assertion.
-    expect(text.indexOf('assertDeploymentTarget')).toBeLessThan(
-      text.indexOf('pods_project.targets')
-    );
-    expect(text.trimEnd().endsWith('end')).toBe(true);
-  });
-
-  it('leaves a newer platform alone', () => {
-    const newer = PODFILE.replace("'14.0'", "'16.0'");
-    expect(patchPodfile(newer).text).toContain("platform :ios, '16.0'");
-  });
-
-  it('throws when post_install has changed shape', () => {
-    const changed = PODFILE.replace('assertDeploymentTarget', 'somethingElse');
-    expect(() => patchPodfile(changed)).toThrow(/post_install/);
-  });
-});
-
-describe('patchPbxproj', () => {
-  it('raises every target under 15.0 and keeps higher ones', () => {
-    const mixed = PBXPROJ + '\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 17.0;\n';
-    const { text } = patchPbxproj(mixed);
-    expect(text).not.toContain('= 14.0;');
-    expect(text.match(/= 15\.0;/g)).toHaveLength(2);
-    expect(text).toContain('IPHONEOS_DEPLOYMENT_TARGET = 17.0;');
-  });
-});
-
-describe('patchAppDelegate', () => {
-  it('appends a scene delegate that forwards to Capacitor', () => {
-    const { text } = patchAppDelegate(APP_DELEGATE);
-    expect(text.startsWith(APP_DELEGATE.trimEnd())).toBe(true);
-    expect(text).toContain(
-      'class SceneDelegate: UIResponder, UIWindowSceneDelegate'
-    );
-    expect(text).toContain('openURLContexts');
-    expect(text).toContain('continue userActivity');
-    expect(text).toContain('willConnectTo');
-    expect(text).toContain('connectionOptions.urlContexts.first?.url');
-    expect(text).toContain('connectionOptions.userActivities.first');
-    expect(text.match(/ApplicationDelegateProxy\.shared/g)).toHaveLength(4);
-    expect(text.match(/class SceneDelegate\b/g)).toHaveLength(1);
-  });
-
-  it('upgrades the v1 block written by an earlier run', () => {
-    const v1 = `${APP_DELEGATE}
-// Added by scripts/patch-native.mjs: iOS 27 requires the UIScene lifecycle.
-// Info.plist's UIApplicationSceneManifest names this class.
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-
-    var window: UIWindow?
-
-    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-    }
-
-}
-`;
-    const upgraded = patchAppDelegate(v1);
-    expect(upgraded.changed).toBe(true);
-    expect(upgraded.text).toBe(patchAppDelegate(APP_DELEGATE).text);
-    expect(patchAppDelegate(upgraded.text).changed).toBe(false);
-  });
-
-  it('refuses a hand-written SceneDelegate and says to regenerate', () => {
-    const hand = `${APP_DELEGATE}
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-    var window: UIWindow?
-}
-`;
-    expect(() => patchAppDelegate(hand)).toThrow(/Regenerate the iOS project/);
-  });
-});
-
-describe('patchInfoPlist', () => {
-  it('adds the scene manifest inside the top-level dict', () => {
-    const { text } = patchInfoPlist(INFO_PLIST);
-    expect(text).toContain(
-      '<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>'
-    );
-    expect(text).toMatch(
-      /<key>UIApplicationSupportsMultipleScenes<\/key>\s*<false\/>/
-    );
-    expect(text).toMatch(/<\/dict>\n<\/dict>\n<\/plist>\n$/);
-    expect(text.match(/<dict>/g)?.length).toBe(text.match(/<\/dict>/g)?.length);
   });
 });
 
@@ -256,31 +224,17 @@ describe('patchInfoPlistPhotoUsage', () => {
     expect(text).toContain(PHOTO_USAGE_STRINGS.NSPhotoLibraryUsageDescription);
   });
 
-  it('composes with the scene manifest patch in either order', () => {
-    const a = patchInfoPlistPhotoUsage(patchInfoPlist(INFO_PLIST).text).text;
-    expect(patchInfoPlist(a).changed).toBe(false);
-    expect(patchInfoPlistPhotoUsage(a).changed).toBe(false);
-    expect(a.match(/<dict>/g)?.length).toBe(a.match(/<\/dict>/g)?.length);
+  it("leaves the template's scene manifest as it is", () => {
+    const { text } = patchInfoPlistPhotoUsage(INFO_PLIST);
+    const manifest = (plist: string) =>
+      plist.slice(
+        plist.indexOf('<key>UIApplicationSceneManifest</key>'),
+        plist.indexOf('<key>UIMainStoryboardFile</key>')
+      );
+    expect(manifest(text)).toBe(manifest(INFO_PLIST));
+    expect(text.match(/<dict>/g)?.length).toBe(text.match(/<\/dict>/g)?.length);
   });
 });
-
-// The App target's two configurations, as `cap add ios` writes them.
-const TARGET_CONFIGS = `
-		504EC3171FED79650016851F /* Debug */ = {
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-			};
-		};
-		504EC3181FED79650016851F /* Release */ = {
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-			};
-		};
-`;
 
 describe('patchPbxprojEntitlements', () => {
   it('points Debug and Release at App.entitlements', () => {
@@ -291,12 +245,6 @@ describe('patchPbxprojEntitlements', () => {
       )
     ).toHaveLength(2);
     expect(patchPbxprojEntitlements(text).changed).toBe(false);
-  });
-
-  it('composes with the deployment-target patch in either order', () => {
-    const a = patchPbxprojEntitlements(patchPbxproj(TARGET_CONFIGS).text).text;
-    const b = patchPbxproj(patchPbxprojEntitlements(TARGET_CONFIGS).text).text;
-    expect(a).toBe(b);
   });
 
   it('refuses an entitlements file it did not set', () => {
@@ -395,6 +343,155 @@ describe('patchEntitlements', () => {
   });
 });
 
+describe('patchInfoPlistHealthUsage', () => {
+  it('says sleep is read only on request and only hours are kept', () => {
+    const { text } = patchInfoPlistHealthUsage(INFO_PLIST);
+    const copy = HEALTH_USAGE_STRINGS.NSHealthShareUsageDescription;
+    expect(text).toContain(
+      `<key>NSHealthShareUsageDescription</key>\n\t<string>${copy}</string>`
+    );
+    expect(copy).toMatch(/only when you tap Import from Health/);
+    expect(copy).toMatch(/Only the total hours are saved to your check-in\.$/);
+  });
+
+  it('declares an update string that says the app never writes', () => {
+    const { text } = patchInfoPlistHealthUsage(INFO_PLIST);
+    const copy = HEALTH_USAGE_STRINGS.NSHealthUpdateUsageDescription;
+    expect(text).toContain(
+      `<key>NSHealthUpdateUsageDescription</key>\n\t<string>${copy}</string>`
+    );
+    expect(copy).toMatch(/^Canker Core never writes to Health\./);
+    expect(copy).not.toMatch(/\u2014/);
+  });
+
+  it('composes with the photo strings', () => {
+    const photo = patchInfoPlistPhotoUsage(INFO_PLIST).text;
+    const both = patchInfoPlistHealthUsage(photo).text;
+    for (const key of [
+      ...Object.keys(PHOTO_USAGE_STRINGS),
+      ...Object.keys(HEALTH_USAGE_STRINGS)
+    ]) {
+      expect(both.match(new RegExp(`<key>${key}</key>`, 'g'))).toHaveLength(1);
+    }
+    expect(patchInfoPlistPhotoUsage(both).changed).toBe(false);
+  });
+});
+
+describe('patchEntitlementsHealthKit', () => {
+  it('adds the HealthKit capability beside the associated domains', () => {
+    const { text } = patchEntitlementsHealthKit(ENTITLEMENTS);
+    expect(text).toContain(
+      '<key>com.apple.developer.healthkit</key>\n\t<true/>'
+    );
+    expect(text).toContain(
+      '<key>com.apple.developer.healthkit.access</key>\n\t<array/>'
+    );
+    expect(text).toContain('<key>com.apple.developer.associated-domains</key>');
+    expect(text).toMatch(/<\/dict>\n<\/plist>\n$/);
+    expect(patchEntitlements(text).changed).toBe(false);
+  });
+
+  it('refuses HealthKit keys it did not write', () => {
+    const other = ENTITLEMENTS.replace(
+      '</dict>',
+      '\t<key>com.apple.developer.healthkit</key>\n\t<false/>\n</dict>'
+    );
+    expect(() => patchEntitlementsHealthKit(other)).toThrow(/Regenerate/);
+  });
+});
+
+describe('patchAndroidHealthPermissions', () => {
+  it('declares READ_SLEEP and removes the rest', () => {
+    const { text } = patchHealthPermissions(ANDROID_MANIFEST);
+    expect(text).toContain(
+      `<uses-permission android:name="${HEALTH_READ_PERMISSION}" />`
+    );
+    for (const name of REMOVE) {
+      expect(text).toContain(
+        `<uses-permission android:name="${name}" tools:node="remove" />`
+      );
+    }
+    expect(text).toMatch(
+      /^<manifest xmlns:tools="http:\/\/schemas\.android\.com\/tools" xmlns:android=/m
+    );
+    expect(text).toMatch(/<\/manifest>\n$/);
+  });
+
+  it('rewrites its own block when the library list changes', () => {
+    const first = patchHealthPermissions(ANDROID_MANIFEST).text;
+    const next = patchAndroidHealthPermissions(first, [REMOVE[0]]);
+    expect(next.changed).toBe(true);
+    expect(next.text).not.toContain(REMOVE[1]);
+    expect(next.text.match(/patch-native: health permissions/g)).toHaveLength(
+      2
+    );
+    expect(next.text.match(/xmlns:tools=/g)).toHaveLength(1);
+  });
+
+  it('composes with the app link and backup patches', () => {
+    const linked = patchAndroidBackupRules(
+      patchAndroidManifest(ANDROID_MANIFEST).text
+    ).text;
+    const { text } = patchHealthPermissions(linked);
+    expect(text).toContain(APP_LINK_FILTER);
+    expect(patchAndroidManifest(text).changed).toBe(false);
+    expect(patchAndroidBackupRules(text).changed).toBe(false);
+  });
+});
+
+describe('unwantedHealthPermissions', () => {
+  it('lists every health permission except READ_SLEEP, once', () => {
+    const manifest = `<manifest>
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.WRITE_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>`;
+    expect(unwantedHealthPermissions(manifest)).toEqual([
+      'android.permission.health.READ_STEPS',
+      'android.permission.health.WRITE_SLEEP'
+    ]);
+  });
+});
+
+describe('patchAndroidMinSdk', () => {
+  it('raises the template minimum to what Health Connect needs', () => {
+    const { text } = patchAndroidMinSdk(VARIABLES_GRADLE);
+    expect(text).toContain(`minSdkVersion = ${HEALTH_MIN_SDK}\n`);
+    expect(text).toContain('compileSdkVersion = 36');
+  });
+
+  it('leaves a higher minimum alone', () => {
+    const higher = VARIABLES_GRADLE.replace('= 24', '= 28');
+    expect(patchAndroidMinSdk(higher)).toEqual({
+      text: higher,
+      changed: false
+    });
+  });
+});
+
+describe('patchAndroidStrings', () => {
+  it('points the Health Connect privacy policy at the privacy page', () => {
+    const { text } = patchAndroidStrings(STRINGS_XML);
+    expect(text).toContain(
+      `    <string name="health_connect_privacy_policy_url">${HEALTH_PRIVACY_POLICY_URL}</string>\n</resources>\n`
+    );
+    expect(text).toContain('<string name="app_name">Canker Core</string>');
+  });
+
+  it('rewrites a different URL', () => {
+    const old = patchAndroidStrings(STRINGS_XML).text.replace(
+      HEALTH_PRIVACY_POLICY_URL,
+      'https://example.com'
+    );
+    const { text, changed } = patchAndroidStrings(old);
+    expect(changed).toBe(true);
+    expect(text).toContain(HEALTH_PRIVACY_POLICY_URL);
+    expect(text).not.toContain('example.com');
+  });
+});
+
 describe('notificationIconCopies', () => {
   it('maps each committed density into the Android res tree', () => {
     const copies = notificationIconCopies();
@@ -460,12 +557,8 @@ describe('patchAndroidBackupRules', () => {
     expect(tag).toContain('android:theme="@style/AppTheme"');
   });
 
-  it('works on the real template, which sets allowBackup', () => {
-    const template = ANDROID_MANIFEST.replace(
-      '<application\n',
-      '<application\n        android:allowBackup="true"\n'
-    );
-    const first = patchAndroidBackupRules(template);
+  it("keeps the template's allowBackup", () => {
+    const first = patchAndroidBackupRules(ANDROID_MANIFEST);
     expect(first.text).toContain('android:allowBackup="true"');
     expect(patchAndroidBackupRules(first.text).changed).toBe(false);
   });
@@ -520,5 +613,178 @@ describe('backup rule files', () => {
       const name = value.replace('@xml/', '');
       expect(paths).toContain(`android/app/src/main/res/xml/${name}.xml`);
     }
+  });
+});
+
+/*
+ * The fixtures above are trimmed; these run the same patches on the
+ * templates `cap add` actually unpacks, from the installed @capacitor/cli.
+ * They also pin why the iOS deployment-target and scene-lifecycle patches
+ * were retired: the Capacitor 8 template already does both.
+ */
+describe('the installed Capacitor templates', () => {
+  const assets = fileURLToPath(
+    new URL('../node_modules/@capacitor/cli/assets/', import.meta.url)
+  );
+  let dir: string;
+  const unpack = (archive: string, into: string) => {
+    const dest = path.join(dir, into);
+    mkdirSync(dest);
+    execFileSync('tar', ['-xzf', path.join(assets, archive), '-C', dest]);
+    return (file: string) => readFileSync(path.join(dest, file), 'utf8');
+  };
+  let ios: (file: string) => string;
+  let android: (file: string) => string;
+
+  beforeAll(() => {
+    dir = mkdtempSync(path.join(tmpdir(), 'cap-templates-'));
+    ios = unpack('ios-pods-template.tar.gz', 'ios');
+    android = unpack('android-template.tar.gz', 'android');
+  });
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  const twice = (text: string, patches: ((t: string) => PatchResult)[]) => {
+    const run = (input: string) =>
+      patches.reduce(
+        (acc, patch) => {
+          const next = patch(acc.text);
+          return { text: next.text, changed: acc.changed || next.changed };
+        },
+        { text: input, changed: false }
+      );
+    const first = run(text);
+    expect(first.changed).toBe(true);
+    expect(run(first.text)).toEqual({ text: first.text, changed: false });
+  };
+
+  // The Health plugin's own library manifest, as installed.
+  const healthLibrary = () =>
+    readFileSync(
+      fileURLToPath(
+        new URL(
+          '../node_modules/@capgo/capacitor-health/android/src/main/AndroidManifest.xml',
+          import.meta.url
+        )
+      ),
+      'utf8'
+    );
+
+  it('patches the iOS project once', () => {
+    twice(ios('App/App.xcodeproj/project.pbxproj'), [patchPbxprojEntitlements]);
+    twice(ios('App/App/Info.plist'), [
+      patchInfoPlistPhotoUsage,
+      patchInfoPlistHealthUsage
+    ]);
+    twice('', [patchEntitlements, patchEntitlementsHealthKit]);
+  });
+
+  it('patches the Android project once', () => {
+    const remove = unwantedHealthPermissions(healthLibrary());
+    twice(android('app/src/main/AndroidManifest.xml'), [
+      patchAndroidManifest,
+      patchAndroidBackupRules,
+      (text) => patchAndroidHealthPermissions(text, remove)
+    ]);
+    twice(android('variables.gradle'), [patchAndroidMinSdk]);
+    twice(android('app/src/main/res/values/strings.xml'), [
+      patchAndroidStrings
+    ]);
+  });
+
+  it('strips every health permission the plugin declares except READ_SLEEP', () => {
+    const library = healthLibrary();
+    const remove = unwantedHealthPermissions(library);
+    expect(library).toContain(HEALTH_READ_PERMISSION);
+    expect(remove).not.toContain(HEALTH_READ_PERMISSION);
+    // Every declared health permission but one goes, digits and all.
+    const declared = new Set(
+      library.match(/android\.permission\.health\.[A-Z0-9_]+/g)
+    );
+    expect(remove).toHaveLength(declared.size - 1);
+    expect(remove).toContain('android.permission.health.WRITE_SLEEP');
+    expect(remove).toContain('android.permission.health.READ_VO2_MAX');
+  });
+
+  it("relies on the plugin's own rationale activity, alias and queries", () => {
+    const library = healthLibrary();
+    expect(library).toContain(
+      'androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE'
+    );
+    expect(library).toMatch(
+      /<activity-alias[\s\S]*android\.intent\.action\.VIEW_PERMISSION_USAGE[\s\S]*android\.intent\.category\.HEALTH_PERMISSIONS/
+    );
+    expect(library).toContain(
+      '<package android:name="com.google.android.apps.healthdata" />'
+    );
+  });
+
+  it('ships the compileSdkVersion the Capacitor 8 marker expects', () => {
+    expect(() =>
+      assertCapacitor8Android(android('variables.gradle'))
+    ).not.toThrow();
+  });
+
+  it('starts Android below the minimum Health Connect needs', () => {
+    expect(android('variables.gradle')).toMatch(/minSdkVersion = 24\b/);
+  });
+
+  it('already targets iOS 15.0 everywhere', () => {
+    expect(ios('App/Podfile')).toMatch(/^platform :ios, '15\.0'$/m);
+    const targets = ios('App/App.xcodeproj/project.pbxproj').match(
+      /IPHONEOS_DEPLOYMENT_TARGET = ([\d.]+);/g
+    );
+    expect(targets?.length).toBeGreaterThan(0);
+    for (const target of targets!) expect(target).toContain('= 15.0;');
+    // Pods: the template's post_install calls this, which lifts any pod
+    // below 15.0 (the local web-auth podspec included).
+    const helpers = readFileSync(
+      fileURLToPath(
+        new URL(
+          '../node_modules/@capacitor/ios/scripts/pods_helpers.rb',
+          import.meta.url
+        )
+      ),
+      'utf8'
+    );
+    expect(helpers).toContain(
+      "config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'"
+    );
+    expect(ios('App/Podfile')).toMatch(
+      /post_install do \|installer\|\n\s*assertDeploymentTarget\(installer\)/
+    );
+  });
+
+  it('already has the UIScene lifecycle iOS 27 requires', () => {
+    expect(ios('App/App/SceneDelegate.swift')).toContain(
+      'SceneDelegateProxy.shared'
+    );
+    expect(ios('App/App/AppDelegate.swift')).toContain(
+      'config.delegateClass = SceneDelegate.self'
+    );
+    expect(ios('App/App/Info.plist')).toContain(
+      '<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>'
+    );
+  });
+});
+
+describe('assertCapacitor8Android', () => {
+  it('accepts the Capacitor 8 template', () => {
+    expect(() => assertCapacitor8Android(VARIABLES_GRADLE)).not.toThrow();
+  });
+
+  it('refuses a Capacitor 7 project and says how to regenerate', () => {
+    const cap7 = VARIABLES_GRADLE.replace(
+      'compileSdkVersion = 36',
+      'compileSdkVersion = 35'
+    );
+    expect(() => assertCapacitor8Android(cap7)).toThrow(
+      /predates Capacitor 8.*rm -rf android && npm run cap:add:android/
+    );
+  });
+
+  it('refuses a variables.gradle with no compileSdkVersion', () => {
+    expect(() => assertCapacitor8Android('ext {}')).toThrow(
+      /predates Capacitor 8/
+    );
   });
 });
