@@ -13,6 +13,7 @@ import {
   GET as finishGet,
   POST as finishPost
 } from '@/app/api/native-auth/finish/route';
+import { GET as redeem } from '@/app/api/native-auth/redeem/route';
 
 // The route handlers, driven end to end with Better Auth stubbed out: what
 // is under test is the handoff's own checks, not Better Auth's.
@@ -20,7 +21,8 @@ const api = vi.hoisted(() => ({
   signInSocial: vi.fn(),
   holdNativeHandoff: vi.fn(),
   mintNativeHandoff: vi.fn(),
-  discardNativeHandoff: vi.fn()
+  discardNativeHandoff: vi.fn(),
+  redeemNativeHandoff: vi.fn()
 }));
 vi.mock('@/lib/auth', () => ({
   auth: { api, $context: Promise.resolve({ secret: 'test-secret' }) },
@@ -340,5 +342,34 @@ describe('finish', () => {
     expect(res.status).toBe(403);
     expect(api.mintNativeHandoff).not.toHaveBeenCalled();
     expect(api.discardNativeHandoff).not.toHaveBeenCalled();
+  });
+});
+
+describe('redeem', () => {
+  // The standalone server binds 0.0.0.0:3000, so request.url carries that
+  // rather than the host the webview loaded.
+  function internalRequest(path: string) {
+    return new NextRequest(new URL(path, 'http://0.0.0.0:3000'), {
+      headers: { host: 'cankercore.com', 'x-forwarded-proto': 'https' }
+    });
+  }
+
+  it('sends a signed-in webview on to next on the public origin', async () => {
+    api.redeemNativeHandoff.mockResolvedValueOnce({ headers: new Headers() });
+    const res = await redeem(
+      internalRequest('/api/native-auth/redeem?token=t&next=%2Fmap')
+    );
+    expect(res.status).toBe(303);
+    expect(res.headers.get('location')).toBe('https://cankercore.com/map');
+  });
+
+  it('lands a failed redeem on the public sign-in page', async () => {
+    api.redeemNativeHandoff.mockRejectedValueOnce({
+      body: { message: 'expired_token' }
+    });
+    const res = await redeem(internalRequest('/api/native-auth/redeem?token=t'));
+    const location = new URL(res.headers.get('location')!);
+    expect(location.origin).toBe(ORIGIN);
+    expect(location.pathname).toBe('/signin/password_signin');
   });
 });

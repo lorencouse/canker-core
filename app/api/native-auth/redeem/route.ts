@@ -17,7 +17,7 @@ import {
   errorCode,
   nativeAuthErrorMessage
 } from '@/utils/native-auth';
-import { clearCookie, forwardCookies, noStore } from '../shared';
+import { clearCookie, forwardCookies, noStore, publicOrigin } from '../shared';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,11 +27,14 @@ export async function GET(request: NextRequest) {
   const nonce = request.cookies.get(NATIVE_AUTH_NONCE_COOKIE)?.value ?? '';
 
   const redirect = (path: string) => {
-    // safeNext only ever yields a same-origin path; resolving it against the
-    // request and checking the origin is the backstop for that promise.
-    const target = new URL(path, request.url);
-    if (target.origin !== new URL(request.url).origin)
-      target.href = new URL('/today', request.url).href;
+    // Resolved against the public origin, not request.url: the standalone
+    // server binds 0.0.0.0:3000, and request.url carries that, so the
+    // webview was sent to https://0.0.0.0:3000 after signing in.
+    // safeNext only ever yields a same-origin path; checking the origin is
+    // the backstop for that promise.
+    const origin = publicOrigin(request);
+    const target = new URL(path, origin);
+    if (target.origin !== origin) target.href = new URL('/today', origin).href;
     const res = noStore(NextResponse.redirect(target, 303));
     clearCookie(res, request, NATIVE_AUTH_NONCE_COOKIE);
     return res;
