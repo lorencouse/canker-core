@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Sore } from '@/types';
-import { buildSteps, defaultDay, shouldAutoStart, stepKey } from './steps';
+import {
+  buildSteps,
+  defaultDay,
+  nextStepAfter,
+  shouldAutoStart,
+  stepKey
+} from './steps';
 
 const sore = (id: string, created_at: string, healed_at: string | null) =>
   ({ id, created_at, healed_at, readings: [] }) as unknown as Sore;
@@ -51,5 +57,49 @@ describe('shouldAutoStart', () => {
   });
   it('is true when only earlier days have rows', () => {
     expect(shouldAutoStart([{ day: '2026-11-05', status: 'done' }], '2026-11-06')).toBe(true);
+  });
+});
+
+describe('nextStepAfter', () => {
+  const steps = buildSteps([sore('A', '2026-11-01T00:00:00Z', null)]);
+
+  it('moves to the following step on next', () => {
+    const r = nextStepAfter(steps, 'sore:A', 'next');
+    expect(r.current).toBe('new-sore-ask');
+    expect(r.steps).toBe(steps);
+  });
+
+  it('stays on finish', () => {
+    expect(nextStepAfter(steps, 'finish', 'next').current).toBe('finish');
+  });
+
+  it('puts an added sore before a fresh ask and lands on it', () => {
+    const r = nextStepAfter(steps, 'new-sore-ask', 'added-sore', 'N');
+    expect(r.current).toBe('sore:N');
+    expect(r.steps.map(stepKey)).toEqual([
+      'sore:A', 'sore:N', 'new-sore-ask', 'sleep', 'food', 'health', 'treatments', 'finish'
+    ]);
+  });
+
+  it('asks again after the added sore', () => {
+    const added = nextStepAfter(steps, 'new-sore-ask', 'added-sore', 'N');
+    const r = nextStepAfter(added.steps, added.current, 'next');
+    expect(r.current).toBe('new-sore-ask');
+    expect(nextStepAfter(r.steps, r.current, 'next').current).toBe('sleep');
+  });
+
+  it('ignores added-sore without an id or away from the ask', () => {
+    expect(nextStepAfter(steps, 'new-sore-ask', 'added-sore')).toEqual({
+      steps,
+      current: 'new-sore-ask'
+    });
+    expect(nextStepAfter(steps, 'sleep', 'added-sore', 'N')).toEqual({
+      steps,
+      current: 'sleep'
+    });
+  });
+
+  it('leaves an unknown current step where it is', () => {
+    expect(nextStepAfter(steps, 'sore:gone', 'next').current).toBe('sore:gone');
   });
 });
