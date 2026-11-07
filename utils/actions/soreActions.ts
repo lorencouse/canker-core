@@ -1,11 +1,14 @@
 'use server';
 
-import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import type { PoolClient } from 'pg';
 
-import { auth } from '@/lib/auth';
 import { pool } from '@/lib/db/pool';
+import {
+  NOT_SIGNED_IN,
+  requireUserId,
+  type ActionResult
+} from '@/utils/actions/session';
 import type { DayLog, Sore } from '@/types';
 import {
   TREATMENTS,
@@ -27,17 +30,7 @@ import { isTimeZone, parseSores, sameDayReading } from '@/utils/sore-payload';
  * the database never received.
  */
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
-
-const NOT_SIGNED_IN: ActionResult = {
-  ok: false,
-  error: 'Your session has expired. Sign in again to save.'
-};
-
-async function requireUserId(): Promise<string | null> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  return session?.user?.id ?? null;
-}
+export type { ActionResult };
 
 function revalidate() {
   revalidatePath('/my-sores');
