@@ -31,12 +31,15 @@ import { useReportBusy } from './useReportBusy';
 /**
  * One open sore's reading for today. It opens on today's reading when there
  * is one and on the last one otherwise, so "no change" is a single tap on
- * Next. Next and Healed write before the flow moves on; Not now moves on and
- * writes nothing.
+ * Next. Next and Healed write before the flow moves on; Not now moves on
+ * without saving the reading.
  *
- * A photo is keyed to today's reading. With no reading yet today, that is
- * the one Next will append, so its id is chosen up front; a photo taken for
- * it and then left unsaved (Not now, closing the check-in) is deleted.
+ * A photo is keyed to today's reading and is written to the device the moment
+ * it is taken. With no reading yet today, that is the one Next will append,
+ * so its id is chosen up front; a photo taken for it and then left unsaved
+ * (Not now, closing the check-in) is deleted. When today's reading already
+ * exists, a retake replaces its photo straight away, and Not now keeps the
+ * new one.
  */
 export default function SoreStep({
   sore,

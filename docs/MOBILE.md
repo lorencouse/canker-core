@@ -123,7 +123,8 @@ on regeneration:
   `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription` strings in
   `Info.plist` for sore photos (below).
 - **Android:** the sign-in App Link intent-filter on `MainActivity` (see
-  above), and the Kanko notification small icon copied from
+  above), the backup rules that keep sore photos out of Auto Backup (below),
+  and the Kanko notification small icon copied from
   `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`.
 
 The script is idempotent, skips a platform whose folder is missing, and stops
@@ -133,19 +134,27 @@ live in `utils/native-patches.mts`.
 ### Sore photos (`@capacitor/camera`, `@capacitor/filesystem`)
 
 The check-in's sore step can take a photo, and the sore's detail shows
-them. Photos never leave the phone: `utils/sore-photos.ts` writes each one to
-the app's private data folder as `sore-photos/<reading id>.jpg`, with no
-upload, no database column and nothing in the CSV export. Deleting a sore or
-the account in the app deletes its photos on that device; photos taken on
-another phone, or files left when the app is deleted, are out of reach.
+them. Photos never leave the phone: `utils/sore-photos.ts` writes each one as
+`sore-photos/<reading id>.jpg` in the plugin's `Directory.LibraryNoCloud`,
+with no upload, no database column and nothing in the CSV export. Deleting a
+sore or the account in the app deletes its photos on that device; photos
+taken on another phone are out of reach.
+
+They are also kept out of backups, which would otherwise copy them to the
+cloud or to a new phone. On iOS `LibraryNoCloud` is `Library/NoCloud`, which
+the plugin marks excluded from iCloud and device backups. On Android it is
+the ordinary files dir, which Auto Backup includes, so `cap:patch` writes
+`res/xml/backup_rules.xml` and `res/xml/data_extraction_rules.xml` excluding
+`sore-photos` from cloud backup and device transfer, and points
+`<application>` at them (`android:fullBackupContent`,
+`android:dataExtractionRules`).
 
 These two plugins are native code, so they arrive only with a new app
 binary. The controls check `photosSupported()`, which needs the native
 platform **and** both plugins actually present (`Capacitor.isPluginAvailable`),
 so an installed app built before the plugins were added, and the website,
-show no photo control at all. Android needs no manifest change: the camera
-asks for no permission without `saveToGallery`, and `Directory.Data` is
-app-private.
+show no photo control at all. Android needs no permission: the camera asks
+for none without `saveToGallery`, and the files dir is app-private.
 
 Gradle 8.11 here needs JDK 21. A newer JDK — including the one Android
 Studio now bundles — fails the settings script with "Unsupported class file

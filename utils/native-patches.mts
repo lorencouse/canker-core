@@ -437,3 +437,80 @@ export function patchAndroidManifest(text: string): PatchResult {
   );
   return { text: out, changed: true };
 }
+
+/**
+ * Sore photos must never leave the phone, but on Android the filesystem
+ * plugin's LibraryNoCloud is the app's files dir (the same as Data), which
+ * Auto Backup copies to Google Drive and to a new phone. These rules exclude
+ * the photo folder from both. utils/sore-photos.ts writes to this folder.
+ */
+export const SORE_PHOTO_FOLDER = 'sore-photos';
+
+export const BACKUP_RULES_PATH =
+  'android/app/src/main/res/xml/backup_rules.xml';
+export const DATA_EXTRACTION_RULES_PATH =
+  'android/app/src/main/res/xml/data_extraction_rules.xml';
+
+const PHOTO_EXCLUDE = `<exclude domain="file" path="${SORE_PHOTO_FOLDER}" />`;
+
+/** Android 11 and older: android:fullBackupContent. */
+export const BACKUP_RULES_XML = `<?xml version="1.0" encoding="utf-8"?>
+<!-- Written by scripts/patch-native.mjs: sore photos stay on the device. -->
+<full-backup-content>
+    ${PHOTO_EXCLUDE}
+</full-backup-content>
+`;
+
+/** Android 12 and newer: android:dataExtractionRules, cloud and transfer. */
+export const DATA_EXTRACTION_RULES_XML = `<?xml version="1.0" encoding="utf-8"?>
+<!-- Written by scripts/patch-native.mjs: sore photos stay on the device. -->
+<data-extraction-rules>
+    <cloud-backup>
+        ${PHOTO_EXCLUDE}
+    </cloud-backup>
+    <device-transfer>
+        ${PHOTO_EXCLUDE}
+    </device-transfer>
+</data-extraction-rules>
+`;
+
+export function backupRuleFiles(): { path: string; text: string }[] {
+  return [
+    { path: BACKUP_RULES_PATH, text: BACKUP_RULES_XML },
+    { path: DATA_EXTRACTION_RULES_PATH, text: DATA_EXTRACTION_RULES_XML }
+  ];
+}
+
+export const BACKUP_ATTRIBUTES: Record<string, string> = {
+  'android:fullBackupContent': '@xml/backup_rules',
+  'android:dataExtractionRules': '@xml/data_extraction_rules'
+};
+
+/**
+ * Points <application> at the backup rule files. An attribute already
+ * naming something else is someone else's rule set, so it stops the run
+ * rather than being replaced.
+ */
+export function patchAndroidBackupRules(text: string): PatchResult {
+  const match = text.match(/<application\b[^>]*>/);
+  if (!match) {
+    throw new PatchAnchorError('AndroidManifest.xml', '<application …>');
+  }
+  let tag = match[0];
+  for (const [name, value] of Object.entries(BACKUP_ATTRIBUTES)) {
+    const current = tag.match(new RegExp(`\\s${name}="([^"]*)"`));
+    if (current) {
+      if (current[1] === value) continue;
+      throw new Error(
+        `AndroidManifest.xml sets ${name}="${current[1]}", not "${value}". ` +
+          'Remove it or merge its rules into the files scripts/patch-native.mjs writes.'
+      );
+    }
+    tag = tag.replace(
+      /^<application\b/,
+      `<application\n        ${name}="${value}"`
+    );
+  }
+  if (tag === match[0]) return { text, changed: false };
+  return { text: text.replace(match[0], tag), changed: true };
+}

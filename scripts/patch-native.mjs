@@ -21,8 +21,10 @@
  *     Custom Tab returns to this app (public/.well-known/assetlinks.json is
  *     the other half);
  *   - the white Kanko notification small icon from resources/notification.
- *   (Sore photos need nothing in the manifest: the camera plugin asks for no
- *   permission without saveToGallery, and Directory.Data is app-private.)
+ *   - backup rules that keep the sore-photos folder out of Auto Backup and
+ *     device transfer (res/xml/backup_rules.xml, data_extraction_rules.xml,
+ *     referenced from <application>), because the filesystem plugin's
+ *     LibraryNoCloud is the ordinary, backed-up files dir on Android.
  *
  * Safe to run repeatedly. A platform whose folder is missing is skipped; a
  * file whose expected anchor is missing stops the run with an error.
@@ -39,8 +41,10 @@ import {
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  backupRuleFiles,
   ENTITLEMENTS_PATH,
   notificationIconCopies,
+  patchAndroidBackupRules,
   patchAndroidManifest,
   patchAppDelegate,
   patchEntitlements,
@@ -110,8 +114,22 @@ const patchIos = () => {
 const patchAndroid = () => {
   patchFile(
     path.join(ROOT, 'android/app/src/main/AndroidManifest.xml'),
-    patchAndroidManifest
+    (text) => {
+      const link = patchAndroidManifest(text);
+      const backup = patchAndroidBackupRules(link.text);
+      return { text: backup.text, changed: link.changed || backup.changed };
+    }
   );
+  for (const { path: file, text } of backupRuleFiles()) {
+    const dest = path.join(ROOT, file);
+    if (existsSync(dest) && readFileSync(dest, 'utf8') === text) {
+      console.log(`already written  ${file}`);
+      continue;
+    }
+    mkdirSync(path.dirname(dest), { recursive: true });
+    writeFileSync(dest, text);
+    console.log(`wrote  ${file}`);
+  }
   const res = path.join(ROOT, 'android/app/src/main/res');
   if (!existsSync(res)) throw new Error(`${rel(res)} is missing`);
   for (const { from, to } of notificationIconCopies()) {
