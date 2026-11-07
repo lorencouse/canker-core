@@ -188,11 +188,13 @@ function Stepper({
   label,
   onClick,
   disabled,
+  className,
   children
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  className?: string;
   children: ReactNode;
 }) {
   return (
@@ -205,9 +207,103 @@ function Stepper({
       }}
       disabled={disabled}
       aria-label={label}
-      className="h-12 w-full px-0 [&_svg]:size-5"
+      className={cn('h-12 w-full px-0 [&_svg]:size-5', className)}
     >
       {children}
     </Button>
+  );
+}
+
+/** The check-in's one-tap widths: nearly every sore is one of these. */
+export const QUICK_WIDTHS = [1, 2, 3, 4, 5, 6] as const;
+
+/**
+ * Width as taps only, for the check-in, where the map sits above and there
+ * is no room to drag a slider: the six common widths in one row, and half
+ * steps either side of the reading for anything else (up to the same 20mm).
+ */
+export function QuickWidthField({
+  label = 'Width',
+  value,
+  onChange
+}: {
+  label?: string;
+  value: number;
+  onChange: (mm: number) => void;
+}) {
+  const set = (mm: number) => onChange(clampWidth(mm));
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-base font-semibold">{label}</span>
+        <div className="flex items-center gap-1.5">
+          <Stepper
+            label="Half a millimetre narrower"
+            onClick={() => set(value - WIDTH_STEP)}
+            disabled={value <= MIN_WIDTH}
+            className="h-11 w-11"
+          >
+            <Minus aria-hidden="true" />
+          </Stepper>
+          <output
+            aria-live="polite"
+            className="tabular min-w-[4.5rem] text-center font-display text-xl font-semibold leading-none"
+          >
+            {value}{' '}
+            <small className="font-sans text-sm font-normal text-muted-foreground">
+              mm
+            </small>
+          </output>
+          <Stepper
+            label="Half a millimetre wider"
+            onClick={() => set(value + WIDTH_STEP)}
+            disabled={value >= MAX_WIDTH}
+            className="h-11 w-11"
+          >
+            <Plus aria-hidden="true" />
+          </Stepper>
+        </div>
+      </div>
+      <div
+        role="group"
+        aria-label={`${label}, common sizes`}
+        className="mt-2 grid grid-cols-6 gap-1.5"
+      >
+        {QUICK_WIDTHS.map((mm) => {
+          const picked = value === mm;
+          return (
+            <button
+              key={mm}
+              type="button"
+              aria-pressed={picked}
+              aria-label={`${mm} mm`}
+              onClick={() => {
+                tap();
+                set(mm);
+              }}
+              className={cn(
+                'flex h-12 min-w-0 flex-col items-center justify-center gap-0.5 rounded-cell border-2 transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                picked
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-control bg-card text-foreground hover:bg-muted'
+              )}
+            >
+              <span className="tabular text-base font-bold leading-none">
+                {mm}
+              </span>
+              <span
+                className={cn(
+                  'text-[11px] font-semibold leading-none',
+                  picked ? 'text-primary-foreground' : 'text-muted-foreground'
+                )}
+              >
+                mm
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

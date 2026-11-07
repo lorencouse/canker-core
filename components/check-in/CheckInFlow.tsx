@@ -21,7 +21,8 @@ import {
   type Step
 } from '@/utils/check-in/steps';
 import { notify, tap } from '@/utils/native';
-import { dayKey } from '@/utils/readings';
+import { cn } from '@/utils/cn';
+import { currentPain, dayKey, hasReadingOn } from '@/utils/readings';
 import { deferEveningReminder } from '@/utils/reminders';
 
 import FinishStep from './FinishStep';
@@ -155,7 +156,23 @@ export default function CheckInFlow({
     setSores((prev) => prev.map((s) => (s.id === next.id ? next : s)));
 
   const step = steps.find((s) => stepKey(s) === current) ?? steps[0];
-  const position = steps.indexOf(step) + 1;
+  const position = steps.indexOf(step);
+
+  const openSores = sores.filter((s) => !s.healed_at);
+  const loggedToday = openSores.filter((s) => hasReadingOn(s, now));
+  const doneIds = new Set(
+    loggedToday.map((s) => s.id).filter((id) => id !== stepKey(step).slice(5))
+  );
+  const soreSteps = steps.filter((s) => s.kind === 'sore');
+  const label =
+    step.kind === 'sore'
+      ? `Sore ${soreSteps.indexOf(step) + 1} of ${soreSteps.length}`
+      : STEP_LABELS[step.kind];
+  const habitStep =
+    step.kind === 'sleep' ||
+    step.kind === 'food' ||
+    step.kind === 'health' ||
+    step.kind === 'treatments';
 
   const renderStep = (step: Step) => {
     switch (step.kind) {
@@ -173,6 +190,8 @@ export default function CheckInFlow({
         return (
           <SoreStep
             sore={sore}
+            allSores={openSores}
+            doneIds={doneIds}
             now={now}
             onBusy={setStepBusy}
             onChange={replaceSore}
@@ -184,10 +203,9 @@ export default function CheckInFlow({
         return (
           <NewSoreAsk
             sores={sores}
-            onAdded={(sore) => {
-              setSores((prev) => [...prev, sore]);
-              go('added-sore', sore.id);
-            }}
+            // Its reading was taken on the map, so it needs no step of its
+            // own: the screen asks again for another.
+            onAdded={(sore) => setSores((prev) => [...prev, sore])}
             onNext={() => go('next')}
             onBusy={setStepBusy}
           />
@@ -237,10 +255,34 @@ export default function CheckInFlow({
       aria-label="Daily check-in"
       className="safe-t safe-b safe-x fixed inset-0 z-50 flex h-dvh flex-col bg-background"
     >
-      <header className="mx-auto flex w-full max-w-lg items-center justify-between gap-3 px-4 pt-2">
-        <p className="tabular text-sm text-muted-foreground">
-          {position} of {steps.length}
-        </p>
+      <header className="mx-auto grid w-full max-w-lg grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pt-2">
+        <div className="grid min-w-0 gap-1.5">
+          <div
+            role="progressbar"
+            aria-label="Check-in progress"
+            aria-valuemin={1}
+            aria-valuemax={steps.length}
+            aria-valuenow={position + 1}
+            className="flex gap-1"
+          >
+            {steps.map((s, i) => (
+              <span
+                key={stepKey(s)}
+                className={cn(
+                  'h-1.5 min-w-0 flex-1 rounded-full',
+                  i < position
+                    ? 'bg-primary'
+                    : i === position
+                      ? 'bg-primary/45'
+                      : 'bg-border'
+                )}
+              />
+            ))}
+          </div>
+          <p className="truncate text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            {label}
+          </p>
+        </div>
         <Button
           type="button"
           variant="ghost"
@@ -263,7 +305,19 @@ export default function CheckInFlow({
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
         {/* Keyed so each step starts fresh and its heading takes focus. */}
-        <div key={current} className="mx-auto w-full max-w-lg px-4 py-4">
+        <div key={current} className="mx-auto w-full max-w-lg px-4 pb-4 pt-2">
+          {habitStep && soreSteps.length + loggedToday.length > 0 && (
+            <SoresStrip
+              sores={loggedToday}
+              onEdit={() => {
+                tap();
+                const first =
+                  soreSteps[0] ?? steps.find((s) => s.kind === 'new-sore-ask');
+                if (first) setCurrent(stepKey(first));
+              }}
+              disabled={locked}
+            />
+          )}
           {renderStep(step)}
         </div>
       </div>
@@ -281,6 +335,62 @@ export default function CheckInFlow({
           </Button>
         </footer>
       )}
+    </div>
+  );
+}
+
+const STEP_LABELS: Record<Exclude<Step['kind'], 'sore'>, string> = {
+  'new-sore-ask': 'New sores',
+  sleep: 'Sleep',
+  food: 'Food',
+  health: 'Health and mood',
+  treatments: 'Treatments',
+  finish: 'Done'
+};
+
+/**
+ * On the habit screens the map steps aside for one line: the sores logged
+ * so far today, in their pain colours, and a way back to change them.
+ */
+function SoresStrip({
+  sores,
+  onEdit,
+  disabled
+}: {
+  sores: Sore[];
+  onEdit: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="mb-4 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-cell border-2 border-border bg-card py-1 pl-4 pr-1">
+      <div className="flex" aria-hidden="true">
+        {sores.slice(0, 6).map((s, i) => (
+          <span
+            key={s.id}
+            className={cn(
+              'size-3.5 rounded-full border-2 border-card',
+              i > 0 && '-ml-1'
+            )}
+            style={{
+              backgroundColor: `hsl(var(--sev-${Math.min(10, Math.max(1, Math.round(currentPain(s))))}))`
+            }}
+          />
+        ))}
+      </div>
+      <p className="truncate text-sm font-semibold">
+        {sores.length === 0
+          ? 'No sores logged yet'
+          : `${sores.length} sore${sores.length === 1 ? '' : 's'} logged`}
+      </p>
+      <Button
+        type="button"
+        variant="ghost"
+        className="h-11 text-primary"
+        onClick={onEdit}
+        disabled={disabled}
+      >
+        Edit
+      </Button>
     </div>
   );
 }

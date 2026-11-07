@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import type { DayLog, Sore } from '@/types';
 import { answerLine } from '@/utils/course';
 import { tap } from '@/utils/native';
+import { currentPain, currentSize, hasReadingOn } from '@/utils/readings';
 
 import StepHeading from './StepHeading';
 
@@ -27,6 +28,7 @@ export default function FinishStep({
   onDone: () => void;
 }) {
   const answer = useMemo(() => answerLine(sores, now), [sores, now]);
+  const logged = sores.filter((s) => !s.healed_at && hasReadingOn(s, now));
   return (
     <div className="grid gap-6">
       <div className="text-center">
@@ -40,6 +42,28 @@ export default function FinishStep({
         celebrate="proud"
         headingLevel="h3"
       />
+      {logged.length > 0 && (
+        <ul className="grid gap-1.5" aria-label="Sores logged today">
+          {logged.map((s) => (
+            <li
+              key={s.id}
+              className="grid grid-cols-[0.875rem_minmax(0,1fr)_auto] items-center gap-3 rounded-cell border-2 border-border bg-card px-3 py-2.5 text-sm font-semibold"
+            >
+              <span
+                aria-hidden="true"
+                className="size-3.5 rounded-full"
+                style={{
+                  backgroundColor: `hsl(var(--sev-${Math.min(10, Math.max(1, Math.round(currentPain(s))))}))`
+                }}
+              />
+              <span className="truncate">{s.zone}</span>
+              <span className="tabular whitespace-nowrap text-muted-foreground">
+                {currentSize(s)} mm · pain {currentPain(s)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
       <Button
         type="button"
         size="touch"

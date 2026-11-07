@@ -1,4 +1,5 @@
 import type { CheckIn, Sore } from '@/types';
+import { MOUTH_VIEWS } from '@/utils/mouth-map/geometry';
 import { addDays, dayKey } from '@/utils/readings';
 
 export type Step =
@@ -15,11 +16,19 @@ export type HabitKind = 'sleep' | 'food' | 'health' | 'treatments';
 export const stepKey = (s: Step): string =>
   s.kind === 'sore' ? `sore:${s.soreId}` : s.kind;
 
-/** Active sores first (oldest first), then the fixed habit screens. */
+/**
+ * Active sores first, then the fixed habit screens. Sores are grouped by the
+ * map view they sit on (front, cheeks, lips) and oldest first within a view,
+ * so the pinned map changes view as few times as it can.
+ */
 export function buildSteps(sores: Sore[]): Step[] {
+  const viewRank = (s: Sore) => MOUTH_VIEWS.indexOf(s.view);
   const active = sores
     .filter((s) => s.healed_at === null)
-    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .sort(
+      (a, b) =>
+        viewRank(a) - viewRank(b) || a.created_at.localeCompare(b.created_at)
+    )
     .map((s): Step => ({ kind: 'sore', soreId: s.id }));
   return [
     ...active,
