@@ -3,22 +3,6 @@
 
 begin;
 
-do $$
-begin
-  -- Backfill only on the first run, when the columns do not exist yet, so a
-  -- rerun cannot flag days answered after real check-in data exists.
-  if not exists (
-    select 1 from information_schema.columns
-    where table_schema = current_schema()
-      and table_name = 'day_logs' and column_name = 'food_answered'
-  ) then
-    alter table day_logs add column food_answered boolean not null default false;
-    alter table day_logs add column health_answered boolean not null default false;
-    -- Legacy logs keep counting toward streaks.
-    update day_logs set food_answered = true, health_answered = true;
-  end if;
-end $$;
-
 alter table day_logs add column if not exists sleep_hours numeric(4,2)
   check (sleep_hours between 0 and 24);
 alter table day_logs add column if not exists sleep_quality smallint
@@ -29,6 +13,15 @@ alter table day_logs add column if not exists stress smallint
   check (stress between 1 and 5);
 alter table day_logs add column if not exists food_answered boolean not null default false;
 alter table day_logs add column if not exists health_answered boolean not null default false;
+
+do $$
+begin
+  -- Legacy logs keep counting toward streaks. Runs once: the first time any
+  -- of this runs, check_ins does not exist yet; every later run skips it.
+  if to_regclass('public.check_ins') is null then
+    update day_logs set food_answered = true, health_answered = true;
+  end if;
+end $$;
 
 create table if not exists check_ins (
   user_id text not null references "user" ("id") on delete cascade,

@@ -19,10 +19,10 @@ import type { DayLog, Sore, User } from '@/types';
 import { answerLine } from '@/utils/course';
 import { saveDayLog, upsertSores } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
+import { emptyDayLog } from '@/utils/day-log';
 import { useUnsavedGuard } from '@/utils/hooks/useUnsavedGuard';
 import { MOUTH_VIEWS, type MouthView } from '@/utils/mouth-map/geometry';
 import { notify, tap } from '@/utils/native';
-import { emptyDayLog } from '@/utils/day-log';
 import { type Mood, withSavedLog } from '@/utils/momentum';
 import {
   addDays,

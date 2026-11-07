@@ -134,6 +134,15 @@ alter table day_logs add column if not exists stress smallint
 alter table day_logs add column if not exists food_answered boolean not null default false;
 alter table day_logs add column if not exists health_answered boolean not null default false;
 
+do $$
+begin
+  -- Legacy logs keep counting toward streaks. Runs once: the first time any
+  -- of this runs, check_ins does not exist yet; every later run skips it.
+  if to_regclass('public.check_ins') is null then
+    update day_logs set food_answered = true, health_answered = true;
+  end if;
+end $$;
+
 -- One row per day the check-in was finished or skipped; drives the prompt.
 create table if not exists check_ins (
   user_id text not null references "user" ("id") on delete cascade,
