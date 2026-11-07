@@ -38,6 +38,7 @@ export default function FinishStep({
         now={now}
         answer={answer}
         celebrate="proud"
+        headingLevel="h3"
       />
       <Button
         type="button"

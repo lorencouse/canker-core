@@ -23,6 +23,7 @@ import {
 } from '@/utils/readings';
 
 import StepHeading from './StepHeading';
+import { useReportBusy } from './useReportBusy';
 
 /**
  * One open sore's reading for today. It opens on today's reading when there
@@ -35,6 +36,7 @@ export default function SoreStep({
   now,
   onChange,
   onNext,
+  onBusy,
   photoSlot
 }: {
   sore: Sore;
@@ -43,6 +45,8 @@ export default function SoreStep({
   /** The sore as written, after a save or a heal. */
   onChange: (next: Sore) => void;
   onNext: () => void;
+  /** Reports a save in flight, so the flow holds its close and skip. */
+  onBusy?: (busy: boolean) => void;
   /** Where the on-device photo control goes once there is one. */
   photoSlot?: ReactNode;
 }) {
@@ -53,6 +57,7 @@ export default function SoreStep({
   const [pain, setPain] = useState(() => currentPain(sore));
   const [note, setNote] = useState(initialNote);
   const [busy, setBusy] = useState(false);
+  useReportBusy(busy, onBusy);
 
   const changed =
     size !== currentSize(sore) ||

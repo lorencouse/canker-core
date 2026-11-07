@@ -74,4 +74,6 @@ export type HabitStepProps = {
   onSave: (day: string, patch: DayPatch) => Promise<boolean>;
   /** Moves on; it may write (the last screen records the check-in done), so the screen waits for it. */
   onNext: () => void | Promise<void>;
+  /** Reports a save in flight, so the flow holds its close and skip. */
+  onBusy?: (busy: boolean) => void;
 };

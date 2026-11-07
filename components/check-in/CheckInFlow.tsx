@@ -73,6 +73,9 @@ export default function CheckInFlow({
       : stepKey(steps[0]);
   });
   const [busy, setBusy] = useState(false);
+  // A step's own save in flight; close and skip wait for it as for the flow's.
+  const [stepBusy, setStepBusy] = useState(false);
+  const locked = busy || stepBusy;
 
   useEffect(() => {
     // Finished is recorded on the server; there is nothing left to resume.
@@ -138,6 +141,7 @@ export default function CheckInFlow({
     logs,
     now,
     onSave: saveHabit,
+    onBusy: setStepBusy,
     onNext: () => go('next')
   };
 
@@ -164,6 +168,7 @@ export default function CheckInFlow({
           <SoreStep
             sore={sore}
             now={now}
+            onBusy={setStepBusy}
             onChange={replaceSore}
             onNext={() => go('next')}
           />
@@ -178,6 +183,7 @@ export default function CheckInFlow({
               go('added-sore', sore.id);
             }}
             onNext={() => go('next')}
+            onBusy={setStepBusy}
           />
         );
       case 'sleep':
@@ -231,6 +237,7 @@ export default function CheckInFlow({
             // On the last screen the day is already recorded as done.
             onClose(step.kind === 'finish' ? 'done' : 'left');
           }}
+          disabled={locked}
         >
           <X aria-hidden="true" className="!size-5" />
         </Button>
@@ -250,7 +257,7 @@ export default function CheckInFlow({
             variant="link"
             className="h-11 text-base text-muted-foreground"
             onClick={skip}
-            disabled={busy}
+            disabled={locked}
           >
             Skip for today
           </Button>

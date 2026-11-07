@@ -11,6 +11,7 @@ import { tap } from '@/utils/native';
 import DayToggle, { type DayChoice, type HabitStepProps } from './DayToggle';
 import ScalePicker from './ScalePicker';
 import StepHeading from './StepHeading';
+import { useReportBusy } from './useReportBusy';
 
 type Source = NonNullable<DayLog['sleep_source']>;
 
@@ -40,6 +41,7 @@ export default function SleepStep({
   initialDay,
   onSave,
   onNext,
+  onBusy,
   importSlot
 }: HabitStepProps & {
   /** Where "Import from Health" goes once there is one; `fill` sets the hours and their source. */
@@ -52,6 +54,7 @@ export default function SleepStep({
   const saved = logs.find((l) => l.day === day);
   const [fields, setFields] = useState(() => fromLog(saved));
   const [busy, setBusy] = useState(false);
+  useReportBusy(busy, onBusy);
 
   const pickDay = (next: DayChoice) => {
     setChoice(next);
@@ -71,10 +74,10 @@ export default function SleepStep({
     const hadSleep =
       saved !== undefined &&
       (saved.sleep_hours !== null || saved.sleep_quality !== null);
-    // Nothing entered and nothing to clear: not answered, so nothing to write.
     setBusy(true);
     try {
       const ok =
+        // Nothing entered and nothing to clear: not answered, so nothing to write.
         (empty && !hadSleep) ||
         (await onSave(day, {
           sleep: {
@@ -110,7 +113,9 @@ export default function SleepStep({
             </small>
           </output>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        {/* Clear sits between the steppers so a stray tap is one tap from
+            undone and the screen can still be left unanswered. */}
+        <div className="grid grid-cols-3 gap-2">
           <Button
             type="button"
             variant="outline"
@@ -123,6 +128,19 @@ export default function SleepStep({
             disabled={busy || fields.hours === 0}
           >
             <Minus aria-hidden="true" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-12 w-full text-muted-foreground"
+            aria-label="Clear the hours"
+            onClick={() => {
+              tap();
+              setFields((f) => ({ ...f, hours: null, source: 'manual' }));
+            }}
+            disabled={busy || fields.hours === null}
+          >
+            Clear
           </Button>
           <Button
             type="button"

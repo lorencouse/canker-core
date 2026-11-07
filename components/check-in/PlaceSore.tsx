@@ -13,6 +13,7 @@ import { notify, tap } from '@/utils/native';
 import { localTimeZone } from '@/utils/readings';
 
 import StepHeading from './StepHeading';
+import { useReportBusy } from './useReportBusy';
 
 /*
  * The map stamps a placed sore with the user's id, but the server never
@@ -32,29 +33,35 @@ const NO_USER: User = { id: '', email: '', full_name: null, avatar_url: null };
 export default function PlaceSore({
   sores,
   onPlaced,
-  onCancel
+  onCancel,
+  onBusy
 }: {
   sores: Sore[];
   /** The sore as written. */
   onPlaced: (sore: Sore) => void;
   onCancel: () => void;
+  /** Reports a save in flight, so the flow holds its close and skip. */
+  onBusy?: (busy: boolean) => void;
 }) {
   return (
     <SoreProvider initialSores={sores} initialMode="add">
-      <Placement onPlaced={onPlaced} onCancel={onCancel} />
+      <Placement onPlaced={onPlaced} onCancel={onCancel} onBusy={onBusy} />
     </SoreProvider>
   );
 }
 
 function Placement({
   onPlaced,
-  onCancel
+  onCancel,
+  onBusy
 }: {
   onPlaced: (sore: Sore) => void;
   onCancel: () => void;
+  onBusy?: (busy: boolean) => void;
 }) {
   const { selectedSore, snapshot } = useSoreContext();
   const [busy, setBusy] = useState(false);
+  useReportBusy(busy, onBusy);
   // The same test the map uses: selected and not there when the session opened.
   const placed =
     selectedSore && snapshot && !snapshot.some((s) => s.id === selectedSore.id)

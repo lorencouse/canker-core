@@ -16,12 +16,15 @@ import StepHeading from './StepHeading';
 export default function NewSoreAsk({
   sores,
   onAdded,
-  onNext
+  onNext,
+  onBusy
 }: {
   sores: Sore[];
   /** The new sore, already written. */
   onAdded: (sore: Sore) => void;
   onNext: () => void;
+  /** Reports a save in flight, so the flow holds its close and skip. */
+  onBusy?: (busy: boolean) => void;
 }) {
   const [placing, setPlacing] = useState(false);
 
@@ -31,6 +34,7 @@ export default function NewSoreAsk({
         sores={sores}
         onPlaced={onAdded}
         onCancel={() => setPlacing(false)}
+        onBusy={onBusy}
       />
     );
   }

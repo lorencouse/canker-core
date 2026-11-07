@@ -14,6 +14,7 @@ import { tap } from '@/utils/native';
 import DayToggle, { type DayChoice, type HabitStepProps } from './DayToggle';
 import ScalePicker from './ScalePicker';
 import StepHeading from './StepHeading';
+import { useReportBusy } from './useReportBusy';
 
 type TagKind = 'food' | 'health' | 'treatments';
 
@@ -70,7 +71,8 @@ export default function TagStep({
   now,
   initialDay,
   onSave,
-  onNext
+  onNext,
+  onBusy
 }: HabitStepProps & { kind: TagKind }) {
   const { title, legend, options } = SCREENS[kind];
   const [choice, setChoice] = useState<DayChoice>(initialDay);
@@ -78,6 +80,7 @@ export default function TagStep({
   const saved = logs.find((l) => l.day === day);
   const [fields, setFields] = useState(() => fromLog(kind, saved));
   const [busy, setBusy] = useState(false);
+  useReportBusy(busy, onBusy);
 
   const pickDay = (next: DayChoice) => {
     setChoice(next);
