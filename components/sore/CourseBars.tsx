@@ -33,6 +33,16 @@ export function courseSlots(sore: Sore, days: CourseDay[]): number {
   return sore.healed_at ? days.length : Math.max(FORTNIGHT, days.length);
 }
 
+/**
+ * Pixels between bars. The bars share the width, but the gaps do not shrink,
+ * so a sore open for months would make the gaps alone wider than the card
+ * and push it off the screen. Past a month the bars touch, and a long course
+ * reads as one ribbon of colour.
+ */
+export function barGap(slots: number): number {
+  return slots > 30 ? 0 : 3;
+}
+
 /** The words a screen reader gets instead of the bars. */
 export function describeCourse(days: CourseDay[]): string {
   const logged = days.filter((d) => d.size !== null);
@@ -81,11 +91,12 @@ export default function CourseBars({
       role="img"
       aria-label={`Width by day: ${label}`}
       className={cn(
-        'grid items-end gap-[3px]',
+        'grid items-end',
         axis && 'border-b border-control'
       )}
       style={{
         gridTemplateColumns: `repeat(${slots}, minmax(0, 1fr))`,
+        columnGap: barGap(slots),
         height
       }}
     >
