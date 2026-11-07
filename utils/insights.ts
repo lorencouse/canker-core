@@ -1,5 +1,6 @@
 import type { DayLog, Sore } from '@/types';
 import { effectiveTriggers } from '@/utils/day-log';
+import { isAnswered } from '@/utils/momentum';
 import { addDays, dayKey, dayNumberOf } from '@/utils/readings';
 
 /**
@@ -75,7 +76,8 @@ export function triggersBeforeSores(
     for (let i = 0; i < window; i++) {
       const log = byDay.get(dayKey(addDays(start, -i)));
       if (!log) continue;
-      any = true;
+      // A row with only sleep or treatments says nothing about triggers.
+      if (isAnswered(log)) any = true;
       for (const t of effectiveTriggers(log)) seen.add(t);
     }
     if (any) soresWithLogs++;

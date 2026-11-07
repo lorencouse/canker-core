@@ -5,7 +5,7 @@ import { Directory, Filesystem } from '@capacitor/filesystem';
 /**
  * Sore photos, kept on the device and nowhere else.
  *
- * A photo is a file in the app's private data folder named after the reading
+ * A photo is a file in the app's no-backup library folder named after the reading
  * it belongs to, so nothing about it reaches the server: no upload, no column,
  * no export. That also means a photo exists only on the phone that took it.
  *

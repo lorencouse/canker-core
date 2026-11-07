@@ -21,7 +21,9 @@ export default function PrivacyPage() {
           Your email address and password hash, so you can sign in. Anything you
           choose to put in your profile, which is only a name. And your sores:
           position on the mouth map, size and pain readings, and the dates those
-          readings were taken.
+          readings were taken. Your daily logs, too: the triggers and treatments
+          you tick, any note, your sleep hours and quality, your stress, and
+          whether you finished or skipped each day&rsquo;s check-in.
         </p>
       </section>
 

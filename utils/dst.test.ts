@@ -80,7 +80,13 @@ describe('Day N across daylight saving', () => {
 
 describe('triggersBeforeSores across daylight saving', () => {
   const log = (day: string): DayLog =>
-    ({ day, triggers: ['stress'], treatments: [] }) as unknown as DayLog;
+    ({
+      day,
+      triggers: ['stress'],
+      treatments: [],
+      food_answered: true,
+      health_answered: true
+    }) as unknown as DayLog;
 
   it('finds the previous calendar day after fall-back', () => {
     const r = triggersBeforeSores(

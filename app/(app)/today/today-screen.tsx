@@ -145,9 +145,10 @@ function Today({
     () => [...recorded, ...serverCheckIns],
     [recorded, serverCheckIns]
   );
+  // Done wins: skipping a reopened, finished day leaves it finished.
   const todayDone =
     today !== null &&
-    checkIns.find((c) => c.day === today)?.status === 'done';
+    checkIns.some((c) => c.day === today && c.status === 'done');
 
   const linkHandled = useRef(false);
   useEffect(() => {

@@ -30,7 +30,7 @@ const isTriggerFree = isAnsweredClean;
  * without that (a morning check-in saves today's sleep and treatments), and
  * such a day is still open, not logged.
  */
-const isAnswered = (log: DayLog | undefined): boolean =>
+export const isAnswered = (log: DayLog | undefined): boolean =>
   log !== undefined && log.food_answered && log.health_answered;
 
 /**

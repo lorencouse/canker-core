@@ -33,6 +33,8 @@ worth anything.
   morning check-in is about yesterday.
 - **Sleep can be imported** from Apple Health (iOS) and Health Connect
   (Android) and prefills the Sleep screen. This ships in the **same release**.
+  *Deferred: moved to a Capacitor 8 follow-up project by owner decision on 2026-11-06. No
+  Capacitor 7 plugin reads sleep on both platforms; see Task 11 of the plan.*
 - A **"Check in" button in the Today header** starts the check-in by hand. Once
   today's check-in is done it reads "Done ✓, edit" and reopens the check-in to
   amend it.
@@ -96,10 +98,10 @@ worth anything.
 | Photos | Device only, never uploaded. |
 | Habit screens | Sleep, Food, Health & mood, Treatments. |
 | Which day habits save to | Toggle on each screen. |
-| Sleep import | Apple Health and Health Connect, in this release. |
+| Sleep import | Apple Health and Health Connect, in this release. *Deferred to a Capacitor 8 follow-up project by owner decision on 2026-11-06.* |
 | Manual start | Button in the Today header. |
 | Finish | "All logged" screen with Kanko and the streak, then Today. |
-| Rollout | Two phases. Phase 1 deploys the check-in to the web, which the current app versions pick up immediately, with photos and Health import hidden. Phase 2 is a new app version, and once it is installed those controls appear on their own. Each control checks that its plugin is actually present, not just `isNative()`. |
+| Rollout | Two phases. Phase 1 deploys the check-in to the web, which the current app versions pick up immediately, with photos and Health import hidden. Phase 2 is a new app version, and once it is installed those controls appear on their own. Each control checks that its plugin is actually present, not just `isNative()`. *Health import deferred to a Capacitor 8 follow-up project by owner decision on 2026-11-06; phase 2 ships photos only.* |
 | Evening reminder | Finishing the check-in cancels that day's evening reminder. If the check-in isn't done, the evening reminder fires and opens the check-in. |
 | Empty Food / Health answers | A "None today" chip has to be tapped to record a clean day. Continuing with nothing selected counts as *not answered*. It doesn't count toward the trigger-free streak and doesn't make the day look clean. |
 
@@ -138,7 +140,7 @@ These were not asked about. They are my calls.
    front. It takes total time asleep from the night ending this morning and
    prefills hours (`sleep_source` set to the provider). Quality stays manual.
    If permission is refused or there is no data, the screen stays manual with
-   no error.
+   no error. *Deferred to a Capacitor 8 follow-up project by owner decision on 2026-11-06.*
 8. **Skip** is a text button on every screen ("Skip for today"). On a single
    step, a "Not now" just advances to the next step without saving that step.
 9. **Sore order** is oldest first, the same as the user's list.
@@ -183,6 +185,9 @@ These were not asked about. They are my calls.
   position and the `day_logs` round-trip of the new fields.
 
 ## Open risks
+
+*Deferred: Health sleep import moved to a Capacitor 8 follow-up project by owner decision on 2026-11-06,
+so the HealthKit and Health Connect risks below carry over to that project.*
 
 - **App store review.** HealthKit needs a usage description and review notes.
   Health Connect needs Play Console health-permission declarations, which can

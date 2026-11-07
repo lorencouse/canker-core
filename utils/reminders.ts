@@ -88,21 +88,44 @@ function writeDeferredDay(day: string) {
   }
 }
 
-/** The next time `time` ("HH:MM") occurs on the day after today, local. */
-function tomorrowAt(time: string): Date {
+/*
+ * A skipped evening is a run of one-shot nudges from tomorrow, not a repeat
+ * that starts tomorrow: in @capacitor/local-notifications 7, `every` is
+ * ignored once `at` is set, and both platforms repeat at the gap between
+ * scheduling and `at`, so a "daily" repeat drifts. The run is bounded; any
+ * launch on a later day replaces it with the plain daily repeat, and a
+ * fortnight without opening the app is a fair point to stop nudging.
+ */
+const DEFERRED_RUN_DAYS = 14;
+const DEFERRED_IDS = Array.from(
+  { length: DEFERRED_RUN_DAYS },
+  (_, i) => 101 + i
+);
+
+/** `time` ("HH:MM") on each of the days after today, local. */
+function deferredRun(time: string): Date[] {
   const [hour, minute] = time.split(':').map(Number);
   const now = new Date();
-  return new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() + 1,
-    hour,
-    minute
+  return DEFERRED_IDS.map(
+    (_, i) =>
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1 + i,
+        hour,
+        minute
+      )
   );
 }
 
 type LocalNotificationsPlugin =
   typeof import('@capacitor/local-notifications').LocalNotifications;
+
+/** Every notification a slot may own, the evening's deferred run included. */
+const slotIds = (slot: ReminderSlot) =>
+  (slot === 'evening' ? [IDS.evening, ...DEFERRED_IDS] : [IDS[slot]]).map(
+    (id) => ({ id })
+  );
 
 async function scheduleSlot(
   plugin: LocalNotificationsPlugin,
@@ -111,22 +134,21 @@ async function scheduleSlot(
   startTomorrow: boolean
 ) {
   const [hour, minute] = time.split(':').map(Number);
+  const base = { ...COPY[slot], extra: { path: PATH } };
   await plugin.schedule({
-    notifications: [
-      {
-        id: IDS[slot],
-        ...COPY[slot],
-        schedule: startTomorrow
-          ? {
-              at: tomorrowAt(time),
-              repeats: true,
-              every: 'day' as const,
-              allowWhileIdle: true
-            }
-          : { on: { hour, minute }, allowWhileIdle: true },
-        extra: { path: PATH }
-      }
-    ]
+    notifications: startTomorrow
+      ? deferredRun(time).map((at, i) => ({
+          id: DEFERRED_IDS[i],
+          ...base,
+          schedule: { at, allowWhileIdle: true }
+        }))
+      : [
+          {
+            id: IDS[slot],
+            ...base,
+            schedule: { on: { hour, minute }, allowWhileIdle: true }
+          }
+        ]
   });
 }
 
@@ -146,7 +168,7 @@ export async function applyReminder(
   const { LocalNotifications } = await import('@capacitor/local-notifications');
 
   // Replace rather than stack: one reminder per slot, at the latest time.
-  await LocalNotifications.cancel({ notifications: [{ id: IDS[slot] }] });
+  await LocalNotifications.cancel({ notifications: slotIds(slot) });
 
   if (pref.enabled) {
     let { display } = await LocalNotifications.checkPermissions();
@@ -179,22 +201,26 @@ export async function syncReminders() {
 }
 
 /**
- * Today's check-in is done, so skip tonight's evening nudge: cancel it and
- * schedule a daily repeat starting tomorrow. A later launch's syncReminders
+ * `day`'s check-in is done, so skip that evening's nudge: cancel the daily
+ * repeat and schedule the deferred run from tomorrow. `day` is the day the
+ * check-in opened on; finished after midnight, its evening has already
+ * passed and tonight's nudge stays. A later launch's syncReminders
  * normalises it back to the plain repeating schedule.
  */
-export async function deferEveningReminder() {
+export async function deferEveningReminder(day: string) {
   if (!remindersSupported()) return;
+  if (day !== dayKey(new Date())) return;
   const pref = readReminder('evening');
   if (!pref.enabled) return;
   const { LocalNotifications } = await import('@capacitor/local-notifications');
-  await LocalNotifications.cancel({ notifications: [{ id: IDS.evening }] });
+  await LocalNotifications.cancel({ notifications: slotIds('evening') });
   try {
     await scheduleSlot(LocalNotifications, 'evening', pref.time, true);
   } catch (error) {
-    // Don't leave the user with no evening nudge at all.
+    // Don't leave the user with no evening nudge at all, or with half a run.
+    await LocalNotifications.cancel({ notifications: slotIds('evening') });
     await scheduleSlot(LocalNotifications, 'evening', pref.time, false);
     throw error;
   }
-  writeDeferredDay(dayKey(new Date()));
+  writeDeferredDay(day);
 }

@@ -311,6 +311,36 @@
 
 ### Task 11: Health sleep import (phase 2)
 
+> **Deferred** to a Capacitor 8 follow-up project by owner decision on
+> 2026-11-06. No Capacitor 7 plugin reads sleep on both HealthKit and Health
+> Connect; `@capgo/capacitor-health` 8.2+ and `@capacitor/health-fitness` need
+> Capacitor 8. No code was written for this task; the steps below are kept as
+> the plan for that project.
+>
+> Plugin research (npm registry and unpacked tarballs, 2026-11-06; project on
+> `@capacitor/core` ^7.6.9):
+>
+> | Package | Cap-7-compatible version | Peer dep | Sleep support in that version |
+> |---|---|---|---|
+> | `@capgo/capacitor-health` | 7.2.15 (last 7.x) | core >=7.0.0 | None (no `sleep` in definitions, iOS or Android source). Sleep (`HealthDataType 'sleep'`, `SleepState inBed/asleep/awake/rem/deep/light`, stage segments) first appears between 8.2.0 and 8.2.10; every 8.x needs core >=8.0.0 (latest 8.11.14). |
+> | `@capacitor/health-fitness` (official, Ionic) | none | core >=8.0.0 for every version incl. 1.0.x | n/a |
+> | `capacitor-health` (mley) | 7.1.0 | core >=7.0.0 | None (also none in 8.4.0) |
+> | `@flomentumsolutions/capacitor-health-extended` | 0.1.0 (only 7.x-compatible release) | core >=7.0.0 | None on either platform; it only reuses `READ_SLEEP` as the mindfulness permission. 0.3.1+ needs core >=8, latest needs >=9 beta. |
+> | `@kiwi-health/capacitor-health-connect` 0.0.43 | yes | core ^7.0.0 | Android only: `SleepSession` record with `stages`. No iOS. |
+> | `@devmaxime/capacitor-health-connect` 1.1.0 | yes | core >=7.0.0 | Android only (not inspected further). |
+> | `@perfood/capacitor-healthkit` 1.3.2 | no | core ^4.0.0 (last publish 2025-02; 2.0.0-alpha.2 from 2023) | iOS only: `sleepAnalysis` with `sleepState`. Peer conflict with core 7; Capacitor-4-era native code. |
+> | `capacitor-healthkit` 0.2.1 | - | - | iOS only, last published 2022. |
+> | `sahha-capacitor` | - | - | Commercial SDK (paid backend), not a fit for first-party-only analytics. |
+> | `@capawesome-team/capacitor-health` | - | - | Sponsorware, not on public npm. |
+>
+> Options considered: (1) upgrade to Capacitor 8 and use `@capgo/capacitor-health`
+> 8.11.x (sleep with stages on both platforms) or `@capacitor/health-fitness`
+> 1.0.x, a separate upgrade touching every `@capacitor/*` plugin and the native
+> patches; (2) two plugins, kiwi-health for Android plus the unmaintained,
+> core-^4 `@perfood/capacitor-healthkit` for iOS; (3) a thin local plugin
+> (Swift `HKSampleQuery` on `sleepAnalysis`, Kotlin `SleepSessionRecord`); (4)
+> Android-only with kiwi-health for now. Option 1 was chosen, as its own project.
+
 **Files:**
 - Modify: `package.json` (a Health plugin supporting Capacitor 7, HealthKit sleep analysis and Health Connect sleep sessions; verify a maintained one such as `@capgo/capacitor-health`, or write a thin local plugin if none reads sleep on both), the iOS HealthKit entitlement and `NSHealthShareUsageDescription`, the Android Health Connect permission `android.permission.health.READ_SLEEP` plus the privacy-policy activity alias the Health Connect docs require, `docs/MOBILE.md`, the privacy page (sleep is read only on request and stored as hours with its source)
 - Create: `utils/health-sleep.ts`, `components/check-in/SleepImport.tsx`

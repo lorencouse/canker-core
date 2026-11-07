@@ -97,7 +97,7 @@ export default function CheckInFlow({
         if (!result.ok) return fail(result.error);
         clearProgress();
         // Best-effort: a reminder problem never blocks or toasts the check-in.
-        deferEveningReminder().catch((error) =>
+        deferEveningReminder(today).catch((error) =>
           console.error('could not skip tonight’s reminder', error)
         );
       } catch {
