@@ -4,24 +4,13 @@ import { useEffect, useState } from 'react';
 import { HeartPulse, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { resolveDay } from '@/utils/check-in/steps';
 import {
   importLastNight,
+  nightEndFor,
   sleepImportAvailable,
   type ImportedSleep
 } from '@/utils/health-sleep';
 import { tap } from '@/utils/native';
-
-/**
- * The night that ended on the morning of `day`: up to the check-in's clock
- * for today, and up to that evening for an earlier day, so importing on
- * "Yesterday" reads the night before it rather than last night.
- */
-const nightEnd = (day: string, now: Date): Date => {
-  if (day === resolveDay('today', now)) return now;
-  const [y, m, d] = day.split('-').map(Number);
-  return new Date(y, m - 1, d, 18);
-};
 
 /**
  * "Import from Health" on the Sleep screen. Renders nothing on the web, in an
@@ -64,11 +53,15 @@ export default function SleepImport({
     setBusy(true);
     setMissing(false);
     try {
-      const night = await importLastNight(nightEnd(day, now));
+      const night = await importLastNight(nightEndFor(day, now));
       if (night) onImport(night.hours, night.source);
       // A refusal looks the same as an empty night on iOS, so both get the
       // same quiet line and the screen stays manual.
       else setMissing(true);
+    } catch {
+      // importLastNight already turns failures into null; this only keeps an
+      // unexpected throw just as quiet.
+      setMissing(true);
     } finally {
       setBusy(false);
     }

@@ -47,7 +47,7 @@ export const PHOTO_USAGE_STRINGS: Record<string, string> = {
  */
 export const HEALTH_USAGE_STRINGS: Record<string, string> = {
   NSHealthShareUsageDescription:
-    'Reads your sleep only when you tap Import from Health, to fill in hours asleep. Only the total hours are saved.'
+    'Reads your sleep only when you tap Import from Health, to fill in hours asleep. Only the total hours are saved to your check-in.'
 };
 
 const plistString = (key: string, value: string) =>
@@ -416,7 +416,11 @@ export const HEALTH_PERMISSIONS_MARKER =
 const HEALTH_PERMISSIONS_END = '<!-- /patch-native: health permissions -->';
 const TOOLS_NS = 'xmlns:tools="http://schemas.android.com/tools"';
 
-/** Every health permission a library manifest declares, other than READ_SLEEP. */
+/**
+ * Every health permission a library manifest declares, other than READ_SLEEP.
+ * A health permission another plugin needs must be filtered out of this list
+ * too, or this patch strips it from the merged manifest.
+ */
 export function unwantedHealthPermissions(libraryManifest: string): string[] {
   const names: string[] =
     libraryManifest.match(

@@ -34,24 +34,40 @@ const SAMPLE_LIMIT = 1000;
 export const sleepImportSupported = (): boolean =>
   Capacitor.isNativePlatform() && Capacitor.isPluginAvailable(PLUGIN);
 
+let availability: Promise<boolean> | null = null;
+
 /**
  * Whether this phone has a health store to read: false on an Android phone
  * without Health Connect installed (Android 13 and older ship without it),
- * so the control is not offered where it could only fail.
+ * so the control is not offered where it could only fail. Asked once per
+ * page load, so the button does not blink out and back on a day switch.
  */
-export async function sleepImportAvailable(): Promise<boolean> {
-  if (!sleepImportSupported()) return false;
-  try {
-    return (await Health.isAvailable()).available;
-  } catch {
-    return false;
-  }
+export function sleepImportAvailable(): Promise<boolean> {
+  if (!sleepImportSupported()) return Promise.resolve(false);
+  availability ??= Health.isAvailable().then(
+    (result) => result.available,
+    () => false
+  );
+  return availability;
+}
+
+/**
+ * Where the night that ended on the morning of `day` stops: the check-in's
+ * clock for today, and 14:00 for an earlier day, so importing on "Yesterday"
+ * reads the night before it, without that afternoon's nap.
+ */
+export function nightEndFor(day: string, now: Date): Date {
+  const [y, m, d] = day.split('-').map(Number);
+  const isToday =
+    now.getFullYear() === y && now.getMonth() === m - 1 && now.getDate() === d;
+  return isToday ? now : new Date(y, m - 1, d, 14);
 }
 
 /**
  * Hours asleep inside the window, to the nearest quarter hour. Segments are
- * clipped to the window and merged before summing, because an Apple Watch and
- * the iPhone (or two Android apps) can both record the same night.
+ * clipped to the window and overlaps merged before summing. Meant for one
+ * source's segments: across sources a coarse "asleep" span would fill the
+ * awake gaps another source recorded (see `pickSource`).
  */
 export function sumAsleepHours(
   segments: SleepSegment[],
@@ -109,10 +125,48 @@ const segmentsOf = (sample: HealthSample, android: boolean): SleepSegment[] => {
   ];
 };
 
+/** Stages only a tracker that measures sleep stages records. */
+const STAGED = new Set(['light', 'deep', 'rem']);
+
+/**
+ * One source's night, not a blend: each writer (Apple Watch, iPhone, a
+ * Health Connect app) is summed on its own, then the one with stage detail
+ * wins, the largest total breaking ties; with no staged source, the largest
+ * total. A union would let a phone's or app's coarse "asleep" span fill the
+ * awake gaps a watch recorded.
+ */
+const pickSource = (
+  samples: HealthSample[],
+  android: boolean,
+  windowStart: Date,
+  windowEnd: Date
+): number => {
+  const bySource = new Map<string, SleepSegment[]>();
+  for (const sample of samples) {
+    const key = sample.sourceId ?? sample.sourceName ?? '';
+    const segments = bySource.get(key) ?? [];
+    segments.push(...segmentsOf(sample, android));
+    bySource.set(key, segments);
+  }
+  let best = { staged: false, hours: 0 };
+  bySource.forEach((segments) => {
+    const hours = sumAsleepHours(segments, windowStart, windowEnd);
+    if (hours <= 0) return;
+    const staged = segments.some((s) => STAGED.has(s.stage));
+    if (
+      (staged && !best.staged) ||
+      (staged === best.staged && hours > best.hours)
+    ) {
+      best = { staged, hours };
+    }
+  });
+  return best.hours;
+};
+
 /**
  * Total time asleep in the night that ended by `now`: segments from 18:00 the
- * previous local day up to `now`. Asks to read sleep the first time; null on
- * refusal, no data, or any failure.
+ * previous local day up to `now`, from one source (`pickSource`). Asks to
+ * read sleep the first time; null on refusal, no data, or any failure.
  *
  * HealthKit never says whether reading was refused (an app can only learn
  * that it asked), so on iOS a refusal arrives as an empty read. Health
@@ -144,11 +198,7 @@ export async function importLastNight(
       limit: SAMPLE_LIMIT,
       ascending: true
     });
-    const hours = sumAsleepHours(
-      samples.flatMap((s) => segmentsOf(s, android)),
-      windowStart,
-      now
-    );
+    const hours = pickSource(samples, android, windowStart, now);
     if (hours <= 0) return null;
     return { hours, source: android ? 'health_connect' : 'apple_health' };
   } catch {

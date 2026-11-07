@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   importLastNight,
-  sleepImportAvailable,
+  nightEndFor,
   sleepImportSupported,
   sumAsleepHours
 } from './health-sleep';
@@ -45,9 +45,18 @@ const granted = {
   writeDenied: []
 };
 
+const WATCH = 'com.apple.health.watch';
+const PHONE = 'com.apple.health.phone';
+
 /** One HealthKit category sample, shaped the way the plugin returns it. */
-const iosSample = (start: Date, end: Date, stage: string) => ({
+const iosSample = (
+  start: Date,
+  end: Date,
+  stage: string,
+  sourceId = WATCH
+) => ({
   dataType: 'sleep',
+  sourceId,
   value: (end.getTime() - start.getTime()) / 60_000,
   unit: 'minute',
   startDate: start.toISOString(),
@@ -177,25 +186,69 @@ describe('sleepImportSupported', () => {
 });
 
 describe('sleepImportAvailable', () => {
+  // A fresh module each time: the answer is cached for the page's life.
+  const fresh = async () => {
+    vi.resetModules();
+    return (await import('./health-sleep')).sleepImportAvailable;
+  };
+
+  it('asks the plugin once and reuses the answer', async () => {
+    const sleepImportAvailable = await fresh();
+    expect(await sleepImportAvailable()).toBe(true);
+    expect(await sleepImportAvailable()).toBe(true);
+    expect(mocks.isAvailable).toHaveBeenCalledTimes(1);
+  });
+
   it('is false where Health Connect is not installed', async () => {
+    const sleepImportAvailable = await fresh();
     mocks.platform = 'android';
     mocks.isAvailable.mockResolvedValue({ available: false });
     expect(await sleepImportAvailable()).toBe(false);
   });
 
   it('is true where the health store is present', async () => {
+    const sleepImportAvailable = await fresh();
     expect(await sleepImportAvailable()).toBe(true);
   });
 
   it('is false without asking the plugin when import is unsupported', async () => {
+    const sleepImportAvailable = await fresh();
     mocks.native = false;
     expect(await sleepImportAvailable()).toBe(false);
     expect(mocks.isAvailable).not.toHaveBeenCalled();
   });
 
   it('is false when the availability check fails', async () => {
+    const sleepImportAvailable = await fresh();
     mocks.isAvailable.mockRejectedValue(new Error('boom'));
     expect(await sleepImportAvailable()).toBe(false);
+  });
+});
+
+describe('nightEndFor', () => {
+  const now = at(6, 8, 15);
+
+  it('ends today at the check-in clock', () => {
+    expect(nightEndFor('2026-11-06', now)).toEqual(now);
+  });
+
+  it('ends an earlier day at 14:00, before an afternoon nap', () => {
+    expect(nightEndFor('2026-11-05', now)).toEqual(at(5, 14));
+  });
+
+  it("leaves that day's nap out of its night", () => {
+    const end = nightEndFor('2026-11-05', now);
+    const start = at(4, 18);
+    expect(
+      sumAsleepHours(
+        [
+          seg(at(4, 23), at(5, 7), 'asleep'),
+          seg(at(5, 15), at(5, 16), 'asleep')
+        ],
+        start,
+        end
+      )
+    ).toBe(8);
   });
 });
 
@@ -257,19 +310,45 @@ describe('importLastNight', () => {
     expect(mocks.requestAuthorization).not.toHaveBeenCalled();
   });
 
-  it('sums an Apple Health night as apple_health', async () => {
+  it("takes the watch's staged night over the phone's estimate", async () => {
     mocks.readSamples.mockResolvedValue({
       samples: [
         iosSample(at(5, 22, 30), at(6, 6, 50), 'inBed'),
         iosSample(at(5, 23), at(6, 2), 'light'),
         iosSample(at(6, 2), at(6, 2, 20), 'awake'),
         iosSample(at(6, 2, 20), at(6, 6, 40), 'deep'),
-        // The phone's own estimate, overlapping the watch.
-        iosSample(at(5, 23, 10), at(6, 6, 30), 'asleep')
+        // The phone's own estimate covers the watch's awake gap; it must not
+        // fill it in.
+        iosSample(at(5, 23, 10), at(6, 6, 30), 'asleep', PHONE)
       ]
     });
     expect(await importLastNight(now)).toEqual({
-      hours: 7.75,
+      hours: 7.25,
+      source: 'apple_health'
+    });
+  });
+
+  it('uses a stage-less source when it is the only one', async () => {
+    mocks.readSamples.mockResolvedValue({
+      samples: [iosSample(at(5, 23, 10), at(6, 6, 30), 'asleep', PHONE)]
+    });
+    expect(await importLastNight(now)).toEqual({
+      hours: 7.25,
+      source: 'apple_health'
+    });
+  });
+
+  it('takes the longer of two staged sources', async () => {
+    mocks.readSamples.mockResolvedValue({
+      samples: [
+        iosSample(at(5, 23), at(6, 5), 'light'),
+        iosSample(at(5, 23), at(6, 6), 'deep', 'com.example.ring'),
+        // Longer, but stage-less, so it does not win.
+        iosSample(at(5, 22), at(6, 7), 'asleep', PHONE)
+      ]
+    });
+    expect(await importLastNight(now)).toEqual({
+      hours: 7,
       source: 'apple_health'
     });
   });

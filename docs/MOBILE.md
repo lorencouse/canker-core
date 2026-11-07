@@ -176,10 +176,16 @@ for none without `saveToGallery`, and the files dir is app-private.
 The check-in's Sleep screen has an **Import from Health** button that fills
 in last night's hours from Apple Health (iOS) or Health Connect (Android).
 `utils/health-sleep.ts` asks to read sleep, and nothing else, the first time
-the button is tapped, never up front. It reads sleep segments ending between
-18:00 the previous day and now, counts only asleep stages (asleep, core or
-light, deep, REM; not awake or in bed), merges overlaps so a watch and a
-phone recording the same night count once, and rounds to a quarter hour.
+the button is tapped, never up front. It reads sleep segments from 18:00
+the previous day up to now (up to 14:00 when the screen is on Yesterday, so
+that day's nap is left out), counts only asleep stages (asleep, core or
+light, deep, REM; not awake or in bed), and rounds to a quarter hour. It
+takes one source's night rather than blending them: each source (an Apple
+Watch, the iPhone, a Health Connect app) is summed on its own, overlaps
+within it merged, and the source with stage detail (light, deep or REM)
+wins, the longest breaking ties; with no staged source, the longest. A
+blend would let a phone's coarse "asleep" span fill the awake gaps a watch
+recorded.
 Only the hours are kept, with `sleep_source` set to `apple_health` or
 `health_connect`; quality stays manual, and changing the hours makes the
 source `manual` again. A refusal, an empty night or any error shows "No
@@ -206,14 +212,15 @@ What `cap:patch` adds for it:
   HealthKit capability writes them; automatic signing enables HealthKit on
   the App ID. `NSHealthShareUsageDescription` in `Info.plist`: "Reads your
   sleep only when you tap Import from Health, to fill in hours asleep. Only
-  the total hours are saved." There is no `NSHealthUpdateUsageDescription`:
+  the total hours are saved to your check-in." There is no `NSHealthUpdateUsageDescription`:
   the app requests no write types, and HealthKit only requires that key for
   an app that asks to write.
 - **Android:** `android.permission.health.READ_SLEEP`, and every other
   health permission the plugin's library manifest declares (read and write
   for about twenty types, read from the installed package at patch time)
   marked `tools:node="remove"`, so the merged manifest carries only
-  `READ_SLEEP`. `minSdkVersion` goes from the template's 24 to 26, which
+  `READ_SLEEP`. A health permission another plugin needs has to be excluded
+  from that strip list (`unwantedHealthPermissions`), or it is removed too. `minSdkVersion` goes from the template's 24 to 26, which
   Health Connect and the plugin need. `health_connect_privacy_policy_url` in
   `strings.xml` points at https://cankercore.com/privacy. The plugin's own
   manifest supplies the rest Health Connect requires: the rationale activity

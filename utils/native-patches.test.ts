@@ -350,7 +350,7 @@ describe('patchInfoPlistHealthUsage', () => {
       `<key>NSHealthShareUsageDescription</key>\n\t<string>${copy}</string>`
     );
     expect(copy).toMatch(/only when you tap Import from Health/);
-    expect(copy).toMatch(/Only the total hours are saved/);
+    expect(copy).toMatch(/Only the total hours are saved to your check-in\.$/);
   });
 
   it('asks to read only, so declares no update (write) string', () => {
