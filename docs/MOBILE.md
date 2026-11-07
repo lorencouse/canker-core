@@ -99,6 +99,9 @@ anyone holding that keystore could sign a build the link would trust.
 
 ## Building the native projects
 
+The apps are on Capacitor 8, which needs Node 22+, Xcode 26+ (Xcode 27 here)
+with CocoaPods, and Android Studio Otter (2025.2.1) or newer with JDK 21.
+
 The `ios/` and `android/` directories are generated and untracked. Create
 them once per machine:
 
@@ -108,28 +111,37 @@ npm run cap:add:android    # needs Android Studio
 ```
 
 Each of those runs `npm run cap:patch` (`scripts/patch-native.mjs`) after
-`cap add`, because the generated projects need fixes the Capacitor 7
+`cap add`, because the generated projects need fixes the Capacitor 8
 templates lack, and anything edited by hand in `ios/` or `android/` is lost
 on regeneration:
 
-- **iOS:** deployment target 15.0 in the Podfile, every pod target and the
-  app project (Xcode 27 rejects 14.0), then `pod install`; and a
-  `SceneDelegate` plus `UIApplicationSceneManifest` in `Info.plist` (iOS 27
-  crashes at launch in an app without the scene lifecycle); and
-  `App/App.entitlements` with the Associated Domains entries
+- **iOS:** `App/App.entitlements` with the Associated Domains entries
   `webcredentials:cankercore.com` and `applinks:cankercore.com`, referenced
-  by `CODE_SIGN_ENTITLEMENTS`.
-  Automatic signing enables the capability on the App ID. Also the
-  `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription` strings in
-  `Info.plist` for sore photos (below).
+  by `CODE_SIGN_ENTITLEMENTS`. Automatic signing enables the capability on
+  the App ID. Also the `NSCameraUsageDescription` and
+  `NSPhotoLibraryUsageDescription` strings in `Info.plist` for sore photos
+  (below). The template already targets iOS 15.0 (Capacitor's Podfile hook
+  lifts every pod to 15.0 too) and ships the `SceneDelegate` and scene
+  manifest iOS 27 requires, so the script no longer patches those.
 - **Android:** the sign-in App Link intent-filter on `MainActivity` (see
   above), the backup rules that keep sore photos out of Auto Backup (below),
   and the Kanko notification small icon copied from
   `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`.
 
+`cap:add:ios` asks for the CocoaPods template (`--packagemanager
+CocoaPods`). Capacitor 8 otherwise generates a Swift Package Manager
+project, which leaves out the local `native/plugins/web-auth` plugin
+because it ships only a podspec; `cap:patch` refuses such a project.
+
+Projects generated before Capacitor 8 do not upgrade in place. Delete and
+regenerate both (`rm -rf ios android`, then the two commands above, then
+`npm run cap:assets`). `cap:patch` refuses an `ios/` without the Capacitor 8
+`SceneDelegate.swift`.
+
 The script is idempotent, skips a platform whose folder is missing, and stops
 with an error if a template no longer has the text it patches. The patches
-live in `utils/native-patches.mts`.
+live in `utils/native-patches.mts`; their tests also run them on the
+templates inside the installed `@capacitor/cli`.
 
 ### Sore photos (`@capacitor/camera`, `@capacitor/filesystem`)
 
@@ -156,10 +168,10 @@ so an installed app built before the plugins were added, and the website,
 show no photo control at all. Android needs no permission: the camera asks
 for none without `saveToGallery`, and the files dir is app-private.
 
-Gradle 8.11 here needs JDK 21. A newer JDK — including the one Android
-Studio now bundles — fails the settings script with "Unsupported class file
-major version", so point `JAVA_HOME` at a JDK 21 (for example Homebrew's
-`openjdk@21`):
+Gradle 8.14 (the Capacitor 8 template's wrapper) needs JDK 21. If a newer
+JDK, such as the one Android Studio bundles, fails the settings script with
+"Unsupported class file major version", point `JAVA_HOME` at a JDK 21 (for
+example Homebrew's `openjdk@21`):
 
 ```bash
 export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
@@ -250,7 +262,10 @@ Anything new should hold to these.
 **Safe areas.** Read `--safe-top` / `--safe-bottom` / `--safe-left` /
 `--safe-right`, or use `.safe-t` / `.safe-b` / `.safe-x`. Never call `env()`
 directly — the variables are one place to adjust for a device the insets get
-wrong.
+wrong. On Android, Capacitor 8's built-in SystemBars plugin owns edge-to-edge:
+with `viewportFit: 'cover'` (set in `app/layout.tsx`) and Android System
+WebView 140 or newer, `env()` reports the real insets; on an older WebView it
+pads the webview itself and `env()` reads 0.
 
 **Viewport units.** `dvh`, never `vh`. `vh` is the tallest the viewport ever
 gets, which on a phone is the state with the address bar hidden.

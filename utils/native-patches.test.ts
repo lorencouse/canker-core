@@ -1,6 +1,9 @@
-import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   APP_LINK_FILTER,
   APP_LINK_HOST,
@@ -15,55 +18,41 @@ import {
   patchAndroidBackupRules,
   notificationIconCopies,
   patchAndroidManifest,
-  patchAppDelegate,
   patchEntitlements,
-  patchInfoPlist,
   patchInfoPlistPhotoUsage,
   PHOTO_USAGE_STRINGS,
-  patchPbxproj,
   patchPbxprojEntitlements,
-  patchPodfile,
   type PatchResult
 } from './native-patches.mjs';
 import { NATIVE_AUTH_HTTPS_PATH } from './native-auth';
 
-// Trimmed from what `cap add ios` (Capacitor 7) generates.
-const PODFILE = `require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
-
-platform :ios, '14.0'
-use_frameworks!
-
-target 'App' do
-  capacitor_pods
-end
-
-post_install do |installer|
-  assertDeploymentTarget(installer)
-end
-`;
-
-const PBXPROJ = `
-				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-				SDKROOT = iphoneos;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-`;
-
-const APP_DELEGATE = `import UIKit
-import Capacitor
-
-@UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
-
-    var window: UIWindow?
-
-}
-`;
-
+// Trimmed from what `cap add ios --packagemanager CocoaPods` (Capacitor 8)
+// generates, scene manifest and its indentation included.
 const INFO_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+    <false/>
+    <key>UISceneConfigurations</key>
+    <dict>
+      <key>UIWindowSceneSessionRoleApplication</key>
+      <array>
+        <dict>
+            <key>UISceneConfigurationName</key>
+            <string>Default Configuration</string>
+            <key>UISceneDelegateClassName</key>
+            <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+            <key>UISceneStoryboardFile</key>
+            <string>Main</string>
+        </dict>
+      </array>
+    </dict>
+	</dict>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
@@ -72,15 +61,42 @@ const INFO_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 `;
 
-// What `cap add android` (Capacitor 7) generates, trimmed.
+// The App target's two configurations, as `cap add ios` (Capacitor 8) writes them.
+const TARGET_CONFIGS = `
+		504EC3171FED79650016851F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+			};
+			name = Debug;
+		};
+		504EC3181FED79650016851F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+			};
+			name = Release;
+		};
+`;
+
+// What `cap add android` (Capacitor 8) generates, trimmed.
 const ANDROID_MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
         <activity
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
@@ -96,21 +112,21 @@ const ANDROID_MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:exported="false">
+            android:authorities="\${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
         </provider>
     </application>
+
+    <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
 `;
 
 const cases: [string, string, (text: string) => PatchResult][] = [
-  ['Podfile', PODFILE, patchPodfile],
-  ['project.pbxproj', PBXPROJ, patchPbxproj],
-  ['AppDelegate.swift', APP_DELEGATE, patchAppDelegate],
-  ['Info.plist', INFO_PLIST, patchInfoPlist],
   ['Info.plist (photo usage)', INFO_PLIST, patchInfoPlistPhotoUsage],
-  ['project.pbxproj (entitlements)', PBXPROJ, patchPbxprojEntitlements],
+  ['project.pbxproj (entitlements)', TARGET_CONFIGS, patchPbxprojEntitlements],
   ['AndroidManifest.xml', ANDROID_MANIFEST, patchAndroidManifest],
   [
     'AndroidManifest.xml (backup rules)',
@@ -131,100 +147,6 @@ describe.each(cases)('%s patch', (_name, fixture, patch) => {
     expect(() => patch('// an unrecognisable template\n')).toThrow(
       PatchAnchorError
     );
-  });
-});
-
-describe('patchPodfile', () => {
-  it('raises the platform and pins every pod target to 15.0', () => {
-    const { text } = patchPodfile(PODFILE);
-    expect(text).toContain("platform :ios, '15.0'");
-    expect(text).toContain(
-      "config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'"
-    );
-    // Inside post_install, after Capacitor's own assertion.
-    expect(text.indexOf('assertDeploymentTarget')).toBeLessThan(
-      text.indexOf('pods_project.targets')
-    );
-    expect(text.trimEnd().endsWith('end')).toBe(true);
-  });
-
-  it('leaves a newer platform alone', () => {
-    const newer = PODFILE.replace("'14.0'", "'16.0'");
-    expect(patchPodfile(newer).text).toContain("platform :ios, '16.0'");
-  });
-
-  it('throws when post_install has changed shape', () => {
-    const changed = PODFILE.replace('assertDeploymentTarget', 'somethingElse');
-    expect(() => patchPodfile(changed)).toThrow(/post_install/);
-  });
-});
-
-describe('patchPbxproj', () => {
-  it('raises every target under 15.0 and keeps higher ones', () => {
-    const mixed = PBXPROJ + '\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 17.0;\n';
-    const { text } = patchPbxproj(mixed);
-    expect(text).not.toContain('= 14.0;');
-    expect(text.match(/= 15\.0;/g)).toHaveLength(2);
-    expect(text).toContain('IPHONEOS_DEPLOYMENT_TARGET = 17.0;');
-  });
-});
-
-describe('patchAppDelegate', () => {
-  it('appends a scene delegate that forwards to Capacitor', () => {
-    const { text } = patchAppDelegate(APP_DELEGATE);
-    expect(text.startsWith(APP_DELEGATE.trimEnd())).toBe(true);
-    expect(text).toContain(
-      'class SceneDelegate: UIResponder, UIWindowSceneDelegate'
-    );
-    expect(text).toContain('openURLContexts');
-    expect(text).toContain('continue userActivity');
-    expect(text).toContain('willConnectTo');
-    expect(text).toContain('connectionOptions.urlContexts.first?.url');
-    expect(text).toContain('connectionOptions.userActivities.first');
-    expect(text.match(/ApplicationDelegateProxy\.shared/g)).toHaveLength(4);
-    expect(text.match(/class SceneDelegate\b/g)).toHaveLength(1);
-  });
-
-  it('upgrades the v1 block written by an earlier run', () => {
-    const v1 = `${APP_DELEGATE}
-// Added by scripts/patch-native.mjs: iOS 27 requires the UIScene lifecycle.
-// Info.plist's UIApplicationSceneManifest names this class.
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-
-    var window: UIWindow?
-
-    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-    }
-
-}
-`;
-    const upgraded = patchAppDelegate(v1);
-    expect(upgraded.changed).toBe(true);
-    expect(upgraded.text).toBe(patchAppDelegate(APP_DELEGATE).text);
-    expect(patchAppDelegate(upgraded.text).changed).toBe(false);
-  });
-
-  it('refuses a hand-written SceneDelegate and says to regenerate', () => {
-    const hand = `${APP_DELEGATE}
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-    var window: UIWindow?
-}
-`;
-    expect(() => patchAppDelegate(hand)).toThrow(/Regenerate the iOS project/);
-  });
-});
-
-describe('patchInfoPlist', () => {
-  it('adds the scene manifest inside the top-level dict', () => {
-    const { text } = patchInfoPlist(INFO_PLIST);
-    expect(text).toContain(
-      '<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>'
-    );
-    expect(text).toMatch(
-      /<key>UIApplicationSupportsMultipleScenes<\/key>\s*<false\/>/
-    );
-    expect(text).toMatch(/<\/dict>\n<\/dict>\n<\/plist>\n$/);
-    expect(text.match(/<dict>/g)?.length).toBe(text.match(/<\/dict>/g)?.length);
   });
 });
 
@@ -256,31 +178,17 @@ describe('patchInfoPlistPhotoUsage', () => {
     expect(text).toContain(PHOTO_USAGE_STRINGS.NSPhotoLibraryUsageDescription);
   });
 
-  it('composes with the scene manifest patch in either order', () => {
-    const a = patchInfoPlistPhotoUsage(patchInfoPlist(INFO_PLIST).text).text;
-    expect(patchInfoPlist(a).changed).toBe(false);
-    expect(patchInfoPlistPhotoUsage(a).changed).toBe(false);
-    expect(a.match(/<dict>/g)?.length).toBe(a.match(/<\/dict>/g)?.length);
+  it("leaves the template's scene manifest as it is", () => {
+    const { text } = patchInfoPlistPhotoUsage(INFO_PLIST);
+    const manifest = (plist: string) =>
+      plist.slice(
+        plist.indexOf('<key>UIApplicationSceneManifest</key>'),
+        plist.indexOf('<key>UIMainStoryboardFile</key>')
+      );
+    expect(manifest(text)).toBe(manifest(INFO_PLIST));
+    expect(text.match(/<dict>/g)?.length).toBe(text.match(/<\/dict>/g)?.length);
   });
 });
-
-// The App target's two configurations, as `cap add ios` writes them.
-const TARGET_CONFIGS = `
-		504EC3171FED79650016851F /* Debug */ = {
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-			};
-		};
-		504EC3181FED79650016851F /* Release */ = {
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-			};
-		};
-`;
 
 describe('patchPbxprojEntitlements', () => {
   it('points Debug and Release at App.entitlements', () => {
@@ -291,12 +199,6 @@ describe('patchPbxprojEntitlements', () => {
       )
     ).toHaveLength(2);
     expect(patchPbxprojEntitlements(text).changed).toBe(false);
-  });
-
-  it('composes with the deployment-target patch in either order', () => {
-    const a = patchPbxprojEntitlements(patchPbxproj(TARGET_CONFIGS).text).text;
-    const b = patchPbxproj(patchPbxprojEntitlements(TARGET_CONFIGS).text).text;
-    expect(a).toBe(b);
   });
 
   it('refuses an entitlements file it did not set', () => {
@@ -460,12 +362,8 @@ describe('patchAndroidBackupRules', () => {
     expect(tag).toContain('android:theme="@style/AppTheme"');
   });
 
-  it('works on the real template, which sets allowBackup', () => {
-    const template = ANDROID_MANIFEST.replace(
-      '<application\n',
-      '<application\n        android:allowBackup="true"\n'
-    );
-    const first = patchAndroidBackupRules(template);
+  it("keeps the template's allowBackup", () => {
+    const first = patchAndroidBackupRules(ANDROID_MANIFEST);
     expect(first.text).toContain('android:allowBackup="true"');
     expect(patchAndroidBackupRules(first.text).changed).toBe(false);
   });
@@ -520,5 +418,98 @@ describe('backup rule files', () => {
       const name = value.replace('@xml/', '');
       expect(paths).toContain(`android/app/src/main/res/xml/${name}.xml`);
     }
+  });
+});
+
+/*
+ * The fixtures above are trimmed; these run the same patches on the
+ * templates `cap add` actually unpacks, from the installed @capacitor/cli.
+ * They also pin why the iOS deployment-target and scene-lifecycle patches
+ * were retired: the Capacitor 8 template already does both.
+ */
+describe('the installed Capacitor templates', () => {
+  const assets = fileURLToPath(
+    new URL('../node_modules/@capacitor/cli/assets/', import.meta.url)
+  );
+  let dir: string;
+  const unpack = (archive: string, into: string) => {
+    const dest = path.join(dir, into);
+    mkdirSync(dest);
+    execFileSync('tar', ['-xzf', path.join(assets, archive), '-C', dest]);
+    return (file: string) => readFileSync(path.join(dest, file), 'utf8');
+  };
+  let ios: (file: string) => string;
+  let android: (file: string) => string;
+
+  beforeAll(() => {
+    dir = mkdtempSync(path.join(tmpdir(), 'cap-templates-'));
+    ios = unpack('ios-pods-template.tar.gz', 'ios');
+    android = unpack('android-template.tar.gz', 'android');
+  });
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  const twice = (text: string, patches: ((t: string) => PatchResult)[]) => {
+    const run = (input: string) =>
+      patches.reduce(
+        (acc, patch) => {
+          const next = patch(acc.text);
+          return { text: next.text, changed: acc.changed || next.changed };
+        },
+        { text: input, changed: false }
+      );
+    const first = run(text);
+    expect(first.changed).toBe(true);
+    expect(run(first.text)).toEqual({ text: first.text, changed: false });
+  };
+
+  it('patches the iOS project once', () => {
+    twice(ios('App/App.xcodeproj/project.pbxproj'), [patchPbxprojEntitlements]);
+    twice(ios('App/App/Info.plist'), [patchInfoPlistPhotoUsage]);
+    twice('', [patchEntitlements]);
+  });
+
+  it('patches the Android manifest once', () => {
+    twice(android('app/src/main/AndroidManifest.xml'), [
+      patchAndroidManifest,
+      patchAndroidBackupRules
+    ]);
+  });
+
+  it('already targets iOS 15.0 everywhere', () => {
+    expect(ios('App/Podfile')).toMatch(/^platform :ios, '15\.0'$/m);
+    const targets = ios('App/App.xcodeproj/project.pbxproj').match(
+      /IPHONEOS_DEPLOYMENT_TARGET = ([\d.]+);/g
+    );
+    expect(targets?.length).toBeGreaterThan(0);
+    for (const target of targets!) expect(target).toContain('= 15.0;');
+    // Pods: the template's post_install calls this, which lifts any pod
+    // below 15.0 (the local web-auth podspec included).
+    const helpers = readFileSync(
+      fileURLToPath(
+        new URL(
+          '../node_modules/@capacitor/ios/scripts/pods_helpers.rb',
+          import.meta.url
+        )
+      ),
+      'utf8'
+    );
+    expect(helpers).toContain(
+      "config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'"
+    );
+    expect(ios('App/Podfile')).toMatch(
+      /post_install do \|installer\|\n\s*assertDeploymentTarget\(installer\)/
+    );
+  });
+
+  it('already has the UIScene lifecycle iOS 27 requires', () => {
+    expect(ios('App/App/SceneDelegate.swift')).toContain(
+      'SceneDelegateProxy.shared'
+    );
+    expect(ios('App/App/AppDelegate.swift')).toContain(
+      'config.delegateClass = SceneDelegate.self'
+    );
+    expect(ios('App/App/Info.plist')).toContain(
+      '<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>'
+    );
   });
 });

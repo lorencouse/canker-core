@@ -4,11 +4,8 @@
  *
  *   npm run cap:patch                 (also run by cap:add:*, cap:sync, cap:ios, cap:android)
  *
- * iOS (Xcode 27 / iOS 27):
- *   - deployment target 15.0 in the Podfile, every pod target and the app
- *     project, because Xcode 27 rejects 14.0;
- *   - a UIScene delegate and scene manifest, because iOS 27 traps at launch
- *     in an app without the scene lifecycle;
+ * iOS (the Capacitor 8 CocoaPods template, which already targets iOS 15.0
+ * and ships the UIScene lifecycle that iOS 27 requires):
  *   - App.entitlements with Associated Domains (webcredentials: and
  *     applinks:cankercore.com) and CODE_SIGN_ENTITLEMENTS pointing at it, so
  *     iCloud Keychain offers the site's saved passwords in the app and the
@@ -46,13 +43,9 @@ import {
   notificationIconCopies,
   patchAndroidBackupRules,
   patchAndroidManifest,
-  patchAppDelegate,
   patchEntitlements,
-  patchInfoPlist,
   patchInfoPlistPhotoUsage,
-  patchPbxproj,
-  patchPbxprojEntitlements,
-  patchPodfile
+  patchPbxprojEntitlements
 } from '../utils/native-patches.mts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -70,17 +63,27 @@ const patchFile = (file, patch) => {
 
 const patchIos = () => {
   const app = path.join(ROOT, 'ios/App');
-  const podChanged = patchFile(path.join(app, 'Podfile'), patchPodfile);
-  const projChanged = patchFile(
+  // Capacitor 8 defaults `cap add ios` to Swift Package Manager, which
+  // leaves out native/plugins/web-auth (it ships only a podspec), so system
+  // sign-in would silently vanish from the app.
+  if (existsSync(path.join(app, 'CapApp-SPM'))) {
+    throw new Error(
+      'ios/ is a Swift Package Manager project, which drops the web-auth ' +
+        'plugin. Regenerate it with CocoaPods: rm -rf ios && npm run cap:add:ios'
+    );
+  }
+  // A project from the Capacitor 7 template has no scene lifecycle of its
+  // own; these patches no longer add one.
+  if (!existsSync(path.join(app, 'App/SceneDelegate.swift'))) {
+    throw new Error(
+      'ios/ predates Capacitor 8 (no App/SceneDelegate.swift). ' +
+        'Regenerate it: rm -rf ios && npm run cap:add:ios'
+    );
+  }
+
+  patchFile(
     path.join(app, 'App.xcodeproj/project.pbxproj'),
-    (text) => {
-      const target = patchPbxproj(text);
-      const signing = patchPbxprojEntitlements(target.text);
-      return {
-        text: signing.text,
-        changed: target.changed || signing.changed
-      };
-    }
+    patchPbxprojEntitlements
   );
 
   // The template has no entitlements file, so a missing one is created.
@@ -89,25 +92,9 @@ const patchIos = () => {
   if (patchFile(entitlements, patchEntitlements) && has('plutil')) {
     execFileSync('plutil', ['-lint', entitlements], { stdio: 'inherit' });
   }
-  patchFile(path.join(app, 'App/AppDelegate.swift'), patchAppDelegate);
   const plist = path.join(app, 'App/Info.plist');
-  const plistChanged = patchFile(plist, (text) => {
-    const scenes = patchInfoPlist(text);
-    const photos = patchInfoPlistPhotoUsage(scenes.text);
-    return { text: photos.text, changed: scenes.changed || photos.changed };
-  });
-  if (plistChanged && has('plutil')) {
+  if (patchFile(plist, patchInfoPlistPhotoUsage) && has('plutil')) {
     execFileSync('plutil', ['-lint', plist], { stdio: 'inherit' });
-  }
-
-  if (!podChanged && !projChanged) return;
-  if (has('pod')) {
-    console.log('running  pod install  (ios/App)');
-    execFileSync('pod', ['install'], { cwd: app, stdio: 'inherit' });
-  } else {
-    console.log(
-      'CocoaPods not found. Install it, then run:\n  cd ios/App && pod install'
-    );
   }
 };
 
