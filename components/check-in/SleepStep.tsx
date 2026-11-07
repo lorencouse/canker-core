@@ -8,7 +8,7 @@ import type { DayLog } from '@/types';
 import { resolveDay } from '@/utils/check-in/steps';
 import { tap } from '@/utils/native';
 
-import DayToggle, { type DayChoice, type HabitStepProps } from './DayToggle';
+import type { HabitStepProps } from './DayToggle';
 import ScalePicker from './ScalePicker';
 import StepHeading from './StepHeading';
 import { useReportBusy } from './useReportBusy';
@@ -32,18 +32,18 @@ const fromLog = (log: DayLog | undefined) => ({
 });
 
 /**
- * Last night's sleep: hours and how well. Both start empty and both are
+ * Last night's sleep: hours and how well. Always last night, so there is
+ * no day to pick; it is saved on today, the day that night ended. Both start empty and both are
  * optional; Next with neither set moves on and writes nothing.
  */
 export default function SleepStep({
   logs,
   now,
-  initialDay,
   onSave,
   onNext,
   onBusy,
   importSlot
-}: HabitStepProps & {
+}: Omit<HabitStepProps, 'initialDay'> & {
   /**
    * Where "Import from Health" goes: `fill` sets the hours and their source,
    * `day` is the day being saved to, and `busy` is true while it saves.
@@ -54,17 +54,12 @@ export default function SleepStep({
     busy: boolean
   ) => ReactNode;
 }) {
-  const [choice, setChoice] = useState<DayChoice>(initialDay);
-  const day = resolveDay(choice, now);
+  // Sleep is always last night's, kept on the day it ended: today.
+  const day = resolveDay('today', now);
   const saved = logs.find((l) => l.day === day);
   const [fields, setFields] = useState(() => fromLog(saved));
   const [busy, setBusy] = useState(false);
   useReportBusy(busy, onBusy);
-
-  const pickDay = (next: DayChoice) => {
-    setChoice(next);
-    setFields(fromLog(logs.find((l) => l.day === resolveDay(next, now))));
-  };
 
   const stepHours = (delta: number) =>
     setFields((f) => ({
@@ -99,8 +94,7 @@ export default function SleepStep({
 
   return (
     <div className="grid gap-6">
-      <StepHeading>Sleep</StepHeading>
-      <DayToggle value={choice} onChange={pickDay} disabled={busy} />
+      <StepHeading>Last night</StepHeading>
 
       <div className="space-y-2">
         <div className="flex items-baseline justify-between gap-3">

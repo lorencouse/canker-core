@@ -214,11 +214,8 @@ export default function CheckInFlow({
         return (
           <SleepStep
             {...habit}
-            initialDay={defaultDay('sleep', now, manual)}
             importSlot={(fill, day, busy) => (
-              // Keyed by day, so switching days clears a "no sleep found" line.
               <SleepImport
-                key={day}
                 day={day}
                 onImport={fill}
                 disabled={busy}
