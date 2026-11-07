@@ -52,4 +52,20 @@ export interface DayLog {
   triggers: string[];
   treatments: string[];
   note: string | null;
+  sleep_hours: number | null;
+  /** 1 (poor) to 5 (great). */
+  sleep_quality: number | null;
+  sleep_source: 'manual' | 'apple_health' | 'health_connect' | null;
+  /** 1 (calm) to 5 (very stressed). */
+  stress: number | null;
+  /** False means the question was never asked, not that the answer was no. */
+  food_answered: boolean;
+  health_answered: boolean;
+}
+
+/** How a day's guided check-in ended. No row means it has not been started. */
+export interface CheckIn {
+  /** Local calendar day, YYYY-MM-DD. */
+  day: string;
+  status: 'done' | 'skipped';
 }

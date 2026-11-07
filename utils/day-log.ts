@@ -8,6 +8,8 @@
  * dentists' advice; anything else goes in the day's note.
  */
 
+import type { DayLog } from '@/types';
+
 export const TRIGGERS = [
   'Stress',
   'Poor sleep',
@@ -37,6 +39,20 @@ export const TREATMENTS = [
   'Avoided trigger foods',
   'Soft foods only'
 ] as const;
+
+/** A day with nothing recorded: no habits answered, no triggers or treatments. */
+export const emptyDayLog = (day: string): DayLog => ({
+  day,
+  triggers: [],
+  treatments: [],
+  note: null,
+  sleep_hours: null,
+  sleep_quality: null,
+  sleep_source: null,
+  stress: null,
+  food_answered: false,
+  health_answered: false
+});
 
 export type Trigger = (typeof TRIGGERS)[number];
 export type Treatment = (typeof TREATMENTS)[number];

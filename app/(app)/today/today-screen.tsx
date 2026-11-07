@@ -22,6 +22,7 @@ import { cn } from '@/utils/cn';
 import { useUnsavedGuard } from '@/utils/hooks/useUnsavedGuard';
 import { MOUTH_VIEWS, type MouthView } from '@/utils/mouth-map/geometry';
 import { notify, tap } from '@/utils/native';
+import { emptyDayLog } from '@/utils/day-log';
 import { type Mood, withSavedLog } from '@/utils/momentum';
 import {
   addDays,
@@ -89,8 +90,8 @@ function Today({
   const log =
     editedLog ??
     (today
-      ? (dayLogs.find((l) => l.day === today) ?? blankLog(today))
-      : blankLog(''));
+      ? (dayLogs.find((l) => l.day === today) ?? emptyDayLog(today))
+      : emptyDayLog(''));
   const [logDirty, setLogDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -411,13 +412,6 @@ const readDeviceNow = () => (deviceNow ??= new Date());
 const readServerNow = () => null;
 const useDeviceNow = () =>
   useSyncExternalStore(subscribeToNow, readDeviceNow, readServerNow);
-
-const blankLog = (day: string): DayLog => ({
-  day,
-  triggers: [],
-  treatments: [],
-  note: null
-});
 
 const count = (n: number, noun: string) =>
   n ? `${n} ${noun}${n === 1 ? '' : 's'}` : null;

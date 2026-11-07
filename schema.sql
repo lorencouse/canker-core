@@ -120,6 +120,29 @@ create table if not exists day_logs (
   primary key (user_id, day)
 );
 
+-- Habit answers the guided check-in adds to a day. Added with alter so this
+-- file stays re-runnable on databases that already have day_logs. The
+-- *_answered flags tell "answered no" apart from "never asked".
+alter table day_logs add column if not exists sleep_hours numeric(4,2)
+  check (sleep_hours between 0 and 24);
+alter table day_logs add column if not exists sleep_quality smallint
+  check (sleep_quality between 1 and 5);
+alter table day_logs add column if not exists sleep_source text
+  check (sleep_source in ('manual', 'apple_health', 'health_connect'));
+alter table day_logs add column if not exists stress smallint
+  check (stress between 1 and 5);
+alter table day_logs add column if not exists food_answered boolean not null default false;
+alter table day_logs add column if not exists health_answered boolean not null default false;
+
+-- One row per day the check-in was finished or skipped; drives the prompt.
+create table if not exists check_ins (
+  user_id text not null references "user" ("id") on delete cascade,
+  day date not null,
+  status text not null check (status in ('done', 'skipped')),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, day)
+);
+
 -- Where an account first arrived from, copied off the first-touch cookie when
 -- the account is created (utils/first-touch.ts). It exists only to credit
 -- signups to articles; the rest of the funnel in scripts/funnel.sql is

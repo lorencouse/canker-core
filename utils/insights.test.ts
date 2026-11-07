@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { DayLog, Sore } from '@/types';
+import { emptyDayLog } from '@/utils/day-log';
 import {
   isLongRunning,
   medianDaysToHeal,
@@ -24,10 +25,9 @@ const sore = (overrides: Partial<Sore>): Sore => ({
 });
 
 const log = (day: string, triggers: string[] = [], treatments: string[] = []): DayLog => ({
-  day,
+  ...emptyDayLog(day),
   triggers,
-  treatments,
-  note: null
+  treatments
 });
 
 describe('medianDaysToHeal', () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { DayLog, Reading, Sore } from '@/types';
+import { emptyDayLog } from '@/utils/day-log';
 import {
   BAD_DAY_PAIN,
   expectedMood,
@@ -18,10 +19,8 @@ const now = new Date(2026, 10, 5, 14, 0, 0);
 const today = '2026-11-05';
 
 const log = (day: string, triggers: string[] = []): DayLog => ({
-  day,
-  triggers,
-  treatments: [],
-  note: null
+  ...emptyDayLog(day),
+  triggers
 });
 
 const reading = (overrides: Partial<Reading> = {}): Reading => ({
