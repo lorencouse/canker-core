@@ -69,7 +69,7 @@ export function validatePatch(p: unknown): DayPatch | null {
     out.food = pickKnown(p.food, FOOD_TRIGGERS);
   }
   if (p.health !== undefined) {
-    if (!isRecord(p.health)) return null;
+    if (!isRecord(p.health) || !Array.isArray(p.health.triggers)) return null;
     out.health = {
       triggers: pickKnown(p.health.triggers, HEALTH_TRIGGERS),
       stress: scale(p.health.stress)

@@ -44,6 +44,8 @@ export async function saveDayPatch(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // `for update` locks nothing when the row is missing, so two first saves can
+    // race; `on conflict` below turns the loser into an update instead of an error.
     const { rows } = await client.query<DayLog>(
       `select to_char(day, 'YYYY-MM-DD') as day, triggers, treatments, note,
               sleep_hours::float8 as sleep_hours, sleep_quality, sleep_source,
@@ -90,7 +92,7 @@ export async function saveDayPatch(
     }
     await client.query('COMMIT');
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Error saving day patch:', error);
     return { ok: false, error: 'Could not save that answer. Try again.' };
   } finally {

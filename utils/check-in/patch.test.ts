@@ -44,6 +44,7 @@ describe('validatePatch', () => {
   it('refuses a malformed section', () => {
     expect(validatePatch({ sleep: 3 })).toBeNull();
     expect(validatePatch({ food: 'Coffee' })).toBeNull();
+    expect(validatePatch({ health: { stress: 3 } })).toBeNull();
   });
 });
 
