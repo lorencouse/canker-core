@@ -47,7 +47,7 @@ export default function DayToggle({
             }}
             className={cn(
               'h-10 min-w-0 truncate rounded-xl px-3 text-[15px] font-extrabold transition-colors coarse:h-11 lg:h-9 lg:text-sm',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+              'focus-ring',
               'disabled:opacity-50',
               on
                 ? 'bg-card text-foreground shadow-sm ring-2 ring-inset ring-primary'

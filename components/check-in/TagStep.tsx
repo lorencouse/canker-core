@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { Check, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import type { DayLog } from '@/types';
 import type { DayPatch } from '@/utils/check-in/patch';
 import { resolveDay } from '@/utils/check-in/steps';
-import { cn } from '@/utils/cn';
 import { FOOD_TRIGGERS, HEALTH_TRIGGERS, TREATMENTS } from '@/utils/day-log';
 import { tap } from '@/utils/native';
 
@@ -187,33 +187,5 @@ export default function TagStep({
         Next
       </Button>
     </div>
-  );
-}
-
-/** One tag: one line, 44px tall under a thumb, as on Today's log. */
-function Chip({
-  on,
-  onClick,
-  children
-}: {
-  on: boolean;
-  onClick: () => void;
-  children: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={on}
-      onClick={onClick}
-      className={cn(
-        'inline-flex h-10 max-w-full items-center whitespace-nowrap rounded-full border px-3.5 text-[15px] transition-colors coarse:h-11 lg:h-9 lg:text-sm',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-        on
-          ? 'border-primary bg-accent font-semibold text-foreground'
-          : 'border-control bg-card text-foreground hover:bg-muted'
-      )}
-    >
-      <span className="min-w-0 truncate">{children}</span>
-    </button>
   );
 }

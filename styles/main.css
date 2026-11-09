@@ -301,6 +301,11 @@
 }
 
 @layer components {
+  /* The keyboard focus ring every custom control shares. */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
   /* Labels drawn inside the mouth-map SVG. */
   .mouth-map-label {
     font-family: var(--font-sans), system-ui, sans-serif;

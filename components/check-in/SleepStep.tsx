@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Check, Loader2, Minus, Plus } from 'lucide-react';
 
 import Measure from '@/components/sore/Measure';
+import { Stepper } from '@/components/sore/ReadingFields';
 import { Button } from '@/components/ui/button';
 import type { DayLog } from '@/types';
 import { resolveDay } from '@/utils/check-in/steps';
@@ -103,19 +104,13 @@ export default function SleepStep({
         {/* Clear sits between the steppers so a stray tap is one tap from
             undone and the screen can still be left unanswered. */}
         <div className="grid grid-cols-3 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-12 w-full px-0 [&_svg]:size-5"
-            aria-label="Half an hour less"
-            onClick={() => {
-              tap();
-              stepHours(-HOURS_STEP);
-            }}
+          <Stepper
+            label="Half an hour less"
+            onClick={() => stepHours(-HOURS_STEP)}
             disabled={busy || fields.hours === 0}
           >
             <Minus aria-hidden="true" />
-          </Button>
+          </Stepper>
           <Button
             type="button"
             variant="ghost"
@@ -129,19 +124,13 @@ export default function SleepStep({
           >
             Clear
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-12 w-full px-0 [&_svg]:size-5"
-            aria-label="Half an hour more"
-            onClick={() => {
-              tap();
-              stepHours(HOURS_STEP);
-            }}
+          <Stepper
+            label="Half an hour more"
+            onClick={() => stepHours(HOURS_STEP)}
             disabled={busy || fields.hours === MAX_HOURS}
           >
             <Plus aria-hidden="true" />
-          </Button>
+          </Stepper>
         </div>
         <SleepImport
           day={day}

@@ -106,7 +106,7 @@ export function WidthField({
               className={cn(
                 // Dot over figure; 56px tall so the 8mm dot has room.
                 'flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-cell border-2 bg-card transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                'focus-ring',
                 picked
                   ? 'border-primary bg-accent text-foreground'
                   : 'border-control text-muted-foreground hover:bg-muted'
@@ -182,7 +182,7 @@ export function PainField({
   );
 }
 
-function Stepper({
+export function Stepper({
   label,
   onClick,
   disabled,
@@ -278,7 +278,7 @@ export function QuickWidthField({
               }}
               className={cn(
                 'flex h-12 min-w-0 flex-col items-center justify-center gap-0.5 rounded-cell border-2 transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                'focus-ring',
                 picked
                   ? 'border-primary bg-primary text-primary-foreground'
                   : 'border-control bg-card text-foreground hover:bg-muted'
