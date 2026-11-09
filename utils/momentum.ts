@@ -23,8 +23,6 @@ const shiftDay = (day: string, offset: number): string => {
   return dayKey(date);
 };
 
-const isTriggerFree = isAnsweredClean;
-
 /**
  * Whether a day has both trigger questions answered. A row can exist
  * without that (a morning check-in saves today's sleep and treatments), and
@@ -41,7 +39,7 @@ export const triggerFreeStreak = (logs: DayLog[], today: string): number => {
   const byDay = new Map(logs.map((log) => [log.day, log]));
   let cursor = isAnswered(byDay.get(today)) ? today : shiftDay(today, -1);
   let count = 0;
-  while (isTriggerFree(byDay.get(cursor))) {
+  while (isAnsweredClean(byDay.get(cursor))) {
     count += 1;
     cursor = shiftDay(cursor, -1);
   }
@@ -83,7 +81,7 @@ export const weekDots = (logs: DayLog[], today: string): WeekDot[] => {
     return {
       day,
       initial: weekday.charAt(0),
-      won: isTriggerFree(byDay.get(day))
+      won: isAnsweredClean(byDay.get(day))
     };
   });
 };
@@ -162,5 +160,5 @@ export const expectedMood = (
     .reduce<
       DayLog | undefined
     >((best, l) => (best === undefined || l.day > best.day ? l : best), undefined);
-  return isTriggerFree(newest) ? 'proud' : 'neutral';
+  return isAnsweredClean(newest) ? 'proud' : 'neutral';
 };

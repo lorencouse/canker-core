@@ -25,7 +25,7 @@ import { useUnsavedGuard } from '@/utils/hooks/useUnsavedGuard';
  * map. Inline, it can carry the course chart and the place-against-time
  * list, scrolls like the rest of the page, and leaves the map visible.
  */
-export const MySoresLayout = ({
+const MySoresLayout = ({
   user,
   soresData,
   initialSelectedId = null,

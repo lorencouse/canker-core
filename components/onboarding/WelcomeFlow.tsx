@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 
@@ -117,7 +117,7 @@ function Flow({ user }: { user: User }) {
     }
   };
 
-  const copy = useMemo(() => COPY[step], [step]);
+  const copy = COPY[step];
 
   return (
     <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-3 min-[400px]:py-5 lg:py-10">

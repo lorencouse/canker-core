@@ -49,9 +49,6 @@ export const getOnboardedAt = cache(async (userId: string): Promise<string | nul
   return rows[0]?.onboarded_at ?? null;
 });
 
-/** Profile for the signed-in user; the profile lives on the auth record. */
-export const getUserDetails = cache(async (): Promise<User | null> => getUser());
-
 /**
  * Every sore belonging to a user, newest first, each with its readings
  * oldest first.

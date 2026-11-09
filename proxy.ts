@@ -16,7 +16,7 @@ import {
  *
  * This is deliberately *not* a validation: it only checks that the cookie is
  * present. Every protected page still resolves the real session server-side (via
- * getUser/getUserDetails) and redirects if it is missing or invalid, so a forged
+ * getUser) and redirects if it is missing or invalid, so a forged
  * cookie gains nothing beyond reaching a page that will bounce it.
  *
  * The cookie is read by name rather than with better-auth's `getSessionCookie`

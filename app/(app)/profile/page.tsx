@@ -2,11 +2,11 @@ import { redirect } from 'next/navigation';
 
 import Kanko from '@/components/kanko/Kanko';
 import { Separator } from '@/components/ui/separator';
-import { getUserDetails } from '@/lib/queries';
+import { getUser } from '@/lib/queries';
 import { ProfileForm } from './profile-form';
 
 export default async function ProfilePage() {
-  const user = await getUserDetails();
+  const user = await getUser();
   if (!user) redirect('/signin/password_signin');
 
   return (

@@ -21,9 +21,9 @@ import { tap } from '@/utils/native';
  */
 
 /** Width moves in half millimetres, which is as fine as anyone can judge one. */
-export const WIDTH_STEP = 0.5;
-export const MIN_WIDTH = 0.5;
-export const MAX_WIDTH = 20;
+const WIDTH_STEP = 0.5;
+const MIN_WIDTH = 0.5;
+const MAX_WIDTH = 20;
 
 const clampWidth = (mm: number) =>
   Math.min(
@@ -71,7 +71,7 @@ function FieldHead({
  * range a few pixels per step under a thumb; these land it in one tap, and
  * the slider and steppers stay for anything in between.
  */
-export const WIDTH_PRESETS = [1, 2, 3, 5, 8] as const;
+const WIDTH_PRESETS = [1, 2, 3, 5, 8] as const;
 
 export function WidthField({
   id,
@@ -215,7 +215,7 @@ function Stepper({
 }
 
 /** The check-in's one-tap widths: nearly every sore is one of these. */
-export const QUICK_WIDTHS = [1, 2, 3, 4, 5, 6] as const;
+const QUICK_WIDTHS = [1, 2, 3, 4, 5, 6] as const;
 
 /**
  * Width as taps only, for the check-in, where the map sits above and there

@@ -332,10 +332,6 @@ export default function MouthMap({
     setSelectedSore(moved);
   };
 
-  const selectSore = (sore: Sore) => {
-    setSelectedSore(sore);
-  };
-
   const visible = visibleSores.filter(
     (s) => s.view === view && s.x !== null && s.y !== null
   );
@@ -416,14 +412,14 @@ export default function MouthMap({
                   selected={sore.id === selectedSore?.id}
                   draggable={mode !== 'view'}
                   filterId={`${idPrefix}soft`}
-                  onSelect={() => selectSore(sore)}
+                  onSelect={() => setSelectedSore(sore)}
                   onActivate={() => {
-                    selectSore(sore);
+                    setSelectedSore(sore);
                     if (mode === 'view') setQuickOpen(true);
                   }}
                   onNudge={(dx, dy) => nudgeSore(sore, dx, dy)}
                   onPointerDown={(e) => {
-                    selectSore(sore);
+                    setSelectedSore(sore);
                     onPointerDown(
                       e as unknown as React.PointerEvent<SVGSVGElement>,
                       sore
