@@ -6,7 +6,6 @@ import { ArrowRight, Loader2, Plus } from 'lucide-react';
 import MouthMap from '@/components/mouth-map/MouthMap';
 import { PainField, QuickWidthField } from '@/components/sore/ReadingFields';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/Toasts/use-toast';
 import { SoreProvider, useSoreContext } from '@/context/SoreContext';
 import type { Sore, User } from '@/types';
 import { upsertSores } from '@/utils/actions/soreActions';
@@ -17,6 +16,7 @@ import {
   localTimeZone,
   withReading
 } from '@/utils/readings';
+import { runWrite, showFailure } from '@/utils/write-feedback';
 
 import StepHeading from './StepHeading';
 import { useReportBusy } from './useReportBusy';
@@ -102,18 +102,13 @@ function Placement({
     if (!placed) return;
     tap();
     setBusy(true);
-    const fail = (error: string) => {
-      notify('error');
-      toast({ variant: 'destructive', title: error });
-    };
     try {
-      const result = await upsertSores([placed], localTimeZone());
-      if (!result.ok) return fail(result.error);
+      const result = await runWrite(() =>
+        upsertSores([placed], localTimeZone())
+      );
+      if (!result.ok) return showFailure(result.error);
       notify('success');
       onAdded(placed);
-    } catch {
-      // The request itself failed (offline, server down): stay on the map.
-      fail('Could not save your changes. Try again.');
     } finally {
       setBusy(false);
     }

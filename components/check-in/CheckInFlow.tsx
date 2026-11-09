@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Loader2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/Toasts/use-toast';
 import type { DayLog, Sore } from '@/types';
 import { saveDayPatch, setCheckInStatus } from '@/utils/actions/checkInActions';
 import { applyPatchToLogs, type DayPatch } from '@/utils/check-in/patch';
@@ -25,6 +24,7 @@ import { cn } from '@/utils/cn';
 import { currentPain, dayKey, hasReadingOn } from '@/utils/readings';
 import { deferEveningReminder } from '@/utils/reminders';
 import { sevFill } from '@/utils/severity';
+import { runWrite, showFailure } from '@/utils/write-feedback';
 
 import FinishStep from './FinishStep';
 import NewSoreAsk from './NewSoreAsk';
@@ -82,25 +82,21 @@ export default function CheckInFlow({
     if (current !== 'finish') writeProgress(today, current);
   }, [today, current]);
 
-  const fail = (error: string) => {
-    notify('error');
-    toast({ variant: 'destructive', title: error });
-  };
-
   const go = async () => {
     const next = nextStepAfter(steps, current);
     if (next === 'finish' && current !== 'finish') {
       setBusy(true);
       try {
-        const result = await setCheckInStatus(today, 'done');
-        if (!result.ok) return fail(result.error);
+        const result = await runWrite(
+          () => setCheckInStatus(today, 'done'),
+          STATUS_FAILED
+        );
+        if (!result.ok) return showFailure(result.error);
         clearProgress();
         // Best-effort: a reminder problem never blocks or toasts the check-in.
         deferEveningReminder(today).catch((error) =>
           console.error('could not skip tonight’s reminder', error)
         );
-      } catch {
-        return fail(STATUS_FAILED);
       } finally {
         setBusy(false);
       }
@@ -112,12 +108,13 @@ export default function CheckInFlow({
     tap();
     setBusy(true);
     try {
-      const result = await setCheckInStatus(today, 'skipped');
-      if (!result.ok) return fail(result.error);
+      const result = await runWrite(
+        () => setCheckInStatus(today, 'skipped'),
+        STATUS_FAILED
+      );
+      if (!result.ok) return showFailure(result.error);
       clearProgress();
       onClose('skipped');
-    } catch {
-      fail(STATUS_FAILED);
     } finally {
       setBusy(false);
     }
@@ -125,14 +122,12 @@ export default function CheckInFlow({
 
   /** One habit answer, written and then folded into the local logs. */
   const saveHabit = async (day: string, patch: DayPatch): Promise<boolean> => {
-    try {
-      const result = await saveDayPatch(day, patch);
-      if (!result.ok) {
-        fail(result.error);
-        return false;
-      }
-    } catch {
-      fail('Could not save that answer. Try again.');
+    const result = await runWrite(
+      () => saveDayPatch(day, patch),
+      'Could not save that answer. Try again.'
+    );
+    if (!result.ok) {
+      showFailure(result.error);
       return false;
     }
     notify('success');

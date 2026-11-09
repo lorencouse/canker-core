@@ -47,6 +47,7 @@ import {
   localTimeZone,
   withReading
 } from '@/utils/readings';
+import { runWrite, showFailure } from '@/utils/write-feedback';
 
 /**
  * The daily check-in.
@@ -262,12 +263,10 @@ function Today({
     const updated = repeatable.map((s) => withReading(s, {}));
     setBulkBusy(true);
     try {
-      const result = await upsertSores(updated, localTimeZone());
-      if (!result.ok) {
-        notify('error');
-        toast({ variant: 'destructive', title: result.error });
-        return;
-      }
+      const result = await runWrite(() =>
+        upsertSores(updated, localTimeZone())
+      );
+      if (!result.ok) return showFailure(result.error);
       const byId = new Map(updated.map((s) => [s.id, s]));
       setSores((prev) => prev.map((s) => byId.get(s.id) ?? s));
       notify('success');
@@ -292,12 +291,11 @@ function Today({
   const saveLog = async () => {
     setSaving(true);
     try {
-      const result = await saveDayLog(log);
-      if (!result.ok) {
-        notify('error');
-        toast({ variant: 'destructive', title: result.error });
-        return;
-      }
+      const result = await runWrite(
+        () => saveDayLog(log),
+        'Could not save today’s log. Try again.'
+      );
+      if (!result.ok) return showFailure(result.error);
       setSavedLogs((prev) =>
         withSavedLog(prev, { ...log, food_answered: true, health_answered: true })
       );

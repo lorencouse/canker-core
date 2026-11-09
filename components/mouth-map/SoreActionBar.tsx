@@ -20,11 +20,11 @@ import {
   setSoreHealed,
   upsertSores
 } from '@/utils/actions/soreActions';
-import type { ActionResult } from '@/utils/actions/session';
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
 import { localTimeZone } from '@/utils/readings';
 import { deletePhotosFor } from '@/utils/sore-photos';
+import { runWrite, showFailure } from '@/utils/write-feedback';
 
 let healedUndo: { dismiss: () => void } | null = null;
 
@@ -57,13 +57,6 @@ function useMapActions() {
   } = useSoreContext();
   const [busy, setBusy] = useState(false);
 
-  const failed = (result: ActionResult) => {
-    if (result.ok) return false;
-    notify('error');
-    toast({ variant: 'destructive', title: result.error });
-    return true;
-  };
-
   const begin = (next: 'add' | 'edit') => {
     tap();
     healedUndo?.dismiss();
@@ -81,10 +74,12 @@ function useMapActions() {
       : sores;
     setBusy(true);
     try {
-      const result = await upsertSores(changed, localTimeZone());
+      const result = await runWrite(() =>
+        upsertSores(changed, localTimeZone())
+      );
       // On failure the session stays open with the edits intact, so the
       // user can retry rather than redo.
-      if (failed(result)) return;
+      if (!result.ok) return showFailure(result.error);
       notify('success');
       setSnapshot(null);
       setMode('view');
@@ -105,8 +100,11 @@ function useMapActions() {
     if (!sore) return;
     setBusy(true);
     try {
-      const result = await setSoreHealed(sore.id, healedAt);
-      if (failed(result)) return;
+      const result = await runWrite(
+        () => setSoreHealed(sore.id, healedAt),
+        'Could not update the sore. Try again.'
+      );
+      if (!result.ok) return showFailure(result.error);
       const updated = { ...sore, healed_at: healedAt };
       setSores((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
       // A healed sore leaves the map (unless healed ones are shown), so
@@ -136,8 +134,14 @@ function useMapActions() {
     if (!selectedSore) return false;
     setBusy(true);
     try {
-      const result = await deleteSore(selectedSore.id);
-      if (failed(result)) return false;
+      const result = await runWrite(
+        () => deleteSore(selectedSore.id),
+        'Could not delete the sore. Try again.'
+      );
+      if (!result.ok) {
+        showFailure(result.error);
+        return false;
+      }
       // Photos never reached the server, so only this device can delete them.
       await deletePhotosFor(selectedSore.readings.map((r) => r.id));
       setSores((prev) => prev.filter((s) => s.id !== selectedSore.id));

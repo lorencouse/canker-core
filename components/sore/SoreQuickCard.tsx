@@ -29,6 +29,7 @@ import {
   localTimeZone,
   withReading
 } from '@/utils/readings';
+import { runWrite, showFailure } from '@/utils/write-feedback';
 
 /**
  * A sore at a glance, opened by tapping it on the map or in a chart: its
@@ -76,16 +77,13 @@ export default function SoreQuickCard({
   const last = latestReading(sore);
   const verdict = verdictOf(sore, now);
 
-  const fail = (error: string) => {
-    notify('error');
-    toast({ variant: 'destructive', title: error });
-  };
-
   const save = async (next: Sore) => {
     setBusy(true);
     try {
-      const result = await upsertSores([next], localTimeZone());
-      if (!result.ok) return fail(result.error);
+      const result = await runWrite(() =>
+        upsertSores([next], localTimeZone())
+      );
+      if (!result.ok) return showFailure(result.error);
       notify('success');
       onChange(next);
       setDraft(null);
@@ -98,8 +96,11 @@ export default function SoreQuickCard({
   const setHealed = async (healedAt: string | null) => {
     setBusy(true);
     try {
-      const result = await setSoreHealed(sore.id, healedAt);
-      if (!result.ok) return fail(result.error);
+      const result = await runWrite(
+        () => setSoreHealed(sore.id, healedAt),
+        'Could not update the sore. Try again.'
+      );
+      if (!result.ok) return showFailure(result.error);
       const next = { ...sore, healed_at: healedAt };
       notify('success');
       onChange(next);
@@ -113,8 +114,11 @@ export default function SoreQuickCard({
               altText="Undo marking this sore healed"
               className="tap-target"
               onClick={async () => {
-                const undo = await setSoreHealed(sore.id, null);
-                if (!undo.ok) return fail(undo.error);
+                const undo = await runWrite(
+                  () => setSoreHealed(sore.id, null),
+                  'Could not update the sore. Try again.'
+                );
+                if (!undo.ok) return showFailure(undo.error);
                 onChange({ ...next, healed_at: null });
               }}
             >

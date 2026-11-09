@@ -8,7 +8,6 @@ import { PainField, QuickWidthField } from '@/components/sore/ReadingFields';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/components/ui/Toasts/use-toast';
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
 import { setSoreHealed, upsertSores } from '@/utils/actions/soreActions';
@@ -23,6 +22,7 @@ import {
   localTimeZone,
   withReading
 } from '@/utils/readings';
+import { runWrite, showFailure } from '@/utils/write-feedback';
 
 import CheckInMap from './CheckInMap';
 import PhotoControl from './PhotoControl';
@@ -95,20 +95,17 @@ export default function SoreStep({
     // A photo for a reading that does not exist yet needs the reading.
     (pendingPhoto && !loggedToday);
 
-  const fail = (error: string) => {
-    notify('error');
-    toast({ variant: 'destructive', title: error });
-  };
-
   /** Today's reading as entered; the one-per-day rule lives in withReading. */
   const entered = () =>
     withReading(sore, { size, pain, note: note.trim() || null }, now, appendId);
 
   const save = async (): Promise<Sore | null> => {
     const next = entered();
-    const result = await upsertSores([next], localTimeZone());
+    const result = await runWrite(() =>
+      upsertSores([next], localTimeZone())
+    );
     if (!result.ok) {
-      fail(result.error);
+      showFailure(result.error);
       return null;
     }
     unsavedPhoto.current = false;
@@ -123,9 +120,6 @@ export default function SoreStep({
         notify('success');
         onNext();
       }
-    } catch {
-      // The request itself failed (offline, server down): stay on the step.
-      fail('Could not save your changes. Try again.');
     } finally {
       setBusy(false);
     }
@@ -143,9 +137,9 @@ export default function SoreStep({
       const written = changed ? await save() : sore;
       if (!written) return false;
       const healedAt = new Date().toISOString();
-      const result = await setSoreHealed(sore.id, healedAt);
+      const result = await runWrite(() => setSoreHealed(sore.id, healedAt));
       if (!result.ok) {
-        fail(result.error);
+        showFailure(result.error);
         return false;
       }
       onChange({ ...written, healed_at: healedAt });

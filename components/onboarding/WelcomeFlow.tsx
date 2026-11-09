@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { toast } from '@/components/ui/Toasts/use-toast';
 import { SoreProvider, useSoreContext } from '@/context/SoreContext';
 import type { Sore, User } from '@/types';
 import { completeOnboarding } from '@/utils/actions/onboardingActions';
@@ -28,6 +27,7 @@ import {
   remindersSupported,
   type ReminderPref
 } from '@/utils/reminders';
+import { runWrite, showFailure } from '@/utils/write-feedback';
 
 /**
  * The first run: place a sore, measure it, keep going.
@@ -94,22 +94,20 @@ function Flow({ user }: { user: User }) {
     setSaving(true);
     try {
       if (write && sore) {
-        const saved = await upsertSores([sore], localTimeZone());
-        if (!saved.ok) {
-          notify('error');
-          toast({ variant: 'destructive', title: saved.error });
-          return;
-        }
+        const saved = await runWrite(() =>
+          upsertSores([sore], localTimeZone())
+        );
+        if (!saved.ok) return showFailure(saved.error);
         if (canRemind && reminder.enabled) await applyReminder('evening', reminder);
       }
 
       // Marked seen either way. Someone who skips has still been introduced,
       // and showing them this screen again tomorrow would be a bug.
-      const done = await completeOnboarding();
-      if (!done.ok) {
-        toast({ variant: 'destructive', title: done.error });
-        return;
-      }
+      const done = await runWrite(
+        completeOnboarding,
+        'Could not save that. Try again.'
+      );
+      if (!done.ok) return showFailure(done.error);
       if (write) notify('success');
       router.push('/today');
     } finally {
