@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Check, Loader2, Minus, Plus } from 'lucide-react';
 
+import Measure from '@/components/sore/Measure';
 import { Button } from '@/components/ui/button';
 import type { DayLog } from '@/types';
 import { resolveDay } from '@/utils/check-in/steps';
@@ -96,10 +97,7 @@ export default function SleepStep({
             aria-live="polite"
             className="tabular font-display text-xl font-semibold leading-none"
           >
-            {fields.hours ?? '–'}{' '}
-            <small className="font-sans text-sm font-normal text-muted-foreground">
-              h
-            </small>
+            <Measure value={fields.hours ?? '–'} unit="h" />
           </output>
         </div>
         {/* Clear sits between the steppers so a stray tap is one tap from

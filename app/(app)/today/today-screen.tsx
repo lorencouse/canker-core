@@ -10,13 +10,13 @@ import {
 import { Capacitor } from '@capacitor/core';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, ChevronRight, Loader2, Plus } from 'lucide-react';
+import { Check, Loader2, Plus } from 'lucide-react';
 
 import CheckInFlow from '@/components/check-in/CheckInFlow';
 import CheckInHost from '@/components/check-in/CheckInHost';
 import Kanko from '@/components/kanko/Kanko';
 import MouthMap from '@/components/mouth-map/MouthMap';
-import SoreSigil from '@/components/sore/SoreSigil';
+import SoreRow from '@/components/sore/SoreRow';
 import DayLogForm from '@/components/today/DayLogForm';
 import StreakBlock, {
   StreakBlockPlaceholder
@@ -37,12 +37,10 @@ import { isNative, notify, tap } from '@/utils/native';
 import { type Mood, withSavedLog } from '@/utils/momentum';
 import {
   addDays,
-  currentPain,
-  currentSize,
   dayKey,
-  dayNumberOf,
   hasReadingOn,
   isSameLocalDay,
+  lastWasYesterday,
   latestReading,
   localTimeZone,
   withReading
@@ -388,7 +386,7 @@ function Today({
                 ) : (
                   <Check aria-hidden="true" />
                 )}
-                {repeatable.every(lastWasYesterday)
+                {repeatable.every((s) => lastWasYesterday(s))
                   ? 'All the same as yesterday'
                   : 'All the same as last time'}
               </Button>
@@ -411,36 +409,24 @@ function Today({
                       key={sore.id}
                       className="border-t border-border first:border-t-0"
                     >
-                      <button
-                        type="button"
+                      <SoreRow
+                        sore={sore}
+                        now={now}
                         onClick={() => openSore(sore)}
-                        className="grid min-h-14 w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 py-2.5 text-left hover:bg-muted"
-                      >
-                        <SoreSigil sore={sore} size={28} />
-                        <span className="min-w-0">
-                          <span className="block truncate font-semibold">
-                            {sore.zone}
+                        className="min-h-14 grid-cols-[auto_minmax(0,1fr)_auto_auto] gap-3 py-2.5"
+                        trailing={
+                          <span
+                            className={cn(
+                              'whitespace-nowrap text-sm',
+                              logged
+                                ? 'text-muted-foreground'
+                                : 'font-semibold text-foreground'
+                            )}
+                          >
+                            {logged ? 'Logged' : 'Log today'}
                           </span>
-                          <span className="tabular block truncate text-sm text-muted-foreground">
-                            {now && `Day ${dayNumberOf(sore, now)} · `}
-                            {currentSize(sore)} mm, pain {currentPain(sore)}
-                          </span>
-                        </span>
-                        <span
-                          className={cn(
-                            'whitespace-nowrap text-sm',
-                            logged
-                              ? 'text-muted-foreground'
-                              : 'font-semibold text-foreground'
-                          )}
-                        >
-                          {logged ? 'Logged' : 'Log today'}
-                        </span>
-                        <ChevronRight
-                          aria-hidden="true"
-                          className="size-5 text-muted-foreground"
-                        />
-                      </button>
+                        }
+                      />
                     </li>
                   );
                 })}
@@ -531,13 +517,6 @@ function Today({
       )}
     </div>
   );
-}
-
-/** Whether the sore's last reading was taken yesterday. */
-function lastWasYesterday(sore: Sore): boolean {
-  const last = latestReading(sore);
-  if (!last) return false;
-  return isSameLocalDay(last.recorded_at, addDays(new Date(), -1));
 }
 
 /** "2 triggers, 1 treatment, a note": what Save is about to write. */

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Check, Loader2, RotateCcw } from 'lucide-react';
 
 import CourseBars from '@/components/sore/CourseBars';
+import Measure from '@/components/sore/Measure';
 import { PainField, WidthField } from '@/components/sore/ReadingFields';
 import SoreSigil from '@/components/sore/SoreSigil';
 import { useHealSore } from '@/components/sore/useHealSore';
@@ -24,7 +25,7 @@ import {
   currentSize,
   dayNumberOf,
   hasReadingOn,
-  isSameLocalDay,
+  lastWasYesterday,
   latestReading,
   localTimeZone,
   withReading
@@ -99,13 +100,6 @@ export default function SoreQuickCard({
     if ((await heal.setHealed(sore, healedAt)) && healedAt) onOpenChange(false);
   };
 
-  const lastWasYesterday = (() => {
-    if (!last) return false;
-    const y = new Date(now);
-    y.setDate(y.getDate() - 1);
-    return isSameLocalDay(last.recorded_at, y);
-  })();
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-sm gap-0 overflow-y-auto rounded-xl p-4 sm:p-5">
@@ -134,10 +128,7 @@ export default function SoreQuickCard({
                 {today ? 'Width today' : 'Last width'}
               </dt>
               <dd className="tabular font-display text-xl font-semibold">
-                {currentSize(sore)}{' '}
-                <small className="font-sans text-sm font-normal text-muted-foreground">
-                  mm
-                </small>
+                <Measure value={currentSize(sore)} unit="mm" />
               </dd>
             </div>
             <div>
@@ -145,10 +136,7 @@ export default function SoreQuickCard({
                 {today ? 'Pain today' : 'Last pain'}
               </dt>
               <dd className="tabular font-display text-xl font-semibold">
-                {currentPain(sore)}{' '}
-                <small className="font-sans text-sm font-normal text-muted-foreground">
-                  of 10
-                </small>
+                <Measure value={currentPain(sore)} unit="of 10" />
               </dd>
             </div>
           </dl>
@@ -223,7 +211,7 @@ export default function SoreQuickCard({
                 disabled={busy}
               >
                 <Check aria-hidden="true" />
-                {lastWasYesterday ? 'Same as yesterday' : 'Same as last time'}
+                {lastWasYesterday(sore, now) ? 'Same as yesterday' : 'Same as last time'}
               </Button>
             )}
             <div className="grid grid-cols-2 gap-2">

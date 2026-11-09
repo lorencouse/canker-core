@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { Minus, Plus } from 'lucide-react';
 
+import Measure from '@/components/sore/Measure';
 import { Button } from '@/components/ui/button';
 import SeverityLadder from '@/components/ui/SeverityLadder';
 import { Slider } from '@/components/ui/slider';
@@ -56,10 +57,7 @@ function FieldHead({
         htmlFor={htmlFor}
         className="tabular font-display text-xl font-semibold leading-none"
       >
-        {value}{' '}
-        <small className="font-sans text-sm font-normal text-muted-foreground">
-          {unit}
-        </small>
+        <Measure value={value} unit={unit} />
       </output>
     </div>
   );
@@ -249,10 +247,7 @@ export function QuickWidthField({
             aria-live="polite"
             className="tabular min-w-[4.5rem] text-center font-display text-xl font-semibold leading-none"
           >
-            {value}{' '}
-            <small className="font-sans text-sm font-normal text-muted-foreground">
-              mm
-            </small>
+            <Measure value={value} unit="mm" />
           </output>
           <Stepper
             label="Half a millimetre wider"

@@ -62,6 +62,12 @@ export const hasReadingOn = (sore: Sore, when: Date): boolean => {
   return last !== null && isSameLocalDay(last.recorded_at, when);
 };
 
+/** Whether the sore's last reading was taken the day before `now`. */
+export const lastWasYesterday = (sore: Sore, now: Date = new Date()): boolean => {
+  const last = latestReading(sore);
+  return last !== null && isSameLocalDay(last.recorded_at, addDays(now, -1));
+};
+
 /** The list with `next` in place of the sore that has its id. */
 export const replaceSore = (sores: Sore[], next: Sore): Sore[] =>
   sores.map((s) => (s.id === next.id ? next : s));

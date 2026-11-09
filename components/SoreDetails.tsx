@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronRight } from 'lucide-react';
 
 import { useSoreContext } from '@/context/SoreContext';
 import SoreActions, { EditingBar } from '@/components/mouth-map/SoreActionBar';
 import SoreSliders from '@/components/mouth-map/SoreSliders';
 import CourseBars from '@/components/sore/CourseBars';
 import LongSoreNote from '@/components/sore/LongSoreNote';
+import Measure from '@/components/sore/Measure';
+import SoreRow from '@/components/sore/SoreRow';
 import SoreSigil from '@/components/sore/SoreSigil';
 import type { Sore } from '@/types';
 import { courseOf, verdictOf } from '@/utils/course';
@@ -48,10 +49,11 @@ function Figure({
     <div className="min-w-0">
       <dt className="text-sm text-muted-foreground">{label}</dt>
       <dd className="tabular mt-0.5 truncate font-display text-xl font-semibold leading-tight">
-        {value}{' '}
-        <small className="text-sm font-medium text-muted-foreground">
-          {unit}
-        </small>
+        <Measure
+          value={value}
+          unit={unit}
+          className="text-sm font-medium text-muted-foreground"
+        />
       </dd>
     </div>
   );
@@ -319,32 +321,20 @@ export function OpenSoresList() {
               key={sore.id}
               className="border-t border-border first:border-t-0"
             >
-              <button
-                type="button"
+              <SoreRow
+                sore={sore}
+                now={now}
                 onClick={() => setSelectedSore(sore)}
-                className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 py-3 text-left hover:bg-muted"
-              >
-                <SoreSigil sore={sore} size={28} />
-                <span className="min-w-0">
-                  <span className="block truncate font-semibold">
-                    {sore.zone}
-                  </span>
-                  <span className="tabular block truncate text-sm text-muted-foreground">
-                    Day {dayNumberOf(sore, now)} · {currentSize(sore)} mm, pain{' '}
-                    {currentPain(sore)}
-                  </span>
-                </span>
-                <ChevronRight
-                  aria-hidden="true"
-                  className="size-5 text-muted-foreground"
-                />
-                <CourseBars
-                  sore={sore}
-                  height={36}
-                  now={now}
-                  className="col-start-2"
-                />
-              </button>
+                className="grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 gap-y-2 py-3"
+                below={
+                  <CourseBars
+                    sore={sore}
+                    height={36}
+                    now={now}
+                    className="col-start-2"
+                  />
+                }
+              />
             </li>
           ))}
         </ul>
