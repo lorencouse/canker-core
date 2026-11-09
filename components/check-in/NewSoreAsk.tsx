@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, Loader2, Plus } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
 
 import MouthMap from '@/components/mouth-map/MouthMap';
 import { PainField, QuickWidthField } from '@/components/sore/ReadingFields';
@@ -17,8 +17,10 @@ import {
   withReading
 } from '@/utils/readings';
 import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 import StepHeading from './StepHeading';
+import { StepFooter, StepPinnedMap } from './StepLayout';
 import { useReportBusy } from './useReportBusy';
 
 /*
@@ -108,9 +110,9 @@ function Placement({
 
   return (
     <div className="grid gap-4">
-      <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pb-1 pt-1">
+      <StepPinnedMap>
         <MouthMap user={NO_USER} compact />
-      </div>
+      </StepPinnedMap>
 
       {placed ? (
         <>
@@ -142,7 +144,7 @@ function Placement({
         </div>
       )}
 
-      <div className="sticky bottom-0 -mx-4 flex gap-2 border-t-2 border-border bg-background px-4 py-3">
+      <StepFooter>
         {placed ? (
           <>
             <Button
@@ -164,11 +166,7 @@ function Placement({
               onClick={add}
               disabled={busy}
             >
-              {busy ? (
-                <Loader2 className="animate-spin" aria-hidden="true" />
-              ) : (
-                <Plus aria-hidden="true" />
-              )}
+              <BusyIcon busy={busy}><Plus aria-hidden="true" /></BusyIcon>
               Add sore
             </Button>
           </>
@@ -186,7 +184,7 @@ function Placement({
             <ArrowRight aria-hidden="true" />
           </Button>
         )}
-      </div>
+      </StepFooter>
     </div>
   );
 }

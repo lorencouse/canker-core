@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import type { DayLog, Sore } from '@/types';
@@ -15,6 +15,7 @@ import {
 import {
   buildSteps,
   defaultDay,
+  isHabitStep,
   nextStepAfter,
   stepKey,
   type Step
@@ -30,6 +31,7 @@ import {
 import { deferEveningReminder } from '@/utils/reminders';
 import { sevFill } from '@/utils/severity';
 import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 import FinishStep from './FinishStep';
 import NewSoreAsk from './NewSoreAsk';
@@ -153,19 +155,15 @@ export default function CheckInFlow({
 
   const openSores = sores.filter((s) => !s.healed_at);
   const loggedToday = openSores.filter((s) => hasReadingOn(s, now));
+  const activeSoreId = step.kind === 'sore' ? step.soreId : null;
   const doneIds = new Set(
-    loggedToday.map((s) => s.id).filter((id) => id !== stepKey(step).slice(5))
+    loggedToday.map((s) => s.id).filter((id) => id !== activeSoreId)
   );
   const soreSteps = steps.filter((s) => s.kind === 'sore');
   const label =
     step.kind === 'sore'
       ? `Sore ${soreSteps.indexOf(step) + 1} of ${soreSteps.length}`
       : STEP_LABELS[step.kind];
-  const habitStep =
-    step.kind === 'sleep' ||
-    step.kind === 'food' ||
-    step.kind === 'health' ||
-    step.kind === 'treatments';
 
   const renderStep = (step: Step) => {
     switch (step.kind) {
@@ -287,7 +285,7 @@ export default function CheckInFlow({
       <div className="flex-1 overflow-y-auto overscroll-contain">
         {/* Keyed so each step starts fresh and its heading takes focus. */}
         <div key={current} className="mx-auto w-full max-w-lg px-4 pb-4 pt-2">
-          {habitStep && soreSteps.length + loggedToday.length > 0 && (
+          {isHabitStep(step) && soreSteps.length + loggedToday.length > 0 && (
             <SoresStrip
               sores={loggedToday}
               onEdit={() => {
@@ -397,7 +395,7 @@ function Placeholder({
           onNext();
         }}
       >
-        {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
+        <BusyIcon busy={busy} />
         Next
       </Button>
     </div>

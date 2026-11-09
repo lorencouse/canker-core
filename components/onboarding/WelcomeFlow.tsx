@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 
 import Kanko from '@/components/kanko/Kanko';
 import FirstReading from '@/components/onboarding/FirstReading';
@@ -28,6 +28,7 @@ import {
   type ReminderPref
 } from '@/utils/reminders';
 import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
  * The first run: place a sore, measure it, keep going.
@@ -192,11 +193,7 @@ function Flow({ user }: { user: User }) {
               leave(true);
             }}
           >
-            {saving ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <Check aria-hidden="true" />
-            )}
+            <BusyIcon busy={saving}><Check aria-hidden="true" /></BusyIcon>
             {saving ? 'Saving…' : 'Start tracking'}
           </Button>
         ) : (

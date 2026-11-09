@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import AuthField from './AuthField';
 import AuthLinks from './AuthLinks';
 import { signUp } from '@/utils/auth-helpers/server';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 type Message = { type: 'error' | 'success'; content: string };
 
@@ -89,7 +89,7 @@ export default function SignUp({ allowEmail }: SignUpProps) {
           hint="At least 8 characters."
         />
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="animate-spin" />}
+          <BusyIcon busy={isSubmitting} />
           {isSubmitting ? 'Creating account' : 'Create account'}
         </Button>
       </form>

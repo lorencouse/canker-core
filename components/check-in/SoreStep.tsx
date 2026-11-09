@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, Loader2, Plus } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 
 import { PainField, QuickWidthField } from '@/components/sore/ReadingFields';
 import { writeHealed } from '@/components/sore/useHealSore';
@@ -24,10 +24,12 @@ import {
   withReading
 } from '@/utils/readings';
 import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 import CheckInMap from './CheckInMap';
 import PhotoControl from './PhotoControl';
 import StepHeading from './StepHeading';
+import { StepFooter, StepPinnedMap } from './StepLayout';
 import { useReportBusy } from './useReportBusy';
 
 /**
@@ -156,15 +158,14 @@ export default function SoreStep({
 
   return (
     <div className="grid gap-4">
-      {/* Pinned while the controls scroll, so the sore stays in sight. */}
-      <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pb-1 pt-1">
+      <StepPinnedMap>
         <CheckInMap
           sores={allSores}
           activeId={sore.id}
           activeReading={{ size, pain }}
           doneIds={doneIds}
         />
-      </div>
+      </StepPinnedMap>
 
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
@@ -232,8 +233,7 @@ export default function SoreStep({
         </div>
       </details>
 
-      {/* Pinned to the bottom of the scroll area, so Next is always one tap. */}
-      <div className="sticky bottom-0 -mx-4 flex gap-2 border-t-2 border-border bg-background px-4 py-3">
+      <StepFooter>
         <Button
           type="button"
           variant="outline"
@@ -264,14 +264,10 @@ export default function SoreStep({
           onClick={next}
           disabled={busy}
         >
-          {busy ? (
-            <Loader2 className="animate-spin" aria-hidden="true" />
-          ) : (
-            <Check aria-hidden="true" />
-          )}
+          <BusyIcon busy={busy}><Check aria-hidden="true" /></BusyIcon>
           {changed ? 'Save, next' : loggedToday ? 'Next' : 'Same, next'}
         </Button>
-      </div>
+      </StepFooter>
     </div>
   );
 }

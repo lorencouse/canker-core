@@ -2,12 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import AuthField from './AuthField';
 import { updatePassword } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 interface UpdatePasswordProps {
   redirectMethod: string;
@@ -47,7 +47,7 @@ export default function UpdatePassword({
         autoComplete="new-password"
       />
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting && <Loader2 className="animate-spin" />}
+        <BusyIcon busy={isSubmitting} />
         {isSubmitting ? 'Saving' : 'Save new password'}
       </Button>
     </form>

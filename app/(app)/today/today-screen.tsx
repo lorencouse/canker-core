@@ -10,7 +10,7 @@ import {
 import { Capacitor } from '@capacitor/core';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, Loader2, Plus } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 
 import CheckInFlow from '@/components/check-in/CheckInFlow';
 import CheckInHost from '@/components/check-in/CheckInHost';
@@ -46,6 +46,7 @@ import {
   withReading
 } from '@/utils/readings';
 import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
  * The daily check-in.
@@ -381,11 +382,9 @@ function Today({
                 onClick={allSame}
                 disabled={bulkBusy}
               >
-                {bulkBusy ? (
-                  <Loader2 className="animate-spin" aria-hidden="true" />
-                ) : (
+                <BusyIcon busy={bulkBusy}>
                   <Check aria-hidden="true" />
-                )}
+                </BusyIcon>
                 {repeatable.every((s) => lastWasYesterday(s))
                   ? 'All the same as yesterday'
                   : 'All the same as last time'}
@@ -473,7 +472,7 @@ function Today({
           className={cn(
             'mt-5 flex items-center gap-3',
             logDirty &&
-              'keyboard-hides fixed inset-x-0 bottom-[calc(var(--tab-bar-h)+var(--safe-bottom))] z-30 mt-0 border-t border-border bg-background px-4 py-2.5 lg:static lg:z-auto lg:mt-5 lg:border-0 lg:bg-transparent lg:p-0'
+              'floating-action-bar keyboard-hides mt-0 lg:mt-5'
           )}
         >
           <p
@@ -497,9 +496,7 @@ function Today({
                 saveLog();
               }}
             >
-              {saving && (
-                <Loader2 className="animate-spin" aria-hidden="true" />
-              )}
+              <BusyIcon busy={saving} />
               {saving ? 'Saving' : 'Save log'}
             </Button>
           )}

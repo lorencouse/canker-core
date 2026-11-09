@@ -306,6 +306,11 @@
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
+  /* A phone's Save or Done, floating over the tab bar; in the flow from lg up. */
+  .floating-action-bar {
+    @apply fixed inset-x-0 bottom-[calc(var(--tab-bar-h)+var(--safe-bottom))] z-30 border-t border-border bg-background px-4 py-2.5 lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:p-0;
+  }
+
   /* Labels drawn inside the mouth-map SVG. */
   .mouth-map-label {
     font-family: var(--font-sans), system-ui, sans-serif;

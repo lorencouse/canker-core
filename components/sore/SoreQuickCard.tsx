@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Loader2, RotateCcw } from 'lucide-react';
+import { Check, RotateCcw } from 'lucide-react';
 
 import CourseBars from '@/components/sore/CourseBars';
 import Measure from '@/components/sore/Measure';
@@ -31,6 +31,7 @@ import {
   withReading
 } from '@/utils/readings';
 import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
  * A sore at a glance, opened by tapping it on the map or in a chart: its
@@ -175,11 +176,7 @@ export default function SoreQuickCard({
                 }}
                 disabled={busy}
               >
-                {busy ? (
-                  <Loader2 className="animate-spin" aria-hidden="true" />
-                ) : (
-                  <Check aria-hidden="true" />
-                )}
+                <BusyIcon busy={busy}><Check aria-hidden="true" /></BusyIcon>
                 Save
               </Button>
             </div>

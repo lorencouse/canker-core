@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 
 import AuthField from '@/components/ui/AuthForms/AuthField';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import type { User } from '@/types';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { updateEmail, updateName } from '@/utils/auth-helpers/server';
 import { getRedirectMethod } from '@/utils/auth-helpers/settings';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
  * Name and email, as two small forms rather than one.
@@ -51,7 +51,7 @@ export function ProfileForm({ user }: { user: User }) {
         />
         <div>
           <Button type="submit" disabled={saving !== null}>
-            {saving === 'name' && <Loader2 className="animate-spin" />}
+            <BusyIcon busy={saving === 'name'} />
             Save name
           </Button>
         </div>
@@ -77,7 +77,7 @@ export function ProfileForm({ user }: { user: User }) {
             variant="outline"
             disabled={saving !== null}
           >
-            {saving === 'email' && <Loader2 className="animate-spin" />}
+            <BusyIcon busy={saving === 'email'} />
             Change email
           </Button>
         </div>

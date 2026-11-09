@@ -2,16 +2,16 @@ import type { CheckIn, Sore } from '@/types';
 import { MOUTH_VIEWS } from '@/utils/mouth-map/geometry';
 import { addDays, dayKey } from '@/utils/readings';
 
+const HABIT_KINDS = ['sleep', 'food', 'health', 'treatments'] as const;
+
 export type Step =
   | { kind: 'sore'; soreId: string }
   | { kind: 'new-sore-ask' }
-  | { kind: 'sleep' }
-  | { kind: 'food' }
-  | { kind: 'health' }
-  | { kind: 'treatments' }
+  | { kind: (typeof HABIT_KINDS)[number] }
   | { kind: 'finish' };
 
-export type HabitKind = 'sleep' | 'food' | 'health' | 'treatments';
+export const isHabitStep = (s: Step): boolean =>
+  (HABIT_KINDS as readonly string[]).includes(s.kind);
 
 export const stepKey = (s: Step): string =>
   s.kind === 'sore' ? `sore:${s.soreId}` : s.kind;
@@ -33,10 +33,7 @@ export function buildSteps(sores: Sore[]): Step[] {
   return [
     ...active,
     { kind: 'new-sore-ask' },
-    { kind: 'sleep' },
-    { kind: 'food' },
-    { kind: 'health' },
-    { kind: 'treatments' },
+    ...HABIT_KINDS.map((kind): Step => ({ kind })),
     { kind: 'finish' }
   ];
 }

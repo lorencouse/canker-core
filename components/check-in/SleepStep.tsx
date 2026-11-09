@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Loader2, Minus, Plus } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 
 import Measure from '@/components/sore/Measure';
 import { Stepper } from '@/components/sore/ReadingFields';
@@ -10,10 +10,11 @@ import type { DayLog } from '@/types';
 import { resolveDay } from '@/utils/check-in/steps';
 import { tap } from '@/utils/native';
 
-import type { HabitStepProps } from './DayToggle';
+import type { HabitStepProps } from './habit-step';
 import ScalePicker from './ScalePicker';
 import SleepImport from './SleepImport';
 import StepHeading from './StepHeading';
+import StepNextButton from './StepNextButton';
 import { useReportBusy } from './useReportBusy';
 
 type Source = NonNullable<DayLog['sleep_source']>;
@@ -150,20 +151,7 @@ export default function SleepStep({
         disabled={busy}
       />
 
-      <Button
-        type="button"
-        size="touch"
-        className="w-full"
-        onClick={next}
-        disabled={busy}
-      >
-        {busy ? (
-          <Loader2 className="animate-spin" aria-hidden="true" />
-        ) : (
-          <Check aria-hidden="true" />
-        )}
-        Next
-      </Button>
+      <StepNextButton busy={busy} onClick={next} />
     </div>
   );
 }

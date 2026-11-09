@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Loader2 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import type { DayLog } from '@/types';
 import type { DayPatch } from '@/utils/check-in/patch';
@@ -11,9 +9,11 @@ import { resolveDay } from '@/utils/check-in/steps';
 import { FOOD_TRIGGERS, HEALTH_TRIGGERS, TREATMENTS } from '@/utils/day-log';
 import { tap } from '@/utils/native';
 
-import DayToggle, { type DayChoice, type HabitStepProps } from './DayToggle';
+import DayToggle, { type DayChoice } from './DayToggle';
+import type { HabitStepProps } from './habit-step';
 import ScalePicker from './ScalePicker';
 import StepHeading from './StepHeading';
+import StepNextButton from './StepNextButton';
 import { useReportBusy } from './useReportBusy';
 
 type TagKind = 'food' | 'health' | 'treatments';
@@ -172,20 +172,7 @@ export default function TagStep({
         />
       )}
 
-      <Button
-        type="button"
-        size="touch"
-        className="w-full"
-        onClick={next}
-        disabled={busy}
-      >
-        {busy ? (
-          <Loader2 className="animate-spin" aria-hidden="true" />
-        ) : (
-          <Check aria-hidden="true" />
-        )}
-        Next
-      </Button>
+      <StepNextButton busy={busy} onClick={next} />
     </div>
   );
 }

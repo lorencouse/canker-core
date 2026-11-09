@@ -2,13 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import AuthField from './AuthField';
 import AuthLinks from './AuthLinks';
 import { signInWithEmail } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 interface EmailSignInProps {
   allowPassword: boolean;
@@ -48,7 +48,7 @@ export default function EmailSignIn({
           hint="We'll send a link that signs you in. No password needed."
         />
         <Button type="submit" disabled={disableButton || isSubmitting}>
-          {isSubmitting && <Loader2 className="animate-spin" />}
+          <BusyIcon busy={isSubmitting} />
           {isSubmitting ? 'Sending' : 'Send sign-in link'}
         </Button>
       </form>
