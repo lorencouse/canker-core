@@ -6,6 +6,7 @@ import { Check, Loader2, RotateCcw } from 'lucide-react';
 import CourseBars from '@/components/sore/CourseBars';
 import { PainField, WidthField } from '@/components/sore/ReadingFields';
 import SoreSigil from '@/components/sore/SoreSigil';
+import { useHealSore } from '@/components/sore/useHealSore';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,11 +14,10 @@ import {
   DialogDescription,
   DialogTitle
 } from '@/components/ui/dialog';
-import { ToastAction } from '@/components/ui/Toasts/toast';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import type { Sore } from '@/types';
 import { verdictOf } from '@/utils/course';
-import { setSoreHealed, upsertSores } from '@/utils/actions/soreActions';
+import { upsertSores } from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
 import {
   currentPain,
@@ -59,7 +59,9 @@ export default function SoreQuickCard({
 }) {
   // The reading being edited, or null when the card is just showing.
   const [draft, setDraft] = useState<Sore | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [saving, setBusy] = useState(false);
+  const heal = useHealSore(onChange);
+  const busy = saving || heal.busy;
 
   // A different sore, or the card closing, drops any half-made edit.
   const [shownId, setShownId] = useState<string | null>(null);
@@ -94,42 +96,7 @@ export default function SoreQuickCard({
   };
 
   const setHealed = async (healedAt: string | null) => {
-    setBusy(true);
-    try {
-      const result = await runWrite(
-        () => setSoreHealed(sore.id, healedAt),
-        'Could not update the sore. Try again.'
-      );
-      if (!result.ok) return showFailure(result.error);
-      const next = { ...sore, healed_at: healedAt };
-      notify('success');
-      onChange(next);
-      if (healedAt) {
-        onOpenChange(false);
-        // Healed is one tap, so it is one tap to take back.
-        toast({
-          title: 'Marked healed.',
-          action: (
-            <ToastAction
-              altText="Undo marking this sore healed"
-              className="tap-target"
-              onClick={async () => {
-                const undo = await runWrite(
-                  () => setSoreHealed(sore.id, null),
-                  'Could not update the sore. Try again.'
-                );
-                if (!undo.ok) return showFailure(undo.error);
-                onChange({ ...next, healed_at: null });
-              }}
-            >
-              Undo
-            </ToastAction>
-          )
-        });
-      }
-    } finally {
-      setBusy(false);
-    }
+    if ((await heal.setHealed(sore, healedAt)) && healedAt) onOpenChange(false);
   };
 
   const lastWasYesterday = (() => {

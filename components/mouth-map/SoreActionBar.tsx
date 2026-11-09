@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Check, Plus, RotateCcw, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { ToastAction } from '@/components/ui/Toasts/toast';
 import {
   Dialog,
   DialogContent,
@@ -13,20 +12,14 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { toast } from '@/components/ui/Toasts/use-toast';
+import { dismissHealedUndo, useHealSore } from '@/components/sore/useHealSore';
 import { useSoreContext } from '@/context/SoreContext';
-import {
-  deleteSore,
-  setSoreHealed,
-  upsertSores
-} from '@/utils/actions/soreActions';
+import { deleteSore, upsertSores } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
 import { localTimeZone, replaceSore } from '@/utils/readings';
 import { deletePhotosFor } from '@/utils/sore-photos';
 import { runWrite, showFailure } from '@/utils/write-feedback';
-
-let healedUndo: { dismiss: () => void } | null = null;
 
 /**
  * The map's editing actions: add, log today, mark healed, delete, and the
@@ -56,12 +49,18 @@ function useMapActions() {
     setSnapshot,
     changedSores
   } = useSoreContext();
-  const [busy, setBusy] = useState(false);
+  const [saving, setBusy] = useState(false);
+  const heal = useHealSore((updated) => {
+    setSores((prev) => replaceSore(prev, updated));
+    // A healed sore leaves the map (unless healed ones are shown), so
+    // keeping it selected would leave the details pointing at nothing.
+    setSelectedSore(updated.healed_at ? null : updated);
+  });
+  const busy = saving || heal.busy;
 
   const begin = (next: 'add' | 'edit') => {
     tap();
-    healedUndo?.dismiss();
-    healedUndo = null;
+    dismissHealedUndo();
     setSnapshot(sores);
     if (next === 'add') setSelectedSore(null);
     setMode(next);
@@ -92,38 +91,8 @@ function useMapActions() {
     setMode('view');
   };
 
-  const setHealed = async (healedAt: string | null, sore = selectedSore) => {
-    if (!sore) return;
-    setBusy(true);
-    try {
-      const result = await runWrite(
-        () => setSoreHealed(sore.id, healedAt),
-        'Could not update the sore. Try again.'
-      );
-      if (!result.ok) return showFailure(result.error);
-      const updated = { ...sore, healed_at: healedAt };
-      setSores((prev) => replaceSore(prev, updated));
-      // A healed sore leaves the map (unless healed ones are shown), so
-      // keeping it selected would leave the details pointing at nothing.
-      setSelectedSore(healedAt ? null : updated);
-      notify('success');
-      // Healed is one tap, so it is one tap to take back.
-      if (healedAt)
-        healedUndo = toast({
-          title: 'Marked healed.',
-          action: (
-            <ToastAction
-              altText="Undo marking this sore healed"
-              className="tap-target"
-              onClick={() => setHealed(null, sore)}
-            >
-              Undo
-            </ToastAction>
-          )
-        });
-    } finally {
-      setBusy(false);
-    }
+  const setHealed = (healedAt: string | null) => {
+    if (selectedSore) heal.setHealed(selectedSore, healedAt);
   };
 
   const remove = async () => {

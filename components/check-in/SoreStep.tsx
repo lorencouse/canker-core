@@ -5,12 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { Check, Loader2, Plus } from 'lucide-react';
 
 import { PainField, QuickWidthField } from '@/components/sore/ReadingFields';
+import { writeHealed } from '@/components/sore/useHealSore';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
-import { setSoreHealed, upsertSores } from '@/utils/actions/soreActions';
+import { upsertSores } from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
 import { deletePhotosFor } from '@/utils/sore-photos';
 import {
@@ -137,11 +138,7 @@ export default function SoreStep({
       const written = changed ? await save() : sore;
       if (!written) return false;
       const healedAt = new Date().toISOString();
-      const result = await runWrite(() => setSoreHealed(sore.id, healedAt));
-      if (!result.ok) {
-        showFailure(result.error);
-        return false;
-      }
+      if (!(await writeHealed(sore.id, healedAt))) return false;
       onChange({ ...written, healed_at: healedAt });
       return true;
     });
