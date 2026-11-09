@@ -8,6 +8,7 @@ import {
   hasReadingOn,
   latestReading,
   newReading,
+  replaceSore,
   withReading
 } from './readings';
 
@@ -156,5 +157,14 @@ describe('dayNumberOf', () => {
   it('stops counting at the healed date', () => {
     const healed = sore({ healed_at: local('2026-09-11T09:00:00') });
     expect(dayNumberOf(healed, at('2026-12-01T00:00:00'))).toBe(4);
+  });
+});
+
+describe('replaceSore', () => {
+  it('swaps only the sore with the same id', () => {
+    const a = { id: 'a' } as Sore;
+    const b = { id: 'b' } as Sore;
+    const next = { id: 'b', zone: 'moved' } as Sore;
+    expect(replaceSore([a, b], next)).toEqual([a, next]);
   });
 });

@@ -46,15 +46,12 @@ const MySoresLayout = ({
 );
 
 function MySoresScreen({ user }: { user: User }) {
-  const { sores, selectedSore, mode, snapshot } = useSoreContext();
-  // Anything placed, moved or logged since the session opened. State
-  // updates replace a sore's object, so an untouched one is still in the
-  // snapshot by reference.
+  const { sores, selectedSore, mode, snapshot, changedSores } = useSoreContext();
+  // Anything placed, moved or logged since the session opened.
   const dirty =
     mode !== 'view' &&
     snapshot !== null &&
-    (sores.length !== snapshot.length ||
-      sores.some((s) => !snapshot.includes(s)));
+    (sores.length !== snapshot.length || changedSores.length > 0);
   useUnsavedGuard(dirty);
   const open = sores.filter((s) => !s.healed_at).length;
   const healed = sores.length - open;

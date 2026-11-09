@@ -80,22 +80,14 @@ function Placement({
   onNext: () => void;
   onBusy?: (busy: boolean) => void;
 }) {
-  const { selectedSore, setSelectedSore, setSores, snapshot } =
-    useSoreContext();
+  const { placedSore: placed, commitSore } = useSoreContext();
   const [busy, setBusy] = useState(false);
   useReportBusy(busy, onBusy);
-  // The same test the map uses: selected and not there when the session opened.
-  const placed =
-    selectedSore && snapshot && !snapshot.some((s) => s.id === selectedSore.id)
-      ? selectedSore
-      : null;
 
   /** The placed sore's first reading, changed in place so the marker follows. */
   const setReading = (patch: { size?: number; pain?: number }) => {
     if (!placed) return;
-    const next = withReading(placed, patch, new Date(placed.created_at));
-    setSores((prev) => prev.map((s) => (s.id === next.id ? next : s)));
-    setSelectedSore(next);
+    commitSore(withReading(placed, patch, new Date(placed.created_at)));
   };
 
   const add = async () => {

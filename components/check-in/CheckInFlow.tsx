@@ -21,7 +21,12 @@ import {
 } from '@/utils/check-in/steps';
 import { notify, tap } from '@/utils/native';
 import { cn } from '@/utils/cn';
-import { currentPain, dayKey, hasReadingOn } from '@/utils/readings';
+import {
+  currentPain,
+  dayKey,
+  hasReadingOn,
+  replaceSore
+} from '@/utils/readings';
 import { deferEveningReminder } from '@/utils/reminders';
 import { sevFill } from '@/utils/severity';
 import { runWrite, showFailure } from '@/utils/write-feedback';
@@ -143,9 +148,6 @@ export default function CheckInFlow({
     onNext: go
   };
 
-  const replaceSore = (next: Sore) =>
-    setSores((prev) => prev.map((s) => (s.id === next.id ? next : s)));
-
   const step = steps.find((s) => stepKey(s) === current) ?? steps[0];
   const position = steps.indexOf(step);
 
@@ -185,7 +187,7 @@ export default function CheckInFlow({
             doneIds={doneIds}
             now={now}
             onBusy={setStepBusy}
-            onChange={replaceSore}
+            onChange={(next) => setSores((prev) => replaceSore(prev, next))}
             onNext={go}
           />
         );

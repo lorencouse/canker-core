@@ -30,7 +30,12 @@ import SoreQuickCard from '@/components/sore/SoreQuickCard';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/utils/cn';
 import { tap } from '@/utils/native';
-import { currentPain, currentSize, newReading } from '@/utils/readings';
+import {
+  currentPain,
+  currentSize,
+  newReading,
+  replaceSore
+} from '@/utils/readings';
 
 import { MapDefs, ViewArtwork } from './artwork';
 import MapControls from './MapControls';
@@ -80,7 +85,8 @@ export default function MouthMap({
     selectedSore,
     setSelectedSore,
     mode,
-    snapshot,
+    commitSore,
+    placedSore: placed,
     quickOpen,
     setQuickOpen
   } = useSoreContext();
@@ -241,8 +247,7 @@ export default function MouthMap({
       if (!zone) return; // Do not let a sore leave the tissue.
       const moved = { ...g.dragging, x: pct.x, y: pct.y, zone };
       g.dragging = moved;
-      setSores((prev) => prev.map((s) => (s.id === moved.id ? moved : s)));
-      setSelectedSore(moved);
+      commitSore(moved);
       return;
     }
 
@@ -278,28 +283,18 @@ export default function MouthMap({
     }
   };
 
-  /*
-   * The sore placed in this add session, if one has been. A second tap is
-   * almost always "no, there", so it moves this one rather than adding
-   * another: two taps used to leave two sores where the person meant one.
+  /**
+   * Add a sore at a point in drawing units; nothing happens off the tissue.
+   * With one already placed this session a second tap is almost always "no,
+   * there", so it moves that one: two taps used to leave two sores where the
+   * person meant one.
    */
-  const placed =
-    mode === 'add' &&
-    selectedSore &&
-    snapshot &&
-    !snapshot.some((s) => s.id === selectedSore.id)
-      ? selectedSore
-      : null;
-
-  /** Add a sore at a point in drawing units; nothing happens off the tissue. */
   const placeSore = (p: Point) => {
     const zone = zoneAt(view, p);
     if (!zone) return;
     const pct = toPercent(p);
     if (placed) {
-      const moved = { ...placed, view, x: pct.x, y: pct.y, zone };
-      setSores((prev) => prev.map((s) => (s.id === moved.id ? moved : s)));
-      setSelectedSore(moved);
+      commitSore({ ...placed, view, x: pct.x, y: pct.y, zone });
       tap();
       return;
     }
@@ -327,9 +322,7 @@ export default function MouthMap({
     const pct = { x: sore.x + dx, y: sore.y + dy };
     const zone = zoneAt(view, fromPercent(pct));
     if (!zone) return;
-    const moved = { ...sore, x: pct.x, y: pct.y, zone };
-    setSores((prev) => prev.map((s) => (s.id === moved.id ? moved : s)));
-    setSelectedSore(moved);
+    commitSore({ ...sore, x: pct.x, y: pct.y, zone });
   };
 
   const visible = visibleSores.filter(
@@ -482,7 +475,7 @@ export default function MouthMap({
         open={quickOpen && mode === 'view' && Boolean(selectedSore)}
         onOpenChange={setQuickOpen}
         onChange={(next) => {
-          setSores((prev) => prev.map((s) => (s.id === next.id ? next : s)));
+          setSores((prev) => replaceSore(prev, next));
           // A healed sore leaves the map unless healed ones are shown.
           setSelectedSore(next.healed_at && !showHealed ? null : next);
         }}

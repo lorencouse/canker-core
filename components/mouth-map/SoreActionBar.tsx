@@ -22,7 +22,7 @@ import {
 } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
-import { localTimeZone } from '@/utils/readings';
+import { localTimeZone, replaceSore } from '@/utils/readings';
 import { deletePhotosFor } from '@/utils/sore-photos';
 import { runWrite, showFailure } from '@/utils/write-feedback';
 
@@ -53,7 +53,8 @@ function useMapActions() {
     mode,
     setMode,
     snapshot,
-    setSnapshot
+    setSnapshot,
+    changedSores
   } = useSoreContext();
   const [busy, setBusy] = useState(false);
 
@@ -67,15 +68,10 @@ function useMapActions() {
   };
 
   const finish = async () => {
-    // Only the sores that changed. State updates replace a sore's object, so
-    // anything still referentially in the snapshot was never touched.
-    const changed = snapshot
-      ? sores.filter((s) => !snapshot.includes(s))
-      : sores;
     setBusy(true);
     try {
       const result = await runWrite(() =>
-        upsertSores(changed, localTimeZone())
+        upsertSores(changedSores, localTimeZone())
       );
       // On failure the session stays open with the edits intact, so the
       // user can retry rather than redo.
@@ -106,7 +102,7 @@ function useMapActions() {
       );
       if (!result.ok) return showFailure(result.error);
       const updated = { ...sore, healed_at: healedAt };
-      setSores((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+      setSores((prev) => replaceSore(prev, updated));
       // A healed sore leaves the map (unless healed ones are shown), so
       // keeping it selected would leave the details pointing at nothing.
       setSelectedSore(healedAt ? null : updated);
