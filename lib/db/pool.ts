@@ -93,7 +93,8 @@ export async function transaction<T>(
     await client.query('COMMIT');
     return result;
   } catch (err) {
-    await client.query('ROLLBACK');
+    // A failed rollback must not replace the error that caused it.
+    await client.query('ROLLBACK').catch(() => {});
     throw err;
   } finally {
     client.release();

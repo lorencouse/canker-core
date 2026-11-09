@@ -1,11 +1,9 @@
 'use server';
 
-import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
-import { auth } from '@/lib/auth';
 import { query } from '@/lib/db/pool';
-import type { ActionResult } from '@/utils/actions/soreActions';
+import { requireUserId, type ActionResult } from '@/utils/actions/session';
 
 /**
  * Marking the first-run flow as seen.
@@ -15,8 +13,7 @@ import type { ActionResult } from '@/utils/actions/soreActions';
  * and the `is null` guard means a second call cannot move the timestamp.
  */
 export async function completeOnboarding(): Promise<ActionResult> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const userId = session?.user?.id;
+  const userId = await requireUserId();
   if (!userId) {
     return {
       ok: false,

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import type { PoolClient } from 'pg';
 
-import { pool } from '@/lib/db/pool';
+import { pool, transaction } from '@/lib/db/pool';
 import {
   NOT_SIGNED_IN,
   requireUserId,
@@ -14,6 +14,7 @@ import {
   TREATMENTS,
   TRIGGERS,
   buildSaveDayLogSql,
+  isDayKey,
   pickKnown
 } from '@/utils/day-log';
 import { isTimeZone, parseSores, sameDayReading } from '@/utils/sore-payload';
@@ -29,8 +30,6 @@ import { isTimeZone, parseSores, sameDayReading } from '@/utils/sore-payload';
  * optimistically, so a swallowed failure would leave the map showing a state
  * the database never received.
  */
-
-export type { ActionResult };
 
 function revalidate() {
   revalidatePath('/my-sores');
@@ -150,13 +149,11 @@ export async function upsertSores(
   const userId = await requireUserId();
   if (!userId) return NOT_SIGNED_IN;
 
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    for (const sore of sores) await writeSore(client, userId, sore, timeZone);
-    await client.query('COMMIT');
+    await transaction(async (client) => {
+      for (const sore of sores) await writeSore(client, userId, sore, timeZone);
+    });
   } catch (error) {
-    await client.query('ROLLBACK');
     if (error instanceof SameDayReading) {
       console.error('Refused second reading on one day:', error.message);
       return {
@@ -166,8 +163,6 @@ export async function upsertSores(
     }
     console.error('Error upserting sores:', error);
     return { ok: false, error: 'Could not save your changes. Try again.' };
-  } finally {
-    client.release();
   }
 
   revalidate();
@@ -224,7 +219,7 @@ export async function saveDayLog(log: DayLog): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) return NOT_SIGNED_IN;
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(log.day)) {
+  if (!isDayKey(log.day)) {
     return { ok: false, error: 'That is not a valid day.' };
   }
   const triggers = pickKnown(log.triggers, TRIGGERS);

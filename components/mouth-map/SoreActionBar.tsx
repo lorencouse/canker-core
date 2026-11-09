@@ -18,9 +18,9 @@ import { useSoreContext } from '@/context/SoreContext';
 import {
   deleteSore,
   setSoreHealed,
-  upsertSores,
-  type ActionResult
+  upsertSores
 } from '@/utils/actions/soreActions';
+import type { ActionResult } from '@/utils/actions/session';
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
 import { localTimeZone } from '@/utils/readings';

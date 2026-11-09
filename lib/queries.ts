@@ -14,6 +14,7 @@ import { headers } from 'next/headers';
 import { query } from '@/lib/db/pool';
 import { auth } from '@/lib/auth';
 import type { CheckIn, DayLog, Sore, User } from '@/types';
+import { DAY_LOG_COLUMNS } from '@/utils/day-log';
 import { isMouthView, zoneFor } from '@/utils/mouth-map/geometry';
 
 /** The signed-in user, or null. */
@@ -96,9 +97,7 @@ export const getSores = cache(async (userId: string): Promise<Sore[]> => {
 /** The user's daily logs, newest first. */
 export const getDayLogs = cache(async (userId: string): Promise<DayLog[]> => {
   return query<DayLog>(
-    `select to_char(day, 'YYYY-MM-DD') as day, triggers, treatments, note,
-            sleep_hours::float8 as sleep_hours, sleep_quality, sleep_source, stress,
-            food_answered, health_answered
+    `select ${DAY_LOG_COLUMNS}
      from day_logs
      where user_id = $1
      order by day desc`,
