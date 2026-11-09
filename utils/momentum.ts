@@ -111,17 +111,11 @@ export const streakHeadline = (n: number): string => {
 export const streakCardLabel = (n: number): string =>
   n === 1 ? 'trigger-free day' : 'trigger-free days';
 
-/**
- * The saved logs after a Save. The day's log joins them only when Save
- * actually wrote it: adding an untouched log would count a day nobody
- * logged towards the streak.
- */
-export const withSavedLog = (
-  logs: DayLog[],
-  log: DayLog,
-  written: boolean
-): DayLog[] =>
-  written ? [...logs.filter((l) => l.day !== log.day), log] : logs;
+/** The saved logs after a Save, with this day's log replacing any earlier copy. */
+export const withSavedLog = (logs: DayLog[], log: DayLog): DayLog[] => [
+  ...logs.filter((l) => l.day !== log.day),
+  log
+];
 
 const utcKey = (instant: number): string =>
   new Date(instant).toISOString().slice(0, 10);

@@ -27,7 +27,6 @@ import { deferEveningReminder } from '@/utils/reminders';
 
 import FinishStep from './FinishStep';
 import NewSoreAsk from './NewSoreAsk';
-import SleepImport from './SleepImport';
 import SleepStep from './SleepStep';
 import SoreStep from './SoreStep';
 import StepHeading from './StepHeading';
@@ -65,7 +64,7 @@ export default function CheckInFlow({
   // Sores and logs as this check-in has written them, including any added in it.
   const [sores, setSores] = useState(initialSores);
   const [logs, setLogs] = useState(dayLogs);
-  const [steps, setSteps] = useState(() => buildSteps(initialSores));
+  const [steps] = useState(() => buildSteps(initialSores));
   const [current, setCurrent] = useState(() => {
     const saved = readProgress(today);
     return saved && steps.some((s) => stepKey(s) === saved)
@@ -87,9 +86,9 @@ export default function CheckInFlow({
     toast({ variant: 'destructive', title: error });
   };
 
-  const go = async (event: 'next' | 'added-sore', newSoreId?: string) => {
-    const next = nextStepAfter(steps, current, event, newSoreId);
-    if (next.current === 'finish' && current !== 'finish') {
+  const go = async () => {
+    const next = nextStepAfter(steps, current);
+    if (next === 'finish' && current !== 'finish') {
       setBusy(true);
       try {
         const result = await setCheckInStatus(today, 'done');
@@ -105,8 +104,7 @@ export default function CheckInFlow({
         setBusy(false);
       }
     }
-    setSteps(next.steps);
-    setCurrent(next.current);
+    setCurrent(next);
   };
 
   const skip = async () => {
@@ -146,7 +144,7 @@ export default function CheckInFlow({
     now,
     onSave: saveHabit,
     onBusy: setStepBusy,
-    onNext: () => go('next')
+    onNext: go
   };
 
   const replaceSore = (next: Sore) =>
@@ -179,7 +177,7 @@ export default function CheckInFlow({
           return (
             <Placeholder
               title="This sore is gone"
-              onNext={() => go('next')}
+              onNext={go}
               busy={busy}
             />
           );
@@ -192,7 +190,7 @@ export default function CheckInFlow({
             now={now}
             onBusy={setStepBusy}
             onChange={replaceSore}
-            onNext={() => go('next')}
+            onNext={go}
           />
         );
       }
@@ -203,22 +201,13 @@ export default function CheckInFlow({
             // Its reading was taken on the map, so it needs no step of its
             // own: the screen asks again for another.
             onAdded={(sore) => setSores((prev) => [...prev, sore])}
-            onNext={() => go('next')}
+            onNext={go}
             onBusy={setStepBusy}
           />
         );
       case 'sleep':
         return (
-          <SleepStep
-            {...habit}
-            importSlot={(fill, day, busy) => (
-              <SleepImport
-                day={day}
-                onImport={fill}
-                disabled={busy}
-              />
-            )}
-          />
+          <SleepStep {...habit} />
         );
       case 'food':
       case 'health':

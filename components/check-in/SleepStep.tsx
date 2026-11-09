@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Check, Loader2, Minus, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { tap } from '@/utils/native';
 
 import type { HabitStepProps } from './DayToggle';
 import ScalePicker from './ScalePicker';
+import SleepImport from './SleepImport';
 import StepHeading from './StepHeading';
 import { useReportBusy } from './useReportBusy';
 
@@ -41,19 +42,8 @@ export default function SleepStep({
   now,
   onSave,
   onNext,
-  onBusy,
-  importSlot
-}: Omit<HabitStepProps, 'initialDay'> & {
-  /**
-   * Where "Import from Health" goes: `fill` sets the hours and their source,
-   * `day` is the day being saved to, and `busy` is true while it saves.
-   */
-  importSlot?: (
-    fill: (hours: number, source: Exclude<Source, 'manual'>) => void,
-    day: string,
-    busy: boolean
-  ) => ReactNode;
-}) {
+  onBusy
+}: Omit<HabitStepProps, 'initialDay'>) {
   // Sleep is always last night's, kept on the day it ended: today.
   const day = resolveDay('today', now);
   const saved = logs.find((l) => l.day === day);
@@ -155,12 +145,13 @@ export default function SleepStep({
             <Plus aria-hidden="true" />
           </Button>
         </div>
-        {importSlot?.(
-          (hours, source) =>
-            setFields((f) => ({ ...f, hours: clampHours(hours), source })),
-          day,
-          busy
-        )}
+        <SleepImport
+          day={day}
+          onImport={(hours, source) =>
+            setFields((f) => ({ ...f, hours: clampHours(hours), source }))
+          }
+          disabled={busy}
+        />
       </div>
 
       <ScalePicker

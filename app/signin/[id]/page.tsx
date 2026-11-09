@@ -169,7 +169,7 @@ export default async function SignIn({
             />
           )}
           {viewProp === 'signup' && (
-            <SignUp allowEmail={allowEmail} redirectMethod={redirectMethod} />
+            <SignUp allowEmail={allowEmail} />
           )}
 
           {showOauth && (

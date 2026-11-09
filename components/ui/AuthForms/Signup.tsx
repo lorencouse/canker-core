@@ -23,7 +23,6 @@ function messageFromParams(params: URLSearchParams): Message | null {
 
 interface SignUpProps {
   allowEmail: boolean;
-  redirectMethod: string;
 }
 
 export default function SignUp({ allowEmail }: SignUpProps) {

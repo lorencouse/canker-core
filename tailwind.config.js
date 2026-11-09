@@ -135,17 +135,6 @@ module.exports = {
         cell: '0.75rem'
       },
       keyframes: {
-        /*
-         * A reading arriving in a course. The app's only non-hover motion:
-         * it answers a press of Save by showing the day that press recorded,
-         * rather than announcing it in a toast alone. The reduced-motion
-         * block in main.css turns it off.
-         */
-        commit: {
-          '0%': { transform: 'scale(0.3)', opacity: '0' },
-          '60%': { transform: 'scale(1.15)', opacity: '1' },
-          '100%': { transform: 'scale(1)', opacity: '1' }
-        },
         'accordion-down': {
           from: { height: '0' },
           to: { height: 'var(--radix-accordion-content-height)' }
@@ -156,7 +145,6 @@ module.exports = {
         }
       },
       animation: {
-        commit: 'commit 360ms cubic-bezier(0.34, 1.3, 0.64, 1)',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out'
       }

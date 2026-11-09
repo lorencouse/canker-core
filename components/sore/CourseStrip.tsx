@@ -43,22 +43,14 @@ function summarise(days: CourseDay[]): string {
 export default function CourseStrip({
   sore,
   size = 'sm',
-  animateLast = false,
   className
 }: {
   sore: Sore;
   size?: keyof typeof SIZES;
-  /**
-   * Pop the most recent cell in. Set for a moment after a check-in is
-   * saved, so the press has a visible consequence beyond a toast — never
-   * on a plain render, or every navigation would twitch.
-   */
-  animateLast?: boolean;
   className?: string;
 }) {
   const days = courseOf(sore);
   const { cell, gap } = SIZES[size];
-  const lastIndex = days.length - 1;
 
   return (
     <div
@@ -66,7 +58,7 @@ export default function CourseStrip({
       aria-label={`Course: ${summarise(days)}`}
       className={cn('flex flex-wrap items-end', gap, className)}
     >
-      {days.map((day, i) => (
+      {days.map((day) => (
         <span
           key={day.day}
           // Hover on a desktop; harmless everywhere else. The strip is a
@@ -79,7 +71,6 @@ export default function CourseStrip({
           className={cn(
             cell,
             'rounded-cell',
-            animateLast && i === lastIndex && 'animate-commit',
             /*
              * A hairline on filled cells. The ramp's pale end sits about six
              * points of lightness from the instrument it is drawn on, which

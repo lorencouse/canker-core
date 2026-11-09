@@ -10,5 +10,5 @@ export default async function InsightsPage() {
 
   const [sores, dayLogs] = await Promise.all([getSores(user.id), getDayLogs(user.id)]);
 
-  return <InsightsLayout user={user} sores={sores} dayLogs={dayLogs} />;
+  return <InsightsLayout sores={sores} dayLogs={dayLogs} />;
 }
