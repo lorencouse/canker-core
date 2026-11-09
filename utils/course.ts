@@ -1,12 +1,7 @@
 import type { Sore } from '@/types';
 import { LONG_SORE_DAYS } from '@/utils/insights';
-import {
-  addDays,
-  dayKey,
-  dayNumberOf,
-  daysBetween,
-  latestReading
-} from '@/utils/readings';
+import { addDays, dayKey, daysBetween } from '@/utils/days';
+import { dayNumberOf, hasReadingOn } from '@/utils/readings';
 
 /**
  * A sore's course: the day-by-day shape of it, and the one sentence that
@@ -100,12 +95,6 @@ export function trendOf(sore: Sore): Trend {
   };
 }
 
-/** Whether a reading was taken on `now`'s calendar day. */
-const loggedToday = (sore: Sore, now: Date) => {
-  const last = latestReading(sore);
-  return last !== null && dayKey(new Date(last.recorded_at)) === dayKey(now);
-};
-
 /**
  * How a single sore is going, as a sentence. Deliberately plain: "narrower"
  * and "hurting less" are what a person would say, and neither claims a cause.
@@ -116,7 +105,7 @@ export function courseSentence(sore: Sore, now: Date = new Date()): string {
   if (sore.healed_at) {
     return `Healed after ${day} day${day === 1 ? '' : 's'}.`;
   }
-  if (!loggedToday(sore, now)) {
+  if (!hasReadingOn(sore, now)) {
     return `Day ${day}. Nothing logged yet today.`;
   }
 
@@ -196,9 +185,9 @@ export function answerLine(sores: Sore[], now: Date = new Date()): Answer {
    * the note is the news, one plain sentence per sore. Sores with a change
    * to report come first, then the ones still waiting for today's reading.
    */
-  const unlogged = open.filter((s) => !loggedToday(s, now));
+  const unlogged = open.filter((s) => !hasReadingOn(s, now));
   const ordered = [
-    ...open.filter((s) => loggedToday(s, now)),
+    ...open.filter((s) => hasReadingOn(s, now)),
     ...unlogged
   ].slice(0, 3);
   const sentences = ordered.map((s) => todayPhrase(s, now));
@@ -229,7 +218,7 @@ const mm = (n: number) => n.toFixed(1);
  * (4.0 to 3.5 mm) and hurting less."
  */
 export function todayPhrase(sore: Sore, now: Date = new Date()): string {
-  if (!loggedToday(sore, now))
+  if (!hasReadingOn(sore, now))
     return `The ${place(sore)} has not been measured today.`;
   const trend = trendOf(sore);
   if (!trend) return `The ${place(sore)} has its first reading today.`;
@@ -285,7 +274,7 @@ export function verdictOf(sore: Sore, now: Date = new Date()): Verdict {
       word: 'No readings yet.',
       detail: 'Log today to start its course.'
     };
-  if (!loggedToday(sore, now)) {
+  if (!hasReadingOn(sore, now)) {
     return {
       word: 'Not logged today.',
       detail: `Last reading ${mm(last.size)} mm, pain ${last.pain} of 10.`

@@ -10,7 +10,7 @@ import {
   triggerFreeStreak,
   weekDots
 } from '@/utils/momentum';
-import { dayKey } from '@/utils/readings';
+import { dayKey } from '@/utils/days';
 
 /**
  * The top of Today: Kanko, the day's headline and, on a trigger-free run,

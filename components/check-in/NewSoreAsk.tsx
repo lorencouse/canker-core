@@ -10,12 +10,8 @@ import { SoreProvider, useSoreContext } from '@/context/SoreContext';
 import type { Sore, User } from '@/types';
 import { upsertSores } from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
-import {
-  currentPain,
-  currentSize,
-  localTimeZone,
-  withReading
-} from '@/utils/readings';
+import { currentPain, currentSize, withReading } from '@/utils/readings';
+import { localTimeZone } from '@/utils/days';
 import { runWrite, showFailure } from '@/utils/write-feedback';
 import { BusyIcon } from '@/components/ui/busy-icon';
 

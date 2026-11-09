@@ -22,12 +22,8 @@ import {
 } from '@/utils/check-in/steps';
 import { notify, tap } from '@/utils/native';
 import { cn } from '@/utils/cn';
-import {
-  currentPain,
-  dayKey,
-  hasReadingOn,
-  replaceSore
-} from '@/utils/readings';
+import { currentPain, hasReadingOn, replaceSore } from '@/utils/readings';
+import { dayKey } from '@/utils/days';
 import { deferEveningReminder } from '@/utils/reminders';
 import { sevFill } from '@/utils/severity';
 import { runWrite, showFailure } from '@/utils/write-feedback';

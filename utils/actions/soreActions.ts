@@ -17,7 +17,8 @@ import {
   isDayKey,
   pickKnown
 } from '@/utils/day-log';
-import { isTimeZone, parseSores, sameDayReading } from '@/utils/sore-payload';
+import { parseSores, sameDayReading } from '@/utils/sore-payload';
+import { isTimeZone } from '@/utils/days';
 
 /**
  * Sore and day-log mutations.

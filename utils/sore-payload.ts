@@ -4,8 +4,6 @@ import type { Reading, Sore } from '@/types';
 import { dayKeyIn } from '@/utils/days';
 import { MOUTH_VIEWS } from '@/utils/mouth-map/geometry';
 
-export { dayKeyIn, isTimeZone } from '@/utils/days';
-
 /**
  * Server-side checks for the `Sore[]` a client asks to save.
  *

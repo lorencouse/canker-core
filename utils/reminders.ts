@@ -1,5 +1,5 @@
 import { isNative } from '@/utils/native';
-import { dayKey } from '@/utils/readings';
+import { dayKey } from '@/utils/days';
 
 /**
  * The daily reminders: a morning check-in and an evening nudge.

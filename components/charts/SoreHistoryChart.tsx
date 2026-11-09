@@ -6,7 +6,7 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartTooltip, type ChartConfig } from '@/components/ui/chart';
 import type { Sore } from '@/types';
 import { sevFill } from '@/utils/severity';
-import { dayKey, daysBetween } from '@/utils/readings';
+import { dayKey, daysBetween } from '@/utils/days';
 
 /**
  * One sore's course: width by day as a line, each point coloured by that

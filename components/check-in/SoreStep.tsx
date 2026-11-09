@@ -20,9 +20,9 @@ import {
   dayNumberOf,
   hasReadingOn,
   latestReading,
-  localTimeZone,
   withReading
 } from '@/utils/readings';
+import { localTimeZone } from '@/utils/days';
 import { runWrite, showFailure } from '@/utils/write-feedback';
 import { BusyIcon } from '@/components/ui/busy-icon';
 

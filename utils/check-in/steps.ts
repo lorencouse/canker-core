@@ -1,6 +1,6 @@
 import type { CheckIn, Sore } from '@/types';
 import { MOUTH_VIEWS } from '@/utils/mouth-map/geometry';
-import { addDays, dayKey } from '@/utils/readings';
+import { addDays, dayKey } from '@/utils/days';
 
 const HABIT_KINDS = ['sleep', 'food', 'health', 'treatments'] as const;
 

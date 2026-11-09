@@ -17,7 +17,8 @@ import { useSoreContext } from '@/context/SoreContext';
 import { deleteSore, upsertSores } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
-import { localTimeZone, replaceSore } from '@/utils/readings';
+import { replaceSore } from '@/utils/readings';
+import { localTimeZone } from '@/utils/days';
 import { deletePhotosFor } from '@/utils/sore-photos';
 import { runWrite, showFailure } from '@/utils/write-feedback';
 

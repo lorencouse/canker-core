@@ -20,7 +20,7 @@ import { upsertSores } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { useMounted } from '@/utils/hooks/useMounted';
 import { notify, tap } from '@/utils/native';
-import { localTimeZone } from '@/utils/readings';
+import { localTimeZone } from '@/utils/days';
 import {
   DEFAULT_TIME,
   applyReminder,

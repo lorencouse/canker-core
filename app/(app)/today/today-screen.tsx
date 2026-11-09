@@ -36,15 +36,12 @@ import { MOUTH_VIEWS, type MouthView } from '@/utils/mouth-map/geometry';
 import { isNative, notify, tap } from '@/utils/native';
 import { type Mood, withSavedLog } from '@/utils/momentum';
 import {
-  addDays,
-  dayKey,
   hasReadingOn,
-  isSameLocalDay,
   lastWasYesterday,
   latestReading,
-  localTimeZone,
   withReading
 } from '@/utils/readings';
+import { addDays, dayKey, isSameLocalDay, localTimeZone } from '@/utils/days';
 import { runWrite, showFailure } from '@/utils/write-feedback';
 import { BusyIcon } from '@/components/ui/busy-icon';
 

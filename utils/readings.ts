@@ -3,15 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Reading, Sore } from '@/types';
 import { addDays, daysBetween, isSameLocalDay } from '@/utils/days';
 
-export {
-  addDays,
-  dayKey,
-  daysBetween,
-  isSameLocalDay,
-  localMidnight,
-  localTimeZone
-} from '@/utils/days';
-
 /**
  * Reading arithmetic for a sore.
  *
