@@ -1,7 +1,12 @@
 import type { DayLog, Sore } from '@/types';
 import { isAnsweredClean } from '@/utils/day-log';
-import { dayKey } from '@/utils/readings';
-import { dayKeyIn, isTimeZone } from '@/utils/sore-payload';
+import {
+  dayKey,
+  dayKeyIn,
+  isTimeZone,
+  parseDay,
+  shiftDay
+} from '@/utils/days';
 
 /** A reading at or above this pain level makes today a gentle day. */
 export const BAD_DAY_PAIN = 6;
@@ -9,19 +14,6 @@ export const BAD_DAY_PAIN = 6;
 export type Mood = 'proud' | 'gentle' | 'neutral';
 
 export type WeekDot = { day: string; initial: string; won: boolean };
-
-/** Parse a local YYYY-MM-DD at noon, which stays clear of DST edges. */
-const parseDay = (day: string): Date => {
-  const [y, m, d] = day.split('-').map(Number);
-  return new Date(y, m - 1, d, 12);
-};
-
-/** The local day `offset` calendar days from `day`, via Date arithmetic rather than milliseconds. */
-const shiftDay = (day: string, offset: number): string => {
-  const date = parseDay(day);
-  date.setDate(date.getDate() + offset);
-  return dayKey(date);
-};
 
 /**
  * Whether a day has both trigger questions answered. A row can exist
