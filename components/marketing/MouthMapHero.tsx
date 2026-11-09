@@ -4,6 +4,7 @@ import {
   radiusFor,
   viewBoxAttr
 } from '@/utils/mouth-map/geometry';
+import { sevFill } from '@/utils/severity';
 
 /**
  * The hero is the product's actual mechanism rather than a picture of it: the
@@ -59,7 +60,7 @@ export default function MouthMapHero() {
                   cx={p.x}
                   cy={p.y}
                   r={r + 2}
-                  fill={`hsl(var(--sev-${sore.pain}))`}
+                  fill={sevFill(sore.pain)}
                   opacity="0.28"
                   filter="url(#herosoft)"
                 />
@@ -67,7 +68,7 @@ export default function MouthMapHero() {
                   cx={p.x}
                   cy={p.y}
                   r={r}
-                  fill={`hsl(var(--sev-${sore.pain}))`}
+                  fill={sevFill(sore.pain)}
                   stroke="hsl(var(--foreground) / 0.45)"
                   strokeWidth="1"
                 />
@@ -123,7 +124,7 @@ export default function MouthMapHero() {
             <li key={sore.id} className="flex items-center gap-2">
               <span
                 className="h-2.5 w-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: `hsl(var(--sev-${sore.pain}))` }}
+                style={{ backgroundColor: sevFill(sore.pain) }}
               />
               {sore.size} mm, pain {sore.pain}, day {sore.day}
             </li>

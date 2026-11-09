@@ -1,4 +1,4 @@
-import { SEVERITY_MAX, SEVERITY_MIN } from '@/utils/getColor';
+import { SEVERITY_MAX, SEVERITY_MIN, sevFill } from '@/utils/severity';
 
 const LEVELS = Array.from(
   { length: SEVERITY_MAX - SEVERITY_MIN + 1 },
@@ -22,7 +22,7 @@ export default function SeverityScale() {
           <div
             key={level}
             className="flex flex-1 items-end justify-center pb-2"
-            style={{ backgroundColor: `hsl(var(--sev-${level}))` }}
+            style={{ backgroundColor: sevFill(level) }}
           >
             <span
               className="tabular text-xs font-semibold"

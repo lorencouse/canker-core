@@ -1,4 +1,5 @@
 import type React from 'react';
+import { sevFill } from '@/utils/severity';
 
 /**
  * One sore on the map. Fill is the pain colour; the ring and glow separate it
@@ -39,8 +40,7 @@ export default function SoreMarker({
   /** Arrow-key movement in percent of the view, only while draggable. */
   onNudge?: (dx: number, dy: number) => void;
 }) {
-  const level = Math.min(10, Math.max(1, Math.round(pain)));
-  const fill = `hsl(var(--sev-${level}))`;
+  const fill = sevFill(pain);
 
   const onKeyDown = (e: React.KeyboardEvent<SVGGElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {

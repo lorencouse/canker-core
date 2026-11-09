@@ -10,8 +10,7 @@ import SoreQuickCard from '@/components/sore/SoreQuickCard';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart';
 import { Sore } from '@/types';
-import { getSeverityColor } from '@/utils/getColor';
-import { useIsDark } from '@/utils/hooks/useIsDark';
+import { sevFill } from '@/utils/severity';
 
 /**
  * Local YYYY-MM-DD. Grouping on the UTC day instead would push an evening
@@ -63,7 +62,6 @@ function buildChart(sores: Sore[]) {
 }
 
 const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
-  const isDark = useIsDark();
   const router = useRouter();
   // The sore whose bar was tapped, shown in its quick card.
   const [tappedId, setTappedId] = useState<string | null>(null);
@@ -161,10 +159,7 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
                 {rows.map((row) => (
                   <Cell
                     key={`${id}-${row.day}`}
-                    fill={getSeverityColor(
-                      painByDay.get(id)?.get(row.day) ?? 1,
-                      isDark
-                    )}
+                    fill={sevFill(painByDay.get(id)?.get(row.day) ?? 1)}
                   />
                 ))}
               </Bar>

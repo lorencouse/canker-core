@@ -2,6 +2,7 @@ import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
 import { courseOf, type CourseDay } from '@/utils/course';
 import { shortDate } from '@/utils/dates';
+import { sevFill } from '@/utils/severity';
 
 /**
  * A sore's course drawn to scale: one slot per day, bar height for width,
@@ -131,7 +132,7 @@ export default function CourseBars({
             className={cn('min-h-1', ring)}
             style={{
               height: `${Math.min(100, (day.size / max) * 100)}%`,
-              backgroundColor: `hsl(var(--sev-${day.pain}))`
+              backgroundColor: sevFill(day.pain!)
             }}
           />
         );

@@ -23,6 +23,7 @@ import {
   latestReading
 } from '@/utils/readings';
 import { photoFor, photosSupported } from '@/utils/sore-photos';
+import { sevFill } from '@/utils/severity';
 
 /**
  * The selected sore, inline beside the map on a desktop and under it on a
@@ -217,7 +218,7 @@ export function SoreDetail() {
             style={{
               width: `${size}mm`,
               height: `${size}mm`,
-              backgroundColor: `hsl(var(--sev-${pain}))`
+              backgroundColor: sevFill(pain)
             }}
           />
         </span>

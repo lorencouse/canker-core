@@ -1,6 +1,7 @@
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
 import { courseOf, type CourseDay } from '@/utils/course';
+import { sevFill } from '@/utils/severity';
 
 /**
  * A sore's whole course as one row of days.
@@ -87,7 +88,7 @@ export default function CourseStrip({
           )}
           style={
             day.pain !== null && !day.isHealedDay
-              ? { backgroundColor: `hsl(var(--sev-${day.pain}))` }
+              ? { backgroundColor: sevFill(day.pain) }
               : undefined
           }
         />

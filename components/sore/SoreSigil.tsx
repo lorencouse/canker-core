@@ -3,6 +3,7 @@ import { cn } from '@/utils/cn';
 import { FRONT, VIEW_BOX, viewBoxAttr } from '@/utils/mouth-map/geometry';
 import { sigilShapes, type SigilShape } from '@/utils/mouth-map/sigil';
 import { currentPain } from '@/utils/readings';
+import { sevFill } from '@/utils/severity';
 
 /**
  * A sore's sigil: the mouth map shrunk to a glyph, with one severity dot
@@ -83,7 +84,7 @@ export default function SoreSigil({
           cx={(sore.x! / 100) * VIEW_BOX.width}
           cy={(sore.y! / 100) * VIEW_BOX.height}
           r={DOT_R}
-          fill={`hsl(var(--sev-${pain}))`}
+          fill={sevFill(pain)}
           // A ring in the surrounding ground, so a pale dot on pale tissue
           // and a hot dot on dark tissue both hold their edge.
           stroke="hsl(var(--card))"

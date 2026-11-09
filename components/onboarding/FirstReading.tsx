@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import type { Sore } from '@/types';
 import { currentPain, currentSize, withReading } from '@/utils/readings';
+import { sevFill } from '@/utils/severity';
 
 /**
  * The second step of the first run: how wide, and how much it hurts.
@@ -47,7 +48,7 @@ export default function FirstReading({
           style={{
             width: `${size}mm`,
             height: `${size}mm`,
-            backgroundColor: `hsl(var(--sev-${pain}))`
+            backgroundColor: sevFill(pain)
           }}
         />
       </div>

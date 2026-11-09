@@ -1,6 +1,6 @@
 'use client';
 
-import { SEVERITY_MAX, SEVERITY_MIN } from '@/utils/getColor';
+import { SEVERITY_MAX, SEVERITY_MIN, sevFill } from '@/utils/severity';
 import { cn } from '@/utils/cn';
 
 /*
@@ -74,7 +74,7 @@ export default function SeverityLadder({
             style={
               filled
                 ? {
-                    backgroundColor: `hsl(var(--sev-${level}))`,
+                    backgroundColor: sevFill(level),
                     // Pale rungs keep dark ink; deep ones flip to white.
                     color: `hsl(var(--sev-ink-${level > 5 ? 'hi' : 'lo'}))`
                   }

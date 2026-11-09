@@ -24,6 +24,7 @@ import { notify, tap } from '@/utils/native';
 import { cn } from '@/utils/cn';
 import { currentPain, dayKey, hasReadingOn } from '@/utils/readings';
 import { deferEveningReminder } from '@/utils/reminders';
+import { sevFill } from '@/utils/severity';
 
 import FinishStep from './FinishStep';
 import NewSoreAsk from './NewSoreAsk';
@@ -354,9 +355,7 @@ function SoresStrip({
               'size-3.5 rounded-full border-2 border-card',
               i > 0 && '-ml-1'
             )}
-            style={{
-              backgroundColor: `hsl(var(--sev-${Math.min(10, Math.max(1, Math.round(currentPain(s))))}))`
-            }}
+            style={{ backgroundColor: sevFill(currentPain(s)) }}
           />
         ))}
       </div>
