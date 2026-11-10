@@ -1,15 +1,24 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import createMDX from '@next/mdx';
 
-import { buildCommit, buildLabel } from './utils/build-label.mjs';
+import {
+  buildCommit,
+  buildLabel,
+  gitBuildNumber
+} from './utils/build-label.mjs';
 
 // The image build has no .git (see .dockerignore), so the deploy passes the
 // commit count and commit in as BUILD_NUMBER and BUILD_COMMIT; a local build
 // asks git, and anything else shows "dev".
-function fromEnvOrGit(name, cmd) {
-  if (process.env[name]) return process.env[name];
+function git(args) {
+  return execFileSync('git', args, {
+    stdio: ['ignore', 'pipe', 'ignore']
+  }).toString();
+}
+
+function gitOrUndefined(args) {
   try {
-    return execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString();
+    return git(args);
   } catch {
     return undefined;
   }
@@ -20,10 +29,11 @@ const nextConfig = {
   // Inlined at build, so the footer and Settings can show which deploy is live.
   env: {
     NEXT_PUBLIC_BUILD_LABEL: buildLabel(
-      fromEnvOrGit('BUILD_NUMBER', 'git rev-list --count HEAD')
+      process.env.BUILD_NUMBER || gitBuildNumber(git)
     ),
     NEXT_PUBLIC_BUILD_COMMIT: buildCommit(
-      fromEnvOrGit('BUILD_COMMIT', 'git rev-parse --short HEAD')
+      process.env.BUILD_COMMIT ||
+        gitOrUndefined(['rev-parse', '--short', 'HEAD'])
     )
   },
 
