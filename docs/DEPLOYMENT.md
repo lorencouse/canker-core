@@ -68,7 +68,11 @@ on the server. This mirrors how kouzr deploys — its images come from the same
 
 ```bash
 SHA=$(git rev-parse --short HEAD)
-BUILD_NUMBER=$(git rev-list --count HEAD)   # version v1.N in the footer
+# Version v1.N in the footer: N is main's commit count at HEAD. Empty (so the
+# footer reads "dev") when HEAD is not on origin/main or the clone is shallow,
+# so fetch main first. Set BUILD_NUMBER by hand only to override it.
+git fetch origin main
+BUILD_NUMBER=$(node scripts/build-number.mjs)
 
 # 1. Build for the VPS architecture (arm64; an Apple Silicon Mac matches natively)
 docker build --platform linux/arm64 \

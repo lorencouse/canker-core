@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildCommit, buildLabel } from './build-label.mjs';
+import { buildCommit, buildLabel, gitBuildNumber } from './build-label.mjs';
 
 describe('buildLabel', () => {
   it('numbers the version by commit count', () => {
@@ -25,5 +25,51 @@ describe('buildCommit', () => {
   it('is empty without a usable commit', () => {
     expect(buildCommit(undefined)).toBe('');
     expect(buildCommit('not-a-sha')).toBe('');
+  });
+});
+
+describe('gitBuildNumber', () => {
+  // A fake git: each command's stdout, or a throw for a non-zero exit.
+  function fakeGit(replies: Record<string, string | Error>) {
+    return (args: string[]) => {
+      const reply = replies[args.join(' ')];
+      if (reply === undefined) throw new Error(`unexpected git ${args}`);
+      if (reply instanceof Error) throw reply;
+      return reply;
+    };
+  }
+
+  const onMain = {
+    'rev-parse --is-shallow-repository': 'false\n',
+    'merge-base --is-ancestor HEAD origin/main': '',
+    'rev-list --count HEAD': '31\n'
+  };
+
+  it('counts HEAD when it is on origin/main in a full clone', () => {
+    expect(gitBuildNumber(fakeGit(onMain))).toBe('31');
+  });
+
+  it('has no number off origin/main', () => {
+    const git = fakeGit({
+      ...onMain,
+      'merge-base --is-ancestor HEAD origin/main': new Error('exit 1')
+    });
+    expect(gitBuildNumber(git)).toBeUndefined();
+  });
+
+  it('has no number in a shallow clone', () => {
+    const git = fakeGit({
+      ...onMain,
+      'rev-parse --is-shallow-repository': 'true\n'
+    });
+    expect(gitBuildNumber(git)).toBeUndefined();
+  });
+
+  it('has no number outside git', () => {
+    expect(gitBuildNumber(fakeGit({}))).toBeUndefined();
+  });
+
+  it('labels a missing number dev', () => {
+    expect(buildLabel(gitBuildNumber(fakeGit({})))).toBe('dev');
   });
 });
