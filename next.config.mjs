@@ -1,17 +1,15 @@
 import { execSync } from 'node:child_process';
 import createMDX from '@next/mdx';
 
-import { buildLabel } from './utils/build-label.mjs';
+import { buildCommit, buildLabel } from './utils/build-label.mjs';
 
-// The image build has no .git (see .dockerignore), so the Dockerfile passes
-// the commit in as BUILD_COMMIT; a local build asks git, and anything else
-// shows "dev".
-function buildCommit() {
-  if (process.env.BUILD_COMMIT) return process.env.BUILD_COMMIT;
+// The image build has no .git (see .dockerignore), so the deploy passes the
+// commit count and commit in as BUILD_NUMBER and BUILD_COMMIT; a local build
+// asks git, and anything else shows "dev".
+function fromEnvOrGit(name, cmd) {
+  if (process.env[name]) return process.env[name];
   try {
-    return execSync('git rev-parse --short HEAD', {
-      stdio: ['ignore', 'pipe', 'ignore']
-    }).toString();
+    return execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString();
   } catch {
     return undefined;
   }
@@ -20,7 +18,14 @@ function buildCommit() {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Inlined at build, so the footer and Settings can show which deploy is live.
-  env: { NEXT_PUBLIC_BUILD_LABEL: buildLabel(buildCommit()) },
+  env: {
+    NEXT_PUBLIC_BUILD_LABEL: buildLabel(
+      fromEnvOrGit('BUILD_NUMBER', 'git rev-list --count HEAD')
+    ),
+    NEXT_PUBLIC_BUILD_COMMIT: buildCommit(
+      fromEnvOrGit('BUILD_COMMIT', 'git rev-parse --short HEAD')
+    )
+  },
 
   // Articles are .mdx files sitting in their own route folder, so prose lives
   // in prose syntax and the interactive pieces are imported components rather
