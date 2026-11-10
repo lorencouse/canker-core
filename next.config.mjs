@@ -1,7 +1,27 @@
+import { execSync } from 'node:child_process';
 import createMDX from '@next/mdx';
+
+import { buildLabel } from './utils/build-label.mjs';
+
+// The image build has no .git (see .dockerignore), so the Dockerfile passes
+// the commit in as BUILD_COMMIT; a local build asks git, and anything else
+// shows "dev".
+function buildCommit() {
+  if (process.env.BUILD_COMMIT) return process.env.BUILD_COMMIT;
+  try {
+    return execSync('git rev-parse --short HEAD', {
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).toString();
+  } catch {
+    return undefined;
+  }
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Inlined at build, so the footer and Settings can show which deploy is live.
+  env: { NEXT_PUBLIC_BUILD_LABEL: buildLabel(buildCommit()) },
+
   // Articles are .mdx files sitting in their own route folder, so prose lives
   // in prose syntax and the interactive pieces are imported components rather
   // than a shortcode dialect.
