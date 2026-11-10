@@ -72,6 +72,7 @@ SHA=$(git rev-parse --short HEAD)
 # 1. Build for the VPS architecture (arm64; an Apple Silicon Mac matches natively)
 docker build --platform linux/arm64 \
   --build-arg NEXT_PUBLIC_SITE_URL="https://cankercore.com" \
+  --build-arg BUILD_COMMIT=$SHA \
   -t canker-core:$SHA .
 
 # 2. Stream it to the VPS.

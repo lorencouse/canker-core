@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 
+import BuildLabel from '@/components/BuildLabel';
 import SignOutButton from '@/components/shell/SignOutButton';
 import { SidebarNav } from './components/sidebar-nav';
 
@@ -58,6 +59,7 @@ export default async function SettingsLayout({
           <div className="mt-8 lg:hidden">
             <SignOutButton />
           </div>
+          <BuildLabel className="mt-8 block text-xs text-muted-foreground" />
         </div>
       </div>
     </div>

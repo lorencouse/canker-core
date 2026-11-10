@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import Logo from '@/components/icons/Logo';
 import GitHub from '@/components/icons/GitHub';
+import BuildLabel from '@/components/BuildLabel';
 import ExternalLink from './ExternalLink';
 
 const productLinks = [
@@ -43,8 +44,9 @@ export default function Footer() {
 
       <div className="safe-b border-t border-border">
         <div className="container flex flex-col items-center justify-between gap-4 py-6 text-sm text-muted-foreground sm:flex-row">
-          <span>
+          <span className="text-center sm:text-left">
             © {new Date().getFullYear()} Canker Core. Not medical advice.
+            <BuildLabel className="mt-1 block text-xs" />
           </span>
           <div className="flex items-center gap-4">
             <ExternalLink
