@@ -46,7 +46,7 @@ export default function ScalePicker({
               }}
               className={cn(
                 'tabular h-12 min-w-0 rounded-cell border-2 bg-card font-display text-lg font-semibold transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                'focus-ring',
                 'disabled:opacity-50',
                 on
                   ? 'border-primary bg-accent text-foreground'

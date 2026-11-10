@@ -1,8 +1,15 @@
 import type { ReactNode } from 'react';
 import type React from 'react';
-import { createContext, useContext, useState, useMemo } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState
+} from 'react';
 
 import { Sore } from '@/types';
+import { replaceSore } from '@/utils/readings';
 
 /** 'add' places new sores, 'edit' drags existing ones, 'view' does neither. */
 type Mode = 'add' | 'edit' | 'view';
@@ -34,6 +41,16 @@ interface SoreContextProps {
    */
   snapshot: Sore[] | null;
   setSnapshot: React.Dispatch<React.SetStateAction<Sore[] | null>>;
+  /** Update a sore in the list and keep it selected, so its marker and details follow. */
+  commitSore: (next: Sore) => void;
+  /** The sore placed in this add session, if one has been: selected and absent from the snapshot. */
+  placedSore: Sore | null;
+  /**
+   * The sores this editing session changed, or every sore outside a session.
+   * State updates replace a sore's object, so anything still referentially
+   * in the snapshot was never touched.
+   */
+  changedSores: Sore[];
   /**
    * Whether the selected sore's quick card is open. Shared so the map's
    * markers and a list beside it open the same card.
@@ -84,6 +101,24 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
     [sores, showHealed]
   );
 
+  const commitSore = useCallback((next: Sore) => {
+    setSores((prev) => replaceSore(prev, next));
+    setSelectedSore(next);
+  }, []);
+
+  const placedSore =
+    mode === 'add' &&
+    selectedSore &&
+    snapshot &&
+    !snapshot.some((s) => s.id === selectedSore.id)
+      ? selectedSore
+      : null;
+
+  const changedSores = useMemo(
+    () => (snapshot ? sores.filter((s) => !snapshot.includes(s)) : sores),
+    [sores, snapshot]
+  );
+
   const contextValue = useMemo(
     () => ({
       selectedSore,
@@ -97,10 +132,24 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
       setMode,
       snapshot,
       setSnapshot,
+      commitSore,
+      placedSore,
+      changedSores,
       quickOpen,
       setQuickOpen
     }),
-    [selectedSore, sores, visibleSores, showHealed, mode, snapshot, quickOpen]
+    [
+      selectedSore,
+      sores,
+      visibleSores,
+      showHealed,
+      mode,
+      snapshot,
+      commitSore,
+      placedSore,
+      changedSores,
+      quickOpen
+    ]
   );
 
   return (

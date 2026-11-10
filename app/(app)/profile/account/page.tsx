@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation';
 
 import { Separator } from '@/components/ui/separator';
-import { getUserDetails } from '@/lib/queries';
+import { getUser } from '@/lib/queries';
 import { AccountForm } from './account-form';
 
 export default async function SettingsAccountPage() {
-  const user = await getUserDetails();
+  const user = await getUser();
   if (!user) redirect('/signin/password_signin');
 
   return (

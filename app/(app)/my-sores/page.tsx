@@ -1,12 +1,12 @@
 import MySoresLayout from './my-sores-layout';
-import { getUserDetails, getSores } from '@/lib/queries';
+import { getUser, getSores } from '@/lib/queries';
 import { redirect } from 'next/navigation';
 export default async function MySoresPage({
   searchParams
 }: {
   searchParams: Promise<{ sore?: string; add?: string }>;
 }) {
-  const user = await getUserDetails();
+  const user = await getUser();
 
   if (!user) {
     redirect('/signin/password_signin');

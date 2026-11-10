@@ -1,16 +1,20 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
-import { Check, Loader2, Minus, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { Minus, Plus } from 'lucide-react';
 
+import Measure from '@/components/sore/Measure';
+import { Stepper } from '@/components/sore/ReadingFields';
 import { Button } from '@/components/ui/button';
 import type { DayLog } from '@/types';
 import { resolveDay } from '@/utils/check-in/steps';
 import { tap } from '@/utils/native';
 
-import type { HabitStepProps } from './DayToggle';
+import type { HabitStepProps } from './habit-step';
 import ScalePicker from './ScalePicker';
+import SleepImport from './SleepImport';
 import StepHeading from './StepHeading';
+import StepNextButton from './StepNextButton';
 import { useReportBusy } from './useReportBusy';
 
 type Source = NonNullable<DayLog['sleep_source']>;
@@ -41,19 +45,8 @@ export default function SleepStep({
   now,
   onSave,
   onNext,
-  onBusy,
-  importSlot
-}: Omit<HabitStepProps, 'initialDay'> & {
-  /**
-   * Where "Import from Health" goes: `fill` sets the hours and their source,
-   * `day` is the day being saved to, and `busy` is true while it saves.
-   */
-  importSlot?: (
-    fill: (hours: number, source: Exclude<Source, 'manual'>) => void,
-    day: string,
-    busy: boolean
-  ) => ReactNode;
-}) {
+  onBusy
+}: Omit<HabitStepProps, 'initialDay'>) {
   // Sleep is always last night's, kept on the day it ended: today.
   const day = resolveDay('today', now);
   const saved = logs.find((l) => l.day === day);
@@ -106,28 +99,19 @@ export default function SleepStep({
             aria-live="polite"
             className="tabular font-display text-xl font-semibold leading-none"
           >
-            {fields.hours ?? '–'}{' '}
-            <small className="font-sans text-sm font-normal text-muted-foreground">
-              h
-            </small>
+            <Measure value={fields.hours ?? '–'} unit="h" />
           </output>
         </div>
         {/* Clear sits between the steppers so a stray tap is one tap from
             undone and the screen can still be left unanswered. */}
         <div className="grid grid-cols-3 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-12 w-full px-0 [&_svg]:size-5"
-            aria-label="Half an hour less"
-            onClick={() => {
-              tap();
-              stepHours(-HOURS_STEP);
-            }}
+          <Stepper
+            label="Half an hour less"
+            onClick={() => stepHours(-HOURS_STEP)}
             disabled={busy || fields.hours === 0}
           >
             <Minus aria-hidden="true" />
-          </Button>
+          </Stepper>
           <Button
             type="button"
             variant="ghost"
@@ -141,26 +125,21 @@ export default function SleepStep({
           >
             Clear
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-12 w-full px-0 [&_svg]:size-5"
-            aria-label="Half an hour more"
-            onClick={() => {
-              tap();
-              stepHours(HOURS_STEP);
-            }}
+          <Stepper
+            label="Half an hour more"
+            onClick={() => stepHours(HOURS_STEP)}
             disabled={busy || fields.hours === MAX_HOURS}
           >
             <Plus aria-hidden="true" />
-          </Button>
+          </Stepper>
         </div>
-        {importSlot?.(
-          (hours, source) =>
-            setFields((f) => ({ ...f, hours: clampHours(hours), source })),
-          day,
-          busy
-        )}
+        <SleepImport
+          day={day}
+          onImport={(hours, source) =>
+            setFields((f) => ({ ...f, hours: clampHours(hours), source }))
+          }
+          disabled={busy}
+        />
       </div>
 
       <ScalePicker
@@ -172,20 +151,7 @@ export default function SleepStep({
         disabled={busy}
       />
 
-      <Button
-        type="button"
-        size="touch"
-        className="w-full"
-        onClick={next}
-        disabled={busy}
-      >
-        {busy ? (
-          <Loader2 className="animate-spin" aria-hidden="true" />
-        ) : (
-          <Check aria-hidden="true" />
-        )}
-        Next
-      </Button>
+      <StepNextButton busy={busy} onClick={next} />
     </div>
   );
 }

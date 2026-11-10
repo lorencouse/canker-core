@@ -1,3 +1,4 @@
+import { sevFill } from '@/utils/severity';
 import { CELL, STAGES, type Stage, stageMarkup } from './stages';
 
 /**
@@ -34,7 +35,7 @@ function StageCard({ stage }: { stage: Stage }) {
             {' · '}
             <span
               className="mr-1 inline-block h-2 w-2 translate-y-px rounded-full align-baseline"
-              style={{ backgroundColor: `hsl(var(--sev-${stage.pain}))` }}
+              style={{ backgroundColor: sevFill(stage.pain) }}
               aria-hidden
             />
             {`pain ${stage.pain}/10`}

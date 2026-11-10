@@ -10,13 +10,13 @@ import {
 import { Capacitor } from '@capacitor/core';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, ChevronRight, Loader2, Plus } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 
 import CheckInFlow from '@/components/check-in/CheckInFlow';
 import CheckInHost from '@/components/check-in/CheckInHost';
 import Kanko from '@/components/kanko/Kanko';
 import MouthMap from '@/components/mouth-map/MouthMap';
-import SoreSigil from '@/components/sore/SoreSigil';
+import SoreRow from '@/components/sore/SoreRow';
 import DayLogForm from '@/components/today/DayLogForm';
 import StreakBlock, {
   StreakBlockPlaceholder
@@ -36,17 +36,14 @@ import { MOUTH_VIEWS, type MouthView } from '@/utils/mouth-map/geometry';
 import { isNative, notify, tap } from '@/utils/native';
 import { type Mood, withSavedLog } from '@/utils/momentum';
 import {
-  addDays,
-  currentPain,
-  currentSize,
-  dayKey,
-  dayNumberOf,
   hasReadingOn,
-  isSameLocalDay,
+  lastWasYesterday,
   latestReading,
-  localTimeZone,
   withReading
 } from '@/utils/readings';
+import { addDays, dayKey, isSameLocalDay, localTimeZone } from '@/utils/days';
+import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
  * The daily check-in.
@@ -262,12 +259,10 @@ function Today({
     const updated = repeatable.map((s) => withReading(s, {}));
     setBulkBusy(true);
     try {
-      const result = await upsertSores(updated, localTimeZone());
-      if (!result.ok) {
-        notify('error');
-        toast({ variant: 'destructive', title: result.error });
-        return;
-      }
+      const result = await runWrite(() =>
+        upsertSores(updated, localTimeZone())
+      );
+      if (!result.ok) return showFailure(result.error);
       const byId = new Map(updated.map((s) => [s.id, s]));
       setSores((prev) => prev.map((s) => byId.get(s.id) ?? s));
       notify('success');
@@ -292,17 +287,14 @@ function Today({
   const saveLog = async () => {
     setSaving(true);
     try {
-      const result = await saveDayLog(log);
-      if (!result.ok) {
-        notify('error');
-        toast({ variant: 'destructive', title: result.error });
-        return;
-      }
-      setSavedLogs((prev) => withSavedLog(
-          prev,
-          { ...log, food_answered: true, health_answered: true },
-          true
-        ));
+      const result = await runWrite(
+        () => saveDayLog(log),
+        'Could not save today’s log. Try again.'
+      );
+      if (!result.ok) return showFailure(result.error);
+      setSavedLogs((prev) =>
+        withSavedLog(prev, { ...log, food_answered: true, health_answered: true })
+      );
       setLogDirty(false);
       setSaved(true);
       notify('success');
@@ -387,12 +379,10 @@ function Today({
                 onClick={allSame}
                 disabled={bulkBusy}
               >
-                {bulkBusy ? (
-                  <Loader2 className="animate-spin" aria-hidden="true" />
-                ) : (
+                <BusyIcon busy={bulkBusy}>
                   <Check aria-hidden="true" />
-                )}
-                {repeatable.every(lastWasYesterday)
+                </BusyIcon>
+                {repeatable.every((s) => lastWasYesterday(s))
                   ? 'All the same as yesterday'
                   : 'All the same as last time'}
               </Button>
@@ -415,36 +405,24 @@ function Today({
                       key={sore.id}
                       className="border-t border-border first:border-t-0"
                     >
-                      <button
-                        type="button"
+                      <SoreRow
+                        sore={sore}
+                        now={now}
                         onClick={() => openSore(sore)}
-                        className="grid min-h-14 w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 py-2.5 text-left hover:bg-muted"
-                      >
-                        <SoreSigil sore={sore} size={28} />
-                        <span className="min-w-0">
-                          <span className="block truncate font-semibold">
-                            {sore.zone}
+                        className="min-h-14 grid-cols-[auto_minmax(0,1fr)_auto_auto] gap-3 py-2.5"
+                        trailing={
+                          <span
+                            className={cn(
+                              'whitespace-nowrap text-sm',
+                              logged
+                                ? 'text-muted-foreground'
+                                : 'font-semibold text-foreground'
+                            )}
+                          >
+                            {logged ? 'Logged' : 'Log today'}
                           </span>
-                          <span className="tabular block truncate text-sm text-muted-foreground">
-                            {now && `Day ${dayNumberOf(sore, now)} · `}
-                            {currentSize(sore)} mm, pain {currentPain(sore)}
-                          </span>
-                        </span>
-                        <span
-                          className={cn(
-                            'whitespace-nowrap text-sm',
-                            logged
-                              ? 'text-muted-foreground'
-                              : 'font-semibold text-foreground'
-                          )}
-                        >
-                          {logged ? 'Logged' : 'Log today'}
-                        </span>
-                        <ChevronRight
-                          aria-hidden="true"
-                          className="size-5 text-muted-foreground"
-                        />
-                      </button>
+                        }
+                      />
                     </li>
                   );
                 })}
@@ -491,7 +469,7 @@ function Today({
           className={cn(
             'mt-5 flex items-center gap-3',
             logDirty &&
-              'keyboard-hides fixed inset-x-0 bottom-[calc(var(--tab-bar-h)+var(--safe-bottom))] z-30 mt-0 border-t border-border bg-background px-4 py-2.5 lg:static lg:z-auto lg:mt-5 lg:border-0 lg:bg-transparent lg:p-0'
+              'floating-action-bar keyboard-hides mt-0 lg:mt-5'
           )}
         >
           <p
@@ -515,9 +493,7 @@ function Today({
                 saveLog();
               }}
             >
-              {saving && (
-                <Loader2 className="animate-spin" aria-hidden="true" />
-              )}
+              <BusyIcon busy={saving} />
               {saving ? 'Saving' : 'Save log'}
             </Button>
           )}
@@ -535,13 +511,6 @@ function Today({
       )}
     </div>
   );
-}
-
-/** Whether the sore's last reading was taken yesterday. */
-function lastWasYesterday(sore: Sore): boolean {
-  const last = latestReading(sore);
-  if (!last) return false;
-  return isSameLocalDay(last.recorded_at, addDays(new Date(), -1));
 }
 
 /** "2 triggers, 1 treatment, a note": what Save is about to write. */

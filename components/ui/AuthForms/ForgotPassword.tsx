@@ -2,13 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import AuthField from './AuthField';
 import AuthLinks from './AuthLinks';
 import { requestPasswordUpdate } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 interface ForgotPasswordProps {
   allowEmail: boolean;
@@ -44,7 +44,7 @@ export default function ForgotPassword({
           hint="We'll send a link to choose a new password."
         />
         <Button type="submit" disabled={disableButton || isSubmitting}>
-          {isSubmitting && <Loader2 className="animate-spin" />}
+          <BusyIcon busy={isSubmitting} />
           {isSubmitting ? 'Sending' : 'Send reset link'}
         </Button>
       </form>

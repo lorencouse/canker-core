@@ -8,6 +8,7 @@ import type { DayLog, Sore } from '@/types';
 import { answerLine } from '@/utils/course';
 import { tap } from '@/utils/native';
 import { currentPain, currentSize, hasReadingOn } from '@/utils/readings';
+import { sevFill } from '@/utils/severity';
 
 import StepHeading from './StepHeading';
 
@@ -52,9 +53,7 @@ export default function FinishStep({
               <span
                 aria-hidden="true"
                 className="size-3.5 rounded-full"
-                style={{
-                  backgroundColor: `hsl(var(--sev-${Math.min(10, Math.max(1, Math.round(currentPain(s))))}))`
-                }}
+                style={{ backgroundColor: sevFill(currentPain(s)) }}
               />
               <span className="truncate">{s.zone}</span>
               <span className="tabular whitespace-nowrap text-muted-foreground">

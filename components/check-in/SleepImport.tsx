@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { HeartPulse, Loader2 } from 'lucide-react';
+import { HeartPulse } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +12,7 @@ import {
   type ImportedSleep
 } from '@/utils/health-sleep';
 import { tap } from '@/utils/native';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
  * "Import from Health" on the Sleep screen. Renders nothing on the web, in an
@@ -81,11 +82,7 @@ export default function SleepImport({
         onClick={run}
         disabled={busy || disabled}
       >
-        {busy ? (
-          <Loader2 className="animate-spin" aria-hidden="true" />
-        ) : (
-          <HeartPulse aria-hidden="true" />
-        )}
+        <BusyIcon busy={busy}><HeartPulse aria-hidden="true" /></BusyIcon>
         Import from Health
       </Button>
       <p role="status" className="mt-1 text-sm text-muted-foreground">

@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import { useMounted } from '@/utils/hooks/useMounted';
 import { notify, tap } from '@/utils/native';
 import { photoFor, photosSupported, takePhoto } from '@/utils/sore-photos';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
  * Today's photo of a sore, taken in the app and kept on this phone. Renders
@@ -79,11 +80,7 @@ export default function PhotoControl({
           onClick={take}
           disabled={busy}
         >
-          {busy ? (
-            <Loader2 className="animate-spin" aria-hidden="true" />
-          ) : (
-            <Camera aria-hidden="true" />
-          )}
+          <BusyIcon busy={busy}><Camera aria-hidden="true" /></BusyIcon>
           {src ? 'Retake photo' : 'Add photo'}
         </Button>
         <p className="mt-1 text-sm text-muted-foreground">

@@ -1,24 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, Loader2, Plus } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
 
 import MouthMap from '@/components/mouth-map/MouthMap';
 import { PainField, QuickWidthField } from '@/components/sore/ReadingFields';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/Toasts/use-toast';
 import { SoreProvider, useSoreContext } from '@/context/SoreContext';
 import type { Sore, User } from '@/types';
 import { upsertSores } from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
-import {
-  currentPain,
-  currentSize,
-  localTimeZone,
-  withReading
-} from '@/utils/readings';
+import { currentPain, currentSize, withReading } from '@/utils/readings';
+import { localTimeZone } from '@/utils/days';
+import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 import StepHeading from './StepHeading';
+import { StepFooter, StepPinnedMap } from './StepLayout';
 import { useReportBusy } from './useReportBusy';
 
 /*
@@ -80,40 +78,27 @@ function Placement({
   onNext: () => void;
   onBusy?: (busy: boolean) => void;
 }) {
-  const { selectedSore, setSelectedSore, setSores, snapshot } =
-    useSoreContext();
+  const { placedSore: placed, commitSore } = useSoreContext();
   const [busy, setBusy] = useState(false);
   useReportBusy(busy, onBusy);
-  // The same test the map uses: selected and not there when the session opened.
-  const placed =
-    selectedSore && snapshot && !snapshot.some((s) => s.id === selectedSore.id)
-      ? selectedSore
-      : null;
 
   /** The placed sore's first reading, changed in place so the marker follows. */
   const setReading = (patch: { size?: number; pain?: number }) => {
     if (!placed) return;
-    const next = withReading(placed, patch, new Date(placed.created_at));
-    setSores((prev) => prev.map((s) => (s.id === next.id ? next : s)));
-    setSelectedSore(next);
+    commitSore(withReading(placed, patch, new Date(placed.created_at)));
   };
 
   const add = async () => {
     if (!placed) return;
     tap();
     setBusy(true);
-    const fail = (error: string) => {
-      notify('error');
-      toast({ variant: 'destructive', title: error });
-    };
     try {
-      const result = await upsertSores([placed], localTimeZone());
-      if (!result.ok) return fail(result.error);
+      const result = await runWrite(() =>
+        upsertSores([placed], localTimeZone())
+      );
+      if (!result.ok) return showFailure(result.error);
       notify('success');
       onAdded(placed);
-    } catch {
-      // The request itself failed (offline, server down): stay on the map.
-      fail('Could not save your changes. Try again.');
     } finally {
       setBusy(false);
     }
@@ -121,9 +106,9 @@ function Placement({
 
   return (
     <div className="grid gap-4">
-      <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pb-1 pt-1">
+      <StepPinnedMap>
         <MouthMap user={NO_USER} compact />
-      </div>
+      </StepPinnedMap>
 
       {placed ? (
         <>
@@ -155,7 +140,7 @@ function Placement({
         </div>
       )}
 
-      <div className="sticky bottom-0 -mx-4 flex gap-2 border-t-2 border-border bg-background px-4 py-3">
+      <StepFooter>
         {placed ? (
           <>
             <Button
@@ -177,11 +162,7 @@ function Placement({
               onClick={add}
               disabled={busy}
             >
-              {busy ? (
-                <Loader2 className="animate-spin" aria-hidden="true" />
-              ) : (
-                <Plus aria-hidden="true" />
-              )}
+              <BusyIcon busy={busy}><Plus aria-hidden="true" /></BusyIcon>
               Add sore
             </Button>
           </>
@@ -199,7 +180,7 @@ function Placement({
             <ArrowRight aria-hidden="true" />
           </Button>
         )}
-      </div>
+      </StepFooter>
     </div>
   );
 }

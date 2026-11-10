@@ -1,10 +1,10 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { DayLog } from '@/types';
-import { cn } from '@/utils/cn';
 import { FOOD_TRIGGERS, HEALTH_TRIGGERS, TREATMENTS } from '@/utils/day-log';
 import { tap } from '@/utils/native';
 
@@ -126,26 +126,15 @@ function ChipGroup({
         </Button>
       )}
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => {
-          const on = selected.includes(option);
-          return (
-            <button
-              key={option}
-              type="button"
-              aria-pressed={on}
-              onClick={() => onToggle(option)}
-              className={cn(
-                // 44px tall on touch: a chip is tapped, not aimed at.
-                'inline-flex h-10 items-center whitespace-nowrap rounded-full border px-3.5 text-[15px] transition-colors coarse:h-11 lg:h-9 lg:text-sm',
-                on
-                  ? 'border-primary bg-accent font-semibold text-foreground'
-                  : 'border-control bg-card text-foreground hover:bg-muted'
-              )}
-            >
-              {option}
-            </button>
-          );
-        })}
+        {options.map((option) => (
+          <Chip
+            key={option}
+            on={selected.includes(option)}
+            onClick={() => onToggle(option)}
+          >
+            {option}
+          </Chip>
+        ))}
       </div>
     </fieldset>
   );

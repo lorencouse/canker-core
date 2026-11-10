@@ -8,7 +8,7 @@ import StatTiles from '@/components/insights/StatTiles';
 import TriggerTally from '@/components/insights/TriggerTally';
 import Kanko from '@/components/kanko/Kanko';
 import { Button } from '@/components/ui/button';
-import type { DayLog, Sore, User } from '@/types';
+import type { DayLog, Sore } from '@/types';
 
 /**
  * Insights: the headline figures, the chart, the patterns, and every sore.
@@ -22,7 +22,6 @@ const InsightsLayout = ({
   sores,
   dayLogs
 }: {
-  user: User;
   sores: Sore[];
   dayLogs: DayLog[];
 }) => {

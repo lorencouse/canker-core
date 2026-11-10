@@ -15,6 +15,7 @@ import {
 } from '@/utils/mouth-map/geometry';
 import { tap } from '@/utils/native';
 import { currentPain, currentSize } from '@/utils/readings';
+import { sevFill } from '@/utils/severity';
 
 /**
  * The map pinned above a check-in sore step: the whole mouth with the sore
@@ -97,11 +98,7 @@ export default function CheckInMap({
           const { x, y } = fromPercent({ x: sore.x!, y: sore.y! });
           const live = sore.id === activeId ? activeReading : undefined;
           const r = radiusFor(live?.size ?? currentSize(sore), view);
-          const level = Math.min(
-            10,
-            Math.max(1, Math.round(live?.pain ?? currentPain(sore)))
-          );
-          const fill = `hsl(var(--sev-${level}))`;
+          const fill = sevFill(live?.pain ?? currentPain(sore));
           if (sore.id === activeId) {
             // Wide enough for the zone name at this size; approximate is fine.
             const w = 18 + sore.zone.length * 8;

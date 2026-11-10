@@ -5,11 +5,10 @@ import {
   CLOCK_SKEW_MS,
   MAX_READINGS_PER_SORE,
   MAX_SORES_PER_SAVE,
-  dayKeyIn,
-  isTimeZone,
   parseSores,
   sameDayReading
 } from './sore-payload';
+import { dayKeyIn, isTimeZone } from './days';
 
 const NOW = new Date('2026-09-10T12:00:00.000Z');
 

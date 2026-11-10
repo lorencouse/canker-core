@@ -5,9 +5,8 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 
 import { ChartContainer, ChartTooltip, type ChartConfig } from '@/components/ui/chart';
 import type { Sore } from '@/types';
-import { getSeverityColor } from '@/utils/getColor';
-import { useIsDark } from '@/utils/hooks/useIsDark';
-import { dayKey, daysBetween } from '@/utils/readings';
+import { sevFill } from '@/utils/severity';
+import { dayKey, daysBetween } from '@/utils/days';
 
 /**
  * One sore's course: width by day as a line, each point coloured by that
@@ -16,7 +15,6 @@ import { dayKey, daysBetween } from '@/utils/readings';
  * the map and the bar chart use, which means nothing new to learn.
  */
 export default function SoreHistoryChart({ sore }: { sore: Sore }) {
-  const isDark = useIsDark();
   const rows = useMemo(
     () =>
       sore.readings.map((r, i) => ({
@@ -100,7 +98,7 @@ export default function SoreHistoryChart({ sore }: { sore: Sore }) {
               cx={props.cx}
               cy={props.cy}
               r={5}
-              fill={getSeverityColor(props.payload?.pain ?? 1, isDark)}
+              fill={sevFill(props.payload?.pain ?? 1)}
               stroke="hsl(var(--card))"
               strokeWidth={2}
             />

@@ -10,6 +10,15 @@
 
 import type { DayLog } from '@/types';
 
+/** A `day_logs` row as `DayLog`. Every read goes through it, so a column added here reaches both the screens and the check-in's read-then-rewrite. */
+export const DAY_LOG_COLUMNS = `to_char(day, 'YYYY-MM-DD') as day, triggers, treatments, note,
+  sleep_hours::float8 as sleep_hours, sleep_quality, sleep_source, stress,
+  food_answered, health_answered`;
+
+/** Whether untrusted input is shaped like a local YYYY-MM-DD day. */
+export const isDayKey = (day: unknown): day is string =>
+  typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day);
+
 export const TRIGGERS = [
   'Stress',
   'Poor sleep',

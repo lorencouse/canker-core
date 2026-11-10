@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { Minus, Plus } from 'lucide-react';
 
+import Measure from '@/components/sore/Measure';
 import { Button } from '@/components/ui/button';
 import SeverityLadder from '@/components/ui/SeverityLadder';
 import { Slider } from '@/components/ui/slider';
@@ -21,9 +22,9 @@ import { tap } from '@/utils/native';
  */
 
 /** Width moves in half millimetres, which is as fine as anyone can judge one. */
-export const WIDTH_STEP = 0.5;
-export const MIN_WIDTH = 0.5;
-export const MAX_WIDTH = 20;
+const WIDTH_STEP = 0.5;
+const MIN_WIDTH = 0.5;
+const MAX_WIDTH = 20;
 
 const clampWidth = (mm: number) =>
   Math.min(
@@ -56,10 +57,7 @@ function FieldHead({
         htmlFor={htmlFor}
         className="tabular font-display text-xl font-semibold leading-none"
       >
-        {value}{' '}
-        <small className="font-sans text-sm font-normal text-muted-foreground">
-          {unit}
-        </small>
+        <Measure value={value} unit={unit} />
       </output>
     </div>
   );
@@ -71,7 +69,7 @@ function FieldHead({
  * range a few pixels per step under a thumb; these land it in one tap, and
  * the slider and steppers stay for anything in between.
  */
-export const WIDTH_PRESETS = [1, 2, 3, 5, 8] as const;
+const WIDTH_PRESETS = [1, 2, 3, 5, 8] as const;
 
 export function WidthField({
   id,
@@ -108,7 +106,7 @@ export function WidthField({
               className={cn(
                 // Dot over figure; 56px tall so the 8mm dot has room.
                 'flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-cell border-2 bg-card transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                'focus-ring',
                 picked
                   ? 'border-primary bg-accent text-foreground'
                   : 'border-control text-muted-foreground hover:bg-muted'
@@ -184,7 +182,7 @@ export function PainField({
   );
 }
 
-function Stepper({
+export function Stepper({
   label,
   onClick,
   disabled,
@@ -215,7 +213,7 @@ function Stepper({
 }
 
 /** The check-in's one-tap widths: nearly every sore is one of these. */
-export const QUICK_WIDTHS = [1, 2, 3, 4, 5, 6] as const;
+const QUICK_WIDTHS = [1, 2, 3, 4, 5, 6] as const;
 
 /**
  * Width as taps only, for the check-in, where the map sits above and there
@@ -249,10 +247,7 @@ export function QuickWidthField({
             aria-live="polite"
             className="tabular min-w-[4.5rem] text-center font-display text-xl font-semibold leading-none"
           >
-            {value}{' '}
-            <small className="font-sans text-sm font-normal text-muted-foreground">
-              mm
-            </small>
+            <Measure value={value} unit="mm" />
           </output>
           <Stepper
             label="Half a millimetre wider"
@@ -283,7 +278,7 @@ export function QuickWidthField({
               }}
               className={cn(
                 'flex h-12 min-w-0 flex-col items-center justify-center gap-0.5 rounded-cell border-2 transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                'focus-ring',
                 picked
                   ? 'border-primary bg-primary text-primary-foreground'
                   : 'border-control bg-card text-foreground hover:bg-muted'

@@ -1,5 +1,6 @@
 import { MapDefs, ViewArtwork } from '@/components/mouth-map/artwork';
 import { fromPercent, radiusFor } from '@/utils/mouth-map/geometry';
+import { sevFill } from '@/utils/severity';
 
 /**
  * Four sores over a year, all on one spot of the lower gum: the "same place
@@ -36,7 +37,7 @@ export default function RecurrenceSketch({
             cx={p.x}
             cy={p.y}
             r={radiusFor(sore.size, 'front')}
-            fill={`hsl(var(--sev-${sore.pain}))`}
+            fill={sevFill(sore.pain)}
             fillOpacity="0.85"
             stroke="hsl(var(--foreground) / 0.45)"
             strokeWidth="1"

@@ -29,7 +29,7 @@ const todaysNote = (sore: Sore | null | undefined) =>
  * produces more than one row.
  */
 const SoreSliders: React.FC = () => {
-  const { selectedSore, setSelectedSore, setSores, mode } = useSoreContext();
+  const { selectedSore, commitSore, mode } = useSoreContext();
 
   const [note, setNote] = useState<string>(todaysNote(selectedSore));
 
@@ -39,9 +39,7 @@ const SoreSliders: React.FC = () => {
     note?: string | null;
   }) => {
     if (!selectedSore) return;
-    const updated = withReading(selectedSore, values);
-    setSelectedSore(updated);
-    setSores((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    commitSore(withReading(selectedSore, values));
   };
 
   // Reset when a different sore is picked, not on every keystroke echo.

@@ -19,6 +19,7 @@ import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
 import { shortDate } from '@/utils/dates';
 import { dayNumberOf, latestReading } from '@/utils/readings';
+import { sevFill } from '@/utils/severity';
 
 import SoreHistoryChart from './SoreHistoryChart';
 
@@ -41,7 +42,7 @@ function PainDot({ pain }: { pain: number }) {
   return (
     <span
       className="size-2.5 shrink-0 rounded-full ring-1 ring-foreground/20"
-      style={{ backgroundColor: `hsl(var(--sev-${pain}))` }}
+      style={{ backgroundColor: sevFill(pain) }}
       aria-hidden="true"
     />
   );

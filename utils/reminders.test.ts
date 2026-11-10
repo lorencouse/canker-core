@@ -17,7 +17,7 @@ import {
   readReminder,
   syncReminders
 } from './reminders';
-import { dayKey } from './readings';
+import { dayKey } from './days';
 
 const store = new Map<string, string>();
 

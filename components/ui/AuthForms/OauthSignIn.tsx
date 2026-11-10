@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Github, Loader2 } from 'lucide-react';
+import { Github } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Google } from '@/components/icons/Google';
@@ -10,6 +10,7 @@ import {
   signInWithOAuth,
   type OAuthProvider
 } from '@/utils/auth-helpers/client';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 type OAuthProviders = {
   name: OAuthProvider;
@@ -66,11 +67,9 @@ export default function OauthSignIn({
               className="w-full"
               disabled={pending !== null}
             >
-              {pending === provider.name ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                provider.icon
-              )}
+              <BusyIcon busy={pending === provider.name}>
+                {provider.icon}
+              </BusyIcon>
               Continue with {provider.displayName}
             </Button>
           </form>

@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/Toasts/use-toast';
 import type { DayLog, Sore } from '@/types';
 import { saveDayPatch, setCheckInStatus } from '@/utils/actions/checkInActions';
 import { applyPatchToLogs, type DayPatch } from '@/utils/check-in/patch';
@@ -16,18 +15,22 @@ import {
 import {
   buildSteps,
   defaultDay,
+  isHabitStep,
   nextStepAfter,
   stepKey,
   type Step
 } from '@/utils/check-in/steps';
 import { notify, tap } from '@/utils/native';
 import { cn } from '@/utils/cn';
-import { currentPain, dayKey, hasReadingOn } from '@/utils/readings';
+import { currentPain, hasReadingOn, replaceSore } from '@/utils/readings';
+import { dayKey } from '@/utils/days';
 import { deferEveningReminder } from '@/utils/reminders';
+import { sevFill } from '@/utils/severity';
+import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 import FinishStep from './FinishStep';
 import NewSoreAsk from './NewSoreAsk';
-import SleepImport from './SleepImport';
 import SleepStep from './SleepStep';
 import SoreStep from './SoreStep';
 import StepHeading from './StepHeading';
@@ -65,7 +68,7 @@ export default function CheckInFlow({
   // Sores and logs as this check-in has written them, including any added in it.
   const [sores, setSores] = useState(initialSores);
   const [logs, setLogs] = useState(dayLogs);
-  const [steps, setSteps] = useState(() => buildSteps(initialSores));
+  const [steps] = useState(() => buildSteps(initialSores));
   const [current, setCurrent] = useState(() => {
     const saved = readProgress(today);
     return saved && steps.some((s) => stepKey(s) === saved)
@@ -82,43 +85,39 @@ export default function CheckInFlow({
     if (current !== 'finish') writeProgress(today, current);
   }, [today, current]);
 
-  const fail = (error: string) => {
-    notify('error');
-    toast({ variant: 'destructive', title: error });
-  };
-
-  const go = async (event: 'next' | 'added-sore', newSoreId?: string) => {
-    const next = nextStepAfter(steps, current, event, newSoreId);
-    if (next.current === 'finish' && current !== 'finish') {
+  const go = async () => {
+    const next = nextStepAfter(steps, current);
+    if (next === 'finish' && current !== 'finish') {
       setBusy(true);
       try {
-        const result = await setCheckInStatus(today, 'done');
-        if (!result.ok) return fail(result.error);
+        const result = await runWrite(
+          () => setCheckInStatus(today, 'done'),
+          STATUS_FAILED
+        );
+        if (!result.ok) return showFailure(result.error);
         clearProgress();
         // Best-effort: a reminder problem never blocks or toasts the check-in.
         deferEveningReminder(today).catch((error) =>
           console.error('could not skip tonight’s reminder', error)
         );
-      } catch {
-        return fail(STATUS_FAILED);
       } finally {
         setBusy(false);
       }
     }
-    setSteps(next.steps);
-    setCurrent(next.current);
+    setCurrent(next);
   };
 
   const skip = async () => {
     tap();
     setBusy(true);
     try {
-      const result = await setCheckInStatus(today, 'skipped');
-      if (!result.ok) return fail(result.error);
+      const result = await runWrite(
+        () => setCheckInStatus(today, 'skipped'),
+        STATUS_FAILED
+      );
+      if (!result.ok) return showFailure(result.error);
       clearProgress();
       onClose('skipped');
-    } catch {
-      fail(STATUS_FAILED);
     } finally {
       setBusy(false);
     }
@@ -126,14 +125,12 @@ export default function CheckInFlow({
 
   /** One habit answer, written and then folded into the local logs. */
   const saveHabit = async (day: string, patch: DayPatch): Promise<boolean> => {
-    try {
-      const result = await saveDayPatch(day, patch);
-      if (!result.ok) {
-        fail(result.error);
-        return false;
-      }
-    } catch {
-      fail('Could not save that answer. Try again.');
+    const result = await runWrite(
+      () => saveDayPatch(day, patch),
+      'Could not save that answer. Try again.'
+    );
+    if (!result.ok) {
+      showFailure(result.error);
       return false;
     }
     notify('success');
@@ -146,30 +143,23 @@ export default function CheckInFlow({
     now,
     onSave: saveHabit,
     onBusy: setStepBusy,
-    onNext: () => go('next')
+    onNext: go
   };
-
-  const replaceSore = (next: Sore) =>
-    setSores((prev) => prev.map((s) => (s.id === next.id ? next : s)));
 
   const step = steps.find((s) => stepKey(s) === current) ?? steps[0];
   const position = steps.indexOf(step);
 
   const openSores = sores.filter((s) => !s.healed_at);
   const loggedToday = openSores.filter((s) => hasReadingOn(s, now));
+  const activeSoreId = step.kind === 'sore' ? step.soreId : null;
   const doneIds = new Set(
-    loggedToday.map((s) => s.id).filter((id) => id !== stepKey(step).slice(5))
+    loggedToday.map((s) => s.id).filter((id) => id !== activeSoreId)
   );
   const soreSteps = steps.filter((s) => s.kind === 'sore');
   const label =
     step.kind === 'sore'
       ? `Sore ${soreSteps.indexOf(step) + 1} of ${soreSteps.length}`
       : STEP_LABELS[step.kind];
-  const habitStep =
-    step.kind === 'sleep' ||
-    step.kind === 'food' ||
-    step.kind === 'health' ||
-    step.kind === 'treatments';
 
   const renderStep = (step: Step) => {
     switch (step.kind) {
@@ -179,7 +169,7 @@ export default function CheckInFlow({
           return (
             <Placeholder
               title="This sore is gone"
-              onNext={() => go('next')}
+              onNext={go}
               busy={busy}
             />
           );
@@ -191,8 +181,8 @@ export default function CheckInFlow({
             doneIds={doneIds}
             now={now}
             onBusy={setStepBusy}
-            onChange={replaceSore}
-            onNext={() => go('next')}
+            onChange={(next) => setSores((prev) => replaceSore(prev, next))}
+            onNext={go}
           />
         );
       }
@@ -203,22 +193,13 @@ export default function CheckInFlow({
             // Its reading was taken on the map, so it needs no step of its
             // own: the screen asks again for another.
             onAdded={(sore) => setSores((prev) => [...prev, sore])}
-            onNext={() => go('next')}
+            onNext={go}
             onBusy={setStepBusy}
           />
         );
       case 'sleep':
         return (
-          <SleepStep
-            {...habit}
-            importSlot={(fill, day, busy) => (
-              <SleepImport
-                day={day}
-                onImport={fill}
-                disabled={busy}
-              />
-            )}
-          />
+          <SleepStep {...habit} />
         );
       case 'food':
       case 'health':
@@ -300,7 +281,7 @@ export default function CheckInFlow({
       <div className="flex-1 overflow-y-auto overscroll-contain">
         {/* Keyed so each step starts fresh and its heading takes focus. */}
         <div key={current} className="mx-auto w-full max-w-lg px-4 pb-4 pt-2">
-          {habitStep && soreSteps.length + loggedToday.length > 0 && (
+          {isHabitStep(step) && soreSteps.length + loggedToday.length > 0 && (
             <SoresStrip
               sores={loggedToday}
               onEdit={() => {
@@ -365,9 +346,7 @@ function SoresStrip({
               'size-3.5 rounded-full border-2 border-card',
               i > 0 && '-ml-1'
             )}
-            style={{
-              backgroundColor: `hsl(var(--sev-${Math.min(10, Math.max(1, Math.round(currentPain(s))))}))`
-            }}
+            style={{ backgroundColor: sevFill(currentPain(s)) }}
           />
         ))}
       </div>
@@ -412,7 +391,7 @@ function Placeholder({
           onNext();
         }}
       >
-        {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
+        <BusyIcon busy={busy} />
         Next
       </Button>
     </div>

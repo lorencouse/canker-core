@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import type { Reading, Sore } from '@/types';
+import { addDays, daysBetween, isSameLocalDay } from '@/utils/days';
 
 /**
  * Reading arithmetic for a sore.
@@ -25,42 +26,21 @@ export const currentSize = (sore: Sore | null | undefined): number =>
 export const currentPain = (sore: Sore | null | undefined): number =>
   latestReading(sore)?.pain ?? DEFAULT_PAIN;
 
-/** Local YYYY-MM-DD, so an evening reading stays on the day it was taken. */
-export const dayKey = (date: Date): string => {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-};
-
-/** Midnight local, so day arithmetic ignores the time of day. */
-export const localMidnight = (d: Date): Date =>
-  new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-/**
- * Local midnight `n` calendar days from `date`'s day (negative goes back).
- * Steps the calendar rather than adding 24-hour periods, which would repeat
- * or skip a date across a 25- or 23-hour daylight-saving day.
- */
-export const addDays = (date: Date, n: number): Date =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate() + n);
-
-/** Whole local calendar days from `from`'s day to `to`'s day. Rounded, so DST cannot shift it. */
-export const daysBetween = (from: Date, to: Date): number =>
-  Math.round(
-    (localMidnight(to).getTime() - localMidnight(from).getTime()) / 86_400_000
-  );
-
-/** The device's IANA zone, so the server can draw day lines where this does. */
-export const localTimeZone = (): string =>
-  Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-export const isSameLocalDay = (iso: string, when: Date): boolean =>
-  dayKey(new Date(iso)) === dayKey(when);
-
 /** Whether the sore already has a reading taken on `when`'s day. */
 export const hasReadingOn = (sore: Sore, when: Date): boolean => {
   const last = latestReading(sore);
   return last !== null && isSameLocalDay(last.recorded_at, when);
 };
+
+/** Whether the sore's last reading was taken the day before `now`. */
+export const lastWasYesterday = (sore: Sore, now: Date = new Date()): boolean => {
+  const last = latestReading(sore);
+  return last !== null && isSameLocalDay(last.recorded_at, addDays(now, -1));
+};
+
+/** The list with `next` in place of the sore that has its id. */
+export const replaceSore = (sores: Sore[], next: Sore): Sore[] =>
+  sores.map((s) => (s.id === next.id ? next : s));
 
 /** A fresh first reading for a sore placed just now. */
 export const newReading = (when: Date = new Date()): Reading => ({

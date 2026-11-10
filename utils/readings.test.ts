@@ -6,8 +6,10 @@ import {
   currentSize,
   dayNumberOf,
   hasReadingOn,
+  lastWasYesterday,
   latestReading,
   newReading,
+  replaceSore,
   withReading
 } from './readings';
 
@@ -156,5 +158,30 @@ describe('dayNumberOf', () => {
   it('stops counting at the healed date', () => {
     const healed = sore({ healed_at: local('2026-09-11T09:00:00') });
     expect(dayNumberOf(healed, at('2026-12-01T00:00:00'))).toBe(4);
+  });
+});
+
+describe('replaceSore', () => {
+  it('swaps only the sore with the same id', () => {
+    const a = { id: 'a' } as Sore;
+    const b = { id: 'b' } as Sore;
+    const next = { id: 'b', zone: 'moved' } as Sore;
+    expect(replaceSore([a, b], next)).toEqual([a, next]);
+  });
+});
+
+describe('lastWasYesterday', () => {
+  const now = at('2026-11-06T09:00:00');
+  const sore = (recorded: string) =>
+    ({ readings: [{ recorded_at: local(recorded) }] }) as Sore;
+
+  it('is true for a reading on the previous calendar day', () => {
+    expect(lastWasYesterday(sore('2026-11-05T23:30:00'), now)).toBe(true);
+  });
+
+  it('is false for today, for two days back and with no reading', () => {
+    expect(lastWasYesterday(sore('2026-11-06T08:00:00'), now)).toBe(false);
+    expect(lastWasYesterday(sore('2026-11-04T23:30:00'), now)).toBe(false);
+    expect(lastWasYesterday({ readings: [] } as unknown as Sore, now)).toBe(false);
   });
 });

@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 
 import Kanko from '@/components/kanko/Kanko';
 import FirstReading from '@/components/onboarding/FirstReading';
@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { toast } from '@/components/ui/Toasts/use-toast';
 import { SoreProvider, useSoreContext } from '@/context/SoreContext';
 import type { Sore, User } from '@/types';
 import { completeOnboarding } from '@/utils/actions/onboardingActions';
@@ -21,13 +20,15 @@ import { upsertSores } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { useMounted } from '@/utils/hooks/useMounted';
 import { notify, tap } from '@/utils/native';
-import { localTimeZone } from '@/utils/readings';
+import { localTimeZone } from '@/utils/days';
 import {
   DEFAULT_TIME,
   applyReminder,
   remindersSupported,
   type ReminderPref
 } from '@/utils/reminders';
+import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
  * The first run: place a sore, measure it, keep going.
@@ -94,22 +95,20 @@ function Flow({ user }: { user: User }) {
     setSaving(true);
     try {
       if (write && sore) {
-        const saved = await upsertSores([sore], localTimeZone());
-        if (!saved.ok) {
-          notify('error');
-          toast({ variant: 'destructive', title: saved.error });
-          return;
-        }
+        const saved = await runWrite(() =>
+          upsertSores([sore], localTimeZone())
+        );
+        if (!saved.ok) return showFailure(saved.error);
         if (canRemind && reminder.enabled) await applyReminder('evening', reminder);
       }
 
       // Marked seen either way. Someone who skips has still been introduced,
       // and showing them this screen again tomorrow would be a bug.
-      const done = await completeOnboarding();
-      if (!done.ok) {
-        toast({ variant: 'destructive', title: done.error });
-        return;
-      }
+      const done = await runWrite(
+        completeOnboarding,
+        'Could not save that. Try again.'
+      );
+      if (!done.ok) return showFailure(done.error);
       if (write) notify('success');
       router.push('/today');
     } finally {
@@ -117,7 +116,7 @@ function Flow({ user }: { user: User }) {
     }
   };
 
-  const copy = useMemo(() => COPY[step], [step]);
+  const copy = COPY[step];
 
   return (
     <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-3 min-[400px]:py-5 lg:py-10">
@@ -194,11 +193,7 @@ function Flow({ user }: { user: User }) {
               leave(true);
             }}
           >
-            {saving ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <Check aria-hidden="true" />
-            )}
+            <BusyIcon busy={saving}><Check aria-hidden="true" /></BusyIcon>
             {saving ? 'Saving…' : 'Start tracking'}
           </Button>
         ) : (

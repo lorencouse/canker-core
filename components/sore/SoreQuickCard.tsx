@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Loader2, RotateCcw } from 'lucide-react';
+import { Check, RotateCcw } from 'lucide-react';
 
 import CourseBars from '@/components/sore/CourseBars';
+import Measure from '@/components/sore/Measure';
 import { PainField, WidthField } from '@/components/sore/ReadingFields';
 import SoreSigil from '@/components/sore/SoreSigil';
+import { useHealSore } from '@/components/sore/useHealSore';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,22 +15,23 @@ import {
   DialogDescription,
   DialogTitle
 } from '@/components/ui/dialog';
-import { ToastAction } from '@/components/ui/Toasts/toast';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import type { Sore } from '@/types';
 import { verdictOf } from '@/utils/course';
-import { setSoreHealed, upsertSores } from '@/utils/actions/soreActions';
+import { upsertSores } from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
 import {
   currentPain,
   currentSize,
   dayNumberOf,
   hasReadingOn,
-  isSameLocalDay,
+  lastWasYesterday,
   latestReading,
-  localTimeZone,
   withReading
 } from '@/utils/readings';
+import { localTimeZone } from '@/utils/days';
+import { runWrite, showFailure } from '@/utils/write-feedback';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
  * A sore at a glance, opened by tapping it on the map or in a chart: its
@@ -58,7 +61,9 @@ export default function SoreQuickCard({
 }) {
   // The reading being edited, or null when the card is just showing.
   const [draft, setDraft] = useState<Sore | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [saving, setBusy] = useState(false);
+  const heal = useHealSore(onChange);
+  const busy = saving || heal.busy;
 
   // A different sore, or the card closing, drops any half-made edit.
   const [shownId, setShownId] = useState<string | null>(null);
@@ -76,16 +81,13 @@ export default function SoreQuickCard({
   const last = latestReading(sore);
   const verdict = verdictOf(sore, now);
 
-  const fail = (error: string) => {
-    notify('error');
-    toast({ variant: 'destructive', title: error });
-  };
-
   const save = async (next: Sore) => {
     setBusy(true);
     try {
-      const result = await upsertSores([next], localTimeZone());
-      if (!result.ok) return fail(result.error);
+      const result = await runWrite(() =>
+        upsertSores([next], localTimeZone())
+      );
+      if (!result.ok) return showFailure(result.error);
       notify('success');
       onChange(next);
       setDraft(null);
@@ -96,44 +98,8 @@ export default function SoreQuickCard({
   };
 
   const setHealed = async (healedAt: string | null) => {
-    setBusy(true);
-    try {
-      const result = await setSoreHealed(sore.id, healedAt);
-      if (!result.ok) return fail(result.error);
-      const next = { ...sore, healed_at: healedAt };
-      notify('success');
-      onChange(next);
-      if (healedAt) {
-        onOpenChange(false);
-        // Healed is one tap, so it is one tap to take back.
-        toast({
-          title: 'Marked healed.',
-          action: (
-            <ToastAction
-              altText="Undo marking this sore healed"
-              className="tap-target"
-              onClick={async () => {
-                const undo = await setSoreHealed(sore.id, null);
-                if (!undo.ok) return fail(undo.error);
-                onChange({ ...next, healed_at: null });
-              }}
-            >
-              Undo
-            </ToastAction>
-          )
-        });
-      }
-    } finally {
-      setBusy(false);
-    }
+    if ((await heal.setHealed(sore, healedAt)) && healedAt) onOpenChange(false);
   };
-
-  const lastWasYesterday = (() => {
-    if (!last) return false;
-    const y = new Date(now);
-    y.setDate(y.getDate() - 1);
-    return isSameLocalDay(last.recorded_at, y);
-  })();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -163,10 +129,7 @@ export default function SoreQuickCard({
                 {today ? 'Width today' : 'Last width'}
               </dt>
               <dd className="tabular font-display text-xl font-semibold">
-                {currentSize(sore)}{' '}
-                <small className="font-sans text-sm font-normal text-muted-foreground">
-                  mm
-                </small>
+                <Measure value={currentSize(sore)} unit="mm" />
               </dd>
             </div>
             <div>
@@ -174,10 +137,7 @@ export default function SoreQuickCard({
                 {today ? 'Pain today' : 'Last pain'}
               </dt>
               <dd className="tabular font-display text-xl font-semibold">
-                {currentPain(sore)}{' '}
-                <small className="font-sans text-sm font-normal text-muted-foreground">
-                  of 10
-                </small>
+                <Measure value={currentPain(sore)} unit="of 10" />
               </dd>
             </div>
           </dl>
@@ -216,11 +176,7 @@ export default function SoreQuickCard({
                 }}
                 disabled={busy}
               >
-                {busy ? (
-                  <Loader2 className="animate-spin" aria-hidden="true" />
-                ) : (
-                  <Check aria-hidden="true" />
-                )}
+                <BusyIcon busy={busy}><Check aria-hidden="true" /></BusyIcon>
                 Save
               </Button>
             </div>
@@ -252,7 +208,7 @@ export default function SoreQuickCard({
                 disabled={busy}
               >
                 <Check aria-hidden="true" />
-                {lastWasYesterday ? 'Same as yesterday' : 'Same as last time'}
+                {lastWasYesterday(sore, now) ? 'Same as yesterday' : 'Same as last time'}
               </Button>
             )}
             <div className="grid grid-cols-2 gap-2">

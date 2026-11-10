@@ -1,7 +1,8 @@
 import type { DayLog, Sore } from '@/types';
 import { effectiveTriggers } from '@/utils/day-log';
 import { isAnswered } from '@/utils/momentum';
-import { addDays, dayKey, dayNumberOf } from '@/utils/readings';
+import { dayNumberOf } from '@/utils/readings';
+import { addDays, dayKey } from '@/utils/days';
 
 /**
  * Summary arithmetic for the History screen.

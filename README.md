@@ -72,5 +72,4 @@ npm run cap:ios          # sync and open Xcode
 ## Deployment
 
 Self-hosted on the Coolify VPS, with a Coolify-managed Postgres alongside it.
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), which also covers the one-off
-data migration from Supabase.
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).

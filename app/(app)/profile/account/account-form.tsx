@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Download, Loader2 } from 'lucide-react';
+import { Download } from 'lucide-react';
 
 import AuthField from '@/components/ui/AuthForms/AuthField';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import { handleRequest } from '@/utils/auth-helpers/client';
 import { deleteAccount, updatePassword } from '@/utils/auth-helpers/server';
 import { getRedirectMethod } from '@/utils/auth-helpers/settings';
 import { deleteAllPhotos } from '@/utils/sore-photos';
+import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
  * Account: change password, export, delete.
@@ -91,7 +92,7 @@ export function AccountForm() {
           />
           <div>
             <Button type="submit" disabled={savingPassword}>
-              {savingPassword && <Loader2 className="animate-spin" />}
+              <BusyIcon busy={savingPassword} />
               Change password
             </Button>
           </div>

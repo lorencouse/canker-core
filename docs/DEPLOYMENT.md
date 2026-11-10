@@ -194,33 +194,6 @@ https://<your-domain>/api/auth/callback/google
 
 ---
 
-## Migrating the data from Supabase
-
-Run once, after the schema is applied and before cutting DNS over.
-
-```bash
-# Credentials from the pre-migration .env.local, kept as .env.local.supabase-backup
-SUPABASE_URL="https://<project>.supabase.co" \
-SUPABASE_SERVICE_ROLE_KEY="<service-role-key>" \
-DATABASE_URL="postgresql://..." \
-node scripts/migrate-from-supabase.mjs --dry-run   # report first
-
-# Then for real (drop --dry-run)
-```
-
-The script is idempotent — re-running it upserts rather than duplicating, so it
-is safe to run again to pick up rows created after the first pass.
-
-**Passwords do not migrate.** Supabase keeps bcrypt hashes in `auth.users`, which
-is not reachable over its REST API, and Better Auth formats hashes differently.
-Every migrated account therefore arrives with no password and must use
-**Forgot password** once (or sign in with GitHub/Google, which does carry over —
-the script copies OAuth identities into the `account` table).
-
-Tell existing users this before cutover.
-
----
-
 ## Ongoing operations
 
 ### Backups

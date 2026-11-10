@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Check, Plus, RotateCcw, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { ToastAction } from '@/components/ui/Toasts/toast';
 import {
   Dialog,
   DialogContent,
@@ -13,20 +12,15 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { toast } from '@/components/ui/Toasts/use-toast';
+import { dismissHealedUndo, useHealSore } from '@/components/sore/useHealSore';
 import { useSoreContext } from '@/context/SoreContext';
-import {
-  deleteSore,
-  setSoreHealed,
-  upsertSores,
-  type ActionResult
-} from '@/utils/actions/soreActions';
+import { deleteSore, upsertSores } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
-import { localTimeZone } from '@/utils/readings';
+import { replaceSore } from '@/utils/readings';
+import { localTimeZone } from '@/utils/days';
 import { deletePhotosFor } from '@/utils/sore-photos';
-
-let healedUndo: { dismiss: () => void } | null = null;
+import { runWrite, showFailure } from '@/utils/write-feedback';
 
 /**
  * The map's editing actions: add, log today, mark healed, delete, and the
@@ -53,38 +47,35 @@ function useMapActions() {
     mode,
     setMode,
     snapshot,
-    setSnapshot
+    setSnapshot,
+    changedSores
   } = useSoreContext();
-  const [busy, setBusy] = useState(false);
-
-  const failed = (result: ActionResult) => {
-    if (result.ok) return false;
-    notify('error');
-    toast({ variant: 'destructive', title: result.error });
-    return true;
-  };
+  const [saving, setBusy] = useState(false);
+  const heal = useHealSore((updated) => {
+    setSores((prev) => replaceSore(prev, updated));
+    // A healed sore leaves the map (unless healed ones are shown), so
+    // keeping it selected would leave the details pointing at nothing.
+    setSelectedSore(updated.healed_at ? null : updated);
+  });
+  const busy = saving || heal.busy;
 
   const begin = (next: 'add' | 'edit') => {
     tap();
-    healedUndo?.dismiss();
-    healedUndo = null;
+    dismissHealedUndo();
     setSnapshot(sores);
     if (next === 'add') setSelectedSore(null);
     setMode(next);
   };
 
   const finish = async () => {
-    // Only the sores that changed. State updates replace a sore's object, so
-    // anything still referentially in the snapshot was never touched.
-    const changed = snapshot
-      ? sores.filter((s) => !snapshot.includes(s))
-      : sores;
     setBusy(true);
     try {
-      const result = await upsertSores(changed, localTimeZone());
+      const result = await runWrite(() =>
+        upsertSores(changedSores, localTimeZone())
+      );
       // On failure the session stays open with the edits intact, so the
       // user can retry rather than redo.
-      if (failed(result)) return;
+      if (!result.ok) return showFailure(result.error);
       notify('success');
       setSnapshot(null);
       setMode('view');
@@ -101,43 +92,22 @@ function useMapActions() {
     setMode('view');
   };
 
-  const setHealed = async (healedAt: string | null, sore = selectedSore) => {
-    if (!sore) return;
-    setBusy(true);
-    try {
-      const result = await setSoreHealed(sore.id, healedAt);
-      if (failed(result)) return;
-      const updated = { ...sore, healed_at: healedAt };
-      setSores((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-      // A healed sore leaves the map (unless healed ones are shown), so
-      // keeping it selected would leave the details pointing at nothing.
-      setSelectedSore(healedAt ? null : updated);
-      notify('success');
-      // Healed is one tap, so it is one tap to take back.
-      if (healedAt)
-        healedUndo = toast({
-          title: 'Marked healed.',
-          action: (
-            <ToastAction
-              altText="Undo marking this sore healed"
-              className="tap-target"
-              onClick={() => setHealed(null, sore)}
-            >
-              Undo
-            </ToastAction>
-          )
-        });
-    } finally {
-      setBusy(false);
-    }
+  const setHealed = (healedAt: string | null) => {
+    if (selectedSore) heal.setHealed(selectedSore, healedAt);
   };
 
   const remove = async () => {
     if (!selectedSore) return false;
     setBusy(true);
     try {
-      const result = await deleteSore(selectedSore.id);
-      if (failed(result)) return false;
+      const result = await runWrite(
+        () => deleteSore(selectedSore.id),
+        'Could not delete the sore. Try again.'
+      );
+      if (!result.ok) {
+        showFailure(result.error);
+        return false;
+      }
       // Photos never reached the server, so only this device can delete them.
       await deletePhotosFor(selectedSore.readings.map((r) => r.id));
       setSores((prev) => prev.filter((s) => s.id !== selectedSore.id));
@@ -198,7 +168,7 @@ export function EditingBar({ place }: { place: 'map' | 'detail' }) {
          * tab bar instead, like Today's Save.
          */
         place === 'detail' &&
-          'keyboard-hides fixed inset-x-0 bottom-[calc(var(--tab-bar-h)+var(--safe-bottom))] z-30 border-t border-border bg-background px-4 py-2.5 lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:p-0'
+          'floating-action-bar keyboard-hides'
       )}
     >
       <Button

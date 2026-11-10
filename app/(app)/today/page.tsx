@@ -5,7 +5,7 @@ import {
   getDayLogs,
   getRecentCheckIns,
   getSores,
-  getUserDetails
+  getUser
 } from '@/lib/queries';
 import { expectedMood } from '@/utils/momentum';
 import { TIME_ZONE_COOKIE } from '@/utils/time-zone-cookie';
@@ -21,7 +21,7 @@ export default async function TodayPage({
 }: {
   searchParams: Promise<{ checkin?: string }>;
 }) {
-  const user = await getUserDetails();
+  const user = await getUser();
   if (!user) redirect('/signin/password_signin');
 
   const [sores, dayLogs, checkIns, cookieStore, { checkin }] =

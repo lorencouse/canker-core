@@ -18,15 +18,15 @@
 /** The light-theme --sev-* ramp, resolved. Index = pain level 1–10. */
 export const SEVERITY = [
   '#f3cdcd', // 1
-  '#efc1c1',
+  '#eeb4b4',
   '#eb9e9e',
-  '#e88686',
+  '#e78383',
   '#e56c6c',
-  '#e05252',
+  '#e15151',
   '#e03838',
-  '#d42121',
-  '#c61b1b',
-  '#ad1414' // 10
+  '#db1f1f',
+  '#c51b1b',
+  '#ac1515' // 10
 ] as const;
 
 /** Lining of the mouth: cheek, inner lip, floor. Where canker sores happen. */

@@ -2,6 +2,7 @@ import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
 import { courseOf, type CourseDay } from '@/utils/course';
 import { shortDate } from '@/utils/dates';
+import { sevFill } from '@/utils/severity';
 
 /**
  * A sore's course drawn to scale: one slot per day, bar height for width,
@@ -63,7 +64,6 @@ export default function CourseBars({
   height = 64,
   axis = false,
   base = axis ? 8 : 6,
-  animateLast = false,
   now = new Date(),
   className
 }: {
@@ -74,8 +74,6 @@ export default function CourseBars({
   axis?: boolean;
   /** Millimetres at the top of the axis before a wide sore stretches it. */
   base?: number;
-  /** Pop today's bar in, for a moment after Save. */
-  animateLast?: boolean;
   now?: Date;
   className?: string;
 }) {
@@ -131,14 +129,10 @@ export default function CourseBars({
           <span
             key={day.day}
             title={`Day ${day.n}: ${day.size} mm, pain ${day.pain} of 10`}
-            className={cn(
-              'min-h-1',
-              ring,
-              animateLast && today && 'origin-bottom animate-commit'
-            )}
+            className={cn('min-h-1', ring)}
             style={{
               height: `${Math.min(100, (day.size / max) * 100)}%`,
-              backgroundColor: `hsl(var(--sev-${day.pain}))`
+              backgroundColor: sevFill(day.pain!)
             }}
           />
         );

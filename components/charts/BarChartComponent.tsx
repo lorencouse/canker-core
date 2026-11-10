@@ -10,18 +10,8 @@ import SoreQuickCard from '@/components/sore/SoreQuickCard';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart';
 import { Sore } from '@/types';
-import { getSeverityColor } from '@/utils/getColor';
-import { useIsDark } from '@/utils/hooks/useIsDark';
-
-/**
- * Local YYYY-MM-DD. Grouping on the UTC day instead would push an evening
- * reading into the next bar, and disagree with the dates shown in the table.
- */
-const dayKey = (iso: string) => {
-  const date = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-};
+import { dayKey } from '@/utils/days';
+import { sevFill } from '@/utils/severity';
 
 type Row = { day: string } & Record<string, number | string>;
 
@@ -41,7 +31,9 @@ function buildChart(sores: Sore[]) {
     const pains = new Map<string, number>();
 
     sore.readings.forEach((reading) => {
-      const day = dayKey(reading.recorded_at);
+      // The local day: grouping on the UTC day would push an evening reading
+      // into the next bar and disagree with the dates in the table.
+      const day = dayKey(new Date(reading.recorded_at));
       if (!byDay.has(day)) byDay.set(day, { day });
       byDay.get(day)![sore.id] = reading.size;
       pains.set(day, reading.pain);
@@ -63,7 +55,6 @@ function buildChart(sores: Sore[]) {
 }
 
 const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
-  const isDark = useIsDark();
   const router = useRouter();
   // The sore whose bar was tapped, shown in its quick card.
   const [tappedId, setTappedId] = useState<string | null>(null);
@@ -161,10 +152,7 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
                 {rows.map((row) => (
                   <Cell
                     key={`${id}-${row.day}`}
-                    fill={getSeverityColor(
-                      painByDay.get(id)?.get(row.day) ?? 1,
-                      isDark
-                    )}
+                    fill={sevFill(painByDay.get(id)?.get(row.day) ?? 1)}
                   />
                 ))}
               </Bar>

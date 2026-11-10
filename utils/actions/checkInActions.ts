@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { pool } from '@/lib/db/pool';
+import { pool, transaction } from '@/lib/db/pool';
 import type { DayLog } from '@/types';
 import {
   NOT_SIGNED_IN,
@@ -15,10 +15,10 @@ import {
   validatePatch,
   type DayPatch
 } from '@/utils/check-in/patch';
+import { DAY_LOG_COLUMNS, isDayKey } from '@/utils/day-log';
 
 /** Partial day saves and check-in status; ownership rules as in `soreActions`. */
 
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const BAD_DAY: ActionResult = { ok: false, error: 'That is not a valid day.' };
 
 function revalidate() {
@@ -37,29 +37,27 @@ export async function saveDayPatch(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) return NOT_SIGNED_IN;
-  if (typeof day !== 'string' || !DAY.test(day)) return BAD_DAY;
+  if (!isDayKey(day)) return BAD_DAY;
   const valid = validatePatch(patch);
   if (!valid) return { ok: false, error: 'That answer could not be saved.' };
 
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    // `for update` locks nothing when the row is missing, so two first saves can
-    // race; `on conflict` below turns the loser into an update instead of an error.
-    const { rows } = await client.query<DayLog>(
-      `select to_char(day, 'YYYY-MM-DD') as day, triggers, treatments, note,
-              sleep_hours::float8 as sleep_hours, sleep_quality, sleep_source,
-              stress, food_answered, health_answered
-         from day_logs where user_id = $1 and day = $2 for update`,
-      [userId, day]
-    );
-    const next = applyPatch(rows[0] ?? null, day, valid);
-    if (isBlankDayLog(next)) {
-      await client.query(
-        'delete from day_logs where user_id = $1 and day = $2',
+    await transaction(async (client) => {
+      // `for update` locks nothing when the row is missing, so two first saves can
+      // race; `on conflict` below turns the loser into an update instead of an error.
+      const { rows } = await client.query<DayLog>(
+        `select ${DAY_LOG_COLUMNS}
+           from day_logs where user_id = $1 and day = $2 for update`,
         [userId, day]
       );
-    } else {
+      const next = applyPatch(rows[0] ?? null, day, valid);
+      if (isBlankDayLog(next)) {
+        await client.query(
+          'delete from day_logs where user_id = $1 and day = $2',
+          [userId, day]
+        );
+        return;
+      }
       await client.query(
         `insert into day_logs
            (user_id, day, triggers, treatments, note, sleep_hours,
@@ -89,14 +87,10 @@ export async function saveDayPatch(
           next.health_answered
         ]
       );
-    }
-    await client.query('COMMIT');
+    });
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => {});
     console.error('Error saving day patch:', error);
     return { ok: false, error: 'Could not save that answer. Try again.' };
-  } finally {
-    client.release();
   }
 
   revalidate();
@@ -110,7 +104,7 @@ export async function setCheckInStatus(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) return NOT_SIGNED_IN;
-  if (typeof day !== 'string' || !DAY.test(day)) return BAD_DAY;
+  if (!isDayKey(day)) return BAD_DAY;
   if (status !== 'done' && status !== 'skipped') {
     return { ok: false, error: 'That is not a valid status.' };
   }

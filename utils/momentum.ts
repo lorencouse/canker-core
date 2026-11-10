@@ -1,7 +1,12 @@
 import type { DayLog, Sore } from '@/types';
 import { isAnsweredClean } from '@/utils/day-log';
-import { dayKey } from '@/utils/readings';
-import { dayKeyIn, isTimeZone } from '@/utils/sore-payload';
+import {
+  dayKey,
+  dayKeyIn,
+  isTimeZone,
+  parseDay,
+  shiftDay
+} from '@/utils/days';
 
 /** A reading at or above this pain level makes today a gentle day. */
 export const BAD_DAY_PAIN = 6;
@@ -9,21 +14,6 @@ export const BAD_DAY_PAIN = 6;
 export type Mood = 'proud' | 'gentle' | 'neutral';
 
 export type WeekDot = { day: string; initial: string; won: boolean };
-
-/** Parse a local YYYY-MM-DD at noon, which stays clear of DST edges. */
-const parseDay = (day: string): Date => {
-  const [y, m, d] = day.split('-').map(Number);
-  return new Date(y, m - 1, d, 12);
-};
-
-/** The local day `offset` calendar days from `day`, via Date arithmetic rather than milliseconds. */
-const shiftDay = (day: string, offset: number): string => {
-  const date = parseDay(day);
-  date.setDate(date.getDate() + offset);
-  return dayKey(date);
-};
-
-const isTriggerFree = isAnsweredClean;
 
 /**
  * Whether a day has both trigger questions answered. A row can exist
@@ -41,7 +31,7 @@ export const triggerFreeStreak = (logs: DayLog[], today: string): number => {
   const byDay = new Map(logs.map((log) => [log.day, log]));
   let cursor = isAnswered(byDay.get(today)) ? today : shiftDay(today, -1);
   let count = 0;
-  while (isTriggerFree(byDay.get(cursor))) {
+  while (isAnsweredClean(byDay.get(cursor))) {
     count += 1;
     cursor = shiftDay(cursor, -1);
   }
@@ -83,7 +73,7 @@ export const weekDots = (logs: DayLog[], today: string): WeekDot[] => {
     return {
       day,
       initial: weekday.charAt(0),
-      won: isTriggerFree(byDay.get(day))
+      won: isAnsweredClean(byDay.get(day))
     };
   });
 };
@@ -111,17 +101,11 @@ export const streakHeadline = (n: number): string => {
 export const streakCardLabel = (n: number): string =>
   n === 1 ? 'trigger-free day' : 'trigger-free days';
 
-/**
- * The saved logs after a Save. The day's log joins them only when Save
- * actually wrote it: adding an untouched log would count a day nobody
- * logged towards the streak.
- */
-export const withSavedLog = (
-  logs: DayLog[],
-  log: DayLog,
-  written: boolean
-): DayLog[] =>
-  written ? [...logs.filter((l) => l.day !== log.day), log] : logs;
+/** The saved logs after a Save, with this day's log replacing any earlier copy. */
+export const withSavedLog = (logs: DayLog[], log: DayLog): DayLog[] => [
+  ...logs.filter((l) => l.day !== log.day),
+  log
+];
 
 const utcKey = (instant: number): string =>
   new Date(instant).toISOString().slice(0, 10);
@@ -168,5 +152,5 @@ export const expectedMood = (
     .reduce<
       DayLog | undefined
     >((best, l) => (best === undefined || l.day > best.day ? l : best), undefined);
-  return isTriggerFree(newest) ? 'proud' : 'neutral';
+  return isAnsweredClean(newest) ? 'proud' : 'neutral';
 };

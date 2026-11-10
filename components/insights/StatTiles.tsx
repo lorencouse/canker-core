@@ -5,6 +5,7 @@ import {
   soresStartedSince,
   worstPainSince
 } from '@/utils/insights';
+import { sevFill } from '@/utils/severity';
 
 /**
  * The headline figures. Plain numbers in text ink — a stat tile is not a
@@ -46,7 +47,7 @@ export default function StatTiles({ sores }: { sores: Sore[] }) {
           <span className="inline-flex items-center gap-2">
             <span
               className="size-3 rounded-full ring-1 ring-foreground/20"
-              style={{ backgroundColor: `hsl(var(--sev-${worst}))` }}
+              style={{ backgroundColor: sevFill(worst) }}
               aria-hidden="true"
             />
             {worst}

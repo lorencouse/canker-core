@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { Reading, Sore } from '@/types';
+import { dayKeyIn } from '@/utils/days';
 import { MOUTH_VIEWS } from '@/utils/mouth-map/geometry';
 
 /**
@@ -89,26 +90,6 @@ export function parseSores(
     }))
   };
 }
-
-/** Whether `timeZone` is an IANA zone this runtime can compute days in. */
-export function isTimeZone(timeZone: unknown): timeZone is string {
-  if (typeof timeZone !== 'string' || !timeZone) return false;
-  try {
-    new Intl.DateTimeFormat('en-CA', { timeZone });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** YYYY-MM-DD of `iso` in `timeZone`, the server's twin of `dayKey`. */
-export const dayKeyIn = (iso: string, timeZone: string): string =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(new Date(iso));
 
 /**
  * The first incoming reading that would give a sore a second reading on one
