@@ -68,10 +68,12 @@ on the server. This mirrors how kouzr deploys — its images come from the same
 
 ```bash
 SHA=$(git rev-parse --short HEAD)
+BUILD_NUMBER=$(git rev-list --count HEAD)   # version v1.N in the footer
 
 # 1. Build for the VPS architecture (arm64; an Apple Silicon Mac matches natively)
 docker build --platform linux/arm64 \
   --build-arg NEXT_PUBLIC_SITE_URL="https://cankercore.com" \
+  --build-arg BUILD_NUMBER=$BUILD_NUMBER \
   --build-arg BUILD_COMMIT=$SHA \
   -t canker-core:$SHA .
 

@@ -23,11 +23,13 @@ COPY . .
 # client bundle. Everything else (DATABASE_URL, secrets, SMTP) is read at runtime,
 # which is why lib/db/pool.ts must not connect at import time.
 ARG NEXT_PUBLIC_SITE_URL
-# Short commit for the build label in the footer and Settings; .git is not in
-# the build context. Left empty, the label reads "dev".
+# Version (v1.<commit count>) and short commit for the footer and Settings;
+# .git is not in the build context. Without BUILD_NUMBER the label reads "dev".
+ARG BUILD_NUMBER
 ARG BUILD_COMMIT
 
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV BUILD_NUMBER=$BUILD_NUMBER
 ENV BUILD_COMMIT=$BUILD_COMMIT
 ENV NEXT_TELEMETRY_DISABLED=1
 
