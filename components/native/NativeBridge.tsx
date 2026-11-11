@@ -8,6 +8,7 @@ import { useTheme } from 'next-themes';
 import { DEFAULT_AFTER_SIGN_IN } from '@/utils/auth-helpers/settings';
 import { releaseAutoStart } from '@/utils/check-in/auto-start-hold';
 import { isNative } from '@/utils/native';
+import { nativeAppCookie } from '@/utils/native-launch';
 import { syncReminders } from '@/utils/reminders';
 
 /**
@@ -91,11 +92,21 @@ export default function NativeBridge() {
   // started on its own. An app opens on its working screen: Today when signed
   // in, and the proxy sends it on to sign-in otherwise. Only at launch, so
   // Home stays reachable from the menu.
+  //
+  // The cookie lets the proxy do this before the home page renders at all
+  // (utils/native-launch.ts), so from the second launch on the webview's
+  // first document is Today. The replace below is the fallback for a launch
+  // without it, the first after an install, and the splash stays up over it
+  // (launchReplacing) so the home page is never shown on the way.
   const launched = useRef(false);
+  const launchReplacing = useRef(false);
   useEffect(() => {
     if (launched.current) return;
     launched.current = true;
-    if (isNative() && window.location.pathname === '/') {
+    if (!isNative()) return;
+    document.cookie = nativeAppCookie(window.location.protocol === 'https:');
+    if (window.location.pathname === '/') {
+      launchReplacing.current = true;
       router.replace(DEFAULT_AFTER_SIGN_IN);
     }
   }, [router]);
@@ -174,16 +185,26 @@ export default function NativeBridge() {
   // timeout can no longer fire.
   const LAUNCH_SHOW_MS = 5000;
 
+  // Re-asserting the status bar after the fade; kept apart from the effect
+  // below, which re-runs per navigation, so a quick tap does not cancel them.
+  const splashTimers = useRef<number[]>([]);
+  useEffect(() => () => splashTimers.current.forEach(clearTimeout), []);
+  const splashHidden = useRef(false);
+
   useEffect(() => {
-    if (!isNative()) return;
-    const timers: number[] = [];
+    if (!isNative() || splashHidden.current) return;
+    // Still on the home page with the launch replace in flight: wait for the
+    // screen it lands on. The splash's own timeout is the backstop.
+    if (launchReplacing.current && pathname === '/') return;
     // The splash covers hydration rather than uncovering a half-built page,
     // so hide it here instead of letting it time out. Two frames is enough
     // for the first paint. (It does also auto-hide, but only as the backstop
     // for the offline shell, which cannot reach this code — see
     // capacitor.config.ts.)
-    const id = window.requestAnimationFrame(() =>
-      window.requestAnimationFrame(async () => {
+    let inner = 0;
+    const outer = window.requestAnimationFrame(() => {
+      inner = window.requestAnimationFrame(async () => {
+        splashHidden.current = true;
         const { SplashScreen } = await import('@capacitor/splash-screen');
         await SplashScreen.hide({ fadeOutDuration: FADE_MS });
         // Tearing the splash window down restores the flags it was shown
@@ -191,17 +212,17 @@ export default function NativeBridge() {
         // a cold start the theme has to be asserted a second time. hide()
         // resolves when the fade is asked for, not when it ends, hence the
         // wait: re-styling mid-fade is what gets undone.
-        timers.push(
+        splashTimers.current.push(
           window.setTimeout(() => void applyStatusBar(), FADE_MS + 100),
           window.setTimeout(() => void applyStatusBar(), LAUNCH_SHOW_MS + 150)
         );
-      })
-    );
+      });
+    });
     return () => {
-      window.cancelAnimationFrame(id);
-      timers.forEach((t) => window.clearTimeout(t));
+      window.cancelAnimationFrame(outer);
+      window.cancelAnimationFrame(inner);
     };
-  }, [applyStatusBar]);
+  }, [applyStatusBar, pathname]);
 
   /* --- daily reminder ------------------------------------------------------ */
   useEffect(() => {

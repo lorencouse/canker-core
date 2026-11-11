@@ -5,6 +5,7 @@ import {
   encodeFirstTouch,
   externalReferrerHost
 } from '@/utils/first-touch';
+import { NATIVE_APP_COOKIE, nativeLaunchTarget } from '@/utils/native-launch';
 
 /**
  * Route protection.
@@ -24,7 +25,8 @@ import {
  * every matched request.
  *
  * It also sets the first-touch attribution cookie for signed-out visitors,
- * which is the only other thing that has to happen on the first request.
+ * and sends a signed-in launch of the native app straight past the home page
+ * (utils/native-launch.ts): both have to happen on the first request.
  */
 const PROTECTED_PATHS = [
   '/today',
@@ -48,6 +50,15 @@ export async function proxy(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
   const hasSession = SESSION_COOKIES.some((name) => request.cookies.has(name));
+
+  const launch = nativeLaunchTarget({
+    method: request.method,
+    pathname,
+    hasSession,
+    isApp: request.cookies.has(NATIVE_APP_COOKIE),
+    header: (name) => request.headers.get(name)
+  });
+  if (launch) return NextResponse.redirect(new URL(launch, request.url));
 
   if (!isProtected) {
     const response = NextResponse.next();

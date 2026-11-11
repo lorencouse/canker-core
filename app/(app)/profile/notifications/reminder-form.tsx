@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { useMounted } from '@/utils/hooks/useMounted';
 import {
   applyReminder,
   readReminder,
+  reminderStatus,
   remindersSupported,
   type ReminderPref,
   type ReminderSlot
@@ -47,6 +48,16 @@ export function ReminderForm() {
     Partial<Record<ReminderSlot, ReminderPref>>
   >({});
   const supported = mounted && remindersSupported();
+  // A switch can be on while the phone blocks the app's notifications (the
+  // launch sync keeps the choice rather than quietly turning it off), so say
+  // so here, where the switch would otherwise look like it works.
+  const [blocked, setBlocked] = useState(false);
+  useEffect(() => {
+    if (!supported) return;
+    reminderStatus()
+      .then((status) => setBlocked(status === 'blocked'))
+      .catch(() => setBlocked(false));
+  }, [supported, changed]);
 
   if (!mounted) return null;
 
@@ -75,6 +86,12 @@ export function ReminderForm() {
 
   return (
     <div className="space-y-8">
+      {blocked && (
+        <p role="status" className="prose-measure text-sm font-bold">
+          Notifications for Canker Core are off on this phone, so these
+          reminders never arrive. Allow them in your phone’s settings.
+        </p>
+      )}
       {SLOTS.map(({ slot, label, hint }) => {
         const pref = changed[slot] ?? readReminder(slot);
         return (

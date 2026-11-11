@@ -282,7 +282,12 @@
     text-wrap: pretty;
   }
 
-  a {
+  /*
+   * iOS paints a grey box over whatever is tapped: a link, a button, an SVG
+   * shape with a handler. Every control here draws its own pressed state, so
+   * the box is only ever a stray. Inherited, so this covers everything.
+   */
+  html {
     -webkit-tap-highlight-color: transparent;
   }
 

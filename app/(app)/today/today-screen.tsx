@@ -18,6 +18,7 @@ import Kanko from '@/components/kanko/Kanko';
 import MouthMap from '@/components/mouth-map/MouthMap';
 import SoreRow from '@/components/sore/SoreRow';
 import DayLogForm from '@/components/today/DayLogForm';
+import ReminderOffer from '@/components/today/ReminderOffer';
 import StreakBlock, {
   StreakBlockPlaceholder
 } from '@/components/today/StreakBlock';
@@ -346,6 +347,8 @@ function Today({
             {todayDone ? 'Done ✓, edit' : 'Check in'}
           </Button>
         </div>
+
+        <ReminderOffer />
 
         {open.length === 0 ? (
           <div className="surface-worksheet mt-5 flex flex-col items-start gap-3 p-4 sm:p-5">

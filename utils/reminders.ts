@@ -44,6 +44,9 @@ const PATH = '/today?checkin=1';
 const DEFERRED_KEY = 'canker-core:reminder-evening-deferred';
 
 export const DEFAULT_TIME = DEFAULTS.evening;
+export const MORNING_TIME = DEFAULTS.morning;
+// "Not now" on Today's offer; a choice like any other, so it never returns.
+const OFFER_DISMISSED_KEY = 'canker-core:reminder-offer-dismissed';
 
 export const remindersSupported = () => isNative();
 
@@ -62,6 +65,57 @@ export function readReminder(slot: ReminderSlot): ReminderPref {
     /* no storage: fall through to the default */
   }
   return { enabled: false, time: DEFAULTS[slot] };
+}
+
+/**
+ * Whether this device has ever answered: a slot set either way in Settings
+ * or onboarding, or the offer turned down. Both slots default to off, and the
+ * onboarding step that offers one is shown once per account, so an account
+ * onboarded before reminders existed, or a phone the app was later installed
+ * on, would otherwise never be asked and never be reminded.
+ */
+function reminderChoiceMade(): boolean {
+  try {
+    return [...Object.values(KEYS), OFFER_DISMISSED_KEY].some(
+      (key) => window.localStorage.getItem(key) !== null
+    );
+  } catch {
+    // No storage means nothing to remember a yes or a no in; don't nag.
+    return true;
+  }
+}
+
+export function dismissReminderOffer() {
+  try {
+    window.localStorage.setItem(OFFER_DISMISSED_KEY, '1');
+  } catch {
+    /* the offer comes back next launch, which is the lesser harm */
+  }
+}
+
+type Permission = 'granted' | 'denied' | 'prompt';
+
+async function notificationPermission(): Promise<Permission> {
+  const { LocalNotifications } = await import('@capacitor/local-notifications');
+  const { display } = await LocalNotifications.checkPermissions();
+  return display === 'granted' || display === 'denied' ? display : 'prompt';
+}
+
+/**
+ * What Today should say about reminders on this device:
+ *   - `offer`: never asked here, so offer one.
+ *   - `blocked`: a reminder is on but the phone does not allow the app's
+ *     notifications, so none will arrive however it is scheduled.
+ *   - `ok`: nothing to say (also on the web, which has no reminders).
+ */
+export async function reminderStatus(): Promise<'offer' | 'blocked' | 'ok'> {
+  if (!remindersSupported()) return 'ok';
+  if (!reminderChoiceMade()) return 'offer';
+  const on = (['morning', 'evening'] as const).some(
+    (slot) => readReminder(slot).enabled
+  );
+  if (!on) return 'ok';
+  return (await notificationPermission()) === 'granted' ? 'ok' : 'blocked';
 }
 
 function writeReminder(slot: ReminderSlot, pref: ReminderPref) {
@@ -191,9 +245,17 @@ export async function applyReminder(
 /**
  * Re-assert both stored schedules; safe to call on every launch. This also
  * restores the repeating evening schedule once the skipped day has passed.
+ *
+ * Only while the phone allows notifications. Without that, applying would
+ * either raise the system prompt at launch with nothing to explain it or,
+ * once refused, quietly record the reminder as off, and the person would
+ * never learn why they are not reminded. The preference is kept instead, so
+ * Today can say what is wrong and the schedule comes back by itself the
+ * next launch after notifications are allowed again.
  */
 export async function syncReminders() {
   if (!remindersSupported()) return;
+  if ((await notificationPermission()) !== 'granted') return;
   for (const slot of ['morning', 'evening'] as const) {
     const pref = readReminder(slot);
     if (pref.enabled) await applyReminder(slot, pref);
@@ -223,4 +285,18 @@ export async function deferEveningReminder(day: string) {
     throw error;
   }
   writeDeferredDay(day);
+}
+
+/**
+ * Ask the phone again for the reminders that are already on, and schedule
+ * them if it now says yes. Once refused, iOS shows no second prompt and
+ * answers at once, so false means the person has to allow it in Settings.
+ */
+export async function allowReminderNotifications(): Promise<boolean> {
+  if (!remindersSupported()) return false;
+  const { LocalNotifications } = await import('@capacitor/local-notifications');
+  const { display } = await LocalNotifications.requestPermissions();
+  if (display !== 'granted') return false;
+  await syncReminders();
+  return true;
 }
