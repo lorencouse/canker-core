@@ -12,9 +12,12 @@ vi.mock('@capacitor/local-notifications', () => ({
 vi.mock('@/utils/native', () => ({ isNative: () => true }));
 
 import {
+  allowReminderNotifications,
   applyReminder,
   deferEveningReminder,
+  dismissReminderOffer,
   readReminder,
+  reminderStatus,
   syncReminders
 } from './reminders';
 import { dayKey } from './days';
@@ -203,5 +206,79 @@ describe('reminders', () => {
     });
     expect(batches().at(-1)).toEqual([repeating(1, 20, 0)]);
     expect(store.get('canker-core:reminder-evening-deferred')).toBeUndefined();
+  });
+
+  it('sync leaves the schedule and the choice alone while notifications are blocked', async () => {
+    const pref = { enabled: true, time: '20:00' };
+    store.set('canker-core:reminder', JSON.stringify(pref));
+    plugin.checkPermissions.mockResolvedValueOnce({ display: 'denied' });
+    await syncReminders();
+    expect(plugin.requestPermissions).not.toHaveBeenCalled();
+    expect(plugin.cancel).not.toHaveBeenCalled();
+    expect(plugin.schedule).not.toHaveBeenCalled();
+    expect(readReminder('evening')).toEqual(pref);
+  });
+
+  it('allowing notifications again restores the kept schedule', async () => {
+    store.set(
+      'canker-core:reminder-morning',
+      JSON.stringify({ enabled: true, time: '07:15' })
+    );
+    expect(await allowReminderNotifications()).toBe(true);
+    expect(scheduled()).toEqual([
+      expect.objectContaining({
+        id: 2,
+        schedule: { on: { hour: 7, minute: 15 }, allowWhileIdle: true }
+      })
+    ]);
+  });
+
+  it('allowing notifications reports a refusal and schedules nothing', async () => {
+    store.set(
+      'canker-core:reminder-morning',
+      JSON.stringify({ enabled: true, time: '07:15' })
+    );
+    plugin.requestPermissions.mockResolvedValueOnce({ display: 'denied' });
+    expect(await allowReminderNotifications()).toBe(false);
+    expect(plugin.schedule).not.toHaveBeenCalled();
+  });
+});
+
+describe('reminderStatus', () => {
+  it('offers a reminder on a phone that has never been asked', async () => {
+    expect(await reminderStatus()).toBe('offer');
+  });
+
+  it('does not offer again once turned down', async () => {
+    dismissReminderOffer();
+    expect(await reminderStatus()).toBe('ok');
+  });
+
+  it('does not offer once either slot was set, even to off', async () => {
+    await applyReminder('evening', { enabled: false, time: '20:00' });
+    expect(await reminderStatus()).toBe('ok');
+  });
+
+  it('is ok with a reminder on and notifications allowed', async () => {
+    await applyReminder('morning', { enabled: true, time: '08:00' });
+    expect(await reminderStatus()).toBe('ok');
+  });
+
+  it('is blocked with a reminder on and notifications refused', async () => {
+    store.set(
+      'canker-core:reminder-morning',
+      JSON.stringify({ enabled: true, time: '08:00' })
+    );
+    plugin.checkPermissions.mockResolvedValueOnce({ display: 'denied' });
+    expect(await reminderStatus()).toBe('blocked');
+  });
+
+  it('is blocked while the phone has not been asked yet', async () => {
+    store.set(
+      'canker-core:reminder-morning',
+      JSON.stringify({ enabled: true, time: '08:00' })
+    );
+    plugin.checkPermissions.mockResolvedValueOnce({ display: 'prompt' });
+    expect(await reminderStatus()).toBe('blocked');
   });
 });

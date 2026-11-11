@@ -99,7 +99,9 @@ function Flow({ user }: { user: User }) {
           upsertSores([sore], localTimeZone())
         );
         if (!saved.ok) return showFailure(saved.error);
-        if (canRemind && reminder.enabled) await applyReminder('evening', reminder);
+        // Applied off as well as on: a no here is an answer, and Today
+        // offers a reminder only on a phone that has never given one.
+        if (canRemind) await applyReminder('evening', reminder);
       }
 
       // Marked seen either way. Someone who skips has still been introduced,

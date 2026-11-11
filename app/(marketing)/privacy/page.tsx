@@ -76,7 +76,9 @@ export default function PrivacyPage() {
           other measure is a count of how many accounts go on to log a reading,
           worked out from the readings themselves. A second cookie, named tz,
           stores only your device’s time zone so dates show correctly; it is not
-          used for tracking.
+          used for tracking. In the iPhone and Android apps, a third, named
+          native-app, only tells the site it is open in the app, so the app
+          starts on Today; it holds nothing about you.
         </p>
       </section>
 
