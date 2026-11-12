@@ -30,10 +30,10 @@ export default async function SettingsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-4 lg:px-6 lg:py-8">
+    <div className="fold-shell mx-auto max-w-6xl px-4 py-4 lg:px-6 lg:py-8">
       {/* Visually hidden on a phone, where the top bar already says
           Settings, but still the page's h1 for a screen reader. */}
-      <header className="sr-only lg:not-sr-only lg:mb-8">
+      <header className="sr-only fold:max-w-[var(--fold-col)] lg:not-sr-only lg:mb-8">
         <h1 className="text-title">Settings</h1>
         <p className="prose-measure mt-2 text-muted-foreground">
           Your details, your password and data, how the app looks, and
@@ -41,7 +41,9 @@ export default async function SettingsLayout({
         </p>
       </header>
 
-      <div className="flex flex-col gap-5 lg:flex-row lg:gap-14">
+      {/* On a spanned Duo: the sections on the first screen, the one
+          open on the second. */}
+      <div className="fold-split flex flex-col gap-5 lg:flex-row lg:gap-14">
         <aside
           className={[
             // Sticky under the fixed top bar, so switching section does not
@@ -55,8 +57,9 @@ export default async function SettingsLayout({
         </aside>
         <div className="min-w-0 flex-1 lg:max-w-2xl">
           {children}
-          {/* Only on a phone: the desktop top bar already has this. */}
-          <div className="mt-8 lg:hidden">
+          {/* Wherever the tabs are a bar or a rail: the top bar carries
+              this only when it carries the links (navtop). */}
+          <div className="mt-8 navtop:hidden">
             <SignOutButton />
           </div>
           <BuildLabel className="mt-8 block text-xs text-muted-foreground" />

@@ -59,12 +59,14 @@ function MySoresScreen({ user }: { user: User }) {
   return (
     <div
       className={cn(
-        'mx-auto grid max-w-6xl grid-cols-1 gap-x-8 px-4 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:px-6 lg:py-8',
+        // On a spanned Duo the map takes the first screen and the sore's
+        // detail the second (THE FOLD in styles/main.css).
+        'fold-shell fold-split mx-auto grid max-w-6xl grid-cols-1 gap-x-8 px-4 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:px-6 lg:py-8',
         // Room under the reading for the Done bar that floats over it.
         mode !== 'view' && selectedSore && 'pb-28 lg:pb-8'
       )}
     >
-      <header className="flex flex-col gap-3.5 lg:col-span-2 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+      <header className="fold-across flex flex-col gap-3.5 lg:col-span-2 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <div>
           <h1 className="text-2xl leading-tight lg:text-3xl">Your mouth map</h1>
           <p className="mt-1.5">

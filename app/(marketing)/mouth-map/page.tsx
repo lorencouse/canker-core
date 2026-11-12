@@ -22,7 +22,7 @@ export const metadata: Metadata = {
  */
 export default function MouthMapPage() {
   return (
-    <article className="container max-w-3xl py-12 sm:py-16">
+    <article className="fold-first container max-w-3xl py-12 sm:py-16">
       <h1 className="text-title">Where is it?</h1>
 
       <p className="mt-6 border-l-2 border-primary pl-4 text-lg text-foreground">

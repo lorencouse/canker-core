@@ -230,7 +230,7 @@ export default function CheckInFlow({
       aria-label="Daily check-in"
       className="safe-t safe-b safe-x fixed inset-0 z-50 flex h-dvh flex-col bg-background"
     >
-      <header className="mx-auto grid w-full max-w-lg grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pt-2">
+      <header className="fold-first-pane mx-auto grid w-full max-w-lg grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pt-2">
         <div className="grid min-w-0 gap-1.5">
           <div
             role="progressbar"
@@ -280,7 +280,10 @@ export default function CheckInFlow({
 
       <div className="flex-1 overflow-y-auto overscroll-contain">
         {/* Keyed so each step starts fresh and its heading takes focus. */}
-        <div key={current} className="mx-auto w-full max-w-lg px-4 pb-4 pt-2">
+        <div
+          key={current}
+          className="fold-first-pane mx-auto w-full max-w-lg px-4 pb-4 pt-2"
+        >
           {isHabitStep(step) && soreSteps.length + loggedToday.length > 0 && (
             <SoresStrip
               sores={loggedToday}
@@ -298,7 +301,7 @@ export default function CheckInFlow({
       </div>
 
       {step.kind !== 'finish' && (
-        <footer className="mx-auto flex w-full max-w-lg justify-center px-4 pb-2">
+        <footer className="fold-first-pane mx-auto flex w-full max-w-lg justify-center px-4 pb-2">
           <Button
             type="button"
             variant="link"

@@ -315,7 +315,9 @@ function Today({
   return (
     <div
       className={cn(
-        'mx-auto max-w-6xl px-4 py-5 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start lg:gap-x-8 lg:px-6 lg:py-9',
+        // On a spanned Duo the sores take the first screen and the day's
+        // log the second (THE FOLD in styles/main.css).
+        'fold-shell fold-split mx-auto max-w-6xl px-4 py-5 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start lg:gap-x-8 lg:px-6 lg:py-9',
         // Room under the last field for the Save bar that floats over it.
         logDirty && 'pb-28 lg:pb-9'
       )}

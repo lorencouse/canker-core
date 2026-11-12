@@ -18,7 +18,7 @@ export default function Prose({
   mascot?: ReactNode;
 }>) {
   return (
-    <article className="container max-w-2xl py-16">
+    <article className="fold-first container max-w-2xl py-16">
       {mascot ? (
         <div className="flex items-end justify-between gap-4">
           <h1 className="min-w-0 text-title">{title}</h1>

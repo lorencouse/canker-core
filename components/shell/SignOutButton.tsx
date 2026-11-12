@@ -9,9 +9,10 @@ import { handleRequest } from '@/utils/auth-helpers/client';
 import { getRedirectMethod } from '@/utils/auth-helpers/settings';
 
 /**
- * Sign out, for the phone layout.
+ * Sign out, wherever the tabs are a bar or a rail.
  *
- * The desktop top bar carries this already; the tab bar deliberately does
+ * The top bar carries this when it carries the links (a mouse from lg up,
+ * utils/nav-mode.ts); the tabs deliberately do
  * not, because signing out is not a destination. Settings is where a phone
  * user goes looking for it, so it lives at the bottom of Settings.
  */

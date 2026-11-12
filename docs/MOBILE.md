@@ -337,10 +337,37 @@ header re-lays-out as the mobile address bar collapses, and it can be
 scrolled away mid-gesture on the mouth map. `.app-scroll` supplies the
 padding that keeps content clear of both bars.
 
-Navigation is a bottom tab bar under `lg`, and the same four destinations
-inline in the top bar from `lg` up. Sign out is in the top bar on desktop
-and at the foot of Settings on a phone — it is an action, not a destination,
-so it does not get a tab.
+The four tabs go in one of three places, by the rule Kouzr and Aireio
+share (`utils/nav-mode.ts`, set on `<html data-nav>` before the first
+paint): a **bar** along the bottom on every phone upright; a **rail** down
+the right edge on a Surface Duo (always), any wide touch screen (an iPad
+either way up, an unfolded foldable) and any short wide touch screen (a
+phone on its side); and links in the **top** bar for a mouse from `lg` up.
+The shell's Tailwind variants `rail:` and `navtop:` read it. Beside the rail
+the app shell's `--safe-right` includes the rail's room, so content and
+floating Save or Done bars clear it without knowing it is there. Sign out is
+in the top bar when it carries the links and at the foot of Settings
+otherwise — it is an action, not a destination, so it does not get a tab.
+
+Which content layout a page draws is decided by window size alone (the
+Tailwind breakpoints), never by touch or hover, so a spanned Duo and an iPad
+on its side draw the same layout.
+
+### Folds
+
+A Surface Duo spanned, a foldable bent like a book, or iPhone Duo held partly
+open puts a hinge down the window. `utils/fold.ts` reads it (Chrome's
+Viewport Segments API in a browser; in the apps the local Fold plugin,
+`native/plugins/fold`, since neither WebView reports segments) and sets
+`<html data-fold>` with `--fold-start`, `--fold-size` and `--fold-end`;
+`components/shell/LayoutWatch.tsx` keeps it current. THE FOLD in
+`styles/main.css` then moves each layout's seam onto the hinge:
+`.fold-shell` and `.fold-split` for two panes (one per screen),
+`.fold-first` for text with no second pane, `.fold-first-pane` for a centred
+column such as sign-in or the check-in, `.fold-dialog` for dialogs. A new
+screen with two panes should use them; one that only centres a column needs
+`.fold-first-pane`. The plugin is native code, so a binary from before it
+lays out by width alone.
 
 ### The mouth map screen
 

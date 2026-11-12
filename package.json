@@ -23,6 +23,7 @@
     "art:review": "node tools/review-page.mjs --all --serve"
   },
   "dependencies": {
+    "@canker-core/fold": "file:native/plugins/fold",
     "@canker-core/web-auth": "file:native/plugins/web-auth",
     "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",

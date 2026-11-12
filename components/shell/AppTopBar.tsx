@@ -16,9 +16,10 @@ import { APP_NAV, isActiveTab } from './nav-items';
 /**
  * The app's top bar, in two forms behind one component.
  *
- * On a phone it is a title bar: the current screen's name, centred, with the
- * navigation living in the tab bar below. On a desktop the tab bar is gone,
- * so the same strip carries the wordmark and the full set of links.
+ * Wherever the tabs are a bar or a rail (utils/nav-mode.ts) it is a title
+ * bar: the current screen's name, with the navigation in the tabs. With a
+ * mouse from lg up the tabs are gone, so the same strip carries the wordmark
+ * and the full set of links (`navtop:`).
  *
  * Fixed in both cases — the mouth map is a pan-and-zoom surface, and a
  * sticky bar that scrolls away mid-gesture is worse than no bar.
@@ -44,21 +45,21 @@ export default function AppTopBar() {
             has to say when the tabs are visible two inches below. Not a
             heading — it labels the chrome, and each screen carries its own
             h1 at every width. */}
-        <p className="flex-1 truncate font-display text-base font-semibold tracking-tight lg:hidden">
+        <p className="flex-1 truncate font-display text-base font-semibold tracking-tight fold:mr-auto fold:max-w-[var(--fold-col)] navtop:hidden">
           {current?.label ?? 'Canker Core'}
         </p>
 
         {/* Desktop: wordmark plus inline navigation. */}
         <Link
           href="/my-sores"
-          className="hidden items-center gap-2.5 rounded-md text-foreground lg:flex"
+          className="hidden items-center gap-2.5 rounded-md text-foreground navtop:flex"
         >
           <Logo size={26} wordmark />
         </Link>
 
         <nav
           aria-label="Main"
-          className="hidden flex-1 items-center gap-1 lg:flex"
+          className="hidden flex-1 items-center gap-1 navtop:flex"
         >
           {APP_NAV.map(({ href, label }) => {
             const active = isActiveTab(pathname, href);
@@ -99,7 +100,7 @@ export default function AppTopBar() {
           <ModeToggle />
           <form
             onSubmit={(e) => handleRequest(e, SignOut, router)}
-            className="hidden lg:block"
+            className="hidden navtop:block"
           >
             <input type="hidden" name="pathName" value={pathname} />
             <Button type="submit" variant="ghost" size="sm">

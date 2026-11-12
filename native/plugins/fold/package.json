@@ -1,0 +1,22 @@
+{
+  "name": "@canker-core/fold",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The fold of a dual-screen or folding phone for the Canker Core apps: Jetpack WindowManager's folding features on Android (Surface Duo), UIKit's division regions on iPhone Duo.",
+  "license": "UNLICENSED",
+  "author": "Canker Core",
+  "files": [
+    "ios/Sources",
+    "CankerCoreFold.podspec",
+    "android/build.gradle",
+    "android/src/main"
+  ],
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  }
+}

@@ -47,7 +47,7 @@ export default function HomePage() {
   return (
     <>
       <JsonLd schema={softwareApplicationSchema} />
-      <section className="container grid items-center gap-10 py-10 sm:py-16 lg:grid-cols-2 lg:gap-16 lg:py-24">
+      <section className="fold-shell fold-split container grid items-center gap-10 py-10 sm:py-16 lg:grid-cols-2 lg:gap-16 lg:py-24">
         <div>
           {/* Kanko waves beside the headline rather than above it, so the
               promise is still the first thing read. A wrapped heading's box
@@ -92,7 +92,7 @@ export default function HomePage() {
         <MouthMapHero />
       </section>
 
-      <section className="container py-8 sm:py-12">
+      <section className="fold-first container py-8 sm:py-12">
         <div className="rounded-worksheet border border-border bg-card p-5 sm:p-8">
           <h2 className="text-section">One scale, used everywhere</h2>
           <p className="prose-measure mt-2 text-muted-foreground">
@@ -106,9 +106,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="container py-8 sm:py-12 lg:py-16">
-        <h2 className="text-title">A sore, from first twinge to gone</h2>
-        <ol className="mt-10 grid gap-8 sm:grid-cols-3">
+      <section className="fold-shell container py-8 sm:py-12 lg:py-16">
+        <h2 className="text-title fold:max-w-[var(--fold-col)]">
+          A sore, from first twinge to gone
+        </h2>
+        <ol className="fold-split mt-10 grid gap-8 sm:grid-cols-3">
           {TIMELINE.map((step) => (
             <li
               key={step.when}

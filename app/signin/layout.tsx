@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type React from 'react';
 import { PropsWithChildren } from 'react';
 
 import Logo from '@/components/icons/Logo';
@@ -33,7 +34,12 @@ export default function SignInLayout({ children }: PropsWithChildren) {
           bottom-padded by the keyboard height rather than left to be hidden
           behind it.
         */}
-        <div className="w-full max-w-md pb-[var(--keyboard-h)]">{children}</div>
+        <div
+          className="fold-first-pane w-full max-w-md pb-[var(--keyboard-h)]"
+          style={{ '--pane-w': '28rem' } as React.CSSProperties}
+        >
+          {children}
+        </div>
       </main>
     </div>
   );
