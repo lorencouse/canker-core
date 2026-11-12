@@ -32,12 +32,38 @@ describe('navMode: the owner rule shared with Kouzr', () => {
     expect(navMode(touch(390, 664, { screenHeight: 844 }))).toBe('bar');
   });
 
-  it('puts the rail on a Surface Duo, one screen or spanned, either way up', () => {
+  it('keeps the bar on a tall upright window, whatever the device', () => {
+    // iPad upright: 11 inch and 13 inch.
+    expect(navMode(touch(834, 1194))).toBe('bar');
+    expect(navMode(touch(820, 1180))).toBe('bar');
+    expect(navMode(touch(1032, 1376))).toBe('bar');
+    // Safari's toolbars make the window shorter; still upright and tall.
+    expect(navMode(touch(1032, 1290, { screenHeight: 1376 }))).toBe('bar');
+  });
+
+  it('puts the bar on a Surface Duo held upright, one screen or spanned', () => {
     const duo = { userAgent: DUO, screenWidth: 1114, screenHeight: 720 };
-    expect(navMode(touch(540, 720, duo))).toBe('rail');
+    expect(navMode(touch(540, 720, duo))).toBe('bar');
+    // Chrome's toolbars: the screen is still 720 tall.
+    expect(navMode(touch(540, 640, duo))).toBe('bar');
+    // Spanned with the hinge across the window.
+    expect(navMode(touch(720, 1114, { ...duo, foldAxis: 'rows' }))).toBe('bar');
+    expect(
+      navMode(
+        touch(720, 1114, {
+          userAgent: DUO,
+          screenWidth: 720,
+          screenHeight: 1114
+        })
+      )
+    ).toBe('bar');
+  });
+
+  it('puts the rail on a Surface Duo on its side, one screen or spanned', () => {
+    const duo = { userAgent: DUO, screenWidth: 1114, screenHeight: 720 };
     expect(navMode(touch(1114, 720, duo))).toBe('rail');
     expect(navMode(touch(720, 540, duo))).toBe('rail');
-    expect(navMode(touch(720, 1114, { ...duo, foldAxis: 'rows' }))).toBe(
+    expect(navMode(touch(1114, 720, { ...duo, foldAxis: 'columns' }))).toBe(
       'rail'
     );
   });
@@ -45,7 +71,7 @@ describe('navMode: the owner rule shared with Kouzr', () => {
   it('knows a Duo by its spanned screen when the user agent is reduced', () => {
     expect(
       navMode(
-        touch(540, 720, {
+        touch(720, 540, {
           userAgent: ANDROID,
           screenWidth: 1114,
           screenHeight: 720
@@ -54,8 +80,9 @@ describe('navMode: the owner rule shared with Kouzr', () => {
     ).toBe('rail');
   });
 
-  it('puts the rail on every wide touch screen: an iPad either way up', () => {
-    expect(navMode(touch(820, 1180))).toBe('rail');
+  it('puts the rail on every wide touch screen on its side', () => {
+    // iPad on its side: 11 inch and 13 inch.
+    expect(navMode(touch(1194, 834))).toBe('rail');
     expect(navMode(touch(1180, 820))).toBe('rail');
     expect(navMode(touch(1376, 1032))).toBe('rail');
     // An unfolded foldable.

@@ -11,11 +11,13 @@ import { APP_NAV, isActiveTab } from './nav-items';
  * The app's four tabs, in one of the three places utils/nav-mode.ts puts
  * them (<html data-nav>):
  *
- *   bar   along the bottom: every phone upright. Fixed rather than sticky so
- *         it survives the address bar collapsing, and above the home
- *         indicator through the safe-area padding.
- *   rail  a pill stood on end at the foot of the right edge: a Surface Duo,
- *         an iPad, any short wide touch screen. Kouzr's rail, the same width
+ *   bar   along the bottom: any tall upright window (a phone, an iPad, a
+ *         Surface Duo held upright). Fixed rather than sticky so it survives
+ *         the address bar collapsing, and above the home indicator through
+ *         the safe-area padding.
+ *   rail  a pill stood on end at the foot of the right edge: a short or
+ *         wide touch window (a phone or iPad on its side, a Duo spanned
+ *         with the hinge down the middle). Kouzr's rail, the same width
  *         (64px) and place: the tabs in the right thumb's reach, and on a
  *         spanned Duo on the second screen, clear of the hinge. The shell
  *         keeps its room as --safe-right (styles/main.css), so nothing else
