@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The web bar's label: 12px, medium at rest; the lit tab is made
+         heavier by the bar (setItemTextAppearanceActiveBoldEnabled). -->
+    <style name="CankerTabLabel" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">12sp</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+</resources>

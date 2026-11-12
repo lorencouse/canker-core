@@ -1,20 +1,24 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { cn } from '@/utils/cn';
 import { tap } from '@/utils/native';
 import { APP_NAV, isActiveTab } from './nav-items';
+import { useNativeTabBar } from './useNativeTabBar';
 
 /**
  * The app's four tabs, in one of the three places utils/nav-mode.ts puts
  * them (<html data-nav>):
  *
- *   bar   along the bottom: any tall upright window (a phone, an iPad, a
- *         Surface Duo held upright). Fixed rather than sticky so it survives
- *         the address bar collapsing, and above the home indicator through
- *         the safe-area padding.
+ *   bar   a glass capsule floating over the foot of the content: any tall
+ *         upright window (a phone, an iPad, a Surface Duo held upright).
+ *         The width of a phone, and sized to its tabs and centred on
+ *         anything wider (.tab-bar in styles/main.css). Fixed rather than
+ *         sticky so it survives the address bar collapsing. In the app the
+ *         platform draws its own bar in its place (native-tabs.ts).
  *   rail  a pill stood on end at the foot of the right edge: a short or
  *         wide touch window (a phone or iPad on its side, a Duo spanned
  *         with the hinge down the middle). Kouzr's rail, the same width
@@ -26,20 +30,28 @@ import { APP_NAV, isActiveTab } from './nav-items';
  */
 export default function TabBar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const tabs = useMemo(
+    () =>
+      APP_NAV.map(({ href, label }) => ({
+        id: href.slice(1),
+        label,
+        active: isActiveTab(pathname, href)
+      })),
+    [pathname]
+  );
+  useNativeTabBar(tabs, (id) => {
+    const href = `/${id}`;
+    tap();
+    // The lit tab tapped again goes back to the top, as a native bar does.
+    if (pathname === href) window.scrollTo({ top: 0, behavior: 'smooth' });
+    else router.push(href);
+  });
 
   return (
-    <nav
-      aria-label="Main"
-      className={cn(
-        'keyboard-hides fixed z-40 navtop:hidden',
-        // Opaque: a frosted bar lets the content under it compete with the
-        // labels.
-        'border-border bg-card',
-        'inset-x-0 bottom-0 h-[calc(var(--tab-bar-h)+var(--safe-bottom))] border-t safe-b safe-x',
-        'rail:left-auto rail:right-[var(--rail-right)] rail:bottom-[calc(var(--safe-bottom)+var(--rail-gap))] rail:h-auto rail:w-[var(--rail-w)] rail:rounded-full rail:border rail:p-0'
-      )}
-    >
-      <ul className="flex h-[var(--tab-bar-h)] items-stretch rail:h-auto rail:flex-col rail:py-1">
+    <nav aria-label="Main" className="tab-bar keyboard-hides navtop:hidden">
+      <ul className="flex h-full items-stretch p-1 rail:h-auto rail:flex-col">
         {APP_NAV.map(({ href, label, description, icon: Icon }) => {
           const active = isActiveTab(pathname, href);
           return (
@@ -50,7 +62,7 @@ export default function TabBar() {
                 aria-current={active ? 'page' : undefined}
                 aria-label={description}
                 className={cn(
-                  'flex h-full flex-col items-center justify-center gap-1',
+                  'flex h-full flex-col items-center justify-center gap-1 rounded-full',
                   'rail:min-h-14 rail:px-1',
                   'text-xs transition-colors',
                   /*
@@ -59,7 +71,7 @@ export default function TabBar() {
                    * greyscale; indigo stays the colour of actions, not places.
                    */
                   active
-                    ? 'font-semibold text-foreground'
+                    ? 'bg-foreground/[0.07] font-semibold text-foreground'
                     : 'font-medium text-muted-foreground'
                 )}
               >

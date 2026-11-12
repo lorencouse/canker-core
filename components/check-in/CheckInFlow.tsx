@@ -228,6 +228,8 @@ export default function CheckInFlow({
       role="dialog"
       aria-modal="true"
       aria-label="Daily check-in"
+      // The whole window: the app's native tab bar steps out of its way.
+      data-covers-tabs=""
       className="safe-t safe-b safe-x fixed inset-0 z-50 flex h-dvh flex-col bg-background"
     >
       <header className="fold-first-pane mx-auto grid w-full max-w-lg grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pt-2">

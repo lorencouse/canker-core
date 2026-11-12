@@ -346,7 +346,23 @@ the right edge on any other wide touch screen (an iPad or a spanned Duo on
 its side, an unfolded foldable) and any short wide touch screen (a phone on
 its side, a Duo's single screen on its side); and links in the **top** bar
 for a mouse from `lg` up.
-The shell's Tailwind variants `rail:` and `navtop:` read it. Beside the rail
+The shell's Tailwind variants `rail:` and `navtop:` read it.
+
+The bar and the rail follow Apple's Liquid Glass guidance: they float over
+the content, which scrolls under them edge to edge (`.tab-bar` and `.glass`
+in `styles/main.css`). The bar is a translucent capsule over the home
+indicator, the width of a phone and sized to its four tabs and centred on
+anything wider (`--tab-bar-max`); a floating Save or Done is a glass card
+just above it. Everything that clears the bar reads `--tab-lift`. Anyone who
+asks the system for less transparency gets a solid card. In the apps the
+platform draws its own bar instead (`components/shell/native-tabs.ts`, the
+local plugin `native/plugins/tab-bar`): a UITabBar on iOS, which iOS 26 and
+later draw as real Liquid Glass, and Material 3's navigation bar floating as
+a pill on Android. The page still owns the tabs and the rules and sends them
+across; the web bar stays in its place, unseen, and the rail stays the
+web's. A binary built before the plugin keeps the web bar.
+
+Beside the rail
 the app shell's `--safe-right` includes the rail's room, so content and
 floating Save or Done bars clear it without knowing it is there. Sign out is
 in the top bar when it carries the links and at the foot of Settings
