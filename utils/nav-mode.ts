@@ -6,18 +6,26 @@
  * THE OWNER'S RULE, shared with Kouzr and Aireio (Kouzr's
  * apps/app/src/rail.ts is the source; its header is the long version):
  *
- *   1. A Surface Duo has the rail on the right ALWAYS: one screen upright or
- *      on its side, spanned or stacked, in Chrome and in the app.
- *   2. Every wide touch screen has it (WIDE: 900px, or 720px wide and 560px
- *      tall): an iPad either way up, an unfolded foldable. Not across a fold
- *      that runs across the screen, where a rail down the side would cross
- *      the hinge; the bar along the foot stays on the lower screen.
- *   3. Any other short, wide touch screen has it: under 740px tall (the
- *      screen's height, not the window's, so a browser's toolbars do not
- *      count), wider than tall and at least 440px wide. A phone on its side,
- *      iPhone Duo open as a book.
- *   4. A mouse or trackpad from lg (1024px) up gets the links in the top bar.
- *   5. Everything else keeps the bar along the bottom: every phone upright.
+ *   1. A tall upright window keeps the bar along the bottom, whatever the
+ *      device: taller than wide and at least 700px tall (the screen's height
+ *      as held, so a browser's toolbars do not count). An iPad upright, a
+ *      Surface Duo on one screen or spanned with the hinge across, every
+ *      phone upright. The tabs sit under the thumbs and the content keeps
+ *      the full width.
+ *   2. Otherwise a Surface Duo has the rail on the right: one screen on its
+ *      side, or spanned with the hinge down the middle.
+ *   3. Every other wide touch screen has it (WIDE: 900px, or 720px wide and
+ *      560px tall): an iPad on its side, an unfolded foldable. Not across a
+ *      fold that runs across the screen, where a rail down the side would
+ *      cross the hinge; the bar along the foot stays on the lower screen.
+ *   4. Any other short, wide touch screen has it: under 740px tall (the
+ *      screen's height, not the window's), wider than tall and at least
+ *      440px wide. A phone on its side, iPhone Duo open as a book.
+ *   5. A mouse or trackpad from lg (1024px) up gets the links in the top bar.
+ *   6. Everything else keeps the bar along the bottom.
+ *
+ * Size and shape only: never the device's name beyond the Duo's, never hover
+ * for the rail.
  *
  * The rail is about where the tabs go, nothing else. Which content layout a
  * page draws is decided by window size alone (Tailwind's breakpoints), never
@@ -48,11 +56,18 @@ export type NavInput = {
 
 export function navMode(i: NavInput): NavMode {
   var TALL = 740;
+  var UPRIGHT_TALL = 700;
   var RAIL_MIN_WIDTH = 440;
   var w = i.width;
   var h = i.height;
   var a = i.screenWidth || 0;
   var b = i.screenHeight || 0;
+  // The screen's height as the window is held. A screen reported wider than
+  // tall follows the device (Android), so its height is the height; iOS
+  // reports it upright, so the window's orientation picks the side.
+  var side = a > b ? b : w > h ? Math.min(a, b) : Math.max(a, b);
+  var screenTall = Math.max(h, side);
+  if (!i.desktop && h > w && screenTall >= UPRIGHT_TALL) return 'bar';
   // A Duo's screen is the whole spanned display, 1114 x 720 give or take,
   // either way round, whichever pane the window is on.
   var long = Math.max(a, b);
@@ -63,11 +78,6 @@ export function navMode(i: NavInput): NavMode {
   var acrossFold = i.foldAxis === 'rows';
   var wide = w >= 900 || (w >= 720 && h >= 560);
   if (i.touch && !acrossFold && wide) return 'rail';
-  // The screen's height as the window is held. A screen reported wider than
-  // tall follows the device (Android), so its height is the height; iOS
-  // reports it upright, so the window's orientation picks the side.
-  var side = a > b ? b : w > h ? Math.min(a, b) : Math.max(a, b);
-  var screenTall = Math.max(h, side);
   if (
     i.touch &&
     !acrossFold &&

@@ -339,10 +339,13 @@ padding that keeps content clear of both bars.
 
 The four tabs go in one of three places, by the rule Kouzr and Aireio
 share (`utils/nav-mode.ts`, set on `<html data-nav>` before the first
-paint): a **bar** along the bottom on every phone upright; a **rail** down
-the right edge on a Surface Duo (always), any wide touch screen (an iPad
-either way up, an unfolded foldable) and any short wide touch screen (a
-phone on its side); and links in the **top** bar for a mouse from `lg` up.
+paint): a **bar** along the bottom on any tall upright touch window (taller
+than wide and at least 700px tall: every phone upright, an iPad upright, a
+Surface Duo on one screen or spanned with the hinge across); a **rail** down
+the right edge on any other wide touch screen (an iPad or a spanned Duo on
+its side, an unfolded foldable) and any short wide touch screen (a phone on
+its side, a Duo's single screen on its side); and links in the **top** bar
+for a mouse from `lg` up.
 The shell's Tailwind variants `rail:` and `navtop:` read it. Beside the rail
 the app shell's `--safe-right` includes the rail's room, so content and
 floating Save or Done bars clear it without knowing it is there. Sign out is
