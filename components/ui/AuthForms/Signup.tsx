@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -27,6 +27,7 @@ interface SignUpProps {
 
 export default function SignUp({ allowEmail }: SignUpProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<Message | null>(() =>
     messageFromParams(searchParams)
@@ -46,11 +47,16 @@ export default function SignUp({ allowEmail }: SignUpProps) {
 
     const formData = new FormData(e.currentTarget);
     try {
-      await signUp(formData);
-      setMessage({
-        type: 'success',
-        content: 'Account created. Check your email to confirm it.'
-      });
+      // signUp reports failure in the redirect it returns, not by throwing.
+      const redirect = new URL(await signUp(formData), window.location.origin);
+      const error = redirect.searchParams.get('error_description');
+      if (error) {
+        setMessage({ type: 'error', content: error });
+      } else {
+        // Signed in: go where the server sent us.
+        router.push(redirect.pathname + redirect.search);
+        router.refresh();
+      }
     } catch {
       setMessage({
         type: 'error',

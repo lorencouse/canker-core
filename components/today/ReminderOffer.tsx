@@ -21,6 +21,9 @@ const BLOCKED_TOAST = {
   description: 'Allow them in your phone’s settings, then try again.'
 };
 
+// '08:00' reads as '8:00' in copy.
+const MORNING_LABEL = MORNING_TIME.replace(/^0/, '');
+
 /**
  * Today's word on reminders, in the app only: an offer on a phone that has
  * never been asked, or a warning when a reminder is on but the phone blocks
@@ -55,7 +58,7 @@ export default function ReminderOffer() {
       });
       if (ok) {
         setStatus('ok');
-        toast({ title: 'Reminder set for 8:00 each morning.' });
+        toast({ title: `Reminder set for ${MORNING_LABEL} each morning.` });
       } else {
         // The refusal is recorded as a choice, so the offer does not return.
         setStatus('ok');
@@ -77,6 +80,8 @@ export default function ReminderOffer() {
       else toast(BLOCKED_TOAST);
     } catch (error) {
       console.error('could not allow notifications', error);
+      // The system prompt cannot be reopened from here; say where to go instead.
+      toast(BLOCKED_TOAST);
     } finally {
       setBusy(false);
     }
@@ -98,7 +103,7 @@ export default function ReminderOffer() {
         <p className="prose-measure text-sm text-muted-foreground">
           {blocked
             ? 'Notifications for Canker Core are off on this phone, so your reminders never arrive.'
-            : 'A nudge at 8:00 each morning to check in. Change the time in Settings.'}
+            : `A nudge at ${MORNING_LABEL} each morning to check in. Change the time in Settings.`}
         </p>
       </div>
       <div className="col-span-2 flex flex-wrap gap-2">
