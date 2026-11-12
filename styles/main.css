@@ -311,21 +311,105 @@
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
-  /* A phone's Save or Done, floating over the tab bar; in the flow from lg up. */
+  /*
+   * Liquid Glass, as the web can draw it: the chrome that floats over the
+   * page (the tab bar, the rail, a floating Save) is a translucent layer the
+   * content scrolls under, blurred so the labels keep their contrast. Apple's
+   * rule is that glass is for navigation and controls only, never content.
+   * Anyone who asks the system for less transparency gets the solid card.
+   */
+  .glass {
+    background-color: hsl(var(--card) / 0.82);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.7);
+    box-shadow:
+      0 10px 30px -12px hsl(var(--foreground) / 0.28),
+      inset 0 1px 0 hsl(0 0% 100% / 0.4);
+  }
+  .dark .glass {
+    box-shadow:
+      0 10px 30px -12px hsl(0 0% 0% / 0.6),
+      inset 0 1px 0 hsl(0 0% 100% / 0.08);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .glass {
+      background-color: hsl(var(--card));
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  /*
+   * A Save or Done that floats: a glass card over the tab bar, the bar's
+   * width on a phone and no wider than a form on a wider window, so it reads
+   * as part of the page rather than a second bar. In the flow from lg up.
+   */
   .floating-action-bar {
-    @apply fixed inset-x-0 bottom-[calc(var(--tab-bar-h)+var(--safe-bottom))] z-30 border-t border-border bg-background px-4 py-2.5 lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:p-0;
+    @apply glass fixed z-30 mx-auto max-w-xl rounded-2xl px-4 py-2.5;
+    left: var(--tab-side-l);
+    right: var(--tab-side-r);
+    bottom: calc(var(--tab-lift) + var(--tab-gap));
   }
   /*
-   * Beside the rail there is no bar to float over: the Save or Done bar sits
-   * at the foot, over the home indicator, and stops short of the rail
-   * (Kouzr's rule: corner controls step clear of the side column).
+   * Beside the rail there is no bar to float over: the card sits at the
+   * foot, where the bar would be, and stops short of the rail (Kouzr's rule:
+   * corner controls step clear of the side column).
    */
-  @media not all and (min-width: theme('screens.lg')) {
+  :root[data-nav='rail'] .floating-action-bar {
+    bottom: var(--tab-bottom);
+    right: max(var(--tab-gap), var(--safe-right));
+  }
+  @media (min-width: theme('screens.lg')) {
+    .floating-action-bar,
     :root[data-nav='rail'] .floating-action-bar {
-      bottom: 0;
-      right: var(--safe-right);
-      padding-bottom: calc(var(--safe-bottom) + 0.625rem);
+      position: static;
+      z-index: auto;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background-color: transparent;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      box-shadow: none;
     }
+  }
+
+  /*
+   * The app's tabs (components/shell/TabBar.tsx), wherever utils/nav-mode.ts
+   * puts them. As a bar: a glass capsule floating over the content, inset
+   * from the sides and standing just over the home indicator, as iOS 26
+   * draws its own. On a phone it spans the width; on anything wider
+   * (an iPad or a Surface Duo upright) it is sized to its four tabs and
+   * centred, so the content keeps the screen. As a rail: the same capsule
+   * stood on end at the foot of the right edge.
+   */
+  .tab-bar {
+    @apply glass fixed z-40 rounded-full;
+    left: var(--tab-side-l);
+    right: var(--tab-side-r);
+    bottom: var(--tab-bottom);
+    height: var(--tab-bar-h);
+    margin-inline: auto;
+    max-width: var(--tab-bar-max);
+  }
+  :root[data-nav='rail'] .tab-bar {
+    left: auto;
+    right: var(--rail-right);
+    bottom: calc(var(--safe-bottom) + var(--rail-gap));
+    width: var(--rail-w);
+    height: auto;
+    max-width: none;
+  }
+  /*
+   * The app draws the platform's own bar (components/shell/native-tabs.ts):
+   * the web one keeps its place, unseen, so anything that measures it still
+   * finds it, and the rail stays the web's.
+   */
+  :root[data-native-tabs]:not([data-nav='rail']) .tab-bar {
+    visibility: hidden;
   }
 
   /* Labels drawn inside the mouth-map SVG. */
@@ -401,6 +485,22 @@
     /* Fixed chrome heights, so scroll containers can pad themselves. */
     --app-bar-h: 3.5rem;
     --tab-bar-h: 3.75rem;
+
+    /*
+     * The floating tab bar (.tab-bar): its gap from the sides, and its foot,
+     * which gives back part of the home indicator's strip and stands just
+     * over the handle, as iOS 26's own bar does. --tab-lift is how far its
+     * top sits above the bottom of the screen; everything that clears the
+     * bar reads it, and the app's native bar replaces it with its own
+     * (components/shell/native-tabs.ts). Four tabs need no more than
+     * --tab-bar-max on a window wider than a phone.
+     */
+    --tab-gap: 0.75rem;
+    --tab-bottom: max(0.5rem, calc(var(--safe-bottom) - 0.875rem));
+    --tab-lift: calc(var(--tab-bottom) + var(--tab-bar-h));
+    --tab-side-l: max(var(--tab-gap), var(--safe-left));
+    --tab-side-r: max(var(--tab-gap), var(--safe-right));
+    --tab-bar-max: 28rem;
 
     /*
      * Set by the Keyboard plugin while the soft keyboard is up. Sheets and
@@ -504,7 +604,7 @@
    */
   .app-scroll {
     padding-top: calc(var(--app-bar-h) + var(--safe-top));
-    padding-bottom: calc(var(--tab-bar-h) + var(--safe-bottom) + 1rem);
+    padding-bottom: calc(var(--tab-lift) + 1.5rem);
     padding-left: var(--safe-left);
     padding-right: var(--safe-right);
     -webkit-overflow-scrolling: touch;

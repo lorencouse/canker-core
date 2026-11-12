@@ -1,0 +1,22 @@
+{
+  "name": "@canker-core/tab-bar",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The platform's own tab bar for the Canker Core apps, laid over the webview: UITabBar on iOS (Liquid Glass from iOS 26), Material 3's navigation bar on Android. Driven by components/shell/native-tabs.ts.",
+  "license": "UNLICENSED",
+  "author": "Canker Core",
+  "files": [
+    "ios/Sources",
+    "CankerCoreTabBar.podspec",
+    "android/build.gradle",
+    "android/src/main"
+  ],
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  }
+}
