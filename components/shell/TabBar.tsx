@@ -8,12 +8,19 @@ import { tap } from '@/utils/native';
 import { APP_NAV, isActiveTab } from './nav-items';
 
 /**
- * The bottom tab bar: the app's primary navigation on a phone.
+ * The app's four tabs, in one of the three places utils/nav-mode.ts puts
+ * them (<html data-nav>):
  *
- * Hidden from lg up, where the same destinations live in the top bar. It is
- * fixed rather than sticky so it survives the address bar collapsing, and it
- * sits above the home indicator via the safe-area padding rather than
- * guessing at a magic 34px.
+ *   bar   along the bottom: every phone upright. Fixed rather than sticky so
+ *         it survives the address bar collapsing, and above the home
+ *         indicator through the safe-area padding.
+ *   rail  a pill stood on end at the foot of the right edge: a Surface Duo,
+ *         an iPad, any short wide touch screen. Kouzr's rail, the same width
+ *         (64px) and place: the tabs in the right thumb's reach, and on a
+ *         spanned Duo on the second screen, clear of the hinge. The shell
+ *         keeps its room as --safe-right (styles/main.css), so nothing else
+ *         has to know it is there.
+ *   top   hidden: a mouse from lg up has the same links in the top bar.
  */
 export default function TabBar() {
   const pathname = usePathname();
@@ -22,19 +29,19 @@ export default function TabBar() {
     <nav
       aria-label="Main"
       className={cn(
-        'keyboard-hides fixed inset-x-0 bottom-0 z-40 lg:hidden',
+        'keyboard-hides fixed z-40 navtop:hidden',
         // Opaque: a frosted bar lets the content under it compete with the
         // labels.
-        'border-t border-border bg-card',
-        'safe-b safe-x'
+        'border-border bg-card',
+        'inset-x-0 bottom-0 h-[calc(var(--tab-bar-h)+var(--safe-bottom))] border-t safe-b safe-x',
+        'rail:left-auto rail:right-[var(--rail-right)] rail:bottom-[calc(var(--safe-bottom)+var(--rail-gap))] rail:h-auto rail:w-[var(--rail-w)] rail:rounded-full rail:border rail:p-0'
       )}
-      style={{ height: 'calc(var(--tab-bar-h) + var(--safe-bottom))' }}
     >
-      <ul className="flex h-[var(--tab-bar-h)] items-stretch">
+      <ul className="flex h-[var(--tab-bar-h)] items-stretch rail:h-auto rail:flex-col rail:py-1">
         {APP_NAV.map(({ href, label, description, icon: Icon }) => {
           const active = isActiveTab(pathname, href);
           return (
-            <li key={href} className="flex-1">
+            <li key={href} className="min-w-0 flex-1 rail:flex-none">
               <Link
                 href={href}
                 onClick={() => tap()}
@@ -42,6 +49,7 @@ export default function TabBar() {
                 aria-label={description}
                 className={cn(
                   'flex h-full flex-col items-center justify-center gap-1',
+                  'rail:min-h-14 rail:px-1',
                   'text-xs transition-colors',
                   /*
                    * The active tab is ink and heavier, the rest muted. Weight
@@ -58,7 +66,7 @@ export default function TabBar() {
                   strokeWidth={active ? 2.25 : 1.75}
                   aria-hidden="true"
                 />
-                <span aria-hidden="true" className="whitespace-nowrap">
+                <span aria-hidden="true" className="max-w-full truncate">
                   {label}
                 </span>
               </Link>

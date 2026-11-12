@@ -7,5 +7,9 @@ import { PropsWithChildren } from 'react';
  * re-deciding what the column is.
  */
 export default function BlogLayout({ children }: PropsWithChildren) {
-  return <div className="container max-w-2xl py-12 sm:py-16">{children}</div>;
+  return (
+    <div className="fold-first container max-w-2xl py-12 sm:py-16">
+      {children}
+    </div>
+  );
 }

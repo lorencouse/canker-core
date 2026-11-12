@@ -29,7 +29,7 @@ export default async function AppLayout({ children }: PropsWithChildren) {
   if (user && !(await getOnboardedAt(user.id))) redirect('/welcome');
 
   return (
-    <div className="min-h-[100dvh]">
+    <div className="app-shell min-h-[100dvh]">
       <AppTopBar />
       <main id="main" className="app-scroll">
         <Suspense fallback={<AppSkeleton />}>{children}</Suspense>

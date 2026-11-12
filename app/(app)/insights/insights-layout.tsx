@@ -28,8 +28,8 @@ const InsightsLayout = ({
   const active = sores.filter((sore) => !sore.healed_at).length;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-4 lg:px-6 lg:py-8">
-      <header className="mb-4 lg:mb-6">
+    <div className="fold-shell mx-auto max-w-6xl px-4 py-4 lg:px-6 lg:py-8">
+      <header className="mb-4 fold:max-w-[var(--fold-col)] lg:mb-6">
         {/* The top bar already names the screen on a phone, so the heading
             is only drawn from lg up — but it stays in the document outline
             at every width, because the bar's label is not a heading. */}
@@ -56,9 +56,13 @@ const InsightsLayout = ({
           </Button>
         </div>
       ) : (
-        <div className="space-y-4 xl:space-y-8">
+        /*
+          On a spanned Duo: the tiles and the table on the first screen, the
+          two charts down the second (THE FOLD in styles/main.css).
+        */
+        <div className="fold-split space-y-4 fold:grid-rows-[auto_1fr] fold:items-start fold:gap-y-4 fold:space-y-0 xl:space-y-8">
           <StatTiles sores={sores} />
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-8">
+          <div className="fold-end grid grid-cols-1 gap-4 fold:row-span-2 fold:row-start-1 xl:grid-cols-2 xl:gap-8">
             <BarChartComponent sores={sores} />
             <TriggerTally sores={sores} logs={dayLogs} />
           </div>

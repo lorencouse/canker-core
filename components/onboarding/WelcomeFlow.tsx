@@ -121,7 +121,7 @@ function Flow({ user }: { user: User }) {
   const copy = COPY[step];
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-3 min-[400px]:py-5 lg:py-10">
+    <div className="fold-first-pane mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-3 min-[400px]:py-5 lg:py-10">
       <Progress index={index} />
 
       <header className="mt-3 [@media(min-height:700px)]:mt-5">

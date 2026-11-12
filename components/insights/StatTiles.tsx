@@ -63,7 +63,7 @@ export default function StatTiles({ sores }: { sores: Sore[] }) {
   ];
 
   return (
-    <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 fold:lg:grid-cols-3">
       {tiles.map((tile) => (
         /*
          * Figure first, label under it. A number is what the eye lands on,

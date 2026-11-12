@@ -48,8 +48,8 @@ export default function BlogIndexPage() {
   const groups = groupedArticles();
 
   return (
-    <div className="container py-12 sm:py-16 lg:py-20">
-      <header className="max-w-3xl animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+    <div className="fold-shell container py-12 sm:py-16 lg:py-20">
+      <header className="max-w-3xl fold:max-w-[var(--fold-col)] animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
         {/* Kanko reads here, on the index only; the articles themselves are
             medical writing and carry no mascot. */}
         <div className="flex items-end justify-between gap-4">
@@ -72,7 +72,7 @@ export default function BlogIndexPage() {
         <section
           key={group.key}
           aria-labelledby={`group-${group.key}`}
-          className="mt-16 grid grid-cols-1 gap-8 sm:mt-24 lg:mt-36 lg:grid-cols-12 lg:gap-12"
+          className="fold-split mt-16 grid grid-cols-1 gap-8 sm:mt-24 lg:mt-36 lg:grid-cols-12 lg:gap-12"
         >
           <div className="lg:col-span-5">
             <div className="lg:sticky lg:top-24">

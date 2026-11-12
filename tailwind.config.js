@@ -154,6 +154,18 @@ module.exports = {
     require('tailwindcss-animate'),
     // Size controls off the input device, not the viewport (docs/MOBILE.md):
     // `coarse:min-h-11` is a 44px tap target under a thumb only.
-    plugin(({ addVariant }) => addVariant('coarse', '@media (pointer: coarse)'))
+    plugin(({ addVariant }) =>
+      addVariant('coarse', '@media (pointer: coarse)')
+    ),
+    // Where the app's tabs are (utils/nav-mode.ts): `rail:` while they stand
+    // down the right edge, `navtop:` while they are links in the top bar.
+    // Neither is a content breakpoint; content lays out by width alone.
+    plugin(({ addVariant }) => {
+      addVariant('rail', ':root[data-nav="rail"] &');
+      addVariant('navtop', ':root[data-nav="top"] &');
+      // A fold down the middle of the window (utils/fold.ts, THE FOLD in
+      // styles/main.css).
+      addVariant('fold', ':root[data-fold="columns"] &');
+    })
   ]
 };

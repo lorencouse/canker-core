@@ -82,7 +82,7 @@ export default function AboutPage() {
         </section>
       </Prose>
 
-      <div className="container max-w-2xl pb-16">
+      <div className="fold-first container max-w-2xl pb-16">
         <Button asChild size="lg">
           <Link href="/signin/signup">Start tracking</Link>
         </Button>

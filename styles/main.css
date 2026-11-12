@@ -315,6 +315,18 @@
   .floating-action-bar {
     @apply fixed inset-x-0 bottom-[calc(var(--tab-bar-h)+var(--safe-bottom))] z-30 border-t border-border bg-background px-4 py-2.5 lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:p-0;
   }
+  /*
+   * Beside the rail there is no bar to float over: the Save or Done bar sits
+   * at the foot, over the home indicator, and stops short of the rail
+   * (Kouzr's rule: corner controls step clear of the side column).
+   */
+  @media not all and (min-width: theme('screens.lg')) {
+    :root[data-nav='rail'] .floating-action-bar {
+      bottom: 0;
+      right: var(--safe-right);
+      padding-bottom: calc(var(--safe-bottom) + 0.625rem);
+    }
+  }
 
   /* Labels drawn inside the mouth-map SVG. */
   .mouth-map-label {
@@ -395,6 +407,33 @@
      * the tab bar lift by this much instead of being covered.
      */
     --keyboard-h: 0px;
+
+    /*
+     * The tab rail (components/shell/TabBar.tsx, utils/nav-mode.ts): 64px
+     * wide, Kouzr's width, standing inside the system's right inset and
+     * centred in it where that column is wider than the rail.
+     */
+    --safe-right-sys: env(safe-area-inset-right, 0px);
+    --rail-w: 4rem;
+    --rail-gap: 0.5rem;
+    --rail-right: max(
+      var(--rail-gap),
+      calc((var(--safe-right-sys) - var(--rail-w)) / 2)
+    );
+  }
+
+  /*
+   * With the rail up, the app shell's right side is the rail's room where
+   * that is more than the system's inset: Apple counts a bar down the side
+   * as part of the safe area, so everything that clears the side column
+   * clears the rail the same way, and no page needs to know it is there.
+   * Only inside the signed-in shell; the marketing site has no rail.
+   */
+  :root[data-nav='rail'] .app-shell {
+    --safe-right: max(
+      var(--safe-right-sys),
+      calc(var(--rail-w) + 2 * var(--rail-gap))
+    );
   }
 
   /*
@@ -466,14 +505,19 @@
   .app-scroll {
     padding-top: calc(var(--app-bar-h) + var(--safe-top));
     padding-bottom: calc(var(--tab-bar-h) + var(--safe-bottom) + 1rem);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
     -webkit-overflow-scrolling: touch;
   }
 
-  @screen lg {
-    .app-scroll {
-      /* Desktop puts navigation in the top bar only; no bottom tabs. */
-      padding-bottom: 2rem;
-    }
+  /* The links are in the top bar, so nothing is fixed along the bottom. */
+  :root[data-nav='top'] .app-scroll {
+    padding-bottom: 2rem;
+  }
+
+  /* The rail is at the side; the foot keeps only the home indicator's room. */
+  :root[data-nav='rail'] .app-scroll {
+    padding-bottom: calc(var(--safe-bottom) + 1rem);
   }
 
   /*
@@ -553,5 +597,93 @@
 
   .surface-canvas {
     @apply relative overflow-hidden rounded-worksheet border border-border bg-card;
+  }
+}
+
+/* THE FOLD -------------------------------------------------------------------
+ * A Surface Duo spanned across its two screens, a foldable bent like a book,
+ * or iPhone Duo held partly open. utils/fold.ts sets <html data-fold>,
+ * "columns" when the fold runs top to bottom, with --fold-start, --fold-size
+ * and --fold-end in px from the window's left. Everywhere else none of it is
+ * set and nothing here applies.
+ *
+ * A Duo spanned is 1114 x 720 with its hinge at 540-574: as wide as an iPad
+ * on its side, so the page draws the iPad's layout (lg), and these rules
+ * only move that layout's seams onto the hinge so nothing sits on it:
+ *
+ *   .fold-shell   a page's outer box. Its centring is dropped for a known
+ *                 left edge (--fold-gutter from the window's), which is what
+ *                 lets a split inside it land its gap on the fold.
+ *   .fold-split   two panes, one per screen: a grid whose first column ends
+ *                 --fold-pad short of the hinge and whose second starts as
+ *                 far past it. On a .fold-shell or a full-width child of one.
+ *   .fold-first   text with no second pane (an article, a form, sign-in)
+ *                 keeps to the first screen at its usual measure.
+ *   .fold-first-pane  a centred column (the check-in, the first run,
+ *                 sign-in) centred on the first screen instead.
+ *   .fold-dialog  a dialog centred on the first screen, not on the hinge.
+ *
+ * The rail (utils/nav-mode.ts) is on the second screen's right edge, inside
+ * the app shell's --safe-right, so a second pane simply ends before it.
+ * --------------------------------------------------------------------------- */
+:root {
+  --fold-start: 0px;
+  --fold-size: 0px;
+  --fold-end: 0px;
+  /* Clear of the hinge on each side of it. */
+  --fold-pad: 1rem;
+  /* A fold layout's side padding, the app's px-4 and a touch more. */
+  --fold-gutter: 1.25rem;
+  /* The first pane's width inside a .fold-shell. */
+  --fold-col: calc(
+    var(--fold-start) - var(--safe-left) - var(--fold-gutter) - var(--fold-pad)
+  );
+}
+
+@media (min-width: 720px) {
+  :root[data-fold='columns'] .fold-shell {
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: var(--fold-gutter);
+    padding-right: var(--fold-gutter);
+  }
+  :root[data-fold='columns'] .fold-split {
+    display: grid;
+    grid-template-columns: var(--fold-col) minmax(0, 1fr);
+    column-gap: calc(var(--fold-size) + 2 * var(--fold-pad));
+  }
+  /* One pane per column, whatever span it has without the fold; a child
+     that spans both says so (.fold-across) and keeps its middle empty. */
+  :root[data-fold='columns'] .fold-split > * {
+    grid-column: auto / span 1;
+  }
+  :root[data-fold='columns'] .fold-split > .fold-across {
+    grid-column: 1 / -1;
+  }
+  :root[data-fold='columns'] .fold-split > .fold-end {
+    grid-column: 2 / span 1;
+  }
+  :root[data-fold='columns'] .fold-first {
+    max-width: calc(var(--fold-start) - var(--safe-left) - var(--fold-pad));
+    margin-left: 0;
+    margin-right: auto;
+    padding-left: var(--fold-gutter);
+    padding-right: 0;
+  }
+  /* A column centred in the window (max-w-lg and mx-auto: the check-in,
+     the first run, sign-in) centred on the first screen instead. --pane-w
+     is its max width where that is not max-w-lg. */
+  :root[data-fold='columns'] .fold-first-pane {
+    max-width: min(var(--pane-w, 32rem), var(--fold-start));
+    margin-left: max(
+      0px,
+      calc((var(--fold-start) - var(--safe-left) - var(--pane-w, 32rem)) / 2)
+    );
+    margin-right: auto;
+  }
+  :root[data-fold='columns'] .fold-dialog {
+    left: calc(var(--fold-start) / 2);
+    width: min(100%, calc(var(--fold-start) - 2 * var(--fold-pad)));
   }
 }

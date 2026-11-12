@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Nunito } from 'next/font/google';
 import { PropsWithChildren, Suspense } from 'react';
 
 import NativeBridge from '@/components/native/NativeBridge';
+import LayoutWatch from '@/components/shell/LayoutWatch';
 import {
   JsonLd,
   organizationSchema,
@@ -12,6 +13,7 @@ import { Toaster } from '@/components/ui/Toasts/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import TimeZoneCookie from '@/components/time-zone/TimeZoneCookie';
 import { getURL } from '@/utils/helpers';
+import { navModeScript } from '@/utils/nav-mode';
 import 'styles/main.css';
 
 /*
@@ -114,6 +116,11 @@ export default function RootLayout({ children }: PropsWithChildren) {
       suppressHydrationWarning
       className={`${display.variable} ${sans.variable}`}
     >
+      <head>
+        {/* Where the tabs go (utils/nav-mode.ts), set before the first
+            paint so the tab bar never jumps from the bottom to the side. */}
+        <script dangerouslySetInnerHTML={{ __html: navModeScript }} />
+      </head>
       <body className="bg-background font-sans text-foreground">
         <ThemeProvider
           attribute="class"
@@ -131,6 +138,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
           <JsonLd schema={organizationSchema} />
           <JsonLd schema={webSiteSchema} />
           <NativeBridge />
+          <LayoutWatch />
           <TimeZoneCookie />
           {/* Toaster reads search params, which needs a boundary. */}
           <Suspense>
