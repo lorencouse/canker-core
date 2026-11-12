@@ -5,7 +5,6 @@ import {
   defaultDay,
   nextStepAfter,
   resolveDay,
-  shouldAutoStart,
   stepKey
 } from './steps';
 
@@ -72,19 +71,6 @@ describe('defaultDay', () => {
     expect(defaultDay(at(12))).toBe('today');
     expect(defaultDay(at(19))).toBe('today');
     expect(defaultDay(at(23))).toBe('today');
-  });
-});
-
-describe('shouldAutoStart', () => {
-  it('is false when today has a row', () => {
-    expect(
-      shouldAutoStart([{ day: '2026-11-06', status: 'skipped' }], '2026-11-06')
-    ).toBe(false);
-  });
-  it('is true when only earlier days have rows', () => {
-    expect(
-      shouldAutoStart([{ day: '2026-11-05', status: 'done' }], '2026-11-06')
-    ).toBe(true);
   });
 });
 

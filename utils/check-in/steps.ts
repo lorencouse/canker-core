@@ -1,4 +1,4 @@
-import type { CheckIn, Sore } from '@/types';
+import type { Sore } from '@/types';
 import { MOUTH_VIEWS } from '@/utils/mouth-map/geometry';
 import { addDays, dayKey } from '@/utils/days';
 
@@ -51,9 +51,6 @@ export function defaultDay(now: Date): 'today' | 'yesterday' {
  * calendar, not 24 hours, so a daylight-saving night cannot skip or repeat a day. */
 export const resolveDay = (choice: 'today' | 'yesterday', now: Date): string =>
   dayKey(choice === 'today' ? now : addDays(now, -1));
-
-export const shouldAutoStart = (checkIns: CheckIn[], today: string): boolean =>
-  !checkIns.some((c) => c.day === today);
 
 /** The step after `current`, or `current` itself on the last or an unknown step. */
 export function nextStepAfter(steps: Step[], current: string): string {

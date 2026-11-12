@@ -35,7 +35,6 @@ export default async function TodayPage({
 
   return (
     <TodayScreen
-      user={user}
       sores={sores}
       dayLogs={dayLogs}
       checkIns={checkIns}

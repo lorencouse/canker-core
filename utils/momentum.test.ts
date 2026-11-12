@@ -6,11 +6,12 @@ import {
   BAD_DAY_PAIN,
   expectedMood,
   isBadDay,
-  streakCardLabel,
-  streakHeadline,
+  bestTriggerFreeStreak,
+  streakLabel,
   todayMood,
   triggerFreeStreak,
   weekDots,
+  weekStats,
   withSavedLog
 } from './momentum';
 
@@ -200,25 +201,68 @@ describe('weekDots', () => {
       false,
       true
     ]);
+    expect(dots.map((d) => d.logged)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]);
+    expect(dots.filter((d) => d.isToday).map((d) => d.day)).toEqual([today]);
     dots.forEach((d) => expect(d.initial).toHaveLength(1));
   });
 });
 
-describe('streakHeadline', () => {
-  it('uses words then digits', () => {
-    expect(streakHeadline(1)).toBe('One day strong.');
-    expect(streakHeadline(3)).toBe('Three days strong.');
-    expect(streakHeadline(10)).toBe('Ten days strong.');
-    expect(streakHeadline(12)).toBe('12 days strong.');
-    expect(streakHeadline(120)).toBe('120 days strong.');
+describe('streakLabel', () => {
+  it('is singular for a one-day streak', () => {
+    expect(streakLabel(1)).toBe('Day strong');
+    expect(streakLabel(0)).toBe('Days strong');
+    expect(streakLabel(14)).toBe('Days strong');
   });
 });
 
-describe('streakCardLabel', () => {
-  it('is singular for a one-day streak', () => {
-    expect(streakCardLabel(1)).toBe('trigger-free day');
-    expect(streakCardLabel(2)).toBe('trigger-free days');
-    expect(streakCardLabel(14)).toBe('trigger-free days');
+describe('bestTriggerFreeStreak', () => {
+  it('finds the longest clean run, past or current', () => {
+    const logs = [
+      log('2026-10-20'),
+      log('2026-10-21'),
+      log('2026-10-22'),
+      log('2026-10-23', ['Coffee']),
+      log('2026-11-04'),
+      log('2026-11-05')
+    ];
+    expect(bestTriggerFreeStreak(logs, today)).toBe(3);
+  });
+  it('is never below the current streak', () => {
+    expect(bestTriggerFreeStreak([log('2026-11-04')], today)).toBe(1);
+    expect(bestTriggerFreeStreak([], today)).toBe(0);
+  });
+  it('ignores days after today', () => {
+    expect(
+      bestTriggerFreeStreak([log('2026-11-06'), log('2026-11-07')], today)
+    ).toBe(0);
+  });
+});
+
+describe('weekStats', () => {
+  it('counts the seven days ending today', () => {
+    const logs = [
+      { ...log('2026-10-29'), sleep_hours: 4 },
+      { ...log('2026-10-30', ['Stress']), sleep_hours: 6 },
+      { ...log('2026-11-04'), sleep_hours: 7.5 },
+      log('2026-11-05', ['Citrus']),
+      { ...emptyDayLog('2026-11-03'), sleep_hours: 8 }
+    ];
+    expect(weekStats(logs, today)).toEqual({
+      logged: 3,
+      triggerDays: 2,
+      sleepHours: 7.2
+    });
+  });
+  it('has no sleep figure when none was recorded', () => {
+    expect(weekStats([log('2026-11-05')], today).sleepHours).toBeNull();
   });
 });
 
