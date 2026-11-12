@@ -5,6 +5,19 @@ import { Button } from '@/components/ui/button';
 import type { DayLog, Sore } from '@/types';
 import { treatmentDays, triggersBeforeSores, type Tally } from '@/utils/insights';
 
+const PATTERN_METHOD = (
+  <>
+    <p>
+      What you logged in the three days before each sore, and what you have
+      tried.
+    </p>
+    <p>
+      A trigger that keeps appearing before a sore is worth a closer look. It
+      is a pattern, not a verdict.
+    </p>
+  </>
+);
+
 /**
  * What was logged in the three days before each sore appeared, and what has
  * been tried. Counts, not percentages: with five sores a percentage would
@@ -18,10 +31,11 @@ export default function TriggerTally({ sores, logs }: { sores: Sore[]; logs: Day
     return (
       <Instrument
         title="Patterns"
-        caption="Log what you ate, how you slept and what you tried on the Today tab, and this is where the repeat offenders show up."
+        note="No days logged yet"
+        info={PATTERN_METHOD}
       >
         <Button asChild variant="outline" size="touch" className="w-full sm:w-auto">
-          <Link href="/today">Log today</Link>
+          <Link href="/today?checkin=1">Check in</Link>
         </Button>
       </Instrument>
     );
@@ -30,7 +44,8 @@ export default function TriggerTally({ sores, logs }: { sores: Sore[]; logs: Day
   return (
     <Instrument
       title="Patterns"
-      caption={`Over ${logs.length} logged day${logs.length === 1 ? '' : 's'}. A trigger that keeps appearing in the run-up to a sore is worth a closer look; it is a pattern, not a verdict.`}
+      note={`${logs.length} logged day${logs.length === 1 ? '' : 's'}`}
+      info={PATTERN_METHOD}
     >
       <div className="grid gap-6 sm:grid-cols-2">
         <TallyList

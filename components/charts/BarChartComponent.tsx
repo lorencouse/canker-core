@@ -88,7 +88,12 @@ const BarChartComponent = ({ sores }: { sores: Sore[] }) => {
   return (
     <Instrument
       title="Size over time"
-      caption="One bar per sore per day, in millimetres. Colour is that day’s pain level. Tap a bar for that sore."
+      info={
+        <>
+          <p>One bar per sore per day, in millimetres.</p>
+          <p>Colour is that day’s pain level. Tap a bar for that sore.</p>
+        </>
+      }
     >
       {rows.length === 0 ? (
         <p className="py-12 text-center text-muted-foreground">

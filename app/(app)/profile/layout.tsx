@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 
 import BuildLabel from '@/components/BuildLabel';
+import LargeTitle from '@/components/shell/LargeTitle';
 import SignOutButton from '@/components/shell/SignOutButton';
 import { SidebarNav } from './components/sidebar-nav';
 
@@ -31,15 +32,7 @@ export default async function SettingsLayout({
 }) {
   return (
     <div className="fold-shell mx-auto max-w-6xl px-4 py-4 lg:px-6 lg:py-8">
-      {/* Visually hidden on a phone, where the top bar already says
-          Settings, but still the page's h1 for a screen reader. */}
-      <header className="sr-only fold:max-w-[var(--fold-col)] lg:not-sr-only lg:mb-8">
-        <h1 className="text-title">Settings</h1>
-        <p className="prose-measure mt-2 text-muted-foreground">
-          Your details, your password and data, how the app looks, and
-          reminders.
-        </p>
-      </header>
+      <LargeTitle className="mb-3 lg:mb-8">Settings</LargeTitle>
 
       {/* On a spanned Duo: the sections on the first screen, the one
           open on the second. */}

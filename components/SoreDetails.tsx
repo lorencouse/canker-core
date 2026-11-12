@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { useSoreContext } from '@/context/SoreContext';
+import { StarMark } from '@/components/graphics/Sparkles';
 import SoreActions, { EditingBar } from '@/components/mouth-map/SoreActionBar';
 import SoreSliders from '@/components/mouth-map/SoreSliders';
 import CourseBars from '@/components/sore/CourseBars';
@@ -310,10 +311,7 @@ export function OpenSoresList() {
         Open sores
       </h2>
       {open.length === 0 ? (
-        <p className="prose-measure mt-2 text-muted-foreground">
-          Nothing open. When one appears, mark it on the map and its course
-          starts here.
-        </p>
+        <p className="mt-2 text-muted-foreground">Nothing open.</p>
       ) : (
         <ul className="mt-2">
           {open.map((sore) => (
@@ -358,8 +356,10 @@ export function OpenSoresList() {
                     setShowHealed(true);
                     setSelectedSore(sore);
                   }}
-                  className="tabular grid min-h-12 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-left hover:bg-muted"
+                  className="tabular grid min-h-12 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-left hover:bg-muted"
                 >
+                  {/* A star is a healed sore, as it is a logged day on Today. */}
+                  <StarMark size={16} className="text-win" />
                   <span className="truncate">{sore.zone}</span>
                   <span className="text-sm text-muted-foreground">
                     {dayNumberOf(sore, now)} days, healed{' '}

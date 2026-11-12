@@ -1,5 +1,6 @@
-import type { PropsWithChildren } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react';
 
+import InfoButton from '@/components/ui/info-button';
 import { cn } from '@/utils/cn';
 
 /**
@@ -7,30 +8,35 @@ import { cn } from '@/utils/cn';
  *
  * One component rather than a Card assembled by hand in each chart, because
  * every instrument on the Insights screen should agree about its heading
- * size, its caption and the space between them — and because the caption is
- * where each figure gets to say what it does and does not mean, which is a
- * slot worth making hard to skip.
+ * size and the space under it. What a figure means, and what it does not,
+ * still gets its own slot, `info`, but behind an "i" beside the heading so
+ * the screen reads as labels and figures. `note` is the one short line that
+ * stays visible.
  */
 export default function Instrument({
   title,
-  caption,
+  note,
+  info,
   className,
   children
 }: PropsWithChildren<{
   title: string;
-  /** What the figures mean, and what they do not. */
-  caption?: string;
+  /** One short visible line under the heading, 12 words at most. */
+  note?: string;
+  /** The method: what the figures mean, and what they do not. */
+  info?: ReactNode;
   className?: string;
 }>) {
   return (
     <section className={cn('surface-instrument p-4 sm:p-5', className)}>
-      {/* A real heading, so the screen has an outline a screen reader can
-          navigate. CardTitle was a div wearing heading type. */}
-      <h2 className="text-subhead">{title}</h2>
-      {caption && (
-        <p className="prose-measure mt-1.5 text-sm text-muted-foreground">
-          {caption}
-        </p>
+      <div className="flex items-center gap-2">
+        {/* A real heading, so the screen has an outline a screen reader can
+            navigate. */}
+        <h2 className="min-w-0 truncate text-subhead">{title}</h2>
+        {info && <InfoButton title={title}>{info}</InfoButton>}
+      </div>
+      {note && (
+        <p className="tabular mt-0.5 text-sm text-muted-foreground">{note}</p>
       )}
       <div className="mt-4">{children}</div>
     </section>

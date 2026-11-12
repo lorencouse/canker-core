@@ -4,6 +4,7 @@ import { Fragment, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, MapPin } from 'lucide-react';
 
+import { StarMark } from '@/components/graphics/Sparkles';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -114,10 +115,15 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                     <span className="block truncate font-medium">
                       {sore.zone}
                     </span>
-                    <span className="tabular block truncate text-xs text-muted-foreground">
-                      {sore.healed_at
-                        ? `Healed ${dateOf(sore.healed_at)}`
-                        : `Open, day ${dayNumberOf(sore)}`}
+                    <span className="tabular flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                      {sore.healed_at && (
+                        <StarMark size={12} className="text-win" />
+                      )}
+                      <span className="truncate">
+                        {sore.healed_at
+                          ? `Healed ${dateOf(sore.healed_at)}`
+                          : `Open, day ${dayNumberOf(sore)}`}
+                      </span>
                     </span>
                   </div>
                   <span className="tabular text-sm">
@@ -203,7 +209,8 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                     </TableCell>
                     <TableCell className="tabular">
                       {sore.healed_at ? (
-                        <span className="text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                          <StarMark size={14} className="text-win" />
                           Healed {dateOf(sore.healed_at)}
                         </span>
                       ) : (

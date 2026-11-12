@@ -1,6 +1,8 @@
 'use client';
 
 import MouthMap from '@/components/mouth-map/MouthMap';
+import LargeTitle from '@/components/shell/LargeTitle';
+import InfoButton from '@/components/ui/info-button';
 import {
   EditingBar,
   MarkSoreButton
@@ -15,7 +17,7 @@ import { useUnsavedGuard } from '@/utils/hooks/useUnsavedGuard';
  * The mouth map screen. Its question is "where are my sores, and how is
  * this one doing?", so it is laid out as those two halves.
  *
- *   phone     the title and the one primary action, then the map, then the
+ *   phone     the large title and the one primary action, then the map, then the
  *             selected sore's course inline under it, or the list of open
  *             sores when none is selected.
  *   desktop   the same, with the map on the left and the sore on the right,
@@ -61,25 +63,30 @@ function MySoresScreen({ user }: { user: User }) {
       className={cn(
         // On a spanned Duo the map takes the first screen and the sore's
         // detail the second (THE FOLD in styles/main.css).
-        'fold-shell fold-split mx-auto grid max-w-6xl grid-cols-1 gap-x-8 px-4 py-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:px-6 lg:py-8',
+        'fold-shell fold-split mx-auto grid max-w-6xl grid-cols-1 gap-x-8 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:px-6 lg:py-8',
         // Room under the reading for the Done bar that floats over it.
         mode !== 'view' && selectedSore && 'pb-28 lg:pb-8'
       )}
     >
-      <header className="fold-across flex flex-col gap-3.5 lg:col-span-2 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
-        <div>
-          <h1 className="text-2xl leading-tight lg:text-3xl">Your mouth map</h1>
-          <p className="mt-1.5">
-            {sores.length === 0
-              ? 'Nothing marked yet. Mark a sore and tap where it is.'
-              : `${open} open, ${healed} healed. Tap a sore to read its course.`}
-          </p>
-        </div>
+      <div className="fold-across flex flex-col gap-3.5 lg:col-span-2 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+        <LargeTitle
+          below={
+            sores.length === 0 ? 'Nothing marked' : `${open} open · ${healed} healed`
+          }
+          accessory={
+            <InfoButton title="The mouth map" label="About the mouth map">
+              <p>Tap a sore to read its course.</p>
+              <p>As in a mirror: your left is on the left.</p>
+            </InfoButton>
+          }
+        >
+          Map
+        </LargeTitle>
         <MarkSoreButton className="w-full lg:w-auto" />
-      </header>
+      </div>
 
       <div className="mt-5 space-y-3 lg:mt-6">
-        <MouthMap user={user} />
+        <MouthMap user={user} showMirrorNote={false} />
         <EditingBar place="map" />
       </div>
 
