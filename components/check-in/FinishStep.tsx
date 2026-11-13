@@ -1,11 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
-
-import StreakBlock from '@/components/today/StreakBlock';
+import StreakCard from '@/components/today/StreakCard';
 import { Button } from '@/components/ui/button';
 import type { DayLog, Sore } from '@/types';
-import { answerLine } from '@/utils/course';
 import { tap } from '@/utils/native';
 import { currentPain, currentSize, hasReadingOn } from '@/utils/readings';
 import { sevFill } from '@/utils/severity';
@@ -28,21 +25,13 @@ export default function FinishStep({
   now: Date;
   onDone: () => void;
 }) {
-  const answer = useMemo(() => answerLine(sores, now), [sores, now]);
   const logged = sores.filter((s) => !s.healed_at && hasReadingOn(s, now));
   return (
     <div className="grid gap-6">
       <div className="text-center">
         <StepHeading>All logged</StepHeading>
       </div>
-      <StreakBlock
-        sores={sores}
-        logs={logs}
-        now={now}
-        answer={answer}
-        celebrate="proud"
-        headingLevel="h3"
-      />
+      <StreakCard sores={sores} logs={logs} now={now} celebrate="proud" />
       {logged.length > 0 && (
         <ul className="grid gap-1.5" aria-label="Sores logged today">
           {logged.map((s) => (

@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 
 import Logo from '@/components/icons/Logo';
-import ModeToggle from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
 import { SignOut } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
@@ -34,18 +33,21 @@ export default function AppTopBar() {
 
   return (
     <header
+      data-app-bar
       className={cn(
         'fixed inset-x-0 top-0 z-40',
-        'border-b border-border bg-background',
+        // The edge fades in with the title (`.bar-edge`, LargeTitle.tsx).
+        'bar-edge border-b border-border bg-background',
         'safe-t safe-x'
       )}
     >
       <div className="mx-auto flex h-[var(--app-bar-h)] max-w-6xl items-center gap-3 px-4 lg:px-6">
         {/* Phone: the screen's own name, which is the only thing a title bar
             has to say when the tabs are visible two inches below. Not a
-            heading — it labels the chrome, and each screen carries its own
-            h1 at every width. */}
-        <p className="flex-1 truncate font-display text-base font-semibold tracking-tight fold:mr-auto fold:max-w-[var(--fold-col)] navtop:hidden">
+            heading: it labels the chrome, and each screen carries its own
+            h1 at every width. Hidden while that h1, the large title, is on
+            screen (`.bar-title`). */}
+        <p className="bar-title flex-1 truncate font-display text-base font-semibold tracking-tight fold:mr-auto fold:max-w-[var(--fold-col)] navtop:hidden">
           {current?.label ?? 'Canker Core'}
         </p>
 
@@ -97,7 +99,8 @@ export default function AppTopBar() {
               </Link>
             </Button>
           )}
-          <ModeToggle />
+          {/* No theme toggle here: theme is a setting, in Settings >
+              Appearance, and the bar keeps its room for the one action. */}
           <form
             onSubmit={(e) => handleRequest(e, SignOut, router)}
             className="hidden navtop:block"

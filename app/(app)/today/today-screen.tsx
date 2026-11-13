@@ -10,102 +10,62 @@ import {
 import { Capacitor } from '@capacitor/core';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 import CheckInFlow from '@/components/check-in/CheckInFlow';
 import CheckInHost from '@/components/check-in/CheckInHost';
-import Kanko from '@/components/kanko/Kanko';
-import MouthMap from '@/components/mouth-map/MouthMap';
-import SoreRow from '@/components/sore/SoreRow';
-import DayLogForm from '@/components/today/DayLogForm';
-import ReminderOffer from '@/components/today/ReminderOffer';
-import StreakBlock, {
-  StreakBlockPlaceholder
-} from '@/components/today/StreakBlock';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/Toasts/use-toast';
-import { SoreProvider, useSoreContext } from '@/context/SoreContext';
-import type { CheckIn, DayLog, Sore, User } from '@/types';
-import { answerLine } from '@/utils/course';
-import { saveDayLog, upsertSores } from '@/utils/actions/soreActions';
-import { holdAutoStart, isAutoStartHeld } from '@/utils/check-in/auto-start-hold';
-import { shouldAutoStart } from '@/utils/check-in/steps';
-import { cn } from '@/utils/cn';
-import { emptyDayLog } from '@/utils/day-log';
-import { useUnsavedGuard } from '@/utils/hooks/useUnsavedGuard';
-import { MOUTH_VIEWS, type MouthView } from '@/utils/mouth-map/geometry';
-import { isNative, notify, tap } from '@/utils/native';
-import { type Mood, withSavedLog } from '@/utils/momentum';
 import {
-  hasReadingOn,
-  lastWasYesterday,
-  latestReading,
-  withReading
-} from '@/utils/readings';
-import { addDays, dayKey, isSameLocalDay, localTimeZone } from '@/utils/days';
-import { runWrite, showFailure } from '@/utils/write-feedback';
-import { BusyIcon } from '@/components/ui/busy-icon';
+  SparkleField,
+  SparkleMark,
+  StarMark,
+  type Sparkle
+} from '@/components/graphics/Sparkles';
+import Kanko from '@/components/kanko/Kanko';
+import LargeTitle from '@/components/shell/LargeTitle';
+import OpenSoreRow from '@/components/today/OpenSoreRow';
+import ReminderOffer from '@/components/today/ReminderOffer';
+import StreakCard from '@/components/today/StreakCard';
+import WeekTiles from '@/components/today/WeekTiles';
+import { Button } from '@/components/ui/button';
+import type { CheckIn, DayLog, Sore } from '@/types';
+import { cn } from '@/utils/cn';
+import { dayKey, isSameLocalDay } from '@/utils/days';
+import { isNative, tap } from '@/utils/native';
+import type { Mood } from '@/utils/momentum';
+
+/** Two marks on the Check in button once the day is done: a small win. */
+const DONE_SPARKLES: Sparkle[] = [
+  { top: '-14%', left: '88%', size: 14, delay: 0 },
+  { top: '64%', left: '4%', size: 10, tone: 'comfort', delay: 1.1 }
+];
 
 /**
- * The daily check-in.
+ * Today: a one-screen status. Kanko and the streak in one card, the one
+ * button that opens the check-in, the open sores as compact rows, and the
+ * week in three figures.
  *
- * The mouth diagram leads, so every open sore's place and size is seen at
- * once; a short list under it says which still want today's reading. A tap
- * on a sore, in either, opens its quick card: same as yesterday, update or
- * healed, each written as it is pressed. Below that is the day's log, the
- * one part still saved by hand, because chips and a note are edited in
- * several taps that should land together.
+ * Logging lives in the check-in and the map lives on the Map tab, so this
+ * screen only reports. The check-in opens from the button, or from the
+ * reminder's link (`?checkin=1`); it no longer opens by itself on every
+ * visit, which put a full-screen takeover in front of the day.
  */
 export default function TodayScreen({
-  user,
   sores,
   dayLogs,
   checkIns,
   openCheckIn,
   expectedMood
 }: {
-  user: User;
   sores: Sore[];
   dayLogs: DayLog[];
   /** The last few days' check-ins, newest first. */
   checkIns: CheckIn[];
   /** Arrived by the check-in link: open it whether or not today is done. */
   openCheckIn: boolean;
-  /** The server's guess at the block's mood; sizes the placeholder only. */
-  expectedMood: Mood;
-}) {
-  return (
-    <SoreProvider initialSores={sores}>
-      <Today
-        user={user}
-        serverSores={sores}
-        dayLogs={dayLogs}
-        serverCheckIns={checkIns}
-        openCheckIn={openCheckIn}
-        expectedMood={expectedMood}
-      />
-    </SoreProvider>
-  );
-}
-
-function Today({
-  user,
-  serverSores,
-  dayLogs,
-  serverCheckIns,
-  openCheckIn,
-  expectedMood
-}: {
-  user: User;
-  serverSores: Sore[];
-  dayLogs: DayLog[];
-  serverCheckIns: CheckIn[];
-  openCheckIn: boolean;
+  /** The server's guess at the card's mood; draws Kanko before the clock is read. */
   expectedMood: Mood;
 }) {
   const router = useRouter();
-  const { sores, setSores, setSelectedSore, setQuickOpen, snapshot } =
-    useSoreContext();
   /*
    * Which day it is belongs to the device, not the server: a server on UTC
    * is already on tomorrow during a US evening. So the clock is read on the
@@ -114,40 +74,23 @@ function Today({
   const now = useDeviceNow();
   const today = now ? dayKey(now) : null;
 
-  const [savedLogs, setSavedLogs] = useState(dayLogs);
-  const [editedLog, setEditedLog] = useState<DayLog | null>(null);
-  const log =
-    editedLog ??
-    (today
-      ? (dayLogs.find((l) => l.day === today) ?? emptyDayLog(today))
-      : emptyDayLog(''));
-  const [logDirty, setLogDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [bulkBusy, setBulkBusy] = useState(false);
-  useUnsavedGuard(logDirty);
-
   /*
-   * The check-in. It opens on its own once the device's day is known and
-   * today has no done or skipped check-in, and from the button or the
-   * reminder's link by hand. `day` is the day it opened on, which is the
+   * The check-in, while open. `day` is the day it opened on, which is the
    * day its outcome is recorded against.
    */
-  const [checkIn, setCheckIn] = useState<{
-    manual: boolean;
-    day: string;
-  } | null>(null);
+  const [checkIn, setCheckIn] = useState<{ day: string } | null>(null);
   // Outcomes recorded since this page loaded, ahead of the server's list.
   const [recorded, setRecorded] = useState<CheckIn[]>([]);
-  const checkIns = useMemo(
-    () => [...recorded, ...serverCheckIns],
-    [recorded, serverCheckIns]
+  const allCheckIns = useMemo(
+    () => [...recorded, ...checkIns],
+    [recorded, checkIns]
   );
   // Done wins: skipping a reopened, finished day leaves it finished.
   const todayDone =
     today !== null &&
-    checkIns.some((c) => c.day === today && c.status === 'done');
+    allCheckIns.some((c) => c.day === today && c.status === 'done');
 
+  // The reminder's link opens the check-in once, then tidies the URL.
   const linkHandled = useRef(false);
   useEffect(() => {
     if (!openCheckIn) {
@@ -156,31 +99,13 @@ function Today({
     }
     if (!now || linkHandled.current) return;
     linkHandled.current = true;
-    setCheckIn((open) => open ?? { manual: true, day: dayKey(new Date()) });
+    setCheckIn((open) => open ?? { day: dayKey(new Date()) });
     router.replace('/today', { scroll: false });
   }, [openCheckIn, now, router]);
 
-  useEffect(() => {
-    if (!now || checkIn || openCheckIn || isAutoStartHeld()) return;
-    // Read afresh: the app may have come back on a later day.
-    const day = dayKey(new Date());
-    // Deciding needs the device clock and the hold, which live outside React.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (shouldAutoStart(checkIns, day)) setCheckIn({ manual: false, day });
-  }, [now, checkIn, openCheckIn, checkIns]);
-
-  // However the check-in goes away, closed or unmounted with the page.
-  useEffect(() => {
-    if (!checkIn) return;
-    return () => {
-      holdAutoStart();
-    };
-  }, [checkIn]);
-
   /*
-   * Back in the foreground is an open. The hold is cleared app-wide by
-   * NativeBridge; the refresh here brings today's check-ins as they are now,
-   * perhaps finished on another device, and their arrival is what decides.
+   * Back in the foreground: refresh, so a check-in finished on another
+   * device shows here.
    */
   useEffect(() => {
     if (!isNative() || !Capacitor.isPluginAvailable('App')) return;
@@ -198,336 +123,133 @@ function Today({
     };
   }, [router]);
 
-  /*
-   * The check-in kept its own copy of the sores and logs. Once it closes,
-   * the page is refetched and the next server data replaces what this
-   * screen holds, so its readings, heals and habits show here. A map edit
-   * in progress keeps its sores; it saves or cancels against them.
-   */
-  const syncAfterCheckIn = useRef(false);
-  useEffect(() => {
-    if (!syncAfterCheckIn.current) return;
-    syncAfterCheckIn.current = false;
-    if (!snapshot) setSores(serverSores);
-    setSavedLogs(dayLogs);
-    // Only the server's data arriving should run this.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverSores, dayLogs]);
-
+  // The check-in kept its own copy of the data: refetch once it closes.
   const closeCheckIn = (result: 'done' | 'skipped' | 'left') => {
     const day = checkIn?.day;
     setCheckIn(null);
     if (day && result !== 'left') {
       setRecorded((prev) => [{ day, status: result }, ...prev]);
     }
-    syncAfterCheckIn.current = true;
     router.refresh();
   };
 
-  const open = useMemo(() => sores.filter((s) => !s.healed_at), [sores]);
-  const answer = useMemo(() => answerLine(sores), [sores]);
+  const startCheckIn = () => {
+    tap();
+    setCheckIn({ day: dayKey(new Date()) });
+  };
 
-  /*
-   * Kanko takes the medal on a day a sore closed. Derived from the sores
-   * rather than kept as an event, so it survives the quick card closing.
-   */
+  const open = useMemo(() => sores.filter((s) => !s.healed_at), [sores]);
+
+  // Kanko takes the medal on a day a sore closed.
   const healedToday =
     now !== null &&
     sores.some((s) => s.healed_at && isSameLocalDay(s.healed_at, now));
 
-  /*
-   * Open on the view holding the most open sores, so the diagram is not
-   * empty when they are all on the cheeks. Chosen once: a heal from the
-   * quick card must not move the map off the view the user is on.
-   */
-  const [busiestView] = useState<MouthView>(() => {
-    const count = (v: MouthView) => open.filter((s) => s.view === v).length;
-    return MOUTH_VIEWS.reduce((a, b) => (count(b) > count(a) ? b : a));
-  });
-
-  /*
-   * The open sores still waiting for today's reading that have a last one
-   * to repeat. With two or more, one tap says "nothing changed" for all of
-   * them, which is the commonest morning there is.
-   */
-  const repeatable = useMemo(
-    () =>
-      now ? open.filter((s) => !hasReadingOn(s, now) && latestReading(s)) : [],
-    [open, now]
-  );
-  const allSame = async () => {
-    tap();
-    const updated = repeatable.map((s) => withReading(s, {}));
-    setBulkBusy(true);
-    try {
-      const result = await runWrite(() =>
-        upsertSores(updated, localTimeZone())
-      );
-      if (!result.ok) return showFailure(result.error);
-      const byId = new Map(updated.map((s) => [s.id, s]));
-      setSores((prev) => prev.map((s) => byId.get(s.id) ?? s));
-      notify('success');
-      toast({ title: `Logged ${updated.length} sores as unchanged.` });
-    } finally {
-      setBulkBusy(false);
-    }
-  };
-
-  const yesterdaysTreatments = useMemo(() => {
-    if (!now) return [];
-    const yesterday = dayKey(addDays(now, -1));
-    return dayLogs.find((l) => l.day === yesterday)?.treatments ?? [];
-  }, [dayLogs, now]);
-
-  const updateLog = (next: DayLog) => {
-    setEditedLog(next);
-    setLogDirty(true);
-    setSaved(false);
-  };
-
-  const saveLog = async () => {
-    setSaving(true);
-    try {
-      const result = await runWrite(
-        () => saveDayLog(log),
-        'Could not save today’s log. Try again.'
-      );
-      if (!result.ok) return showFailure(result.error);
-      setSavedLogs((prev) =>
-        withSavedLog(prev, { ...log, food_answered: true, health_answered: true })
-      );
-      setLogDirty(false);
-      setSaved(true);
-      notify('success');
-      toast({ title: 'Saved today’s log.' });
-      router.refresh();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const openSore = (sore: Sore) => {
-    tap();
-    setSelectedSore(sore);
-    setQuickOpen(true);
-  };
+  const dateLine = now
+    ? now.toLocaleDateString(undefined, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric'
+      })
+    : ' ';
 
   return (
     <div
       className={cn(
-        // On a spanned Duo the sores take the first screen and the day's
-        // log the second (THE FOLD in styles/main.css).
-        'fold-shell fold-split mx-auto max-w-6xl px-4 py-5 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start lg:gap-x-8 lg:px-6 lg:py-9',
-        // Room under the last field for the Save bar that floats over it.
-        logDirty && 'pb-28 lg:pb-9'
+        // On a spanned Duo the status takes the first screen and the sores
+        // the second (THE FOLD in styles/main.css).
+        'fold-shell fold-split mx-auto max-w-6xl px-4 py-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start lg:gap-x-8 lg:px-6 lg:py-8'
       )}
     >
       <div className="min-w-0">
-        {now ? (
-          <StreakBlock
-            sores={sores}
-            logs={savedLogs}
-            now={now}
-            answer={answer}
-            celebrate={healedToday ? 'medal' : undefined}
-          />
-        ) : (
-          <StreakBlockPlaceholder mood={expectedMood} answer={answer} />
-        )}
+        <LargeTitle overline={dateLine}>Today</LargeTitle>
 
-        <div className="mt-4 flex justify-center">
+        <StreakCard
+          className="mt-3"
+          sores={sores}
+          logs={dayLogs}
+          now={now}
+          expectedMood={expectedMood}
+          celebrate={healedToday ? 'medal' : undefined}
+        />
+
+        <div className="relative mt-3">
           <Button
             type="button"
             size="touch"
             variant={todayDone ? 'outline' : 'default'}
+            className="w-full"
             disabled={!now}
-            onClick={() => {
-              tap();
-              setCheckIn({ manual: true, day: dayKey(new Date()) });
-            }}
+            onClick={startCheckIn}
+            aria-label={todayDone ? 'Checked in. Edit today’s check-in' : undefined}
           >
-            {todayDone ? 'Done ✓, edit' : 'Check in'}
+            {todayDone ? (
+              <StarMark size={18} className="text-win" />
+            ) : (
+              <SparkleMark size={16} />
+            )}
+            {todayDone ? 'Checked in' : 'Check in'}
           </Button>
+          {todayDone && <SparkleField sparkles={DONE_SPARKLES} />}
         </div>
 
         <ReminderOffer />
-
-        {open.length === 0 ? (
-          <div className="surface-worksheet mt-5 flex flex-col items-start gap-3 p-4 sm:p-5">
-            {!healedToday && <Kanko mood="curious" size={120} />}
-            <p className="prose-measure">
-              {sores.length === 0
-                ? 'The map is where a sore starts. It takes about fifteen seconds.'
-                : 'Logging what you ate and how you slept is still worth doing. It is how patterns show up on the days between sores.'}
-            </p>
-            <Button
-              asChild
-              variant="outline"
-              size="touch"
-              className="w-full sm:w-auto"
-            >
-              <Link href="/my-sores?add">
-                {sores.length === 0
-                  ? 'Mark your first sore'
-                  : 'Mark a new sore'}
-              </Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="mt-5 grid grid-cols-1 gap-4">
-            {repeatable.length >= 2 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="touch"
-                className="w-full"
-                onClick={allSame}
-                disabled={bulkBusy}
-              >
-                <BusyIcon busy={bulkBusy}>
-                  <Check aria-hidden="true" />
-                </BusyIcon>
-                {repeatable.every((s) => lastWasYesterday(s))
-                  ? 'All the same as yesterday'
-                  : 'All the same as last time'}
-              </Button>
-            )}
-
-            <MouthMap user={user} initialView={busiestView} />
-
-            <section
-              aria-labelledby="open-sores"
-              className="surface-worksheet p-4 sm:p-5"
-            >
-              <h2 id="open-sores" className="text-section">
-                Open sores
-              </h2>
-              <ul className="mt-1">
-                {open.map((sore) => {
-                  const logged = now ? hasReadingOn(sore, now) : false;
-                  return (
-                    <li
-                      key={sore.id}
-                      className="border-t border-border first:border-t-0"
-                    >
-                      <SoreRow
-                        sore={sore}
-                        now={now}
-                        onClick={() => openSore(sore)}
-                        className="min-h-14 grid-cols-[auto_minmax(0,1fr)_auto_auto] gap-3 py-2.5"
-                        trailing={
-                          <span
-                            className={cn(
-                              'whitespace-nowrap text-sm',
-                              logged
-                                ? 'text-muted-foreground'
-                                : 'font-semibold text-foreground'
-                            )}
-                          >
-                            {logged ? 'Logged' : 'Log today'}
-                          </span>
-                        }
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
-              <Button
-                asChild
-                variant="link"
-                className="mt-1 h-11 px-0.5 text-base font-semibold"
-              >
-                <Link href="/my-sores?add">
-                  <Plus aria-hidden="true" />
-                  Mark a new sore
-                </Link>
-              </Button>
-            </section>
-          </div>
-        )}
       </div>
 
-      {/*
-        A rail beside the sores on a desktop, sticky so Save stays in reach;
-        a plain section under them on a phone.
-      */}
-      <section
-        aria-labelledby="day-log"
-        className="mt-8 lg:surface-worksheet lg:sticky lg:top-[calc(var(--app-bar-h)+var(--safe-top)+1.5rem)] lg:mt-6 lg:p-5"
-      >
-        <h2 id="day-log" className="text-xl">
-          What else happened today?
-        </h2>
-        <div className="mt-3.5">
-          <DayLogForm
-            log={log}
-            onChange={updateLog}
-            yesterdaysTreatments={yesterdaysTreatments}
-          />
-        </div>
-
-        {/*
-          On a phone Save floats above the tab bar, but only while there is
-          something to save. Inside the rail on a desktop.
-        */}
-        <div
-          className={cn(
-            'mt-5 flex items-center gap-3',
-            logDirty &&
-              'floating-action-bar keyboard-hides mt-0 lg:mt-5'
-          )}
-        >
-          <p
-            aria-live="polite"
-            className="min-w-0 flex-1 text-sm text-muted-foreground"
+      <div className="min-w-0">
+        <section aria-labelledby="open-sores" className="mt-6 lg:mt-0">
+          <h2
+            id="open-sores"
+            className="tabular px-1 text-sm font-semibold text-muted-foreground"
           >
-            {logDirty
-              ? logSummary(log)
-              : saved
-                ? 'Saved.'
-                : 'Nothing to save yet.'}
-          </p>
-          {logDirty && (
-            <Button
-              type="button"
-              size="touch"
-              className="shrink-0"
-              disabled={saving}
-              onClick={() => {
-                tap();
-                saveLog();
-              }}
-            >
-              <BusyIcon busy={saving} />
-              {saving ? 'Saving' : 'Save log'}
-            </Button>
+            {open.length > 0 ? `Open · ${open.length}` : 'Open'}
+          </h2>
+          {open.length === 0 ? (
+            <div className="surface-worksheet mt-2 flex items-center gap-3 p-3">
+              <Kanko mood="curious" size={56} className="size-14 shrink-0" />
+              <p className="min-w-0 flex-1 font-semibold">
+                {sores.length === 0 ? 'No sores yet' : 'Nothing open'}
+              </p>
+              <Button asChild variant="outline" size="touch" className="shrink-0">
+                <Link href="/my-sores?add">
+                  <Plus aria-hidden="true" />
+                  Mark one
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <ul className="surface-worksheet mt-2 px-2 py-1">
+              {open.map((sore) => (
+                <li
+                  key={sore.id}
+                  className="border-t border-border first:border-t-0"
+                >
+                  <OpenSoreRow sore={sore} now={now} />
+                </li>
+              ))}
+            </ul>
           )}
-        </div>
-      </section>
+        </section>
+
+        <section aria-labelledby="this-week" className="mt-6">
+          <h2
+            id="this-week"
+            className="px-1 text-sm font-semibold text-muted-foreground"
+          >
+            This week
+          </h2>
+          <div className="mt-2">
+            <WeekTiles logs={dayLogs} today={today} />
+          </div>
+        </section>
+      </div>
 
       {checkIn && (
         <CheckInHost>
-          <CheckInFlow
-            sores={sores}
-            dayLogs={savedLogs}
-            onClose={closeCheckIn}
-          />
+          <CheckInFlow sores={sores} dayLogs={dayLogs} onClose={closeCheckIn} />
         </CheckInHost>
       )}
     </div>
-  );
-}
-
-/** "2 triggers, 1 treatment, a note": what Save is about to write. */
-function logSummary(log: DayLog): string {
-  return (
-    [
-      count(log.triggers.length, 'trigger'),
-      count(log.treatments.length, 'treatment'),
-      log.note ? 'a note' : null
-    ]
-      .filter(Boolean)
-      .join(', ') || 'Today’s log'
   );
 }
 
@@ -544,5 +266,3 @@ const readServerNow = () => null;
 const useDeviceNow = () =>
   useSyncExternalStore(subscribeToNow, readDeviceNow, readServerNow);
 
-const count = (n: number, noun: string) =>
-  n ? `${n} ${noun}${n === 1 ? '' : 's'}` : null;

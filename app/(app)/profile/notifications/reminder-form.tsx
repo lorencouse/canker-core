@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import InfoButton from '@/components/ui/info-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -63,11 +64,15 @@ export function ReminderForm() {
 
   if (!supported) {
     return (
-      <p className="prose-measure text-sm text-muted-foreground">
-        Reminders come with the iPhone and Android apps, which can nudge you at
-        a set time each day. In a browser there is no way to schedule that, so
-        the Today tab shows what is still to log instead.
-      </p>
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <p>Reminders need the phone app.</p>
+        <InfoButton title="Reminders" label="Why reminders need the app">
+          <p>
+            The iPhone and Android apps can nudge you at a set time each day.
+            A browser has no way to schedule that.
+          </p>
+        </InfoButton>
+      </div>
     );
   }
 
@@ -88,8 +93,7 @@ export function ReminderForm() {
     <div className="space-y-8">
       {blocked && (
         <p role="status" className="prose-measure text-sm font-bold">
-          Notifications for Canker Core are off on this phone, so these
-          reminders never arrive. Allow them in your phone’s settings.
+          Notifications are off. Allow them in your phone’s settings.
         </p>
       )}
       {SLOTS.map(({ slot, label, hint }) => {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Download } from 'lucide-react';
 
+import InfoButton from '@/components/ui/info-button';
 import AuthField from '@/components/ui/AuthForms/AuthField';
 import { Button } from '@/components/ui/button';
 import {
@@ -102,12 +103,17 @@ export function AccountForm() {
       <Separator />
 
       <section className="space-y-3">
-        <h3 className="font-medium">Your data</h3>
-        <p className="text-sm text-muted-foreground">
-          Every reading of every sore as a spreadsheet: one row per reading,
-          with where it was, how big, how much it hurt, and when it healed.
-          Handy for a dentist.
-        </p>
+        <div className="flex items-center gap-2">
+          <h3 className="font-medium">Your data</h3>
+          <InfoButton title="Your data">
+            <p>
+              Every reading of every sore as a spreadsheet: one row per
+              reading, with where it was, how big, how much it hurt, and when
+              it healed.
+            </p>
+            <p>Handy for a dentist.</p>
+          </InfoButton>
+        </div>
         <Button asChild variant="outline">
           {/* A plain link, not a fetch: the browser handles the download and
               the file name comes from the response. */}
@@ -122,9 +128,9 @@ export function AccountForm() {
 
       <section className="space-y-3">
         <h3 className="font-medium text-destructive">Delete account</h3>
+        {/* A safety line someone acts on, so it stays on the page. */}
         <p className="text-sm text-muted-foreground">
-          Removes your account, every sore and every reading, immediately and
-          for good. Download your data first if you want to keep it.
+          Every sore and reading goes, for good.
         </p>
         <Button
           type="button"

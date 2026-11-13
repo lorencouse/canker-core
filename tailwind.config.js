@@ -36,6 +36,12 @@ module.exports = {
           'clamp(1.75rem, 3.5vw, 2.5rem)',
           { lineHeight: '1.1', letterSpacing: '-0.02em' }
         ],
+        // An app tab's large title (components/shell/LargeTitle.tsx), the
+        // size iOS gives one: big enough to name the screen at a glance.
+        'large-title': [
+          '2.125rem',
+          { lineHeight: '1.15', letterSpacing: '-0.02em' }
+        ],
         section: ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.015em' }],
         subhead: ['1.125rem', { lineHeight: '1.35', letterSpacing: '-0.01em' }],
         /*

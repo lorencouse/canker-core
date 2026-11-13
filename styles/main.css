@@ -664,6 +664,51 @@
   }
 
   /*
+   * Sparkles and stars (components/graphics/Sparkles.tsx). A slow scale and
+   * fade, transform and opacity only, so it never re-lays out the card it
+   * sits on. Still under reduced motion: the mark stays, the motion goes.
+   */
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+    50% {
+      opacity: 0.35;
+      transform: scale(0.6) rotate(20deg);
+    }
+  }
+  .twinkle {
+    animation: twinkle 2.8s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .twinkle {
+      animation: none;
+    }
+  }
+
+  /*
+   * The compact title in the top bar and the large title it stands in for
+   * (components/shell/LargeTitle.tsx). While the large one is on screen the
+   * bar shows no title and no edge; once it scrolls under the bar both fade
+   * in, as on iOS.
+   */
+  .bar-title,
+  .bar-edge {
+    transition:
+      opacity 160ms ease-out,
+      border-color 160ms ease-out;
+  }
+  :root[data-large-title='shown'] .bar-title {
+    opacity: 0;
+  }
+  :root[data-large-title='shown'] .bar-edge {
+    border-color: transparent;
+  }
+
+  /*
    * Three surfaces, because a box on screen is doing one of three jobs and
    * they should not look alike. One uniform card for readouts, inputs and
    * artwork alike is what makes an app read as assembled rather than

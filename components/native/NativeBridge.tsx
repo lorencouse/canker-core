@@ -6,7 +6,6 @@ import { Capacitor } from '@capacitor/core';
 import { useTheme } from 'next-themes';
 
 import { DEFAULT_AFTER_SIGN_IN } from '@/utils/auth-helpers/settings';
-import { releaseAutoStart } from '@/utils/check-in/auto-start-hold';
 import { isNative } from '@/utils/native';
 import { nativeAppCookie } from '@/utils/native-launch';
 import { syncReminders } from '@/utils/reminders';
@@ -110,27 +109,6 @@ export default function NativeBridge() {
       router.replace(DEFAULT_AFTER_SIGN_IN);
     }
   }, [router]);
-
-  /* --- foreground ----------------------------------------------------------- */
-  // Coming back to the foreground is an open: let the check-in auto-start
-  // again. App-level so it works wherever the app was left, not only Today.
-  useEffect(() => {
-    if (!isNative() || !Capacitor.isPluginAvailable('App')) return;
-    let remove: (() => void) | undefined;
-    let gone = false;
-
-    (async () => {
-      const { App } = await import('@capacitor/app');
-      const handle = await App.addListener('resume', releaseAutoStart);
-      if (gone) handle.remove();
-      else remove = () => handle.remove();
-    })().catch((error) => console.error('resume listener failed', error));
-
-    return () => {
-      gone = true;
-      remove?.();
-    };
-  }, []);
 
   /* --- soft keyboard ----------------------------------------------------- */
   useEffect(() => {

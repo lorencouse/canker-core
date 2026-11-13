@@ -13,7 +13,15 @@ export const BAD_DAY_PAIN = 6;
 
 export type Mood = 'proud' | 'gentle' | 'neutral';
 
-export type WeekDot = { day: string; initial: string; won: boolean };
+export type WeekDot = {
+  day: string;
+  initial: string;
+  /** Both trigger questions answered: the day was logged. */
+  logged: boolean;
+  /** Logged with no triggers: the day counts toward the streak. */
+  won: boolean;
+  isToday: boolean;
+};
 
 /**
  * Whether a day has both trigger questions answered. A row can exist
@@ -70,36 +78,73 @@ export const weekDots = (logs: DayLog[], today: string): WeekDot[] => {
     const weekday = parseDay(day).toLocaleDateString(undefined, {
       weekday: 'short'
     });
+    const log = byDay.get(day);
     return {
       day,
       initial: weekday.charAt(0),
-      won: isAnsweredClean(byDay.get(day))
+      logged: isAnswered(log),
+      won: isAnsweredClean(log),
+      isToday: day === today
     };
   });
 };
 
-const WORDS = [
-  '',
-  'One',
-  'Two',
-  'Three',
-  'Four',
-  'Five',
-  'Six',
-  'Seven',
-  'Eight',
-  'Nine',
-  'Ten'
-];
+/**
+ * The longest run of consecutive trigger-free days on record, up to today.
+ * Never less than the current streak, so "Best" can always sit beside it.
+ */
+export const bestTriggerFreeStreak = (
+  logs: DayLog[],
+  today: string
+): number => {
+  const clean = new Set(
+    logs.filter((l) => l.day <= today && isAnsweredClean(l)).map((l) => l.day)
+  );
+  let best = 0;
+  for (const day of Array.from(clean)) {
+    // Count only from the first day of each run.
+    if (clean.has(shiftDay(day, -1))) continue;
+    let run = 0;
+    let cursor = day;
+    while (clean.has(cursor)) {
+      run += 1;
+      cursor = shiftDay(cursor, 1);
+    }
+    best = Math.max(best, run);
+  }
+  return Math.max(best, triggerFreeStreak(logs, today));
+};
 
-export const streakHeadline = (n: number): string => {
-  const figure = n >= 1 && n <= 10 ? WORDS[n] : String(n);
-  return `${figure} ${n === 1 ? 'day' : 'days'} strong.`;
+export type WeekStats = {
+  /** Days of the last seven with both trigger questions answered. */
+  logged: number;
+  /** Logged days of the last seven that had a trigger. */
+  triggerDays: number;
+  /** Mean hours slept over the days that recorded it, or null. */
+  sleepHours: number | null;
+};
+
+/** The figures for Today's "This week" tiles: the seven days ending today. */
+export const weekStats = (logs: DayLog[], today: string): WeekStats => {
+  const from = shiftDay(today, -6);
+  const week = logs.filter((l) => l.day >= from && l.day <= today);
+  const answered = week.filter(isAnswered);
+  const slept = week
+    .map((l) => l.sleep_hours)
+    .filter((h): h is number => h !== null && h !== undefined)
+    .map(Number);
+  return {
+    logged: answered.length,
+    triggerDays: answered.filter((l) => !isAnsweredClean(l)).length,
+    sleepHours: slept.length
+      ? Math.round((slept.reduce((a, b) => a + b, 0) / slept.length) * 10) / 10
+      : null
+  };
 };
 
 /** The words beside the streak figure on Today's card. */
-export const streakCardLabel = (n: number): string =>
-  n === 1 ? 'trigger-free day' : 'trigger-free days';
+export const streakLabel = (n: number): string =>
+  n === 1 ? 'Day strong' : 'Days strong';
 
 /** The saved logs after a Save, with this day's log replacing any earlier copy. */
 export const withSavedLog = (logs: DayLog[], log: DayLog): DayLog[] => [

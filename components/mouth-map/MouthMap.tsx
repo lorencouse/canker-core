@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { StarMark } from '@/components/graphics/Sparkles';
 import SoreQuickCard from '@/components/sore/SoreQuickCard';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/utils/cn';
@@ -66,7 +67,8 @@ export default function MouthMap({
   user,
   initialView,
   placedHint = 'Tap again to move it, or set its reading below.',
-  compact = false
+  compact = false,
+  showMirrorNote = true
 }: {
   user: User;
   /** The view to open on when no sore is selected. */
@@ -75,6 +77,8 @@ export default function MouthMap({
   placedHint?: string;
   /** Short enough to pin above a form: a capped drawing and no hint or footer lines. */
   compact?: boolean;
+  /** The "as in a mirror" line under the drawing; the Map tab moves it behind an "i". */
+  showMirrorNote?: boolean;
 }) {
   const {
     sores,
@@ -487,14 +491,20 @@ export default function MouthMap({
           compact && 'hidden'
         )}
       >
-        <p>As in a mirror: your left is on the left.</p>
+        {/* On the Map tab this sentence sits behind the title's "i". */}
+        {showMirrorNote ? (
+          <p>As in a mirror: your left is on the left.</p>
+        ) : (
+          <span />
+        )}
         {/*
           Only offered once there is something to show. A toggle for an
           empty set is a question with no answer.
         */}
         {healedCount > 0 && (
           <label className="flex shrink-0 cursor-pointer items-center gap-2">
-            <span>
+            <span className="inline-flex items-center gap-1.5">
+              <StarMark size={14} className="text-win" />
               Show healed <span className="tabular">({healedCount})</span>
             </span>
             <Switch
