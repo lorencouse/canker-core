@@ -35,7 +35,7 @@ const InsightsLayout = ({
 
       {sores.length === 0 ? (
         <div className="surface-worksheet flex flex-col items-center px-4 py-14 text-center">
-          <Kanko mood="curious" size={120} />
+          <Kanko mood="curious" size={120} transparent />
           <h2 className="mt-2 text-subhead">No history yet</h2>
           <Button asChild size="touch" className="mt-6 w-full sm:w-auto">
             <Link href="/my-sores?add">Mark a sore</Link>

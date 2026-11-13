@@ -83,7 +83,10 @@ export default function SizeChart({ sores, days }: { sores: Sore[]; days: SoreDa
   const plotRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLDivElement>(null);
   const barRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [readoutLeft, setReadoutLeft] = useState(0);
+  const [readout, setReadout] = useState<{ left: number; above: boolean }>({
+    left: 0,
+    above: false
+  });
   const scrubbing = useRef(false);
 
   // A new range is a new set of slots; drop a selection that no longer fits.
@@ -98,16 +101,31 @@ export default function SizeChart({ sores, days }: { sores: Sore[]; days: SoreDa
   const tabStop = focusIndex ?? dayIndexes[dayIndexes.length - 1] ?? 0;
   const selectedDay = selected !== null ? slots[selected] : null;
 
-  // Keep the readout over its bar but inside the plot.
+  /*
+   * The readout never covers the bar it reads: beside it, on whichever side
+   * has the room, or, when neither does (a middle bar on a narrow phone),
+   * above the plot, where no bar reaches.
+   */
   useLayoutEffect(() => {
     if (selected === null) return;
     const bar = barRefs.current[selected];
     const plot = plotRef.current;
-    const readout = readoutRef.current;
-    if (!bar || !plot || !readout) return;
-    const centre = bar.offsetLeft + bar.offsetWidth / 2;
-    const max = plot.clientWidth - readout.offsetWidth;
-    setReadoutLeft(Math.max(0, Math.min(max, centre - readout.offsetWidth / 2)));
+    const box = readoutRef.current;
+    if (!bar || !plot || !box) return;
+    const gap = 8;
+    const w = box.offsetWidth;
+    const right = bar.offsetLeft + bar.offsetWidth + gap;
+    const left = bar.offsetLeft - gap - w;
+    if (right + w <= plot.clientWidth) setReadout({ left: right, above: false });
+    else if (left >= 0) setReadout({ left, above: false });
+    else {
+      const centre = bar.offsetLeft + bar.offsetWidth / 2;
+      const max = plot.clientWidth - w;
+      setReadout({
+        left: Math.max(0, Math.min(max, centre - w / 2)),
+        above: true
+      });
+    }
   }, [selected]);
 
   // A tap anywhere else, or Escape, puts the readout away.
@@ -269,8 +287,11 @@ export default function SizeChart({ sores, days }: { sores: Sore[]; days: SoreDa
                 <div
                   ref={readoutRef}
                   id={readoutId}
-                  className="absolute bottom-full z-10 mb-2 w-max min-w-40 max-w-[min(16rem,100%)] rounded-cell border border-border bg-popover p-2.5 text-popover-foreground shadow-lg"
-                  style={{ left: readoutLeft }}
+                  className={cn(
+                    'absolute z-10 w-max min-w-40 max-w-[min(16rem,100%)] rounded-cell border border-border bg-popover p-2.5 text-popover-foreground shadow-lg',
+                    readout.above ? 'bottom-full mb-2' : 'top-0'
+                  )}
+                  style={{ left: readout.left }}
                   onPointerDown={(e) => e.stopPropagation()}
                 >
                   <p className="tabular text-sm font-semibold">{dateLabel(selectedDay.day.day)}</p>

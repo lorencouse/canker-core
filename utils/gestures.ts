@@ -37,7 +37,7 @@ export function isEdgeSwipeBack(
  */
 export type RowSwipe = 'healed' | 'log' | null;
 
-export const ROW_SWIPE_MIN_PX = 72;
+export const ROW_SWIPE_MIN_PX = 88;
 export const ROW_SWIPE_MAX_PX = 120;
 
 export function rowSwipeThreshold(width: number): number {

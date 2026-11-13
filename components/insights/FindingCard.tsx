@@ -37,6 +37,8 @@ export default function FindingCard({ finding }: { finding: Finding }) {
           mood={found ? 'point' : 'curious'}
           size={76}
           priority
+          // Curious sits on a card in dark mode; see Kanko's `transparent`.
+          transparent={!found}
           className="size-[76px] shrink-0"
         />
         <div className="min-w-0 flex-1">

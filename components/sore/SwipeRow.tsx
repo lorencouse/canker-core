@@ -128,7 +128,7 @@ export default function SwipeRow({
       <div
         aria-hidden="true"
         className={cn(
-          'absolute inset-0 flex items-center px-4 text-base font-bold transition-colors',
+          'absolute inset-0 flex items-center px-3 text-base font-bold transition-colors',
           dx > 0 && 'justify-start',
           dx < 0 && 'justify-end',
           dx === 0 && 'invisible',
@@ -143,12 +143,12 @@ export default function SwipeRow({
         )}
       >
         {dx > 0 ? (
-          <span className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5">
             <NotebookPen className="size-5" />
             Log
           </span>
         ) : (
-          <span className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5">
             <StarMark
               size={20}
               className={armed === 'healed' ? undefined : 'text-win-edge'}

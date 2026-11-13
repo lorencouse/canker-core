@@ -42,7 +42,7 @@ describe('sore row swipe', () => {
   });
 
   it('left past the threshold is healed, right is log', () => {
-    expect(rowSwipeAction(-100, 350)).toBe('healed');
+    expect(rowSwipeAction(-110, 350)).toBe('healed');
     expect(rowSwipeAction(110, 350)).toBe('log');
   });
 
