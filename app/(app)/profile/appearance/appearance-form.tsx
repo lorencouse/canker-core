@@ -4,47 +4,39 @@ import { useTheme } from 'next-themes';
 import { Check, Monitor, Moon, Sun } from 'lucide-react';
 
 import { cn } from '@/utils/cn';
-import { Label } from '@/components/ui/label';
 import { useMounted } from '@/utils/hooks/useMounted';
+import { tap } from '@/utils/native';
+
+import { Tile, type TileColor } from '../components/grouped-list';
 
 const OPTIONS = [
-  {
-    value: 'light',
-    label: 'Light',
-    description: 'Sores read as darker marks.',
-    icon: Sun
-  },
-  {
-    value: 'dark',
-    label: 'Dark',
-    description: 'Sores read as brighter marks.',
-    icon: Moon
-  },
-  {
-    value: 'system',
-    label: 'System',
-    description: 'Follow your device setting.',
-    icon: Monitor
-  }
-] as const;
+  { value: 'light', label: 'Light', icon: Sun, color: 'amber' },
+  { value: 'dark', label: 'Dark', icon: Moon, color: 'indigo' },
+  { value: 'system', label: 'System', icon: Monitor, color: 'slate' }
+] as const satisfies ReadonlyArray<{
+  value: string;
+  label: string;
+  icon: typeof Sun;
+  color: TileColor;
+}>;
 
 /**
- * Applies immediately rather than behind a save button: the change is visible
- * the moment it is made, so a confirmation step would only add a click.
+ * A checkmark list, as a phone's own settings pick one of a few. Applies
+ * the moment it is tapped: the change is visible at once, so a Save would
+ * only add a step.
  */
 export function AppearanceForm() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const mounted = useMounted();
 
   return (
-    <div className="space-y-4">
-      <Label>Theme</Label>
+    <div className="grid gap-2">
       <div
         role="radiogroup"
         aria-label="Theme"
-        className="grid gap-3 sm:grid-cols-3"
+        className="overflow-hidden rounded-worksheet bg-card"
       >
-        {OPTIONS.map(({ value, label, description, icon: Icon }) => {
+        {OPTIONS.map(({ value, label, icon, color }, i) => {
           const selected = mounted && theme === value;
           return (
             <button
@@ -52,38 +44,39 @@ export function AppearanceForm() {
               type="button"
               role="radio"
               aria-checked={selected}
-              onClick={() => setTheme(value)}
-              className={cn(
-                'rounded-lg border p-4 text-left transition-colors',
-                selected
-                  ? 'border-primary bg-accent'
-                  : 'border-border hover:bg-muted'
-              )}
+              onClick={() => {
+                tap();
+                setTheme(value);
+              }}
+              className="focus-ring flex w-full items-center gap-3 pl-4 text-left transition-[transform,background-color] duration-150 hover:bg-muted/60 active:scale-[0.99] active:bg-muted"
             >
-              <div className="flex items-center justify-between">
-                <Icon className="h-5 w-5" />
-                {selected && <Check className="h-4 w-4 text-primary" />}
-              </div>
-              <p className="mt-3 font-medium">{label}</p>
-              <p
+              <Tile icon={icon} color={color} />
+              <span
                 className={cn(
-                  'mt-0.5 text-sm',
-                  // Muted grey on the accent fill drops under 4.5:1 in dark.
-                  selected ? 'text-accent-foreground' : 'text-muted-foreground'
+                  'flex min-h-14 min-w-0 flex-1 items-center gap-3 pr-4',
+                  i > 0 && 'border-t border-border'
                 )}
               >
-                {description}
-              </p>
+                <span className="min-w-0 flex-1 truncate text-base font-semibold">
+                  {label}
+                </span>
+                <Check
+                  aria-hidden="true"
+                  className={cn(
+                    'size-5 shrink-0 text-primary transition-opacity',
+                    selected ? 'opacity-100' : 'opacity-0'
+                  )}
+                />
+              </span>
             </button>
           );
         })}
       </div>
-
-      <p className="text-sm text-muted-foreground">
-        {mounted && theme === 'system'
-          ? `Following your device, which is currently ${resolvedTheme}.`
-          : 'Saved to this browser.'}
-      </p>
+      {mounted && theme === 'system' && resolvedTheme && (
+        <p className="px-4 text-sm text-muted-foreground">
+          Now {resolvedTheme}.
+        </p>
+      )}
     </div>
   );
 }

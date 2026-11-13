@@ -10,7 +10,7 @@ import CourseBars from '@/components/sore/CourseBars';
 import LongSoreNote from '@/components/sore/LongSoreNote';
 import Measure from '@/components/sore/Measure';
 import SoreRow from '@/components/sore/SoreRow';
-import SoreSigil from '@/components/sore/SoreSigil';
+import SoreThumb from '@/components/sore/SoreThumb';
 import type { Sore } from '@/types';
 import { courseOf, verdictOf } from '@/utils/course';
 import { shortDate } from '@/utils/dates';
@@ -162,7 +162,7 @@ export function SoreDetail() {
           id="sore-detail"
           className="flex min-w-0 items-center gap-2.5 text-section"
         >
-          <SoreSigil sore={sore} size={30} />
+          <SoreThumb sore={sore} size={48} />
           <span className="truncate">{sore.zone}</span>
         </h2>
         <p className="tabular text-sm text-muted-foreground">

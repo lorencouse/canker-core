@@ -2,15 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, Plus } from 'lucide-react';
+import { Check, NotebookPen } from 'lucide-react';
 
-import { PainField, QuickWidthField } from '@/components/sore/ReadingFields';
+import { StarMark } from '@/components/graphics/Sparkles';
+
+import PainSlider from '@/components/sore/PainSlider';
+import WidthRuler from '@/components/sore/WidthRuler';
 import { writeHealed } from '@/components/sore/useHealSore';
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { Sore } from '@/types';
-import { cn } from '@/utils/cn';
 import { upsertSores } from '@/utils/actions/soreActions';
 import { notify, tap } from '@/utils/native';
 import { deletePhotosFor } from '@/utils/sore-photos';
@@ -35,8 +38,11 @@ import { useReportBusy } from './useReportBusy';
 /**
  * One open sore's reading for today, under the map pinned with that sore
  * picked out. It opens on today's reading when there is one and on the last
- * one otherwise, so "no change" is a single tap on Same, next. Next and
- * Healed write before the flow moves on; Skip moves on without saving.
+ * one otherwise, so "no change" is a single tap on Same, next. Width is a
+ * ruler and pain a slider, one control each. Healed is a chip, a status of
+ * the sore rather than a way out: with it on, the main button says so and
+ * closes the sore. Next writes before the flow moves on; Skip moves on
+ * without saving.
  *
  * A photo is keyed to today's reading and is written to the device the moment
  * it is taken. With no reading yet today, that is the one Next will append,
@@ -73,6 +79,8 @@ export default function SoreStep({
   const [size, setSize] = useState(() => currentSize(sore));
   const [pain, setPain] = useState(() => currentPain(sore));
   const [note, setNote] = useState(initialNote);
+  const [noteOpen, setNoteOpen] = useState(initialNote !== '');
+  const [healing, setHealing] = useState(false);
   const [busy, setBusy] = useState(false);
   useReportBusy(busy, onBusy);
 
@@ -147,17 +155,14 @@ export default function SoreStep({
   };
 
   const last = latestReading(sore);
-  const badge = changed
-    ? { text: 'Changed', className: 'bg-win text-win-foreground' }
-    : loggedToday
-      ? { text: 'Logged today', className: 'bg-accent text-accent-foreground' }
-      : {
-          text: 'Same as last time',
-          className: 'bg-accent text-accent-foreground'
-        };
+  const meta = loggedToday
+    ? 'logged today'
+    : last
+      ? `was ${last.size} mm, pain ${last.pain}`
+      : null;
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-5">
       <StepPinnedMap>
         <CheckInMap
           sores={allSores}
@@ -167,87 +172,75 @@ export default function SoreStep({
         />
       </StepPinnedMap>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-        <div className="min-w-0">
-          <StepHeading>
-            <span className="block truncate">{sore.zone}</span>
-          </StepHeading>
-          <p className="tabular text-sm text-muted-foreground">
-            Day {dayNumberOf(sore, now)}
-            {last && !loggedToday
-              ? ` · last ${last.size} mm, pain ${last.pain}`
-              : ''}
-          </p>
-        </div>
-        <span
-          className={cn(
-            'mt-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold',
-            badge.className
-          )}
-        >
-          {badge.text}
-        </span>
+      <div className="min-w-0">
+        <StepHeading>
+          <span className="block truncate">{sore.zone}</span>
+        </StepHeading>
+        <p className="tabular text-sm text-muted-foreground">
+          Day {dayNumberOf(sore, now)}
+          {meta ? ` · ${meta}` : ''}
+        </p>
       </div>
 
-      <QuickWidthField value={size} onChange={setSize} />
-      <PainField
+      <WidthRuler value={size} onChange={setSize} />
+      <PainSlider
         id={`check-in-pain-${sore.id}`}
-        label="Pain"
         value={pain}
         onChange={setPain}
       />
 
-      <details
-        open={initialNote !== '' || undefined}
-        className="group rounded-cell border-2 border-dashed border-control"
-      >
-        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 font-semibold text-muted-foreground [&::-webkit-details-marker]:hidden">
-          Add a note or photo
-          <Plus
-            aria-hidden="true"
-            className="size-5 transition-transform group-open:rotate-45"
-          />
-        </summary>
-        <div className="grid gap-4 px-4 pb-4">
-          <div className="space-y-1.5">
-            <Label
-              htmlFor={`check-in-note-${sore.id}`}
-              className="text-base font-semibold"
-            >
-              Note
-            </Label>
-            <Textarea
-              id={`check-in-note-${sore.id}`}
-              rows={2}
-              maxLength={500}
-              className="resize-none"
-              placeholder="Optional"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-          </div>
-          <PhotoControl
-            readingId={readingId}
-            onTaken={() => setPendingPhoto(true)}
+      <div className="flex flex-wrap items-center gap-2">
+        <PhotoControl
+          variant="chip"
+          readingId={readingId}
+          onTaken={() => setPendingPhoto(true)}
+        />
+        <Chip
+          on={noteOpen}
+          icon={NotebookPen}
+          onClick={() => {
+            tap();
+            setNoteOpen((o) => !o);
+          }}
+        >
+          Note
+        </Chip>
+        <Chip
+          on={healing}
+          icon={StarMark}
+          tone="win"
+          onClick={() => {
+            tap();
+            setHealing((h) => !h);
+          }}
+        >
+          Healed
+        </Chip>
+      </div>
+
+      {noteOpen && (
+        <div className="space-y-1.5">
+          <Label htmlFor={`check-in-note-${sore.id}`} className="sr-only">
+            Note
+          </Label>
+          <Textarea
+            id={`check-in-note-${sore.id}`}
+            rows={2}
+            maxLength={500}
+            className="resize-none"
+            placeholder="A note for today"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
           />
         </div>
-      </details>
+      )}
 
       <StepFooter>
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="touch"
-          onClick={healed}
-          disabled={busy}
-          aria-label={`Mark the ${sore.zone.toLowerCase()} sore healed`}
-        >
-          Healed
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="touch"
+          className="text-muted-foreground"
           onClick={() => {
             tap();
             onNext();
@@ -261,11 +254,19 @@ export default function SoreStep({
           type="button"
           size="touch"
           className="min-w-0 flex-1"
-          onClick={next}
+          onClick={healing ? healed : next}
           disabled={busy}
         >
-          <BusyIcon busy={busy}><Check aria-hidden="true" /></BusyIcon>
-          {changed ? 'Save, next' : loggedToday ? 'Next' : 'Same, next'}
+          <BusyIcon busy={busy}>
+            {healing ? <StarMark /> : <Check aria-hidden="true" />}
+          </BusyIcon>
+          {healing
+            ? 'Healed, next'
+            : changed
+              ? 'Save, next'
+              : loggedToday
+                ? 'Next'
+                : 'Same, next'}
         </Button>
       </StepFooter>
     </div>

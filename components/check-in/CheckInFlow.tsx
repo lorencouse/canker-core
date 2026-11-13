@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
+import { useActionSheet } from '@/components/ui/action-sheet';
 import { Button } from '@/components/ui/button';
+import { useSheetDrag } from '@/components/ui/use-sheet-drag';
 import type { DayLog, Sore } from '@/types';
 import { saveDayPatch, setCheckInStatus } from '@/utils/actions/checkInActions';
 import { applyPatchToLogs, type DayPatch } from '@/utils/check-in/patch';
@@ -40,7 +42,12 @@ const STATUS_FAILED = 'Could not save your check-in. Try again.';
 
 /**
  * The daily check-in: every open sore, then "Any new sores?", then the
- * habit screens, one full screen at a time.
+ * habit screens, one at a time, in a sheet that rises over the app.
+ *
+ * It is a phone sheet: a grabber, swipe down to put it away (the same as
+ * "Finish later"), a spring-like settle, and the safe areas kept. The close
+ * button asks, as an action sheet, whether to finish later or skip the day,
+ * so skipping is never one stray tap.
  *
  * Each step writes its own answer as the user moves past it, so leaving
  * costs at most the screen they were on, and the step reached is kept on
@@ -148,6 +155,9 @@ export default function CheckInFlow({
 
   const step = steps.find((s) => stepKey(s) === current) ?? steps[0];
   const position = steps.indexOf(step);
+  // The real count: every question, and not the "All logged" screen.
+  const asked = steps.filter((s) => s.kind !== 'finish');
+  const finished = step.kind === 'finish';
 
   const openSores = sores.filter((s) => !s.healed_at);
   const loggedToday = openSores.filter((s) => hasReadingOn(s, now));
@@ -156,10 +166,22 @@ export default function CheckInFlow({
     loggedToday.map((s) => s.id).filter((id) => id !== activeSoreId)
   );
   const soreSteps = steps.filter((s) => s.kind === 'sore');
-  const label =
-    step.kind === 'sore'
-      ? `Sore ${soreSteps.indexOf(step) + 1} of ${soreSteps.length}`
-      : STEP_LABELS[step.kind];
+
+  const actions = useActionSheet();
+  const leave = () => onClose(finished ? 'done' : 'left');
+  const { panelStyle, handleProps, attachBody, dismiss, leaving } = useSheetDrag({ onDismiss: leave });
+
+  /** The close button: on the last screen it just closes. */
+  const askToClose = async () => {
+    if (finished) return dismiss();
+    const pick = await actions.ask(
+      'Close the check-in?',
+      [{ title: 'Finish later' }, { title: 'Skip for today', style: 'destructive' }],
+      'Later picks up where you left off.'
+    );
+    if (pick === 0) dismiss();
+    if (pick === 1) skip();
+  };
 
   const renderStep = (step: Step) => {
     switch (step.kind) {
@@ -230,103 +252,115 @@ export default function CheckInFlow({
       aria-label="Daily check-in"
       // The whole window: the app's native tab bar steps out of its way.
       data-covers-tabs=""
-      className="safe-t safe-b safe-x fixed inset-0 z-50 flex h-dvh flex-col bg-background"
+      className="fixed inset-0 z-50"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && !locked && !e.defaultPrevented) {
+          e.preventDefault();
+          dismiss();
+        }
+      }}
     >
-      <header className="fold-first-pane mx-auto grid w-full max-w-lg grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pt-2">
-        <div className="grid min-w-0 gap-1.5">
-          <div
-            role="progressbar"
-            aria-label="Check-in progress"
-            aria-valuemin={1}
-            aria-valuemax={steps.length}
-            aria-valuenow={position + 1}
-            className="flex gap-1"
-          >
-            {steps.map((s, i) => (
+      <div
+        aria-hidden="true"
+        className={cn(
+          'absolute inset-0 bg-black/40 animate-scrim-in transition-opacity duration-200',
+          leaving && 'opacity-0'
+        )}
+      />
+      <div
+        className="fold-first-pane safe-x absolute inset-x-0 bottom-0 top-[calc(var(--safe-top)+0.75rem)] mx-auto flex w-full max-w-lg flex-col rounded-t-worksheet bg-background shadow-sheet animate-sheet-in"
+        style={panelStyle}
+      >
+        <header
+          {...(locked ? {} : handleProps)}
+          className="grid shrink-0 cursor-grab grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-4 pb-2 pt-2 active:cursor-grabbing"
+        >
+          <span
+            aria-hidden="true"
+            className="col-span-2 mx-auto mb-2 block h-1.5 w-10 rounded-full bg-control/50"
+          />
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+            <div
+              role="progressbar"
+              aria-label="Check-in progress"
+              aria-valuemin={0}
+              aria-valuemax={asked.length}
+              aria-valuenow={finished ? asked.length : position}
+              aria-valuetext={
+                finished
+                  ? 'All done'
+                  : `Step ${position + 1} of ${asked.length}`
+              }
+              className="flex min-w-0 gap-1"
+            >
+              {asked.map((s, i) => (
+                <span
+                  key={stepKey(s)}
+                  className={cn(
+                    'h-1.5 min-w-0 flex-1 rounded-full transition-colors duration-300',
+                    finished || i < position
+                      ? 'bg-primary'
+                      : i === position
+                        ? 'bg-primary/45'
+                        : 'bg-border'
+                  )}
+                />
+              ))}
+            </div>
+            {!finished && (
               <span
-                key={stepKey(s)}
-                className={cn(
-                  'h-1.5 min-w-0 flex-1 rounded-full',
-                  i < position
-                    ? 'bg-primary'
-                    : i === position
-                      ? 'bg-primary/45'
-                      : 'bg-border'
-                )}
-              />
-            ))}
+                aria-hidden="true"
+                className="tabular whitespace-nowrap text-sm font-semibold text-muted-foreground"
+              >
+                {`${position + 1} of ${asked.length}`}
+              </span>
+            )}
           </div>
-          <p className="truncate text-xs font-bold uppercase tracking-wide text-muted-foreground">
-            {label}
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={
-            step.kind === 'finish'
-              ? 'Close the check-in'
-              : 'Close the check-in and finish it later'
-          }
-          onClick={() => {
-            tap();
-            // On the last screen the day is already recorded as done.
-            onClose(step.kind === 'finish' ? 'done' : 'left');
-          }}
-          disabled={locked}
-        >
-          <X aria-hidden="true" className="!size-5" />
-        </Button>
-      </header>
-
-      <div className="flex-1 overflow-y-auto overscroll-contain">
-        {/* Keyed so each step starts fresh and its heading takes focus. */}
-        <div
-          key={current}
-          className="fold-first-pane mx-auto w-full max-w-lg px-4 pb-4 pt-2"
-        >
-          {isHabitStep(step) && soreSteps.length + loggedToday.length > 0 && (
-            <SoresStrip
-              sores={loggedToday}
-              onEdit={() => {
-                tap();
-                const first =
-                  soreSteps[0] ?? steps.find((s) => s.kind === 'new-sore-ask');
-                if (first) setCurrent(stepKey(first));
-              }}
-              disabled={locked}
-            />
-          )}
-          {renderStep(step)}
-        </div>
-      </div>
-
-      {step.kind !== 'finish' && (
-        <footer className="fold-first-pane mx-auto flex w-full max-w-lg justify-center px-4 pb-2">
           <Button
             type="button"
-            variant="link"
-            className="h-11 text-base text-muted-foreground"
-            onClick={skip}
+            variant="ghost"
+            size="icon"
+            className="rounded-full bg-muted"
+            aria-label={finished ? 'Close the check-in' : 'Close or skip the check-in'}
+            onClick={() => {
+              tap();
+              askToClose();
+            }}
             disabled={locked}
           >
-            Skip for today
+            <X aria-hidden="true" className="!size-5" />
           </Button>
-        </footer>
-      )}
+        </header>
+
+        <div
+          ref={attachBody}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        >
+          {/* Keyed so each step starts fresh and its heading takes focus. */}
+          <div
+            key={current}
+            className="w-full px-4 pb-[calc(var(--safe-bottom)+1rem)] pt-1"
+          >
+            {isHabitStep(step) && soreSteps.length + loggedToday.length > 0 && (
+              <SoresStrip
+                sores={loggedToday}
+                onEdit={() => {
+                  tap();
+                  const first =
+                    soreSteps[0] ?? steps.find((s) => s.kind === 'new-sore-ask');
+                  if (first) setCurrent(stepKey(first));
+                }}
+                disabled={locked}
+              />
+            )}
+            {renderStep(step)}
+          </div>
+        </div>
+      </div>
+      {actions.sheet}
     </div>
   );
 }
-
-const STEP_LABELS: Record<Exclude<Step['kind'], 'sore'>, string> = {
-  'new-sore-ask': 'New sores',
-  sleep: 'Sleep',
-  food: 'Food',
-  health: 'Health and mood',
-  treatments: 'Treatments',
-  finish: 'Done'
-};
 
 /**
  * On the habit screens the map steps aside for one line: the sores logged

@@ -28,6 +28,24 @@ export async function tap(style: 'light' | 'medium' = 'light') {
   }
 }
 
+/**
+ * The detent tick of a picker wheel, for controls that step through values
+ * under a finger: the width ruler and the pain slider tick once per step
+ * they cross. Where `tap` would stutter on a drag, a selection tick is the
+ * lighter one the system wheels use.
+ */
+export async function selectionTick() {
+  if (!isNative()) return;
+  try {
+    const { Haptics } = await import('@capacitor/haptics');
+    // Android needs a selection started before a change ticks; iOS ignores it.
+    await Haptics.selectionStart();
+    await Haptics.selectionChanged();
+  } catch {
+    /* see tap */
+  }
+}
+
 /** Confirmation of a committed change — finishing an edit, deleting a sore. */
 export async function notify(type: 'success' | 'warning' | 'error') {
   if (!isNative()) return;
@@ -117,4 +135,92 @@ export async function hasSystemSignIn(callbackPath: string): Promise<boolean> {
  */
 export async function systemSignIn(url: string, callbackPath: string) {
   return webAuthPlugin().start({ url, callbackPath });
+}
+
+/**
+ * A plugin's native side is present in this app binary.
+ *
+ * The apps are a shell around the hosted site (docs/MOBILE.md), so the site
+ * can call a plugin an older binary was built without. On the web the plugin
+ * packages register a browser stand-in, which makes `isPluginAvailable` true
+ * there too, so the native check comes first.
+ */
+export const hasNativePlugin = (name: string): boolean =>
+  isNative() && Capacitor.isPluginAvailable(name);
+
+export type ActionOption = {
+  title: string;
+  style?: 'default' | 'destructive';
+};
+
+/**
+ * The system action sheet, when this binary has it. Resolves with the picked
+ * option's index, null when cancelled, or 'unavailable' when the caller has
+ * to draw its own (the web, or an app built before the plugin was added).
+ */
+export async function nativeActionSheet(
+  title: string,
+  options: ActionOption[],
+  message?: string
+): Promise<number | null | 'unavailable'> {
+  if (!hasNativePlugin('ActionSheet')) return 'unavailable';
+  try {
+    const { ActionSheet, ActionSheetButtonStyle } = await import(
+      '@capacitor/action-sheet'
+    );
+    const { index, canceled } = await ActionSheet.showActions({
+      title,
+      message,
+      options: [
+        ...options.map((o) => ({
+          title: o.title,
+          style:
+            o.style === 'destructive'
+              ? ActionSheetButtonStyle.Destructive
+              : ActionSheetButtonStyle.Default
+        })),
+        { title: 'Cancel', style: ActionSheetButtonStyle.Cancel }
+      ]
+    });
+    return canceled || index < 0 || index >= options.length ? null : index;
+  } catch {
+    return 'unavailable';
+  }
+}
+
+/**
+ * Hands a text file to the system share sheet (Mail, Files, AirDrop, a
+ * messaging app). Resolves false when this binary has no Share or
+ * Filesystem plugin, so the caller falls back to a download; true once the
+ * sheet has been shown, whether or not the person sent it anywhere.
+ */
+export async function shareTextFile(
+  fileName: string,
+  text: string,
+  title: string
+): Promise<boolean> {
+  if (!hasNativePlugin('Share') || !hasNativePlugin('Filesystem')) return false;
+  try {
+    const { Directory, Encoding, Filesystem } = await import(
+      '@capacitor/filesystem'
+    );
+    const { Share } = await import('@capacitor/share');
+    // The cache folder, so the copy never lands in a backup and the system
+    // can clear it.
+    const { uri } = await Filesystem.writeFile({
+      path: fileName,
+      data: text,
+      directory: Directory.Cache,
+      encoding: Encoding.UTF8
+    });
+    try {
+      await Share.share({ title, files: [uri] });
+    } catch (error) {
+      // Closing the sheet rejects; that is an answer, not a failure.
+      if (!(error instanceof Error && /cancel/i.test(error.message))) throw error;
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }

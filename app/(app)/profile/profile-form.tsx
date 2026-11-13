@@ -18,7 +18,14 @@ import { BusyIcon } from '@/components/ui/busy-icon';
  * a confirmation to the new address and nothing changes until it is clicked.
  * One Save button for both would have to explain two outcomes at once.
  */
-export function ProfileForm({ user }: { user: User }) {
+export function ProfileForm({
+  user,
+  onDone
+}: {
+  user: User;
+  /** After either form has been sent, so a sheet holding them can close. */
+  onDone?: () => void;
+}) {
   const clientRouter = useRouter();
   const router = getRedirectMethod() === 'client' ? clientRouter : null;
   const [saving, setSaving] = useState<'name' | 'email' | null>(null);
@@ -29,13 +36,14 @@ export function ProfileForm({ user }: { user: User }) {
       setSaving(which);
       try {
         await handleRequest(e, action, router);
+        onDone?.();
       } finally {
         setSaving(null);
       }
     };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <form
         noValidate
         onSubmit={submit('name', updateName)}
@@ -50,7 +58,7 @@ export function ProfileForm({ user }: { user: User }) {
           defaultValue={user.full_name ?? ''}
         />
         <div>
-          <Button type="submit" disabled={saving !== null}>
+          <Button type="submit" size="touch" disabled={saving !== null}>
             <BusyIcon busy={saving === 'name'} />
             Save name
           </Button>
@@ -69,12 +77,13 @@ export function ProfileForm({ user }: { user: User }) {
           type="email"
           autoComplete="email"
           defaultValue={user.email}
-          hint="Changing this sends a confirmation link to the new address. Your sign-in email stays as it is until you click it."
+          hint="We email the new address a link to confirm it."
         />
         <div>
           <Button
             type="submit"
             variant="outline"
+            size="touch"
             disabled={saving !== null}
           >
             <BusyIcon busy={saving === 'email'} />

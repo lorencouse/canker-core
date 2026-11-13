@@ -13,12 +13,18 @@ export type KankoMood =
   | 'envelope'
   | 'clipboard'
   | 'offline'
-  | 'sleepy';
+  | 'sleepy'
+  | 'done'
+  | 'pain-calm'
+  | 'pain-uneasy'
+  | 'pain-ouch';
 
 /**
  * Square, 640px WebP, built by `npm run art:kanko`. `src` is transparent art
  * for light mode; `darkSrc` is opaque art drawn on the dark ground (the card
- * colour for curious, which sits inside cards).
+ * colour for curious, which sits inside cards), except for done and the
+ * three pain faces, which have no dark master yet and use the transparent
+ * art in both themes.
  */
 export const KANKO: Record<
   KankoMood,
@@ -113,5 +119,37 @@ export const KANKO: Record<
     darkSrc: '/images/kanko/kanko-sleepy-dark.webp',
     width: 640,
     height: 640
+  },
+  done: {
+    src: '/images/kanko/kanko-done.webp',
+    darkSrc: '/images/kanko/kanko-done-dark.webp',
+    width: 640,
+    height: 640
+  },
+  'pain-calm': {
+    src: '/images/kanko/kanko-pain-calm.webp',
+    darkSrc: '/images/kanko/kanko-pain-calm-dark.webp',
+    width: 640,
+    height: 640
+  },
+  'pain-uneasy': {
+    src: '/images/kanko/kanko-pain-uneasy.webp',
+    darkSrc: '/images/kanko/kanko-pain-uneasy-dark.webp',
+    width: 640,
+    height: 640
+  },
+  'pain-ouch': {
+    src: '/images/kanko/kanko-pain-ouch.webp',
+    darkSrc: '/images/kanko/kanko-pain-ouch-dark.webp',
+    width: 640,
+    height: 640
   }
 };
+
+/** Moods whose dark art is the transparent light art (no dark master yet). */
+export const LIGHT_ONLY_MOODS: readonly KankoMood[] = [
+  'done',
+  'pain-calm',
+  'pain-uneasy',
+  'pain-ouch'
+];

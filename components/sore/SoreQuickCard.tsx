@@ -1,20 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, RotateCcw } from 'lucide-react';
+import { Check, NotebookPen, RotateCcw } from 'lucide-react';
 
 import CourseBars from '@/components/sore/CourseBars';
-import Measure from '@/components/sore/Measure';
-import { PainField, WidthField } from '@/components/sore/ReadingFields';
-import SoreSigil from '@/components/sore/SoreSigil';
+import PainSlider from '@/components/sore/PainSlider';
+import WidthRuler from '@/components/sore/WidthRuler';
+import SoreThumb from '@/components/sore/SoreThumb';
+import { StarMark } from '@/components/graphics/Sparkles';
 import { useHealSore } from '@/components/sore/useHealSore';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle
-} from '@/components/ui/dialog';
+import { Sheet } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/Toasts/use-toast';
 import type { Sore } from '@/types';
 import { verdictOf } from '@/utils/course';
@@ -34,10 +30,10 @@ import { runWrite, showFailure } from '@/utils/write-feedback';
 import { BusyIcon } from '@/components/ui/busy-icon';
 
 /**
- * A sore at a glance, opened by tapping it on the map or in a chart: its
+ * A sore at a glance, in a half-height sheet over the map or a chart: its
  * day, today's (or the last) reading and its fortnight, with the two things
- * a person most often wants to do next — log today, or close it — one tap
- * away. The full course stays on the map's detail panel; this is the quick
+ * a person most often wants to do next, log today or close it, one tap
+ * away. Log sits beside the name; a swipe up shows the rest. The full course stays on the map's detail panel; this is the quick
  * look and the quick edit.
  *
  * Writes are its own: Save upserts this one sore and Healed sets it closed,
@@ -49,7 +45,8 @@ export default function SoreQuickCard({
   open,
   onOpenChange,
   onChange,
-  footer
+  footer,
+  startEditing = false
 }: {
   sore: Sore | null;
   open: boolean;
@@ -58,6 +55,8 @@ export default function SoreQuickCard({
   onChange: (next: Sore) => void;
   /** An extra link under the actions, e.g. "Show on map". */
   footer?: React.ReactNode;
+  /** Open straight on today's reading, as the map's long-press Log does. */
+  startEditing?: boolean;
 }) {
   // The reading being edited, or null when the card is just showing.
   const [draft, setDraft] = useState<Sore | null>(null);
@@ -70,7 +69,11 @@ export default function SoreQuickCard({
   const currentId = open ? (sore?.id ?? null) : null;
   if (currentId !== shownId) {
     setShownId(currentId);
-    setDraft(null);
+    setDraft(
+      currentId && startEditing && sore && !sore.healed_at
+        ? withReading(sore, {})
+        : null
+    );
   }
 
   if (!sore) return null;
@@ -101,145 +104,134 @@ export default function SoreQuickCard({
     if ((await heal.setHealed(sore, healedAt)) && healedAt) onOpenChange(false);
   };
 
+  const startLog = () => {
+    tap();
+    setDraft(withReading(sore, {}));
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-sm gap-0 overflow-y-auto rounded-xl p-4 sm:p-5">
-        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 pr-8">
-          <SoreSigil sore={sore} size={36} />
-          <div className="min-w-0">
-            <DialogTitle className="truncate text-subhead">
-              {sore.zone}
-            </DialogTitle>
-            <p className="tabular text-sm text-muted-foreground">
-              {sore.healed_at
-                ? 'Healed'
-                : `Day ${dayNumberOf(sore, now)} · ${today ? 'logged today' : 'not logged today'}`}
-            </p>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      detent="half"
+      hideTitle
+      title={sore.zone}
+    >
+      {/* Clear of the sheet's close button, which sits at this row's end. */}
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 pr-11">
+        <SoreThumb sore={sore} size={48} />
+        <div className="min-w-0">
+          <p aria-hidden="true" className="truncate font-display text-subhead font-semibold">
+            {sore.zone}
+          </p>
+          <p className="tabular truncate text-sm text-muted-foreground">
+            {sore.healed_at
+              ? 'Healed'
+              : `Day ${dayNumberOf(sore, now)}`}
+          </p>
+        </div>
+        {!draft && !sore.healed_at && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="rounded-full bg-accent text-accent-foreground"
+            onClick={startLog}
+            disabled={busy}
+          >
+            <NotebookPen aria-hidden="true" />
+            Log
+          </Button>
+        )}
+      </div>
+
+      <p className="mt-3 text-base">
+        <b className="font-semibold">{verdict.word}</b> {verdict.detail}
+      </p>
+
+      <CourseBars sore={shown} height={56} now={now} className="mt-3" />
+
+      {draft ? (
+        <div className="mt-4 grid gap-5">
+          <WidthRuler
+            value={currentSize(draft)}
+            onChange={(mm) => setDraft(withReading(draft, { size: mm }))}
+          />
+          <PainSlider
+            id={`quick-pain-${sore.id}`}
+            value={currentPain(draft)}
+            onChange={(pain) => setDraft(withReading(draft, { pain }))}
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="touch"
+              onClick={() => setDraft(null)}
+              disabled={busy}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="touch"
+              onClick={() => {
+                tap();
+                save(draft);
+              }}
+              disabled={busy}
+            >
+              <BusyIcon busy={busy}><Check aria-hidden="true" /></BusyIcon>
+              Save
+            </Button>
           </div>
         </div>
-
-        <DialogDescription className="mt-3 text-base text-foreground">
-          <b className="font-semibold">{verdict.word}</b> {verdict.detail}
-        </DialogDescription>
-
-        {!draft && (
-          <dl className="mt-3 grid grid-cols-2 gap-3">
-            <div>
-              <dt className="text-sm text-muted-foreground">
-                {today ? 'Width today' : 'Last width'}
-              </dt>
-              <dd className="tabular font-display text-xl font-semibold">
-                <Measure value={currentSize(sore)} unit="mm" />
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm text-muted-foreground">
-                {today ? 'Pain today' : 'Last pain'}
-              </dt>
-              <dd className="tabular font-display text-xl font-semibold">
-                <Measure value={currentPain(sore)} unit="of 10" />
-              </dd>
-            </div>
-          </dl>
-        )}
-
-        <CourseBars sore={shown} height={48} now={now} className="mt-3" />
-
-        {draft ? (
-          <div className="mt-4 grid gap-4">
-            <WidthField
-              id={`quick-size-${sore.id}`}
-              value={currentSize(draft)}
-              onChange={(mm) => setDraft(withReading(draft, { size: mm }))}
-            />
-            <PainField
-              id={`quick-pain-${sore.id}`}
-              value={currentPain(draft)}
-              onChange={(pain) => setDraft(withReading(draft, { pain }))}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="touch"
-                onClick={() => setDraft(null)}
-                disabled={busy}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="touch"
-                onClick={() => {
-                  tap();
-                  save(draft);
-                }}
-                disabled={busy}
-              >
-                <BusyIcon busy={busy}><Check aria-hidden="true" /></BusyIcon>
-                Save
-              </Button>
-            </div>
-          </div>
-        ) : sore.healed_at ? (
+      ) : sore.healed_at ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="touch"
+          className="mt-4 w-full"
+          onClick={() => setHealed(null)}
+          disabled={busy}
+        >
+          <RotateCcw aria-hidden="true" />
+          Reopen
+        </Button>
+      ) : (
+        <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+          {/* The commonest update is "no change", so it gets one tap. */}
+          {!today && last ? (
+            <Button
+              type="button"
+              size="touch"
+              onClick={() => {
+                tap();
+                save(withReading(sore, {}));
+              }}
+              disabled={busy}
+            >
+              <Check aria-hidden="true" />
+              {lastWasYesterday(sore, now) ? 'Same as yesterday' : 'Same as last time'}
+            </Button>
+          ) : (
+            <span />
+          )}
           <Button
             type="button"
             variant="outline"
             size="touch"
-            className="mt-4 w-full"
-            onClick={() => setHealed(null)}
+            onClick={() => setHealed(now.toISOString())}
             disabled={busy}
+            aria-label={`Mark the ${sore.zone.toLowerCase()} sore healed`}
           >
-            <RotateCcw aria-hidden="true" />
-            Reopen
+            <StarMark className="text-win-edge" />
+            Healed
           </Button>
-        ) : (
-          <div className="mt-4 grid gap-2">
-            {/* The commonest update is "no change", so it gets one tap. */}
-            {!today && last && (
-              <Button
-                type="button"
-                size="touch"
-                className="w-full"
-                onClick={() => {
-                  tap();
-                  save(withReading(sore, {}));
-                }}
-                disabled={busy}
-              >
-                <Check aria-hidden="true" />
-                {lastWasYesterday(sore, now) ? 'Same as yesterday' : 'Same as last time'}
-              </Button>
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="touch"
-                onClick={() => {
-                  tap();
-                  setDraft(withReading(sore, {}));
-                }}
-                disabled={busy}
-              >
-                {today ? 'Change' : 'Update'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="touch"
-                onClick={() => setHealed(now.toISOString())}
-                disabled={busy}
-                aria-label={`Mark the ${sore.zone.toLowerCase()} sore healed`}
-              >
-                Healed
-              </Button>
-            </div>
-          </div>
-        )}
+        </div>
+      )}
 
-        {footer && <div className="mt-3 flex justify-center">{footer}</div>}
-      </DialogContent>
-    </Dialog>
+      {footer && <div className="mt-3 flex justify-center">{footer}</div>}
+    </Sheet>
   );
 }
