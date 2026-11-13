@@ -1,3 +1,4 @@
+import PushScreen from '@/components/shell/PushScreen';
 import { redirect } from 'next/navigation';
 
 import LargeTitle from '@/components/shell/LargeTitle';
@@ -10,9 +11,9 @@ export default async function SettingsPage() {
   if (!user) redirect('/signin/password_signin');
 
   return (
-    <>
+    <PushScreen>
       <LargeTitle className="mb-4 lg:mb-6">Settings</LargeTitle>
       <SettingsList user={user} />
-    </>
+    </PushScreen>
   );
 }

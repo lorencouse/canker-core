@@ -150,7 +150,7 @@ export function ContextMenu({
             onSelect();
           }}
           className={cn(
-            'flex h-12 w-full items-center justify-between gap-3 whitespace-nowrap px-4 text-left text-base font-semibold outline-none transition-colors focus-visible:bg-accent active:bg-accent',
+            'flex h-12 w-full items-center justify-between gap-3 whitespace-nowrap px-4 text-left text-base font-semibold outline-none press [--press-scale:0.98] focus-visible:bg-accent active:bg-accent',
             i > 0 && 'border-t border-border',
             destructive ? 'text-destructive' : 'text-foreground'
           )}

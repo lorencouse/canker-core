@@ -64,7 +64,7 @@ export default function TabBar() {
                 className={cn(
                   'flex h-full flex-col items-center justify-center gap-1 rounded-full',
                   'rail:min-h-14 rail:px-1',
-                  'text-xs transition-colors',
+                  'press text-xs',
                   /*
                    * The active tab is ink and heavier, the rest muted. Weight
                    * and stroke carry it as well as colour, so it survives

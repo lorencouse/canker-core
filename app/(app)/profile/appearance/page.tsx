@@ -1,3 +1,4 @@
+import PushScreen from '@/components/shell/PushScreen';
 import LargeTitle from '@/components/shell/LargeTitle';
 import InfoButton from '@/components/ui/info-button';
 
@@ -6,7 +7,7 @@ import { AppearanceForm } from './appearance-form';
 
 export default function SettingsAppearancePage() {
   return (
-    <>
+    <PushScreen>
       <BackToSettings />
       <LargeTitle
         className="mb-4"
@@ -20,6 +21,6 @@ export default function SettingsAppearancePage() {
         Appearance
       </LargeTitle>
       <AppearanceForm />
-    </>
+    </PushScreen>
   );
 }

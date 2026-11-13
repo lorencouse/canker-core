@@ -105,34 +105,34 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
             <li key={sore.id}>
               <button
                 type="button"
-                className="w-full py-3 text-left"
+                className="press w-full py-3 text-left [--press-scale:0.98]"
                 aria-expanded={expanded}
                 onClick={() => toggle(sore.id)}
               >
                 <div className="flex items-center gap-3">
                   <SoreThumb sore={sore} size={36} />
+                  {/* The name has the row; its figures wrap under it, so
+                      a long name is never cut short on a narrow phone. */}
                   <div className="min-w-0 flex-1">
                     <span className="block truncate font-medium">
                       {sore.zone}
                     </span>
-                    <span className="tabular flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-                      {sore.healed_at && (
-                        <StarMark size={12} className="text-win" />
-                      )}
-                      <span className="truncate">
+                    <span className="tabular flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                        {sore.healed_at && (
+                          <StarMark size={12} className="text-win" />
+                        )}
                         {sore.healed_at
                           ? `Healed ${dateOf(sore.healed_at)}`
                           : `Open, day ${dayNumberOf(sore)}`}
                       </span>
+                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-foreground">
+                        {last ? `${last.size} mm` : '—'}
+                        {last && <PainDot pain={last.pain} />}
+                        {last ? `${last.pain}/10` : ''}
+                      </span>
                     </span>
                   </div>
-                  <span className="tabular text-sm">
-                    {last ? `${last.size} mm` : '—'}
-                  </span>
-                  <span className="tabular inline-flex items-center gap-1.5 text-sm">
-                    {last && <PainDot pain={last.pain} />}
-                    {last ? `${last.pain}/10` : '—'}
-                  </span>
                   <ChevronDown
                     aria-hidden="true"
                     className={cn(

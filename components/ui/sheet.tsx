@@ -165,7 +165,7 @@ function SheetBody({
               type="button"
               onClick={() => dismiss()}
               aria-label="Close"
-              className="focus-ring absolute right-3 top-3 grid size-9 place-items-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-foreground active:scale-95 tap-target"
+              className="focus-ring absolute right-3 top-3 grid size-9 place-items-center rounded-full bg-muted text-muted-foreground press hover:text-foreground tap-target"
             >
               <X aria-hidden="true" className="size-4" />
             </button>

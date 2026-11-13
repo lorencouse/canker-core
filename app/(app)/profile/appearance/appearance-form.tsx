@@ -48,7 +48,7 @@ export function AppearanceForm() {
                 tap();
                 setTheme(value);
               }}
-              className="focus-ring flex w-full items-center gap-3 pl-4 text-left transition-[transform,background-color] duration-150 hover:bg-muted/60 active:scale-[0.99] active:bg-muted"
+              className="focus-ring flex w-full items-center gap-3 pl-4 text-left press [--press-scale:0.98] hover:bg-muted/60 active:bg-muted"
             >
               <Tile icon={icon} color={color} />
               <span

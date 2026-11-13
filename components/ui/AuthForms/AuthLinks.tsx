@@ -12,7 +12,7 @@ export default function AuthLinks({
         <Link
           key={href + label}
           href={href}
-          className="rounded-md text-muted-foreground transition-colors hover:text-foreground"
+          className="press rounded-md text-muted-foreground hover:text-foreground"
         >
           {label}
         </Link>

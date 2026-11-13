@@ -269,7 +269,7 @@ export default function SizeChart({ sores, days }: { sores: Sore[]; days: SoreDa
                 <div
                   ref={readoutRef}
                   id={readoutId}
-                  className="absolute top-0 z-10 w-max min-w-40 max-w-[min(16rem,100%)] rounded-cell border border-border bg-popover p-2.5 text-popover-foreground shadow-lg"
+                  className="absolute bottom-full z-10 mb-2 w-max min-w-40 max-w-[min(16rem,100%)] rounded-cell border border-border bg-popover p-2.5 text-popover-foreground shadow-lg"
                   style={{ left: readoutLeft }}
                   onPointerDown={(e) => e.stopPropagation()}
                 >
@@ -280,7 +280,7 @@ export default function SizeChart({ sores, days }: { sores: Sore[]; days: SoreDa
                         <button
                           type="button"
                           onClick={() => setCardId(s.id)}
-                          className="focus-ring grid min-h-9 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-cell px-1 text-left text-sm hover:bg-muted coarse:min-h-11"
+                          className="focus-ring grid min-h-9 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-cell px-1 text-left text-sm press [--press-scale:0.98] hover:bg-muted coarse:min-h-11"
                         >
                           <span
                             aria-hidden="true"

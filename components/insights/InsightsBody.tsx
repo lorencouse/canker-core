@@ -95,7 +95,7 @@ function RangeSwitch({ value, onChange }: { value: Range; onChange: (r: Range) =
           aria-label={o.name}
           onClick={() => onChange(o.id)}
           className={cn(
-            'focus-ring tap-target h-9 min-w-16 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors coarse:h-11',
+            'focus-ring tap-target h-9 min-w-16 whitespace-nowrap rounded-full px-4 text-sm font-semibold press coarse:h-11',
             value === o.id
               ? 'bg-card text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'

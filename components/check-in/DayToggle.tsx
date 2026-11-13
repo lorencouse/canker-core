@@ -44,7 +44,7 @@ export default function DayToggle({
               onChange(choice.value);
             }}
             className={cn(
-              'h-10 min-w-0 truncate rounded-xl px-3 text-[15px] font-extrabold transition-colors coarse:h-11 lg:h-9 lg:text-sm',
+              'h-10 min-w-0 truncate rounded-xl px-3 text-[15px] font-extrabold press coarse:h-11 lg:h-9 lg:text-sm',
               'focus-ring',
               'disabled:opacity-50',
               on

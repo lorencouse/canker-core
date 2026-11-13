@@ -66,7 +66,7 @@ export default function SeverityLadder({
               'h-12 min-w-0 flex-1 rounded-cell border-2 bg-card font-display',
               filled ? 'border-border' : 'border-control',
               'text-sm font-semibold tabular text-muted-foreground',
-              'focus-ring transition-colors disabled:opacity-50',
+              'focus-ring press disabled:opacity-50',
               'lg:h-10'
             )}
             style={

@@ -30,7 +30,7 @@ export function Chip({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'focus-ring inline-flex h-10 max-w-full items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-[15px] transition-[transform,background-color,border-color] active:scale-[0.97] disabled:opacity-50 coarse:h-11 lg:h-9 lg:text-sm',
+        'focus-ring inline-flex h-10 max-w-full items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-[15px] press disabled:opacity-50 coarse:h-11 lg:h-9 lg:text-sm',
         Icon && 'pl-3',
         on
           ? tone === 'win'

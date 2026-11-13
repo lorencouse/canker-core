@@ -30,7 +30,7 @@ export default function OpenSoreRow({
   return (
     <Link
       href={`/my-sores?sore=${encodeURIComponent(sore.id)}`}
-      className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 rounded-cell px-1 py-2 transition-transform hover:bg-muted active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 rounded-cell px-1 py-2 press [--press-scale:0.98] hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <SoreThumb sore={sore} />
       <span className="min-w-0">

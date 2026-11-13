@@ -35,7 +35,7 @@ export default function InfoButton({
         aria-label={label ?? `About ${title.toLowerCase()}`}
         onClick={() => tap()}
         className={cn(
-          'tap-target inline-grid size-7 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors',
+          'tap-target inline-grid size-7 shrink-0 place-items-center rounded-full text-muted-foreground press',
           'hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           className
         )}
@@ -65,7 +65,7 @@ export default function InfoButton({
             </DialogPrimitive.Title>
             <DialogPrimitive.Close
               aria-label="Close"
-              className="tap-target -mr-1 -mt-0.5 grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="tap-target -mr-1 -mt-0.5 grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground press hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X aria-hidden="true" className="size-5" />
             </DialogPrimitive.Close>

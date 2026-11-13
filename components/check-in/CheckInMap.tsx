@@ -72,7 +72,7 @@ export default function CheckInMap({
               setView(v);
             }}
             className={cn(
-              'tap-target whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold transition-colors',
+              'tap-target whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold press',
               view === v
                 ? 'bg-card text-foreground shadow-sm'
                 : 'text-muted-foreground'
