@@ -28,7 +28,10 @@ import {
 } from '@/components/ui/select';
 import { StarMark } from '@/components/graphics/Sparkles';
 import SoreQuickCard from '@/components/sore/SoreQuickCard';
-import { Switch } from '@/components/ui/switch';
+import { useActionSheet } from '@/components/ui/action-sheet';
+import { Chip } from '@/components/ui/chip';
+import { ContextMenu } from '@/components/ui/context-menu';
+import { Check, Move, NotebookPen, Trash2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { tap } from '@/utils/native';
 import {
@@ -40,6 +43,7 @@ import {
 
 import { MapDefs, ViewArtwork } from './artwork';
 import MapControls from './MapControls';
+import { confirmDeleteSore, useMapActions } from './SoreActionBar';
 import SoreMarker from './SoreMarker';
 
 /**
@@ -47,7 +51,10 @@ import SoreMarker from './SoreMarker';
  * control, drawn as SVG so it scales, prints, and follows the theme.
  *
  * Interaction model
- *   view mode   tap a sore to select it; drag to pan; wheel / pinch to zoom
+ *   view mode   tap a sore to open its sheet; press and hold it for a menu
+ *               (Log, Healed, Move, Delete); drag to pan; pinch, wheel or
+ *               double-tap to zoom (+ / - / 0 keys, or the buttons, which a
+ *               mouse sees and a keyboard reaches on touch)
  *   add mode    tap tissue to place a sore (taps off the tissue do nothing)
  *   edit mode   drag a sore to move it; its zone follows
  *
@@ -59,6 +66,13 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 /** Pointer travel before a press counts as a drag rather than a tap. */
 const DRAG_THRESHOLD = 4;
+/** How long a press on a sore is held before its menu opens. */
+const LONG_PRESS_MS = 480;
+/** Two taps this close in time and place are a double tap. */
+const DOUBLE_TAP_MS = 320;
+const DOUBLE_TAP_PX = 30;
+/** How far a double tap zooms in. */
+const DOUBLE_TAP_ZOOM = 2.2;
 
 type Camera = { k: number; tx: number; ty: number };
 const HOME: Camera = { k: 1, tx: 0, ty: 0 };
@@ -99,6 +113,17 @@ export default function MouthMap({
     selectedSore?.view ?? initialView ?? 'front'
   );
   const [camera, setCamera] = useState<Camera>(HOME);
+  // The long-press menu: which sore, and where the finger was.
+  const [menu, setMenu] = useState<{
+    sore: Sore;
+    at: { x: number; y: number };
+  } | null>(null);
+  // Opens the sore's sheet straight on its reading, from the menu's Log.
+  const [quickLog, setQuickLog] = useState(false);
+  const mapActions = useMapActions();
+  const confirm = useActionSheet();
+  const lastTap = useRef<{ t: number; x: number; y: number } | null>(null);
+  const holdTimer = useRef<number | undefined>(undefined);
   const svgRef = useRef<SVGSVGElement>(null);
   const idPrefix = useId().replace(/:/g, '');
 
@@ -185,6 +210,8 @@ export default function MouthMap({
     // Whether the press started on a sore. Pointer capture retargets the
     // release to the svg, so the release's own target cannot say.
     onSore: boolean;
+    // The press became a long press and opened the menu; its release is not a tap.
+    held: boolean;
   };
   const gesture = useRef<Gesture | null>(null);
 
@@ -201,13 +228,26 @@ export default function MouthMap({
       moved: false,
       pinchDist: null,
       dragging: null,
-      onSore: false
+      onSore: false,
+      held: false
     };
     g.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     // Only ever set: the press bubbles from the marker to the svg, whose own
     // handler runs second without a sore.
     if (g.pointers.size === 1 && sore) g.onSore = true;
     if (g.pointers.size === 1 && sore && mode !== 'view') g.dragging = sore;
+    window.clearTimeout(holdTimer.current);
+    if (g.pointers.size === 1 && sore && mode === 'view' && !compact) {
+      const at = { x: e.clientX, y: e.clientY };
+      holdTimer.current = window.setTimeout(() => {
+        const live = gesture.current;
+        if (!live || live.moved) return;
+        live.held = true;
+        tap('medium');
+        setSelectedSore(sore);
+        setMenu({ sore, at });
+      }, LONG_PRESS_MS);
+    }
     if (g.pointers.size === 2) {
       const [a, b] = Array.from(g.pointers.values());
       g.pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
@@ -243,6 +283,7 @@ export default function MouthMap({
       dy = e.clientY - prev.y;
     if (!g.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
     g.moved = true;
+    window.clearTimeout(holdTimer.current);
 
     if (g.dragging) {
       const p = toDrawing(e.clientX, e.clientY);
@@ -262,7 +303,8 @@ export default function MouthMap({
   const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
     const g = gesture.current;
     if (!g) return;
-    const wasTap = !g.moved && g.pointers.size === 1;
+    window.clearTimeout(holdTimer.current);
+    const wasTap = !g.moved && !g.held && g.pointers.size === 1;
     g.pointers.delete(e.pointerId);
     if (g.pointers.size > 0) {
       g.pinchDist = null;
@@ -275,11 +317,39 @@ export default function MouthMap({
     // view mode the tap also opens its quick card. A drag that started on a
     // sore was a pan, so it never gets here.
     if (g.onSore || (e.target as Element).closest('[data-sore]')) {
-      if (mode === 'view') setQuickOpen(true);
+      if (mode === 'view') {
+        setQuickLog(false);
+        setQuickOpen(true);
+      }
       return;
     }
 
     const p = toDrawing(e.clientX, e.clientY);
+    // A double tap on the drawing zooms in there, or back out when zoomed.
+    if (mode === 'view') {
+      // The event's own clock: a render must not read the time.
+      const now = e.timeStamp;
+      const prev = lastTap.current;
+      if (
+        prev &&
+        now - prev.t < DOUBLE_TAP_MS &&
+        Math.hypot(e.clientX - prev.x, e.clientY - prev.y) < DOUBLE_TAP_PX
+      ) {
+        lastTap.current = null;
+        if (camera.k > 1.01) resetCamera();
+        else {
+          const svg = svgRef.current;
+          const ctm = svg?.getScreenCTM();
+          if (ctm)
+            zoomAbout(
+              DOUBLE_TAP_ZOOM,
+              new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse())
+            );
+        }
+        return;
+      }
+      lastTap.current = { t: now, x: e.clientX, y: e.clientY };
+    }
     if (mode === 'add') {
       placeSore(p);
     } else {
@@ -373,7 +443,18 @@ export default function MouthMap({
         })}
       </div>
 
-      <div className="surface-canvas">
+      <div
+        className="surface-canvas"
+        // Zoom from the keyboard while focus is on the map or a sore.
+        onKeyDown={(e) => {
+          if (e.target instanceof HTMLButtonElement) return;
+          if (e.key === '+' || e.key === '=') zoomCentre(1.25);
+          else if (e.key === '-' || e.key === '_') zoomCentre(0.8);
+          else if (e.key === '0') resetCamera();
+          else return;
+          e.preventDefault();
+        }}
+      >
         <svg
           ref={svgRef}
           viewBox={viewBoxAttr}
@@ -384,7 +465,9 @@ export default function MouthMap({
               ? 'cursor-crosshair'
               : 'cursor-grab active:cursor-grabbing'
           )}
-          style={{ touchAction: 'none' }}
+          // No system callout or text selection under a long press.
+          style={{ touchAction: 'none', WebkitTouchCallout: 'none' }}
+          onContextMenu={(e) => e.preventDefault()}
           onPointerDown={(e) => onPointerDown(e)}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -412,8 +495,19 @@ export default function MouthMap({
                   onSelect={() => setSelectedSore(sore)}
                   onActivate={() => {
                     setSelectedSore(sore);
-                    if (mode === 'view') setQuickOpen(true);
+                    if (mode === 'view') {
+                      setQuickLog(false);
+                      setQuickOpen(true);
+                    }
                   }}
+                  onMenu={
+                    mode === 'view' && !compact
+                      ? (at) => {
+                          setSelectedSore(sore);
+                          setMenu({ sore, at });
+                        }
+                      : undefined
+                  }
                   onNudge={(dx, dy) => nudgeSore(sore, dx, dy)}
                   onPointerDown={(e) => {
                     setSelectedSore(sore);
@@ -474,7 +568,58 @@ export default function MouthMap({
         </Select>
       )}
 
+      <ContextMenu
+        at={menu?.at ?? null}
+        label={menu ? `${menu.sore.zone} sore` : 'Sore'}
+        onClose={() => setMenu(null)}
+        items={
+          menu
+            ? [
+                {
+                  label: 'Log',
+                  icon: NotebookPen,
+                  onSelect: () => {
+                    setSelectedSore(menu.sore);
+                    setQuickLog(true);
+                    setQuickOpen(true);
+                  }
+                },
+                ...(menu.sore.healed_at
+                  ? []
+                  : [
+                      {
+                        label: 'Healed',
+                        icon: Check,
+                        onSelect: () =>
+                          mapActions.setHealed(
+                            new Date().toISOString(),
+                            menu.sore
+                          )
+                      }
+                    ]),
+                {
+                  label: 'Move',
+                  icon: Move,
+                  onSelect: () => mapActions.begin('edit', menu.sore)
+                },
+                {
+                  label: 'Delete',
+                  icon: Trash2,
+                  destructive: true,
+                  onSelect: async () => {
+                    const sore = menu.sore;
+                    if (await confirmDeleteSore(confirm.ask))
+                      mapActions.remove(sore);
+                  }
+                }
+              ]
+            : []
+        }
+      />
+      {confirm.sheet}
+
       <SoreQuickCard
+        startEditing={quickLog}
         sore={mode === 'view' ? selectedSore : null}
         open={quickOpen && mode === 'view' && Boolean(selectedSore)}
         onOpenChange={setQuickOpen}
@@ -502,23 +647,21 @@ export default function MouthMap({
           empty set is a question with no answer.
         */}
         {healedCount > 0 && (
-          <label className="flex shrink-0 cursor-pointer items-center gap-2">
-            <span className="inline-flex items-center gap-1.5">
-              <StarMark size={14} className="text-win" />
-              Show healed <span className="tabular">({healedCount})</span>
-            </span>
-            <Switch
-              checked={showHealed}
-              onCheckedChange={(on) => {
-                tap();
-                setShowHealed(on);
-                // A healed sore that is selected cannot stay selected once
-                // it is hidden.
-                if (!on && selectedSore?.healed_at) setSelectedSore(null);
-              }}
-              aria-label="Show healed sores on the map"
-            />
-          </label>
+          <Chip
+            on={showHealed}
+            icon={StarMark}
+            tone="win"
+            onClick={() => {
+              tap();
+              const on = !showHealed;
+              setShowHealed(on);
+              // A healed sore that is selected cannot stay selected once
+              // it is hidden.
+              if (!on && selectedSore?.healed_at) setSelectedSore(null);
+            }}
+          >
+            {`Healed · ${healedCount}`}
+          </Chip>
         )}
       </div>
     </div>

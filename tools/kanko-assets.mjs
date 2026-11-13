@@ -37,8 +37,19 @@ const moods = {
   envelope: 'kanko-envelope.webp',
   clipboard: 'kanko-clipboard.webp',
   offline: 'kanko-offline.webp',
-  sleepy: 'kanko-sleepy.webp'
+  sleepy: 'kanko-sleepy.webp',
+  // Approved 2026-11-12: the check-in finished, and the three faces the
+  // pain slider shows (calm 1-3, uneasy 4-6, ouch 7-10).
+  done: 'kanko-done.webp',
+  'pain-calm': 'kanko-pain-calm.webp',
+  'pain-uneasy': 'kanko-pain-uneasy.webp',
+  'pain-ouch': 'kanko-pain-ouch.webp'
 };
+
+// Moods with no dark master yet: dark mode shows the transparent light art,
+// which needs no ground of its own. Replace with a drawn dark master (and an
+// entry in darkMoods) when one is approved.
+const lightOnlyMoods = ['done', 'pain-calm', 'pain-uneasy', 'pain-ouch'];
 
 // The art is painted on a flat lavender ground. The background is the region
 // of near-ground pixels connected to the image border (so pale fur inside the
@@ -57,7 +68,7 @@ const SHADOW_FULL_DEFICIT = 50; // luma deficit that reaches SHADOW_STRENGTH * 1
 
 const luma = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
 
-const toTransparent = async (pipeline) => {
+const toTransparent = async (pipeline, { bluishGround = false } = {}) => {
   const { data, info } = await pipeline
     .ensureAlpha()
     .raw()
@@ -95,6 +106,19 @@ const toTransparent = async (pipeline) => {
   const isGroundLike = (p) => {
     if (dist(p) < NEAR_GROUND) return true;
     const [r, g, b] = [data[p * 4], data[p * 4 + 1], data[p * 4 + 2]];
+    // The 2026-11-12 drawings light the floor under the figure, so ground
+    // there is paler than the corners. Any pale, blue-leaning, low-chroma
+    // pixel is ground: the fur is never bluer than it is red.
+    if (
+      bluishGround &&
+      b >= r &&
+      b >= g &&
+      // The lavender ground runs to about 40 of chroma; the confetti and
+      // the sweat drop are far bluer than that, and stay.
+      Math.max(r, g, b) - Math.min(r, g, b) <= 48 &&
+      luma(r, g, b) > groundLuma - SHADOW_MAX_DEFICIT
+    )
+      return true;
     const deficit = groundLuma - luma(r, g, b);
     const chroma = Math.max(r, g, b) - Math.min(r, g, b);
     return (
@@ -178,8 +202,8 @@ const toTransparent = async (pipeline) => {
   return sharp(data, { raw: { width, height, channels: 4 } });
 };
 
-const write = async (pipeline, name) =>
-  (await toTransparent(pipeline))
+const write = async (pipeline, name, options) =>
+  (await toTransparent(pipeline, options))
     .webp({ quality: QUALITY, alphaQuality: 100 })
     .toFile(path.join(out, name));
 
@@ -188,7 +212,15 @@ await mkdir(out, { recursive: true });
 for (const [mood, file] of Object.entries(moods)) {
   await write(
     sharp(path.join(masters, file)).resize(SIZE, SIZE),
-    `kanko-${mood}.webp`
+    `kanko-${mood}.webp`,
+    { bluishGround: lightOnlyMoods.includes(mood) }
+  );
+}
+
+for (const mood of lightOnlyMoods) {
+  await copyFile(
+    path.join(out, `kanko-${mood}.webp`),
+    path.join(out, `kanko-${mood}-dark.webp`)
   );
 }
 

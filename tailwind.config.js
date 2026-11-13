@@ -103,6 +103,12 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'
         },
+        tile: {
+          indigo: 'hsl(var(--tile-indigo))',
+          amber: 'hsl(var(--tile-amber))',
+          green: 'hsl(var(--tile-green))',
+          slate: 'hsl(var(--tile-slate))'
+        },
         // Pain level 1-10. Data only - never use these for chrome.
         severity: {
           1: 'hsl(var(--sev-1))',
@@ -125,7 +131,10 @@ module.exports = {
         // Pressed, the control moves down and the edge goes (see button.tsx).
         press: '0 5px 0 hsl(var(--primary-edge))',
         'press-win': '0 5px 0 hsl(var(--win-edge))',
-        'press-line': '0 4px 0 hsl(var(--border))'
+        'press-line': '0 4px 0 hsl(var(--border))',
+        // Only on what floats over the page: a sheet, a menu.
+        sheet: '0 -8px 32px hsl(240 48% 17% / 0.16)',
+        menu: '0 12px 32px hsl(240 48% 17% / 0.22)'
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -148,11 +157,28 @@ module.exports = {
         'accordion-up': {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' }
+        },
+        // A bottom sheet rising from under the screen's edge.
+        'sheet-in': {
+          from: { transform: 'translateY(100%)' },
+          to: { transform: 'translateY(0)' }
+        },
+        'scrim-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' }
+        },
+        // A menu or a pose growing from where it was asked for.
+        'pop-in': {
+          from: { opacity: '0', transform: 'scale(0.92)' },
+          to: { opacity: '1', transform: 'scale(1)' }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out'
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'sheet-in': 'sheet-in 0.42s var(--ease-sheet)',
+        'scrim-in': 'scrim-in 0.24s ease-out',
+        'pop-in': 'pop-in 0.18s var(--ease-spring)'
       }
     }
   },

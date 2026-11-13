@@ -25,7 +25,7 @@ const SLOTS: Array<{
   {
     slot: 'morning',
     label: 'Morning check-in',
-    hint: 'A minute to log how your sores are today.'
+    hint: 'A minute to log your sores.'
   },
   {
     slot: 'evening',
@@ -90,7 +90,7 @@ export function ReminderForm() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="grid gap-4">
       {blocked && (
         <p role="status" className="prose-measure text-sm font-bold">
           Notifications are off. Allow them in your phone’s settings.
@@ -99,11 +99,21 @@ export function ReminderForm() {
       {SLOTS.map(({ slot, label, hint }) => {
         const pref = changed[slot] ?? readReminder(slot);
         return (
-          <div key={slot} className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
+          // One inset group per reminder: the switch row, then its time,
+          // a native time input, which the phone opens as its own wheel.
+          <div
+            key={slot}
+            className="overflow-hidden rounded-worksheet bg-card"
+          >
+            <div className="flex min-h-14 items-center justify-between gap-4 px-4 py-2.5">
               <div className="min-w-0">
-                <Label htmlFor={`reminder-${slot}-enabled`}>{label}</Label>
-                <p className="text-sm text-muted-foreground">{hint}</p>
+                <Label
+                  htmlFor={`reminder-${slot}-enabled`}
+                  className="text-base font-semibold"
+                >
+                  {label}
+                </Label>
+                <p className="truncate text-sm text-muted-foreground">{hint}</p>
               </div>
               <Switch
                 id={`reminder-${slot}-enabled`}
@@ -113,12 +123,17 @@ export function ReminderForm() {
                 }
               />
             </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor={`reminder-${slot}-time`}>Time</Label>
+            <div className="ml-4 flex min-h-14 items-center justify-between gap-4 border-t border-border pr-4">
+              <Label
+                htmlFor={`reminder-${slot}-time`}
+                className="text-base font-semibold"
+              >
+                Time
+              </Label>
               <Input
                 id={`reminder-${slot}-time`}
                 type="time"
-                className="w-40"
+                className="tabular h-10 w-32 rounded-full bg-muted text-center"
                 value={pref.time}
                 disabled={!pref.enabled}
                 onChange={(e) => {

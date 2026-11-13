@@ -13,6 +13,7 @@ import DayToggle, { type DayChoice } from './DayToggle';
 import type { HabitStepProps } from './habit-step';
 import ScalePicker from './ScalePicker';
 import StepHeading from './StepHeading';
+import { tagIcon } from './tag-icons';
 import StepNextButton from './StepNextButton';
 import { useReportBusy } from './useReportBusy';
 
@@ -61,9 +62,14 @@ function fromLog(kind: TagKind, log: DayLog | undefined) {
 
 /**
  * A chip screen over one fixed list: food triggers, health triggers (with
- * the stress scale) or treatments. "None today" is the explicit clean
- * answer and excludes the other chips. Next with nothing picked moves on
- * and writes nothing, so a skipped screen never makes a day look clean.
+ * the stress scale) or treatments. On health, "None today" is the explicit
+ * clean answer and excludes the other chips, and Next with nothing picked
+ * moves on and writes nothing, so a skipped screen never makes that day
+ * look clean.
+ *
+ * Food is the exception, by owner decision (2026-11-12 app-feel review):
+ * Next never waits on a choice there, and nothing picked is the answer
+ * "none", written as such. It has no "None today" chip to tap.
  */
 export default function TagStep({
   kind,
@@ -113,7 +119,8 @@ export default function TagStep({
     const answered = fields.none || fields.selected.length > 0;
     switch (kind) {
       case 'food':
-        return answered ? { food: fields.selected } : null;
+        // Nothing picked means nothing eaten that might have set one off.
+        return { food: fields.selected };
       case 'health':
         return answered || fields.stress !== null
           ? { health: { triggers: fields.selected, stress: fields.stress } }
@@ -149,15 +156,18 @@ export default function TagStep({
           {options.map((option) => (
             <Chip
               key={option}
+              icon={tagIcon(option)}
               on={fields.selected.includes(option)}
               onClick={() => toggle(option)}
             >
               {option}
             </Chip>
           ))}
-          <Chip on={fields.none} onClick={toggleNone}>
-            None today
-          </Chip>
+          {kind !== 'food' && (
+            <Chip on={fields.none} onClick={toggleNone}>
+              None today
+            </Chip>
+          )}
         </div>
       </fieldset>
 
@@ -172,7 +182,13 @@ export default function TagStep({
         />
       )}
 
-      <StepNextButton busy={busy} onClick={next} />
+      <StepNextButton
+        busy={busy}
+        onClick={next}
+        label={
+          kind === 'food' && fields.selected.length === 0 ? 'None, next' : 'Next'
+        }
+      />
     </div>
   );
 }

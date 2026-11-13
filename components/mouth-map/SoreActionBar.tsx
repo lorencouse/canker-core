@@ -4,16 +4,10 @@ import { useState } from 'react';
 import { Check, Plus, RotateCcw, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
+import { useActionSheet } from '@/components/ui/action-sheet';
 import { dismissHealedUndo, useHealSore } from '@/components/sore/useHealSore';
 import { useSoreContext } from '@/context/SoreContext';
+import type { Sore } from '@/types';
 import { deleteSore, upsertSores } from '@/utils/actions/soreActions';
 import { cn } from '@/utils/cn';
 import { notify, tap } from '@/utils/native';
@@ -38,7 +32,7 @@ import { runWrite, showFailure } from '@/utils/write-feedback';
  * different places on the screen: the add button under the title, Cancel and
  * Done under the map, the rest in the selected sore's detail.
  */
-function useMapActions() {
+export function useMapActions() {
   const {
     sores,
     setSores,
@@ -59,11 +53,13 @@ function useMapActions() {
   });
   const busy = saving || heal.busy;
 
-  const begin = (next: 'add' | 'edit') => {
+  /** Opens an editing session; `edit` on `sore` when a long press named one. */
+  const begin = (next: 'add' | 'edit', sore?: Sore) => {
     tap();
     dismissHealedUndo();
     setSnapshot(sores);
     if (next === 'add') setSelectedSore(null);
+    else if (sore) setSelectedSore(sore);
     setMode(next);
   };
 
@@ -92,16 +88,17 @@ function useMapActions() {
     setMode('view');
   };
 
-  const setHealed = (healedAt: string | null) => {
-    if (selectedSore) heal.setHealed(selectedSore, healedAt);
+  /** On the selected sore, or the one a long press named. */
+  const setHealed = (healedAt: string | null, sore = selectedSore) => {
+    if (sore) heal.setHealed(sore, healedAt);
   };
 
-  const remove = async () => {
-    if (!selectedSore) return false;
+  const remove = async (sore = selectedSore) => {
+    if (!sore) return false;
     setBusy(true);
     try {
       const result = await runWrite(
-        () => deleteSore(selectedSore.id),
+        () => deleteSore(sore.id),
         'Could not delete the sore. Try again.'
       );
       if (!result.ok) {
@@ -109,9 +106,9 @@ function useMapActions() {
         return false;
       }
       // Photos never reached the server, so only this device can delete them.
-      await deletePhotosFor(selectedSore.readings.map((r) => r.id));
-      setSores((prev) => prev.filter((s) => s.id !== selectedSore.id));
-      setSelectedSore(null);
+      await deletePhotosFor(sore.readings.map((r) => r.id));
+      setSores((prev) => prev.filter((s) => s.id !== sore.id));
+      setSelectedSore((current) => (current?.id === sore.id ? null : current));
       notify('warning');
       return true;
     } finally {
@@ -197,7 +194,7 @@ export function EditingBar({ place }: { place: 'map' | 'detail' }) {
 export default function SoreActions() {
   const { busy, editing, selectedSore, begin, setHealed, remove } =
     useMapActions();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const actions = useActionSheet();
 
   if (!selectedSore || editing) return null;
 
@@ -241,45 +238,31 @@ export default function SoreActions() {
         type="button"
         variant="link"
         className="h-12 px-2 text-base text-muted-foreground underline hover:text-foreground"
-        onClick={() => setConfirmingDelete(true)}
+        onClick={async () => {
+          if ((await confirmDeleteSore(actions.ask)) && selectedSore)
+            remove(selectedSore);
+        }}
         disabled={busy}
       >
         Delete
       </Button>
+      {actions.sheet}
 
-      <Dialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Delete this sore?</DialogTitle>
-            <DialogDescription>
-              Its readings go with it and it will not appear in your history. If
-              it has simply gone away, mark it healed instead.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              size="touch"
-              onClick={() => setConfirmingDelete(false)}
-              disabled={busy}
-            >
-              Keep it
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              size="touch"
-              onClick={async () => {
-                if (await remove()) setConfirmingDelete(false);
-              }}
-              disabled={busy}
-            >
-              {busy ? 'Deleting…' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
+}
+
+/**
+ * Asks before a sore is deleted, as the system's destructive action sheet.
+ * Healed is the normal end of a sore, so the sheet says so.
+ */
+export async function confirmDeleteSore(
+  ask: ReturnType<typeof useActionSheet>['ask']
+): Promise<boolean> {
+  const pick = await ask(
+    'Delete this sore?',
+    [{ title: 'Delete sore', style: 'destructive' }],
+    'Its readings go too. If it went away, mark it healed.'
+  );
+  return pick === 0;
 }

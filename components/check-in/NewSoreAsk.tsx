@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { ArrowRight, Plus } from 'lucide-react';
 
 import MouthMap from '@/components/mouth-map/MouthMap';
-import { PainField, QuickWidthField } from '@/components/sore/ReadingFields';
+import PainSlider from '@/components/sore/PainSlider';
+import WidthRuler from '@/components/sore/WidthRuler';
 import { Button } from '@/components/ui/button';
 import { SoreProvider, useSoreContext } from '@/context/SoreContext';
 import type { Sore, User } from '@/types';
@@ -120,11 +121,11 @@ function Placement({
               Day 1 · tap the map again to move it
             </p>
           </div>
-          <QuickWidthField
+          <WidthRuler
             value={currentSize(placed)}
             onChange={(size) => setReading({ size })}
           />
-          <PainField
+          <PainSlider
             id={`check-in-new-pain-${placed.id}`}
             label="Pain"
             value={currentPain(placed)}

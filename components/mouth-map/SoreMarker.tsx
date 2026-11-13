@@ -22,6 +22,7 @@ export default function SoreMarker({
   onPointerDown,
   onSelect,
   onActivate,
+  onMenu,
   onNudge
 }: {
   x: number;
@@ -37,12 +38,27 @@ export default function SoreMarker({
   onSelect: () => void;
   /** Enter or Space: what a tap does, for a keyboard. */
   onActivate?: () => void;
+  /**
+   * The sore's menu, at a point in client pixels: a long press does this on
+   * the map; here a right click, the Menu key or Shift+F10 does it.
+   */
+  onMenu?: (at: { x: number; y: number }) => void;
   /** Arrow-key movement in percent of the view, only while draggable. */
   onNudge?: (dx: number, dy: number) => void;
 }) {
   const fill = sevFill(pain);
 
+  const menuAtSelf = (el: Element) => {
+    const box = el.getBoundingClientRect();
+    onMenu?.({ x: box.left + box.width / 2, y: box.top + box.height / 2 });
+  };
+
   const onKeyDown = (e: React.KeyboardEvent<SVGGElement>) => {
+    if (onMenu && (e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey))) {
+      e.preventDefault();
+      menuAtSelf(e.currentTarget);
+      return;
+    }
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       (onActivate ?? onSelect)();
@@ -70,8 +86,16 @@ export default function SoreMarker({
       tabIndex={0}
       aria-label={label}
       aria-pressed={selected}
+      aria-haspopup={onMenu ? 'menu' : undefined}
       onPointerDown={onPointerDown}
       onKeyDown={onKeyDown}
+      onContextMenu={(e) => {
+        if (!onMenu) return;
+        e.preventDefault();
+        // A long press on touch opens the menu itself; this is the mouse's.
+        if ((e.nativeEvent as PointerEvent).pointerType === 'touch') return;
+        onMenu({ x: e.clientX, y: e.clientY });
+      }}
       onFocus={onSelect}
       className="outline-none"
       style={{ cursor: draggable ? 'move' : 'pointer' }}

@@ -3,7 +3,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 
-import { KANKO } from './moods';
+import { KANKO, LIGHT_ONLY_MOODS } from './moods';
 
 const publicDir = path.resolve(__dirname, '../../public');
 
@@ -12,6 +12,7 @@ describe('KANKO', () => {
     expect(Object.keys(KANKO).sort()).toEqual([
       'clipboard',
       'curious',
+      'done',
       'envelope',
       'gentle',
       'hello',
@@ -20,6 +21,9 @@ describe('KANKO', () => {
       'medal',
       'neutral',
       'offline',
+      'pain-calm',
+      'pain-ouch',
+      'pain-uneasy',
       'phone',
       'point',
       'proud',
@@ -38,7 +42,21 @@ describe('KANKO', () => {
   const PAGE = [0x0f, 0x10, 0x33];
   const CARD = [0x19, 0x1a, 0x48];
 
-  it.each(Object.entries(KANKO))(
+  it.each(LIGHT_ONLY_MOODS)(
+    '%s has transparent art for dark mode until a dark master exists',
+    async (mood) => {
+      const file = path.join(publicDir, KANKO[mood].darkSrc);
+      expect(existsSync(file)).toBe(true);
+      const { hasAlpha } = await sharp(readFileSync(file)).metadata();
+      expect(hasAlpha).toBe(true);
+    }
+  );
+
+  it.each(
+    Object.entries(KANKO).filter(
+      ([mood]) => !(LIGHT_ONLY_MOODS as readonly string[]).includes(mood)
+    )
+  )(
     '%s dark art is light and sits on its dark ground',
     async (mood, k) => {
       const file = path.join(publicDir, k.darkSrc);

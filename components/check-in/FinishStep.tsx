@@ -31,7 +31,7 @@ export default function FinishStep({
       <div className="text-center">
         <StepHeading>All logged</StepHeading>
       </div>
-      <StreakCard sores={sores} logs={logs} now={now} celebrate="proud" />
+      <StreakCard sores={sores} logs={logs} now={now} celebrate="done" />
       {logged.length > 0 && (
         <ul className="grid gap-1.5" aria-label="Sores logged today">
           {logged.map((s) => (

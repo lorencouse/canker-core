@@ -45,13 +45,22 @@ const isCancel = (error: unknown) =>
  * earlier one. Null when the person backs out. The returned uri carries a
  * version so the webview does not show a cached copy of a replaced photo.
  */
-export async function takePhoto(readingId: string): Promise<string | null> {
+export async function takePhoto(
+  readingId: string,
+  /** Chosen by the caller's own action sheet; the plugin's prompt otherwise. */
+  from: 'camera' | 'library' | 'prompt' = 'prompt'
+): Promise<string | null> {
   if (!photosSupported()) return null;
 
   let base64: string | undefined;
   try {
     const photo = await Camera.getPhoto({
-      source: CameraSource.Prompt,
+      source:
+        from === 'camera'
+          ? CameraSource.Camera
+          : from === 'library'
+            ? CameraSource.Photos
+            : CameraSource.Prompt,
       resultType: CameraResultType.Base64,
       quality: 80,
       width: 1600,

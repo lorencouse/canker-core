@@ -8,6 +8,11 @@ import { cn } from '@/utils/cn';
 /**
  * The camera controls that float over the map.
  *
+ * On touch, hands pinch and double-tap, so Zoom in and Zoom out leave the
+ * drawing; they stay in the page for a keyboard or a screen reader and show
+ * while focused (the map also takes + , - and 0). Reset stays visible once
+ * zoomed, the one way back that needs no gesture.
+ *
  * Only zoom lives here. Everything about *editing* a sore moved out to
  * SoreActionBar, because on a phone those actions have to be a real row of
  * buttons under a thumb, not 8mm pills sitting on top of the drawing.
@@ -29,10 +34,18 @@ export default function MapControls({
 }) {
   return (
     <div className="absolute right-2 top-2 flex flex-col gap-1.5">
-      <ZoomButton onClick={onZoomIn} label="Zoom in">
+      <ZoomButton
+        onClick={onZoomIn}
+        label="Zoom in"
+        className="coarse:sr-only coarse:focus-visible:not-sr-only"
+      >
         <Plus />
       </ZoomButton>
-      <ZoomButton onClick={onZoomOut} label="Zoom out">
+      <ZoomButton
+        onClick={onZoomOut}
+        label="Zoom out"
+        className="coarse:sr-only coarse:focus-visible:not-sr-only"
+      >
         <Minus />
       </ZoomButton>
       <ZoomButton
