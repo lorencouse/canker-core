@@ -15,7 +15,7 @@ const buttonVariants = cva(
    * label wrapped in a <span> ellipsises rather than spilling out. A button
    * two lines tall reads as a paragraph, not a control.
    */
-  'inline-flex max-w-full items-center justify-center gap-2 whitespace-nowrap [&>span]:min-w-0 [&>span]:truncate rounded-2xl font-sans text-sm font-extrabold ring-offset-background transition-[transform,box-shadow,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex max-w-full items-center justify-center gap-2 whitespace-nowrap [&>span]:min-w-0 [&>span]:truncate rounded-2xl font-sans text-sm font-extrabold ring-offset-background press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {

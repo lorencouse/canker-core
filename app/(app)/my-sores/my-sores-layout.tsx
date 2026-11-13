@@ -2,6 +2,7 @@
 
 import MouthMap from '@/components/mouth-map/MouthMap';
 import LargeTitle from '@/components/shell/LargeTitle';
+import PushScreen from '@/components/shell/PushScreen';
 import InfoButton from '@/components/ui/info-button';
 import {
   EditingBar,
@@ -31,17 +32,21 @@ const MySoresLayout = ({
   user,
   soresData,
   initialSelectedId = null,
-  startInAddMode = false
+  startInAddMode = false,
+  startLogging = false
 }: {
   user: User;
   soresData: Sore[];
   initialSelectedId?: string | null;
   startInAddMode?: boolean;
+  /** Open the selected sore's card on today's reading. */
+  startLogging?: boolean;
 }) => (
   <SoreProvider
     initialSores={soresData}
     initialSelectedId={initialSelectedId}
     initialMode={startInAddMode ? 'add' : 'view'}
+    initialLog={startLogging}
   >
     <MySoresScreen user={user} />
   </SoreProvider>
@@ -91,7 +96,16 @@ function MySoresScreen({ user }: { user: User }) {
       </div>
 
       <div className="mt-5 lg:mt-6">
-        {selectedSore ? <SoreDetail /> : <OpenSoresList />}
+        {/* The detail pushes over the list and pops back (PushScreen). */}
+        {selectedSore ? (
+          <PushScreen key="detail">
+            <SoreDetail />
+          </PushScreen>
+        ) : (
+          <PushScreen key="list">
+            <OpenSoresList />
+          </PushScreen>
+        )}
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import PushScreen from '@/components/shell/PushScreen';
 import Kanko from '@/components/kanko/Kanko';
 import LargeTitle from '@/components/shell/LargeTitle';
 import InfoButton from '@/components/ui/info-button';
@@ -7,7 +8,7 @@ import { ReminderForm } from './reminder-form';
 
 export default function SettingsNotificationsPage() {
   return (
-    <>
+    <PushScreen>
       <BackToSettings />
       <div className="mb-4 flex items-center gap-3">
         <LargeTitle
@@ -27,6 +28,6 @@ export default function SettingsNotificationsPage() {
         <Kanko mood="sleepy" size={72} className="size-[72px] shrink-0" />
       </div>
       <ReminderForm />
-    </>
+    </PushScreen>
   );
 }

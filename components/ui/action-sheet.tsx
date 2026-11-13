@@ -72,7 +72,7 @@ export function useActionSheet() {
                 answer(i);
               }}
               className={cn(
-                'focus-ring flex h-14 w-full items-center justify-center whitespace-nowrap px-4 text-[17px] font-semibold transition-colors active:bg-accent',
+                'focus-ring flex h-14 w-full items-center justify-center whitespace-nowrap px-4 text-[17px] font-semibold press [--press-scale:0.98] active:bg-accent',
                 i > 0 && 'border-t border-border',
                 o.style === 'destructive' ? 'text-destructive' : 'text-primary'
               )}
@@ -85,7 +85,7 @@ export function useActionSheet() {
           type="button"
           data-autofocus=""
           onClick={() => answer(null)}
-          className="focus-ring flex h-14 w-full items-center justify-center rounded-cell bg-muted text-[17px] font-bold text-foreground transition-colors active:bg-accent"
+          className="focus-ring flex h-14 w-full items-center justify-center rounded-cell bg-muted text-[17px] font-bold text-foreground press active:bg-accent"
         >
           Cancel
         </button>

@@ -106,7 +106,9 @@ export default function MouthMap({
     commitSore,
     placedSore: placed,
     quickOpen,
-    setQuickOpen
+    setQuickOpen,
+    quickLog,
+    setQuickLog
   } = useSoreContext();
   const healedCount = sores.filter((s) => s.healed_at).length;
   const [view, setView] = useState<MouthView>(
@@ -118,8 +120,6 @@ export default function MouthMap({
     sore: Sore;
     at: { x: number; y: number };
   } | null>(null);
-  // Opens the sore's sheet straight on its reading, from the menu's Log.
-  const [quickLog, setQuickLog] = useState(false);
   const mapActions = useMapActions();
   const confirm = useActionSheet();
   const lastTap = useRef<{ t: number; x: number; y: number } | null>(null);
@@ -430,7 +430,7 @@ export default function MouthMap({
               }}
               className={cn(
                 // 44px tall on touch so a mis-aimed thumb still lands.
-                'flex h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full text-[15px] transition-colors lg:h-10',
+                'flex h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full text-[15px] press lg:h-10',
                 view === v
                   ? 'bg-primary font-bold text-primary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'

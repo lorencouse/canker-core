@@ -33,6 +33,13 @@ describe('buttonVariants', () => {
           )
         ).toBe(false);
       });
+
+      it(`${variant}/${size} answers a press, not only a hover`, () => {
+        // .press in styles/main.css: scale and tint under the finger.
+        expect(buttonVariants({ variant, size }).split(/\s+/)).toContain(
+          'press'
+        );
+      });
     }
   }
 

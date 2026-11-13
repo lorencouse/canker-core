@@ -57,6 +57,9 @@ interface SoreContextProps {
    */
   quickOpen: boolean;
   setQuickOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  /** Whether that card opens straight on today's reading (a Log action). */
+  quickLog: boolean;
+  setQuickLog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface SoreProviderProps {
@@ -69,6 +72,8 @@ interface SoreProviderProps {
    * rather than "look at the map".
    */
   initialMode?: Mode;
+  /** Open the selected sore's card on today's reading (Today's swipe to Log). */
+  initialLog?: boolean;
 }
 
 const SoreContext = createContext<SoreContextProps | undefined>(undefined);
@@ -77,7 +82,8 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
   children,
   initialSores,
   initialSelectedId = null,
-  initialMode = 'view'
+  initialMode = 'view',
+  initialLog = false
 }) => {
   const initial = initialSores.find((s) => s.id === initialSelectedId) ?? null;
   const [selectedSore, setSelectedSore] = useState<Sore | null>(initial);
@@ -94,7 +100,9 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
     initialMode === 'view' ? null : initialSores
   );
 
-  const [quickOpen, setQuickOpen] = useState(false);
+  const logNow = initialLog && initialMode === 'view' && !!initial && !initial.healed_at;
+  const [quickOpen, setQuickOpen] = useState(logNow);
+  const [quickLog, setQuickLog] = useState(logNow);
 
   const visibleSores = useMemo(
     () => (showHealed ? sores : sores.filter((s) => !s.healed_at)),
@@ -136,7 +144,9 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
       placedSore,
       changedSores,
       quickOpen,
-      setQuickOpen
+      setQuickOpen,
+      quickLog,
+      setQuickLog
     }),
     [
       selectedSore,
@@ -148,7 +158,8 @@ export const SoreProvider: React.FC<SoreProviderProps> = ({
       commitSore,
       placedSore,
       changedSores,
-      quickOpen
+      quickOpen,
+      quickLog
     ]
   );
 

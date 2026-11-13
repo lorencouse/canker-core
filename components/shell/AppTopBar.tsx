@@ -34,6 +34,8 @@ export default function AppTopBar() {
   return (
     <header
       data-app-bar
+      // Held still while a pushed screen slides under it (styles/main.css).
+      style={{ viewTransitionName: 'app-bar' }}
       className={cn(
         'fixed inset-x-0 top-0 z-40',
         // The edge fades in with the title (`.bar-edge`, LargeTitle.tsx).
@@ -71,7 +73,7 @@ export default function AppTopBar() {
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  'press rounded-md px-3 py-2 text-sm font-medium',
                   active
                     ? 'bg-secondary font-semibold text-foreground'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'

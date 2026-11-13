@@ -1,20 +1,35 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  addTransitionType,
+  startTransition,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode
+} from 'react';
+import { ChevronLeft } from 'lucide-react';
 
 import { useSoreContext } from '@/context/SoreContext';
 import { StarMark } from '@/components/graphics/Sparkles';
-import SoreActions, { EditingBar } from '@/components/mouth-map/SoreActionBar';
+import SoreActions, {
+  EditingBar,
+  useMapActions
+} from '@/components/mouth-map/SoreActionBar';
 import SoreSliders from '@/components/mouth-map/SoreSliders';
 import CourseBars from '@/components/sore/CourseBars';
 import LongSoreNote from '@/components/sore/LongSoreNote';
 import Measure from '@/components/sore/Measure';
 import SoreRow from '@/components/sore/SoreRow';
+import SwipeRow from '@/components/sore/SwipeRow';
 import SoreThumb from '@/components/sore/SoreThumb';
+import { POP, PUSH } from '@/components/shell/PushScreen';
 import type { Sore } from '@/types';
 import { courseOf, verdictOf } from '@/utils/course';
 import { shortDate } from '@/utils/dates';
+import { useEdgeSwipeBack } from '@/utils/hooks/useEdgeSwipeBack';
 import { useMounted } from '@/utils/hooks/useMounted';
+import { tap } from '@/utils/native';
 import { isLongRunning, LONG_SORE_DAYS } from '@/utils/insights';
 import { NEARBY_MM, nearbySores } from '@/utils/mouth-map/nearby';
 import {
@@ -121,6 +136,44 @@ function SorePhotos({ sore, now }: { sore: Sore; now: Date }) {
   );
 }
 
+/**
+ * Change which sore the detail column shows as a push or a pop, so the
+ * detail slides over the list and back (PushScreen). Only the list's rows
+ * and the detail's back use it; a tap on the map swaps plainly, since the
+ * sheet it opens is the motion there.
+ */
+function useNavigateSore() {
+  const { setSelectedSore, setShowHealed } = useSoreContext();
+  return (next: Sore | null, opts: { showHealed?: boolean } = {}) =>
+    startTransition(() => {
+      addTransitionType(next ? PUSH : POP);
+      if (opts.showHealed) setShowHealed(true);
+      setSelectedSore(next);
+    });
+}
+
+/** The detail's way back to the list, and the iOS app's edge swipe. */
+function BackToSores() {
+  const { mode } = useSoreContext();
+  const navigate = useNavigateSore();
+  const view = mode === 'view';
+  useEdgeSwipeBack(() => navigate(null), view);
+  if (!view) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        tap();
+        navigate(null);
+      }}
+      className="focus-ring press -ml-2 -mt-1 mb-1 inline-flex h-11 items-center gap-0.5 rounded-full pl-1 pr-3 text-base font-semibold text-primary"
+    >
+      <ChevronLeft aria-hidden="true" className="size-6" />
+      All sores
+    </button>
+  );
+}
+
 function metaLine(sore: Sore, now: Date) {
   if (sore.healed_at)
     return `Healed ${shortDate(new Date(sore.healed_at), now)}`;
@@ -157,6 +210,7 @@ export function SoreDetail() {
       aria-labelledby="sore-detail"
       className="surface-worksheet p-4 sm:p-5"
     >
+      <BackToSores />
       <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h2
           id="sore-detail"
@@ -289,7 +343,10 @@ export function SoreDetail() {
  * desktop screen spent on nothing.
  */
 export function OpenSoresList() {
-  const { sores, setSelectedSore, setShowHealed, mode } = useSoreContext();
+  const { sores, mode, setSelectedSore, setQuickOpen, setQuickLog } =
+    useSoreContext();
+  const navigate = useNavigateSore();
+  const mapActions = useMapActions();
   const now = useMemo(() => new Date(), []);
   const open = sores.filter((s) => !s.healed_at);
   const healed = sores
@@ -319,20 +376,32 @@ export function OpenSoresList() {
               key={sore.id}
               className="border-t border-border first:border-t-0"
             >
-              <SoreRow
-                sore={sore}
-                now={now}
-                onClick={() => setSelectedSore(sore)}
-                className="grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 gap-y-2 py-3"
-                below={
-                  <CourseBars
-                    sore={sore}
-                    height={36}
-                    now={now}
-                    className="col-start-2"
-                  />
+              <SwipeRow
+                onHealed={() =>
+                  mapActions.setHealed(new Date().toISOString(), sore)
                 }
-              />
+                onLog={() => {
+                  // The sore's own card, open on today's reading.
+                  setSelectedSore(sore);
+                  setQuickLog(true);
+                  setQuickOpen(true);
+                }}
+              >
+                <SoreRow
+                  sore={sore}
+                  now={now}
+                  onClick={() => navigate(sore)}
+                  className="grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 gap-y-2 py-3"
+                  below={
+                    <CourseBars
+                      sore={sore}
+                      height={36}
+                      now={now}
+                      className="col-start-2"
+                    />
+                  }
+                />
+              </SwipeRow>
             </li>
           ))}
         </ul>
@@ -351,12 +420,11 @@ export function OpenSoresList() {
               >
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={() =>
                     // A healed sore is hidden on the map until healed ones show.
-                    setShowHealed(true);
-                    setSelectedSore(sore);
-                  }}
-                  className="tabular grid min-h-12 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-left hover:bg-muted"
+                    navigate(sore, { showHealed: true })
+                  }
+                  className="tabular grid min-h-12 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-left press [--press-scale:0.98] hover:bg-muted"
                 >
                   {/* A star is a healed sore, as it is a logged day on Today. */}
                   <StarMark size={16} className="text-win" />

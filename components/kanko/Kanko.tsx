@@ -12,14 +12,22 @@ export default function Kanko({
   mood,
   size,
   className,
-  priority
+  priority,
+  transparent = false
 }: {
   mood: KankoMood;
   size: number;
   className?: string;
   priority?: boolean;
+  /**
+   * The cut-out art in both themes. For a dark surface the dark art's
+   * painted ground does not match exactly once the browser colour-manages
+   * the image, which shows as a faint square around him.
+   */
+  transparent?: boolean;
 }) {
-  const { src, darkSrc } = KANKO[mood];
+  const { src, darkSrc: paintedSrc } = KANKO[mood];
+  const darkSrc = transparent ? src : paintedSrc;
   // Light mode uses transparent art; dark mode uses art drawn natively on the
   // dark ground, so there is no cut-out edge or clipped shadow to show.
   const shared = {

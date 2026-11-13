@@ -23,6 +23,8 @@ import {
 import Kanko from '@/components/kanko/Kanko';
 import LargeTitle from '@/components/shell/LargeTitle';
 import OpenSoreRow from '@/components/today/OpenSoreRow';
+import SwipeRow from '@/components/sore/SwipeRow';
+import { useHealSore } from '@/components/sore/useHealSore';
 import ReminderOffer from '@/components/today/ReminderOffer';
 import StreakCard from '@/components/today/StreakCard';
 import WeekTiles from '@/components/today/WeekTiles';
@@ -50,7 +52,7 @@ const DONE_SPARKLES: Sparkle[] = [
  * visit, which put a full-screen takeover in front of the day.
  */
 export default function TodayScreen({
-  sores,
+  sores: serverSores,
   dayLogs,
   checkIns,
   openCheckIn,
@@ -66,6 +68,18 @@ export default function TodayScreen({
   expectedMood: Mood;
 }) {
   const router = useRouter();
+  /*
+   * Sores healed or reopened here (a swipe, its Undo), ahead of the
+   * server's copy, which catches up on the next refresh.
+   */
+  const [edited, setEdited] = useState<Record<string, Sore>>({});
+  const sores = useMemo(
+    () => serverSores.map((s) => edited[s.id] ?? s),
+    [serverSores, edited]
+  );
+  const heal = useHealSore((next) =>
+    setEdited((prev) => ({ ...prev, [next.id]: next }))
+  );
   /*
    * Which day it is belongs to the device, not the server: a server on UTC
    * is already on tomorrow during a US evening. So the clock is read on the
@@ -224,7 +238,17 @@ export default function TodayScreen({
                   key={sore.id}
                   className="border-t border-border first:border-t-0"
                 >
-                  <OpenSoreRow sore={sore} now={now} />
+                  <SwipeRow
+                    className="rounded-cell"
+                    onHealed={() => heal.setHealed(sore, new Date().toISOString())}
+                    onLog={() =>
+                      router.push(
+                        `/my-sores?sore=${encodeURIComponent(sore.id)}&log`
+                      )
+                    }
+                  >
+                    <OpenSoreRow sore={sore} now={now} />
+                  </SwipeRow>
                 </li>
               ))}
             </ul>

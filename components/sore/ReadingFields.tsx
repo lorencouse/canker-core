@@ -105,7 +105,7 @@ export function WidthField({
               }}
               className={cn(
                 // Dot over figure; 56px tall so the 8mm dot has room.
-                'flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-cell border-2 bg-card transition-colors',
+                'flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-cell border-2 bg-card press',
                 'focus-ring',
                 picked
                   ? 'border-primary bg-accent text-foreground'
@@ -277,7 +277,7 @@ export function QuickWidthField({
                 set(mm);
               }}
               className={cn(
-                'flex h-12 min-w-0 flex-col items-center justify-center gap-0.5 rounded-cell border-2 transition-colors',
+                'flex h-12 min-w-0 flex-col items-center justify-center gap-0.5 rounded-cell border-2 press',
                 'focus-ring',
                 picked
                   ? 'border-primary bg-primary text-primary-foreground'

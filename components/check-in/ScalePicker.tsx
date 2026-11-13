@@ -45,7 +45,7 @@ export default function ScalePicker({
                 onChange(on ? null : n);
               }}
               className={cn(
-                'tabular h-12 min-w-0 rounded-cell border-2 bg-card font-display text-lg font-semibold transition-colors',
+                'tabular h-12 min-w-0 rounded-cell border-2 bg-card font-display text-lg font-semibold press',
                 'focus-ring',
                 'disabled:opacity-50',
                 on

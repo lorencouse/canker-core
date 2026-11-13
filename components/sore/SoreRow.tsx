@@ -33,7 +33,7 @@ export default function SoreRow({
       type="button"
       onClick={onClick}
       className={cn(
-        'grid w-full items-center text-left hover:bg-muted',
+        'press grid w-full items-center text-left [--press-scale:0.98] hover:bg-muted',
         className
       )}
     >

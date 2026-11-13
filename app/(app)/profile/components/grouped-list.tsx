@@ -2,9 +2,12 @@
 
 import type { ComponentType, ReactNode } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { POP, PUSH } from '@/components/shell/PushScreen';
 import { cn } from '@/utils/cn';
+import { useEdgeSwipeBack } from '@/utils/hooks/useEdgeSwipeBack';
 import { tap } from '@/utils/native';
 
 /**
@@ -113,7 +116,7 @@ function RowInner({ lead, label, sub, value, chevron, tone }: RowProps) {
 
 const rowClass = (className?: string) =>
   cn(
-    'focus-ring flex w-full items-center gap-3 pl-4 text-left transition-[transform,background-color] duration-150 hover:bg-muted/60 active:scale-[0.99] active:bg-muted',
+    'focus-ring flex w-full items-center gap-3 pl-4 text-left press [--press-scale:0.98] hover:bg-muted/60',
     className
   );
 
@@ -123,6 +126,7 @@ export function LinkRow({ href, ...props }: RowProps & { href: string }) {
       <Link
         href={href}
         onClick={() => tap()}
+        transitionTypes={[PUSH]}
         className={rowClass(props.className)}
       >
         <RowInner chevron {...props} />
@@ -153,13 +157,19 @@ export function ButtonRow({
   );
 }
 
-/** A sub-screen's way back to the list, where an app's nav bar puts it. */
+/**
+ * A sub-screen's way back to the list, where an app's nav bar puts it. In
+ * the iOS app a swipe in from the left edge does the same.
+ */
 export function BackToSettings() {
+  const router = useRouter();
+  useEdgeSwipeBack(() => router.push('/profile', { transitionTypes: [POP] }));
   return (
     <Link
       href="/profile"
       onClick={() => tap()}
-      className="focus-ring -ml-2 inline-flex h-11 items-center gap-0.5 rounded-full pl-1 pr-3 text-base font-semibold text-primary transition-transform active:scale-[0.97]"
+      transitionTypes={[POP]}
+      className="focus-ring -ml-2 inline-flex h-11 items-center gap-0.5 rounded-full pl-1 pr-3 text-base font-semibold text-primary press"
     >
       <ChevronLeft aria-hidden="true" className="size-6" />
       Settings

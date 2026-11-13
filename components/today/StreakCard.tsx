@@ -119,11 +119,13 @@ export default function StreakCard({
         {/* Under 360px the words go under the ring, so they never cut off. */}
         <div className="flex min-w-0 flex-col items-start gap-1.5 min-[360px]:flex-row min-[360px]:items-center min-[360px]:gap-3">
           <StreakRing streak={today ? streak : null} />
+          {/* Two lines each before an ellipsis: in the check-in's finish
+              sheet "No streak yet" has about 110px beside the ring. */}
           <div className={cn('min-w-0', !today && 'invisible')}>
-            <p className="truncate font-display text-subhead font-bold leading-tight">
+            <p className="line-clamp-2 text-balance font-display text-subhead font-bold leading-tight">
               {label}
             </p>
-            <p className="tabular truncate text-sm text-muted-foreground">
+            <p className="tabular line-clamp-2 text-balance text-sm text-muted-foreground">
               {sub}
             </p>
           </div>

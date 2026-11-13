@@ -312,6 +312,37 @@
   }
 
   /*
+   * Pressed: every button, chip, row and tab sinks a little and darkens
+   * under the finger, so a tap answers before anything loads. The scale is
+   * the separate `scale` property, so it composes with a control's own
+   * transform (the keys' edge drop, a swiped row's slide) instead of
+   * replacing it, and it never moves the layout. The tint is a layer over
+   * whatever the control is filled with, in the ink's own colour, so it
+   * reads on indigo, on a card and on nothing, in either theme. Rows and
+   * other wide things set a gentler --press-scale. Reduced motion keeps the
+   * tint and drops the scale.
+   */
+  .press {
+    transition-property: scale, transform, background-color, box-shadow,
+      border-color, color;
+    transition-duration: var(--press-out);
+    transition-timing-function: var(--ease-sheet);
+  }
+  .press:active:not(:disabled):not([aria-disabled='true']) {
+    scale: var(--press-scale);
+    background-image: linear-gradient(
+      hsl(var(--foreground) / 0.08),
+      hsl(var(--foreground) / 0.08)
+    );
+    transition-duration: var(--press-in);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .press:active:not(:disabled) {
+      scale: none;
+    }
+  }
+
+  /*
    * Liquid Glass, as the web can draw it: the chrome that floats over the
    * page (the tab bar, the rail, a floating Save) is a translucent layer the
    * content scrolls under, blurred so the labels keep their contrast. Apple's
@@ -388,6 +419,8 @@
    */
   .tab-bar {
     @apply glass fixed z-40 rounded-full;
+    /* Held still while a pushed screen slides (::view-transition, below). */
+    view-transition-name: tab-bar;
     left: var(--tab-side-l);
     right: var(--tab-side-r);
     bottom: var(--tab-bottom);
@@ -490,6 +523,17 @@
      */
     --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
     --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+
+    /*
+     * The pressed state every control shares (.press). Down is quick and
+     * the release a little slower, as a key springs back; the push slides
+     * (::view-transition, below) run at the sheet's curve.
+     */
+    --press-scale: 0.97;
+    --press-in: 90ms;
+    --press-out: 180ms;
+    --push-ms: 340ms;
+    --push-offset: 28%;
 
     /*
      * Settings' icon tiles, the system apps' coloured squares. Identity, not
@@ -849,5 +893,88 @@
   :root[data-fold='columns'] .fold-dialog {
     left: calc(var(--fold-start) / 2);
     width: min(100%, calc(var(--fold-start) - 2 * var(--fold-pad)));
+  }
+}
+
+/* ==========================================================================
+ * Push transitions (components/shell/PushScreen.tsx).
+ *
+ * Deeper comes in from the right over the screen it leaves, which drifts a
+ * little left and dims, the way a phone's navigation stack moves; back is
+ * the same played the other way. The chrome holds still while the content
+ * moves, so the eye keeps its place. Reduced motion keeps a short crossfade
+ * and drops the travel.
+ * ==========================================================================
+ */
+::view-transition {
+  /* A tap during the slide reaches the page instead of the overlay. */
+  pointer-events: none;
+}
+::view-transition-group(app-bar),
+::view-transition-group(tab-bar) {
+  animation: none;
+  z-index: 10;
+}
+::view-transition-old(app-bar),
+::view-transition-old(tab-bar) {
+  display: none;
+}
+::view-transition-new(app-bar),
+::view-transition-new(tab-bar) {
+  animation: none;
+}
+::view-transition-group(.pop-out) {
+  /* Going back, the leaving screen is the one on top. */
+  z-index: 2;
+}
+::view-transition-new(.push-in) {
+  animation: var(--push-ms) var(--ease-sheet) both push-from-edge;
+}
+::view-transition-old(.push-out) {
+  animation: var(--push-ms) var(--ease-sheet) both push-under;
+}
+::view-transition-old(.pop-out) {
+  animation: var(--push-ms) var(--ease-sheet) both pop-to-edge;
+}
+::view-transition-new(.pop-in) {
+  animation: var(--push-ms) var(--ease-sheet) both pop-from-under;
+}
+/* Four keyframes rather than two played in reverse: a reversed animation
+   also reverses its easing, and the pop would start slow. */
+@keyframes push-from-edge {
+  from {
+    translate: 100% 0;
+  }
+}
+@keyframes push-under {
+  to {
+    translate: calc(var(--push-offset) * -1) 0;
+    opacity: 0;
+  }
+}
+@keyframes pop-to-edge {
+  to {
+    translate: 100% 0;
+  }
+}
+@keyframes pop-from-under {
+  from {
+    translate: calc(var(--push-offset) * -1) 0;
+    opacity: 0;
+  }
+}
+@keyframes push-fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(.push-in),
+  ::view-transition-new(.pop-in) {
+    animation: 160ms ease-out both push-fade;
+  }
+  ::view-transition-old(.push-out),
+  ::view-transition-old(.pop-out) {
+    animation: 160ms ease-out both push-fade reverse;
   }
 }
