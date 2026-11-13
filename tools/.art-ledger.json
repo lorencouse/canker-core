@@ -160,8 +160,36 @@
       "model": "gemini-3.1-flash-image",
       "size": "1K",
       "batch": true
+    },
+    {
+      "at": "2026-11-13T01:16:59.650Z",
+      "name": "done__vinyl__86b0759f7b",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-11-13T01:16:59.660Z",
+      "name": "pain-calm__vinyl__9d1a861ca2",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-11-13T01:16:59.669Z",
+      "name": "pain-uneasy__vinyl__6eb3797ace",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
+    },
+    {
+      "at": "2026-11-13T01:16:59.678Z",
+      "name": "pain-ouch__vinyl__0a7e6b0d78",
+      "model": "gemini-3.1-flash-image",
+      "size": "1K",
+      "batch": true
     }
   ],
-  "images": 23,
-  "usd": 0.7704999999999996
+  "images": 27,
+  "usd": 0.9044999999999995
 }
