@@ -1,13 +1,11 @@
 'use client';
 
-import { useId } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
-import { MapDefs, ViewArtwork } from '@/components/mouth-map/artwork';
+import SoreThumb from '@/components/sore/SoreThumb';
 import type { Sore } from '@/types';
 import { LONG_SORE_DAYS } from '@/utils/insights';
-import { fromPercent, viewBoxAttr } from '@/utils/mouth-map/geometry';
 import { currentPain, currentSize, dayNumberOf } from '@/utils/readings';
 import { sevFill } from '@/utils/severity';
 
@@ -54,41 +52,6 @@ export default function OpenSoreRow({
         className="size-5 text-muted-foreground"
       />
     </Link>
-  );
-}
-
-/**
- * The sore on the mouth map's own drawing, shrunk: the same artwork the Map
- * tab draws (never a simplified mouth), with the sore's dot in its pain
- * colour, enlarged so it still reads at this size.
- */
-function SoreThumb({ sore }: { sore: Sore }) {
-  const p = `thumb${useId().replace(/:/g, '')}`;
-  const placed = sore.x !== null && sore.y !== null;
-  const dot = placed ? fromPercent({ x: sore.x!, y: sore.y! }) : null;
-  return (
-    <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-cell bg-muted">
-      <svg
-        viewBox={viewBoxAttr}
-        width={48}
-        height={48}
-        aria-hidden="true"
-        focusable="false"
-      >
-        <MapDefs p={p} />
-        <ViewArtwork view={sore.view} p={p} />
-        {dot && (
-          <circle
-            cx={dot.x}
-            cy={dot.y}
-            r={40}
-            fill={sevFill(currentPain(sore))}
-            stroke="white"
-            strokeWidth={14}
-          />
-        )}
-      </svg>
-    </span>
   );
 }
 

@@ -6,6 +6,8 @@ import {
   isLongRunning,
   medianDaysToHeal,
   mostCommonZone,
+  soreDays,
+  strongestPattern,
   treatmentDays,
   triggersBeforeSores,
   worstPainSince
@@ -132,5 +134,82 @@ describe('treatmentDays', () => {
       { label: 'Salt-water rinse', count: 2 },
       { label: 'Numbing gel', count: 1 }
     ]);
+  });
+});
+
+describe('strongestPattern', () => {
+  // Sores first marked at local noon on the given days.
+  const at = (day: string) => sore({ created_at: new Date(`${day}T12:00:00`).toISOString() });
+
+  it('names the trigger logged before the most sores', () => {
+    const sores = [at('2026-09-03'), at('2026-09-13'), at('2026-09-23')];
+    const logs = [
+      log('2026-09-02', ['Stress', 'Coffee']),
+      log('2026-09-12', ['Stress']),
+      log('2026-09-22', ['Spicy food'])
+    ];
+    expect(strongestPattern(sores, logs)).toEqual({
+      kind: 'pattern',
+      trigger: 'Stress',
+      count: 2,
+      of: 3
+    });
+  });
+
+  it('says so when nothing was logged before any sore', () => {
+    expect(strongestPattern([at('2026-09-03')], [log('2026-08-01', ['Stress'])])).toEqual({
+      kind: 'none',
+      reason: 'no-logs'
+    });
+  });
+
+  it('does not call a single sore a pattern', () => {
+    const sores = [at('2026-09-03'), at('2026-09-13')];
+    const logs = [log('2026-09-02', ['Stress']), log('2026-09-12', ['Coffee'])];
+    expect(strongestPattern(sores, logs)).toEqual({ kind: 'none', reason: 'no-repeat' });
+  });
+
+  it('needs the trigger before at least half the sores with logs', () => {
+    const days = ['01', '05', '09', '13', '17'].map((d) => `2026-09-${d}`);
+    const sores = days.map(at);
+    const clean = (day: string): DayLog => ({
+      ...emptyDayLog(day),
+      food_answered: true,
+      health_answered: true
+    });
+    // Stress before 2 of 5 sores with logs: a repeat, but not half.
+    const logs = days.map((d, i) => (i < 2 ? log(d, ['Stress']) : clean(d)));
+    expect(strongestPattern(sores, logs)).toEqual({ kind: 'none', reason: 'no-repeat' });
+    // Before 2 of 4, it is.
+    expect(strongestPattern(sores.slice(0, 4), logs)).toMatchObject({ trigger: 'Stress', of: 4 });
+  });
+
+  it('never counts a trigger for more sores than have logs', () => {
+    // A check-in that only set stress: not "answered", but it carries a trigger.
+    const stressed = (day: string): DayLog => ({ ...emptyDayLog(day), stress: 5 });
+    const sores = [at('2026-09-03'), at('2026-09-13')];
+    const finding = strongestPattern(sores, [stressed('2026-09-03'), stressed('2026-09-13')]);
+    expect(finding).toEqual({ kind: 'pattern', trigger: 'Stress', count: 2, of: 2 });
+  });
+});
+
+describe('soreDays', () => {
+  it('keeps the largest sore and the worst pain per day, from the cutoff on', () => {
+    const r = (id: string, day: string, size: number, pain: number) => ({
+      id,
+      recorded_at: new Date(`${day}T10:00:00`).toISOString(),
+      size,
+      pain,
+      note: null
+    });
+    const a = sore({ id: 'a', zone: 'Tongue', readings: [r('1', '2026-09-01', 2, 3), r('2', '2026-09-02', 3, 2)] });
+    const b = sore({ id: 'b', zone: 'Lip', readings: [r('3', '2026-09-02', 1, 7)] });
+    const days = soreDays([a, b], null);
+    expect(days.map((d) => [d.day, d.size, d.pain])).toEqual([
+      ['2026-09-01', 2, 3],
+      ['2026-09-02', 3, 7]
+    ]);
+    expect(days[1].sores.map((s) => s.id)).toEqual(['a', 'b']);
+    expect(soreDays([a, b], new Date('2026-09-02T00:00:00')).map((d) => d.day)).toEqual(['2026-09-02']);
   });
 });

@@ -77,9 +77,12 @@ export function triggersBeforeSores(
     for (let i = 0; i < window; i++) {
       const log = byDay.get(dayKey(addDays(start, -i)));
       if (!log) continue;
-      // A row with only sleep or treatments says nothing about triggers.
-      if (isAnswered(log)) any = true;
-      for (const t of effectiveTriggers(log)) seen.add(t);
+      const triggers = effectiveTriggers(log);
+      // A row with only treatments says nothing about triggers, but one that
+      // carries a trigger (a stressed check-in, a short night from Health)
+      // does, or a trigger could be counted for more sores than the total.
+      if (isAnswered(log) || triggers.length > 0) any = true;
+      for (const t of triggers) seen.add(t);
     }
     if (any) soresWithLogs++;
     seen.forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1));
@@ -99,3 +102,68 @@ const sortTally = (counts: Map<string, number>): Tally[] =>
   Array.from(counts, ([label, count]) => ({ label, count })).sort(
     (a, b) => b.count - a.count || a.label.localeCompare(b.label)
   );
+
+/** A trigger has to precede at least this many sores before it is a pattern. */
+export const PATTERN_MIN_SORES = 2;
+
+export type Finding =
+  | { kind: 'pattern'; trigger: string; count: number; of: number }
+  | { kind: 'none'; reason: 'no-logs' | 'no-repeat' };
+
+/**
+ * The one finding Insights leads with: the trigger logged before the most
+ * sores, if it is a repeat (two sores at least) and came before half of the
+ * sores that have logs. One sore is a coincidence, and "1 of 6" is noise
+ * dressed as a headline. A tie goes to the trigger `triggersBeforeSores`
+ * sorts first, so the card does not flip between visits.
+ */
+export function strongestPattern(sores: Sore[], logs: DayLog[], window = 3): Finding {
+  const { tally, soresWithLogs } = triggersBeforeSores(sores, logs, window);
+  if (soresWithLogs === 0) return { kind: 'none', reason: 'no-logs' };
+  const top = tally[0];
+  if (!top || top.count < PATTERN_MIN_SORES || top.count * 2 < soresWithLogs)
+    return { kind: 'none', reason: 'no-repeat' };
+  return { kind: 'pattern', trigger: top.label, count: top.count, of: soresWithLogs };
+}
+
+/** Sores that were open at any point on or after `since`. */
+export const soresActiveSince = (sores: Sore[], since: Date) =>
+  sores.filter((s) => !s.healed_at || new Date(s.healed_at) >= since);
+
+/** Median days to heal over sores that healed on or after `since`. */
+export const medianDaysToHealSince = (sores: Sore[], since: Date) =>
+  medianDaysToHeal(sores.filter((s) => s.healed_at && new Date(s.healed_at) >= since));
+
+export type SoreDay = {
+  /** Local YYYY-MM-DD. */
+  day: string;
+  /** The largest sore measured that day, in mm. */
+  size: number;
+  /** The worst pain recorded that day. */
+  pain: number;
+  /** Every sore measured that day, largest first. */
+  sores: { id: string; zone: string; size: number; pain: number }[];
+};
+
+/**
+ * One entry per local day with a reading on or after `since`, oldest
+ * first. A day's bar is its largest sore, coloured by its worst pain, and
+ * the entry keeps every sore so the readout can name them all.
+ */
+export function soreDays(sores: Sore[], since: Date | null): SoreDay[] {
+  const byDay = new Map<string, SoreDay>();
+  const from = since ? dayKey(since) : null;
+  for (const s of sores)
+    for (const r of s.readings) {
+      const day = dayKey(new Date(r.recorded_at));
+      if (from && day < from) continue;
+      const entry = byDay.get(day) ?? { day, size: 0, pain: 0, sores: [] };
+      entry.sores.push({ id: s.id, zone: s.zone, size: r.size, pain: r.pain });
+      entry.size = Math.max(entry.size, r.size);
+      entry.pain = Math.max(entry.pain, r.pain);
+      byDay.set(day, entry);
+    }
+  return Array.from(byDay.values())
+    .map((d) => ({ ...d, sores: d.sores.sort((a, b) => b.size - a.size) }))
+    .sort((a, b) => a.day.localeCompare(b.day));
+}

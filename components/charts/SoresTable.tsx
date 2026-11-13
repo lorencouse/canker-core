@@ -15,7 +15,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import CourseStrip from '@/components/sore/CourseStrip';
-import SoreSigil from '@/components/sore/SoreSigil';
+import SoreThumb from '@/components/sore/SoreThumb';
 import type { Sore } from '@/types';
 import { cn } from '@/utils/cn';
 import { shortDate } from '@/utils/dates';
@@ -110,7 +110,7 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                 onClick={() => toggle(sore.id)}
               >
                 <div className="flex items-center gap-3">
-                  <SoreSigil sore={sore} size={30} />
+                  <SoreThumb sore={sore} size={36} />
                   <div className="min-w-0 flex-1">
                     <span className="block truncate font-medium">
                       {sore.zone}
@@ -185,7 +185,7 @@ const SoresTable = ({ sores }: { sores: Sore[] }) => {
                   >
                     <TableCell>
                       <span className="flex items-center gap-2.5">
-                        <SoreSigil sore={sore} size={26} />
+                        <SoreThumb sore={sore} size={36} />
                         <span className="font-medium">{sore.zone}</span>
                       </span>
                     </TableCell>
