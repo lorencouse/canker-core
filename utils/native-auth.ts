@@ -32,9 +32,12 @@
  * the same rules. Token minting and redemption are in utils/native-handoff.ts.
  */
 
-export type NativeOAuthProvider = 'google' | 'github';
+export type NativeOAuthProvider = 'apple' | 'google' | 'github';
 
-const PROVIDERS: readonly NativeOAuthProvider[] = ['google', 'github'];
+/** Apple is here for the Android app and for an iOS app built before the
+ * native Apple sheet (utils/auth-helpers/client.ts), which run Apple's web
+ * flow in the system sign-in like the others. */
+const PROVIDERS: readonly NativeOAuthProvider[] = ['apple', 'google', 'github'];
 
 /** The https callback. iOS hands it only to an app the site's
  * apple-app-site-association names, and Android only to an app whose

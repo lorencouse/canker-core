@@ -32,7 +32,9 @@ const config: CapacitorConfig = {
     allowNavigation: [
       new URL(serverUrl).host,
       'accounts.google.com',
-      'github.com'
+      'github.com',
+      // Apple's web flow, for where the native Apple sheet cannot run.
+      'appleid.apple.com'
     ],
     androidScheme: 'https',
     // Android blocks cleartext by default, which is right for the deployed

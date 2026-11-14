@@ -182,6 +182,7 @@ runtime.
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32`. Changing it logs everyone out |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Optional, enables the GitHub button |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional, enables the Google button |
+| `APPLE_CLIENT_ID` / `APPLE_TEAM_ID` / `APPLE_KEY_ID` / `APPLE_PRIVATE_KEY` | Sign in with Apple, all four or the button stays hidden: the Services ID `com.cankercore.signin` (return URL `https://cankercore.com/api/auth/callback/apple`), team `4J28Z4QS4C`, and the Sign in with Apple key for the primary App ID `com.cankercore.app` (its `.p8` on one line, line breaks as `\n`). The client secret is signed from the key at start-up (`lib/apple.ts`). `APPLE_APP_BUNDLE_ID` only if the app's bundle id ever changes |
 | `SMTP_HOST` / `SMTP_PORT` | Defaults to `smtp.mail.me.com` / `587` |
 | `SMTP_USERNAME` / `SMTP_PASSWORD` | The mailbox that sends auth email |
 | `EMAIL_FROM` | e.g. `Canker Core <no-reply@cankercore.com>` |

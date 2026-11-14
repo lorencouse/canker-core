@@ -4,6 +4,7 @@ import { headers as nextHeaders, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { APIError } from 'better-auth/api';
 import { auth } from '@/lib/auth';
+import { revokeAppleGrants } from '@/lib/apple';
 import { query } from '@/lib/db/pool';
 import { getURL, getErrorRedirect, getStatusRedirect } from '@/utils/helpers';
 import { DEFAULT_AFTER_SIGN_IN, safeNext } from '@/utils/auth-helpers/settings';
@@ -285,6 +286,10 @@ export async function updateName(formData: FormData): Promise<string> {
 export async function deleteAccount(): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await auth.api.getSession({ headers: await nextHeaders() });
   if (!session?.user) return { ok: false, error: 'You are not signed in.' };
+
+  // Before the row goes, while the Apple refresh tokens are still on it
+  // (App Review 5.1.1(v)). Best effort: the deletion goes ahead regardless.
+  await revokeAppleGrants(session.user.id);
 
   try {
     await query('delete from "user" where id = $1', [session.user.id]);
