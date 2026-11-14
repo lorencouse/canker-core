@@ -11,10 +11,20 @@ import {
 import { DEFAULT_AFTER_SIGN_IN, safeNext } from './auth-helpers/settings';
 
 describe('parseProvider', () => {
-  it('accepts only the two configured providers', () => {
+  it('accepts only the three known providers', () => {
+    expect(parseProvider('apple')).toBe('apple');
     expect(parseProvider('google')).toBe('google');
     expect(parseProvider('github')).toBe('github');
-    for (const raw of ['apple', 'Google', ' google', '', null, undefined, 1])
+    for (const raw of [
+      'twitter',
+      'Apple',
+      'Google',
+      ' google',
+      '',
+      null,
+      undefined,
+      1
+    ])
       expect(parseProvider(raw)).toBeNull();
   });
 });

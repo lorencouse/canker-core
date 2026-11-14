@@ -3,7 +3,7 @@
 import { authClient } from '@/lib/auth-client';
 import { redirectToPath } from './server';
 import { safeNext } from './settings';
-import { hasSystemSignIn, systemSignIn } from '@/utils/native';
+import { appleSheet, hasSystemSignIn, systemSignIn } from '@/utils/native';
 import {
   NATIVE_AUTH_COOKIE_PATH,
   NATIVE_AUTH_FLOW_MAX_AGE,
@@ -15,7 +15,7 @@ import {
 } from '@/utils/native-auth';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
-export type OAuthProvider = 'github' | 'google';
+export type OAuthProvider = 'apple' | 'github' | 'google';
 
 export async function handleRequest(
   e: React.FormEvent<HTMLFormElement>,
@@ -60,6 +60,11 @@ export async function signInWithOAuth(
   const provider = String(formData.get('provider')).trim() as OAuthProvider;
   const next = safeNext(formData.get('next'));
 
+  if (provider === 'apple') {
+    const handled = await signInWithAppleSheet(next);
+    if (handled !== false) return handled;
+  }
+
   if (await hasSystemSignIn(NATIVE_AUTH_HTTPS_PATH))
     return signInWithSystemSheet(provider, next);
 
@@ -71,6 +76,62 @@ export async function signInWithOAuth(
     errorCallbackURL: '/signin'
   });
   return error ? OAUTH_START_FAILED : null;
+}
+
+/**
+ * Sign in with Apple through the iOS app's own Apple sheet: Apple's identity
+ * token goes to Better Auth's sign-in/social from this webview, so the
+ * session cookie lands here directly, with no handoff. Resolves false where
+ * there is no sheet (the web, Android, an older iOS build), for the caller
+ * to run Apple's web flow instead.
+ */
+async function signInWithAppleSheet(
+  next: string
+): Promise<string | null | false> {
+  // Better Auth checks the token's nonce against this one, so a token lifted
+  // from another sign-in cannot be replayed here.
+  const nonce = randomNonce();
+  let sheet: Awaited<ReturnType<typeof appleSheet>>;
+  try {
+    sheet = await appleSheet(nonce);
+  } catch (err) {
+    // Closing the sheet is a choice, not an error: stay put, say nothing.
+    if ((err as { code?: string })?.code === 'CANCELED') return null;
+    return nativeAuthErrorMessage('unknown');
+  }
+  if (!sheet) return false;
+
+  const name =
+    sheet.givenName || sheet.familyName
+      ? { firstName: sheet.givenName, lastName: sheet.familyName }
+      : undefined;
+  const { error } = await authClient.signIn.social({
+    provider: 'apple',
+    callbackURL: next,
+    idToken: {
+      token: sheet.idToken,
+      nonce,
+      ...(name && { user: { name } })
+    }
+  });
+  if (error) return nativeAuthErrorMessage('unknown');
+
+  // Kept so deleting the account can revoke the Apple grant (lib/apple.ts).
+  // Best effort: the person is already signed in.
+  if (sheet.authorizationCode) {
+    try {
+      await fetch('/api/native-auth/apple-grant', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ code: sheet.authorizationCode })
+      });
+    } catch {
+      // Nothing to tell the person.
+    }
+  }
+  // A full navigation, so the server components render with the new session.
+  window.location.assign(next);
+  return null;
 }
 
 const OAUTH_START_FAILED =

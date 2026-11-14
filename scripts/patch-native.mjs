@@ -56,6 +56,7 @@ import {
   patchAndroidStrings,
   patchEntitlements,
   patchEntitlementsHealthKit,
+  patchEntitlementsAppleSignIn,
   patchInfoPlistHealthUsage,
   patchInfoPlistPhotoUsage,
   patchPbxprojEntitlements,
@@ -118,7 +119,11 @@ const patchIos = () => {
   if (
     patchFile(
       entitlements,
-      compose(patchEntitlements, patchEntitlementsHealthKit)
+      compose(
+        patchEntitlements,
+        patchEntitlementsHealthKit,
+        patchEntitlementsAppleSignIn
+      )
     ) &&
     has('plutil')
   ) {

@@ -20,6 +20,7 @@ import {
   patchAndroidManifest,
   patchEntitlements,
   patchEntitlementsHealthKit,
+  patchEntitlementsAppleSignIn,
   patchInfoPlistHealthUsage,
   patchInfoPlistPhotoUsage,
   PHOTO_USAGE_STRINGS,
@@ -165,6 +166,11 @@ const cases: [string, string, (text: string) => PatchResult][] = [
   ['Info.plist (photo usage)', INFO_PLIST, patchInfoPlistPhotoUsage],
   ['Info.plist (health usage)', INFO_PLIST, patchInfoPlistHealthUsage],
   ['App.entitlements (HealthKit)', ENTITLEMENTS, patchEntitlementsHealthKit],
+  [
+    'App.entitlements (Sign in with Apple)',
+    ENTITLEMENTS,
+    patchEntitlementsAppleSignIn
+  ],
   [
     'AndroidManifest.xml (health permissions)',
     ANDROID_MANIFEST,
@@ -374,6 +380,28 @@ describe('patchInfoPlistHealthUsage', () => {
       expect(both.match(new RegExp(`<key>${key}</key>`, 'g'))).toHaveLength(1);
     }
     expect(patchInfoPlistPhotoUsage(both).changed).toBe(false);
+  });
+});
+
+describe('patchEntitlementsAppleSignIn', () => {
+  it('adds the Sign in with Apple capability beside the others', () => {
+    const { text } = patchEntitlementsAppleSignIn(
+      patchEntitlementsHealthKit(ENTITLEMENTS).text
+    );
+    expect(text).toContain(
+      '<key>com.apple.developer.applesignin</key>\n\t<array>\n\t\t<string>Default</string>\n\t</array>'
+    );
+    expect(text).toContain('<key>com.apple.developer.healthkit</key>');
+    expect(text).toMatch(/<\/dict>\n<\/plist>\n$/);
+    expect(patchEntitlementsAppleSignIn(text).changed).toBe(false);
+  });
+
+  it('refuses a Sign in with Apple key it did not write', () => {
+    const other = ENTITLEMENTS.replace(
+      '</dict>',
+      '\t<key>com.apple.developer.applesignin</key>\n\t<array/>\n</dict>'
+    );
+    expect(() => patchEntitlementsAppleSignIn(other)).toThrow(/Regenerate/);
   });
 });
 
@@ -675,7 +703,11 @@ describe('the installed Capacitor templates', () => {
       patchInfoPlistPhotoUsage,
       patchInfoPlistHealthUsage
     ]);
-    twice('', [patchEntitlements, patchEntitlementsHealthKit]);
+    twice('', [
+      patchEntitlements,
+      patchEntitlementsHealthKit,
+      patchEntitlementsAppleSignIn
+    ]);
   });
 
   it('patches the Android project once', () => {

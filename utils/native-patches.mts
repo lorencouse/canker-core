@@ -201,6 +201,39 @@ export function patchEntitlementsHealthKit(text: string): PatchResult {
   return { text: out, changed: true };
 }
 
+/**
+ * Sign in with Apple, as Xcode writes it when the capability is ticked. The
+ * native Apple sheet (the web-auth plugin's `apple`) fails at once without
+ * it, and a signed build fails to provision unless the App ID has the
+ * capability too.
+ */
+export const APPLE_SIGNIN_ENTITLEMENTS =
+  '\t<key>com.apple.developer.applesignin</key>\n\t<array>\n\t\t<string>Default</string>\n\t</array>\n';
+
+/**
+ * Adds APPLE_SIGNIN_ENTITLEMENTS to App.entitlements (runs after
+ * patchEntitlements, so the file exists). An applesignin key already set some
+ * other way stops the run rather than being rewritten.
+ */
+export function patchEntitlementsAppleSignIn(text: string): PatchResult {
+  if (text.includes(APPLE_SIGNIN_ENTITLEMENTS)) return { text, changed: false };
+  if (text.includes('<key>com.apple.developer.applesignin</key>')) {
+    throw new Error(
+      'App.entitlements has a Sign in with Apple key that scripts/patch-native.mjs ' +
+        'did not write. Regenerate the iOS project (rm -rf ios && npm run cap:add:ios).'
+    );
+  }
+  const anchor = /\n<\/dict>\s*\n<\/plist>\s*$/;
+  if (!anchor.test(text)) {
+    throw new PatchAnchorError('App.entitlements', 'closing </dict></plist>');
+  }
+  const out = text.replace(
+    anchor,
+    (tail) => `\n${APPLE_SIGNIN_ENTITLEMENTS}${tail.slice(1)}`
+  );
+  return { text: out, changed: true };
+}
+
 const ENTITLEMENTS_SETTING = `CODE_SIGN_ENTITLEMENTS = ${ENTITLEMENTS_PATH};`;
 
 /**

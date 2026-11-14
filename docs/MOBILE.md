@@ -59,6 +59,17 @@ What follows from that:
   `/api/auth/callback/<provider>`. `utils/native-auth.ts` describes the flow
   and its checks. The webview flows are why the providers are still listed
   in `server.allowNavigation`.
+- **Sign in with Apple on iOS is Apple's own sheet** (ASAuthorizationController,
+  the web-auth plugin's `apple` method, from build 111), not a web page. Its
+  identity token, whose audience is the bundle id and which carries a nonce
+  the webview made, goes to Better Auth's `sign-in/social` from the webview,
+  so the session cookie lands there with no handoff. The sheet's
+  authorization code goes to `/api/native-auth/apple-grant`, which keeps the
+  refresh token so deleting the account revokes the Apple grant (App Review
+  5.1.1(v), `lib/apple.ts`). An older binary, whose plugin has no `apple`,
+  and Android run Apple's web flow through the system sign-in like the other
+  providers. The App ID needs the Sign in with Apple capability and the app
+  the `com.apple.developer.applesignin` entitlement (`cap:patch` writes it).
 - **OAuth on Android runs in a Chrome Custom Tab** (the same plugin's
   Android side), so it can use the Google accounts and passkeys already in
   Chrome. It is the same server flow and the same confirmation; the tab
@@ -116,7 +127,8 @@ templates lack, and anything edited by hand in `ios/` or `android/` is lost
 on regeneration:
 
 - **iOS:** `App/App.entitlements` with the Associated Domains entries
-  `webcredentials:cankercore.com` and `applinks:cankercore.com`, referenced
+  `webcredentials:cankercore.com` and `applinks:cankercore.com` and Sign in
+  with Apple, referenced
   by `CODE_SIGN_ENTITLEMENTS`. Automatic signing enables the capability on
   the App ID. Also the `NSCameraUsageDescription` and
   `NSPhotoLibraryUsageDescription` strings in `Info.plist` for sore photos

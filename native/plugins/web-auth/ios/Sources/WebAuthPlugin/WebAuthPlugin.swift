@@ -17,13 +17,25 @@ import Foundation
 /// JS: `WebAuth.capabilities() -> { httpsCallback }`;
 /// `WebAuth.start({ url, callbackPath }) -> { url }`, which rejects with code
 /// CANCELED when the person closes the sheet. See utils/native.ts.
+///
+/// `WebAuth.apple({ nonce }) -> { idToken, authorizationCode?, givenName?,
+/// familyName? }` is Sign in with Apple as the system's own sheet
+/// (ASAuthorizationController), which Apple's guidelines prefer to its web
+/// flow in an app. The identity token's audience is this app's bundle id and
+/// it carries `nonce`, which the server checks. Apple gives the name on the
+/// first authorization only; the email is read from the signed token on the
+/// server, never passed here. Rejects with CANCELED when the person closes
+/// the sheet and FAILED otherwise. Needs the
+/// com.apple.developer.applesignin entitlement (scripts/patch-native.mjs).
 @objc(WebAuthPlugin)
-public class WebAuthPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding {
+public class WebAuthPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding,
+    ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     public let identifier = "WebAuthPlugin"
     public let jsName = "WebAuth"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "capabilities", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "apple", returnType: CAPPluginReturnPromise)
     ]
 
     private var session: ASWebAuthenticationSession?
@@ -101,5 +113,59 @@ public class WebAuthPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPres
 
     public func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         return bridge?.webView?.window ?? ASPresentationAnchor()
+    }
+
+    // MARK: Sign in with Apple
+
+    /// Each Apple sheet that is up, with the call waiting on it, keyed by its
+    /// controller, so a second tap gets its own answer.
+    private var appleSheets: [ObjectIdentifier: (controller: ASAuthorizationController, call: CAPPluginCall)] = [:]
+
+    @objc func apple(_ call: CAPPluginCall) {
+        guard let nonce = call.getString("nonce"), !nonce.isEmpty else {
+            call.reject("Must provide a nonce", "INVALID")
+            return
+        }
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let request = ASAuthorizationAppleIDProvider().createRequest()
+            request.requestedScopes = [.fullName, .email]
+            request.nonce = nonce
+            let controller = ASAuthorizationController(authorizationRequests: [request])
+            controller.delegate = self
+            controller.presentationContextProvider = self
+            self.appleSheets[ObjectIdentifier(controller)] = (controller, call)
+            controller.performRequests()
+        }
+    }
+
+    public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        return bridge?.webView?.window ?? ASPresentationAnchor()
+    }
+
+    public func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithAuthorization authorization: ASAuthorization
+    ) {
+        guard let call = appleSheets.removeValue(forKey: ObjectIdentifier(controller))?.call else { return }
+        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let tokenData = credential.identityToken,
+              let idToken = String(data: tokenData, encoding: .utf8) else {
+            call.reject("Apple returned no identity token", "FAILED")
+            return
+        }
+        var result: [String: Any] = ["idToken": idToken]
+        if let codeData = credential.authorizationCode, let code = String(data: codeData, encoding: .utf8) {
+            result["authorizationCode"] = code
+        }
+        if let given = credential.fullName?.givenName { result["givenName"] = given }
+        if let family = credential.fullName?.familyName { result["familyName"] = family }
+        call.resolve(result)
+    }
+
+    public func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        guard let call = appleSheets.removeValue(forKey: ObjectIdentifier(controller))?.call else { return }
+        let canceled = (error as? ASAuthorizationError)?.code == .canceled
+        call.reject(error.localizedDescription, canceled ? "CANCELED" : "FAILED", error)
     }
 }

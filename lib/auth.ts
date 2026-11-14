@@ -7,7 +7,7 @@
  * Covers the four flows the app previously got from Supabase:
  *   - email + password sign in / sign up   (emailAndPassword)
  *   - magic link sign in                   (magicLink plugin)
- *   - GitHub / Google OAuth                (socialProviders)
+ *   - Apple / Google / GitHub OAuth        (socialProviders; Apple in lib/apple.ts)
  *   - password reset + email verification  (sendResetPassword / emailVerification)
  */
 import { betterAuth } from 'better-auth';
@@ -15,6 +15,7 @@ import { magicLink } from 'better-auth/plugins/magic-link';
 import { nextCookies } from 'better-auth/next-js';
 import { nativeHandoff } from '@/lib/native-handoff-plugin';
 import { pool } from '@/lib/db/pool';
+import { appleClientSecret, appleConfig } from '@/lib/apple';
 import { sendEmail, actionEmail } from '@/lib/email/mailer';
 import { getURL } from '@/utils/helpers';
 import {
@@ -29,15 +30,21 @@ function credentials(prefix: 'GITHUB' | 'GOOGLE') {
   return clientId && clientSecret ? { clientId, clientSecret } : undefined;
 }
 
+const APPLE = appleConfig();
+
 const OAUTH_CREDENTIALS = {
+  apple: APPLE,
   github: credentials('GITHUB'),
   google: credentials('GOOGLE')
 };
 
 /** The OAuth providers this deployment can actually sign in with, in the
- * order the sign-in page shows them. */
-export function configuredOAuthProviders(): ('google' | 'github')[] {
-  return (['google', 'github'] as const).filter((p) => OAUTH_CREDENTIALS[p]);
+ * order the sign-in page shows them. Apple leads: App Review guideline 4.8
+ * wants it offered as prominently as any other sign-in. */
+export function configuredOAuthProviders(): ('apple' | 'google' | 'github')[] {
+  return (['apple', 'google', 'github'] as const).filter(
+    (p) => OAUTH_CREDENTIALS[p]
+  );
 }
 
 export const auth = betterAuth({
@@ -48,6 +55,10 @@ export const auth = betterAuth({
   baseURL: (process.env.BETTER_AUTH_URL || getURL()).replace(/\/$/, ''),
 
   secret: process.env.BETTER_AUTH_SECRET,
+
+  // Apple answers the website's sign-in with a form posted from its own
+  // origin to /api/auth/callback/apple.
+  trustedOrigins: ['https://appleid.apple.com'],
 
   emailAndPassword: {
     enabled: true,
@@ -96,6 +107,17 @@ export const auth = betterAuth({
   // tapping it did nothing at all. configuredOAuthProviders() drives which
   // buttons the sign-in page shows.
   socialProviders: {
+    ...(APPLE && {
+      apple: {
+        clientId: APPLE.clientId,
+        // Signed at start-up, valid for six months; every deploy restarts
+        // the container and mints a fresh one.
+        clientSecret: appleClientSecret(APPLE, APPLE.clientId),
+        // The website's flow issues tokens to the Services ID; the iOS app's
+        // own Apple sheet issues them to the app's bundle id.
+        audience: [APPLE.clientId, APPLE.bundleId]
+      }
+    }),
     ...(OAUTH_CREDENTIALS.github && { github: OAUTH_CREDENTIALS.github }),
     ...(OAUTH_CREDENTIALS.google && { google: OAUTH_CREDENTIALS.google })
   },

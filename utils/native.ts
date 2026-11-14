@@ -98,7 +98,19 @@ interface WebAuthPlugin {
     url: string;
     callbackPath: string;
   }): Promise<{ url: string }>;
+  /** iOS only, from build 111: Apple's own Sign in with Apple sheet. */
+  apple(options: { nonce: string }): Promise<AppleSheetResult>;
 }
+
+export type AppleSheetResult = {
+  /** Signed by Apple, its audience the app's bundle id. */
+  idToken: string;
+  /** Single-use, five minutes: traded server side for a refresh token. */
+  authorizationCode?: string;
+  /** Apple gives the name on the first authorization only. */
+  givenName?: string;
+  familyName?: string;
+};
 
 let webAuth: WebAuthPlugin | undefined;
 
@@ -135,6 +147,25 @@ export async function hasSystemSignIn(callbackPath: string): Promise<boolean> {
  */
 export async function systemSignIn(url: string, callbackPath: string) {
   return webAuthPlugin().start({ url, callbackPath });
+}
+
+/**
+ * Apple's native Sign in with Apple sheet, on the iOS app. Resolves null
+ * where there is none (the web, Android, or an iOS binary built before the
+ * sheet was added, whose plugin answers UNIMPLEMENTED), so the caller runs
+ * Apple's web flow instead. Rejects with code 'CANCELED' when the person
+ * closes the sheet, and 'FAILED' otherwise.
+ */
+export async function appleSheet(
+  nonce: string
+): Promise<AppleSheetResult | null> {
+  if (!isNative() || platform() !== 'ios') return null;
+  try {
+    return await webAuthPlugin().apple({ nonce });
+  } catch (err) {
+    if ((err as { code?: string })?.code === 'UNIMPLEMENTED') return null;
+    throw err;
+  }
 }
 
 /**
