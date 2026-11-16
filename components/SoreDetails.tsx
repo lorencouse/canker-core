@@ -303,8 +303,8 @@ export function SoreDetail() {
           </h3>
           <p className="mt-1 text-base text-muted-foreground">
             {nearby.length} earlier sore{nearby.length === 1 ? '' : 's'} within{' '}
-            {NEARBY_MM} mm. Sores that return to one point usually have a local
-            cause, like a sharp tooth or a habit.
+            {NEARBY_MM} mm. A spot that keeps coming back is worth showing a
+            dentist, who can check for a sharp edge.
           </p>
           <ul className="mt-2">
             {nearby.slice(0, 5).map((other) => {

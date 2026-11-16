@@ -1,5 +1,11 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,6 +41,14 @@ import {
   patchAndroidStrings,
   unwantedHealthPermissions,
   patchPbxprojEntitlements,
+  nativeBuildNumber,
+  parseNativeVersionFile,
+  patchAndroidRemovedPermissions,
+  patchAndroidVersion,
+  patchInfoPlistEncryption,
+  patchPbxprojPrivacyManifest,
+  patchPbxprojVersion,
+  PRIVACY_MANIFEST_XML,
   type PatchResult
 } from './native-patches.mjs';
 import { NATIVE_AUTH_HTTPS_PATH } from './native-auth';
@@ -180,6 +194,11 @@ const cases: [string, string, (text: string) => PatchResult][] = [
   ['strings.xml (privacy policy)', STRINGS_XML, patchAndroidStrings],
   ['project.pbxproj (entitlements)', TARGET_CONFIGS, patchPbxprojEntitlements],
   ['AndroidManifest.xml', ANDROID_MANIFEST, patchAndroidManifest],
+  [
+    'AndroidManifest.xml (removed permissions)',
+    ANDROID_MANIFEST,
+    patchAndroidRemovedPermissions
+  ],
   [
     'AndroidManifest.xml (backup rules)',
     ANDROID_MANIFEST,
@@ -650,6 +669,8 @@ describe('backup rule files', () => {
  * They also pin why the iOS deployment-target and scene-lifecycle patches
  * were retired: the Capacitor 8 template already does both.
  */
+const VERSION = { marketing: '1.2', build: '140' };
+
 describe('the installed Capacitor templates', () => {
   const assets = fileURLToPath(
     new URL('../node_modules/@capacitor/cli/assets/', import.meta.url)
@@ -698,10 +719,15 @@ describe('the installed Capacitor templates', () => {
     );
 
   it('patches the iOS project once', () => {
-    twice(ios('App/App.xcodeproj/project.pbxproj'), [patchPbxprojEntitlements]);
+    twice(ios('App/App.xcodeproj/project.pbxproj'), [
+      patchPbxprojEntitlements,
+      (text) => patchPbxprojVersion(text, VERSION),
+      patchPbxprojPrivacyManifest
+    ]);
     twice(ios('App/App/Info.plist'), [
       patchInfoPlistPhotoUsage,
-      patchInfoPlistHealthUsage
+      patchInfoPlistHealthUsage,
+      patchInfoPlistEncryption
     ]);
     twice('', [
       patchEntitlements,
@@ -715,9 +741,13 @@ describe('the installed Capacitor templates', () => {
     twice(android('app/src/main/AndroidManifest.xml'), [
       patchAndroidManifest,
       patchAndroidBackupRules,
-      (text) => patchAndroidHealthPermissions(text, remove)
+      (text) => patchAndroidHealthPermissions(text, remove),
+      patchAndroidRemovedPermissions
     ]);
     twice(android('variables.gradle'), [patchAndroidMinSdk]);
+    twice(android('app/build.gradle'), [
+      (text) => patchAndroidVersion(text, VERSION)
+    ]);
     twice(android('app/src/main/res/values/strings.xml'), [
       patchAndroidStrings
     ]);
@@ -818,5 +848,168 @@ describe('assertCapacitor8Android', () => {
     expect(() => assertCapacitor8Android('ext {}')).toThrow(
       /predates Capacitor 8/
     );
+  });
+});
+
+describe('parseNativeVersionFile', () => {
+  it('reads the committed file', () => {
+    const file = readFileSync(
+      fileURLToPath(new URL('../native/version.json', import.meta.url)),
+      'utf8'
+    );
+    const { marketing, minBuild } = parseNativeVersionFile(file);
+    expect(marketing).toMatch(/^\d+(\.\d+){0,2}$/);
+    // 1.0 (111) is already in App Store Connect.
+    expect(minBuild).toBeGreaterThan(111);
+  });
+
+  it('refuses a marketing version Apple would refuse', () => {
+    for (const bad of ['1.0.0.1', 'v1', '', '1.0-beta']) {
+      expect(() =>
+        parseNativeVersionFile(
+          JSON.stringify({ marketingVersion: bad, minBuildNumber: 2 })
+        )
+      ).toThrow(/marketingVersion/);
+    }
+  });
+});
+
+describe('nativeBuildNumber', () => {
+  it("uses main's commit count", () => {
+    expect(nativeBuildNumber(undefined, '130\n', 112)).toEqual({
+      build: '130',
+      store: true
+    });
+  });
+
+  it('lets NATIVE_BUILD_NUMBER win', () => {
+    expect(nativeBuildNumber('150', '130', 112)).toEqual({
+      build: '150',
+      store: true
+    });
+  });
+
+  it('numbers a build off main 1, never a store number', () => {
+    expect(nativeBuildNumber(undefined, undefined, 112)).toEqual({
+      build: '1',
+      store: false
+    });
+    expect(nativeBuildNumber('  ', undefined, 112).store).toBe(false);
+  });
+
+  it('refuses a number the stores already have, or a non-number', () => {
+    expect(() => nativeBuildNumber('111', undefined, 112)).toThrow(
+      /minBuildNumber/
+    );
+    expect(() => nativeBuildNumber('12a', undefined, 112)).toThrow(
+      /whole number/
+    );
+  });
+});
+
+describe('patchPbxprojVersion', () => {
+  const configs = TARGET_CONFIGS.replaceAll(
+    'IPHONEOS_DEPLOYMENT_TARGET = 15.0;',
+    'IPHONEOS_DEPLOYMENT_TARGET = 15.0;\n\t\t\t\tMARKETING_VERSION = 1.0;'
+  );
+
+  it('sets both numbers in Debug and Release, and follows later changes', () => {
+    const { text, changed } = patchPbxprojVersion(configs, VERSION);
+    expect(changed).toBe(true);
+    expect(text.match(/MARKETING_VERSION = 1\.2;/g)).toHaveLength(2);
+    expect(text.match(/CURRENT_PROJECT_VERSION = 140;/g)).toHaveLength(2);
+    expect(patchPbxprojVersion(text, VERSION).changed).toBe(false);
+    const next = patchPbxprojVersion(text, { marketing: '1.2', build: '141' });
+    expect(next.text.match(/CURRENT_PROJECT_VERSION = 141;/g)).toHaveLength(2);
+  });
+
+  it('throws when the template stops setting them', () => {
+    expect(() => patchPbxprojVersion(TARGET_CONFIGS, VERSION)).toThrow(
+      PatchAnchorError
+    );
+  });
+});
+
+describe('patchAndroidVersion', () => {
+  const gradle =
+    'android {\n    defaultConfig {\n        versionCode 1\n        versionName "1.0"\n    }\n}\n';
+
+  it('writes versionCode and versionName', () => {
+    const { text } = patchAndroidVersion(gradle, VERSION);
+    expect(text).toContain('        versionCode 140\n');
+    expect(text).toContain('        versionName "1.2"\n');
+  });
+
+  it('throws without its anchors', () => {
+    expect(() => patchAndroidVersion('android {}\n', VERSION)).toThrow(
+      PatchAnchorError
+    );
+  });
+});
+
+describe('patchInfoPlistEncryption', () => {
+  it('declares no non-exempt encryption, once', () => {
+    const { text } = patchInfoPlistEncryption(INFO_PLIST);
+    expect(text).toMatch(
+      /<key>ITSAppUsesNonExemptEncryption<\/key>\n\t<false\/>\n<\/dict>\n<\/plist>\n$/
+    );
+    expect(patchInfoPlistEncryption(text).changed).toBe(false);
+  });
+
+  it('refuses to flip a true it did not write', () => {
+    const yes = INFO_PLIST.replace(
+      '</dict>\n</plist>',
+      '\t<key>ITSAppUsesNonExemptEncryption</key>\n\t<true/>\n</dict>\n</plist>'
+    );
+    expect(() => patchInfoPlistEncryption(yes)).toThrow(/true/);
+  });
+});
+
+describe('PRIVACY_MANIFEST_XML', () => {
+  it('is a valid property list that declares no tracking', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'privacy-'));
+    try {
+      const file = path.join(dir, 'PrivacyInfo.xcprivacy');
+      writeFileSync(file, PRIVACY_MANIFEST_XML);
+      const json = JSON.parse(
+        execFileSync('plutil', ['-convert', 'json', '-o', '-', file]).toString()
+      );
+      expect(json.NSPrivacyTracking).toBe(false);
+      expect(json.NSPrivacyTrackingDomains).toEqual([]);
+      for (const entry of json.NSPrivacyCollectedDataTypes) {
+        expect(entry.NSPrivacyCollectedDataTypeTracking).toBe(false);
+      }
+      expect(
+        json.NSPrivacyAccessedAPITypes.map(
+          (a: { NSPrivacyAccessedAPIType: string }) =>
+            a.NSPrivacyAccessedAPIType
+        )
+      ).toContain('NSPrivacyAccessedAPICategoryFileTimestamp');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('patchAndroidRemovedPermissions', () => {
+  it('removes the exact-alarm permission the notifications plugin merges in', () => {
+    const { text } = patchAndroidRemovedPermissions(ANDROID_MANIFEST);
+    expect(text).toContain(
+      '<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />'
+    );
+    expect(text).toMatch(/<manifest xmlns:tools=/);
+  });
+
+  it('is the permission the installed plugin declares', () => {
+    const plugin = readFileSync(
+      fileURLToPath(
+        new URL(
+          '../node_modules/@capacitor/local-notifications/android/src/main/AndroidManifest.xml',
+          import.meta.url
+        )
+      ),
+      'utf8'
+    );
+    expect(plugin).toContain('android.permission.SCHEDULE_EXACT_ALARM');
   });
 });

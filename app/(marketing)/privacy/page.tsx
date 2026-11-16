@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <Prose
       title="Privacy"
       intro="Canker Core holds health information, so it keeps as little as it can."
-      updated="6 November 2026"
+      updated="16 November 2026"
     >
       <section>
         <h2>What is stored</h2>
@@ -24,6 +24,11 @@ export default function PrivacyPage() {
           readings were taken. Your daily logs, too: the triggers and treatments
           you tick, any note, your sleep hours and quality, your stress, and
           whether you finished or skipped each day&rsquo;s check-in.
+        </p>
+        <p>
+          While you are signed in, each session also keeps the IP address and
+          device type it was started from, so a session that is not yours can
+          be spotted. Signing out ends the session.
         </p>
       </section>
 
@@ -83,11 +88,21 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>Sign-in with Google or GitHub</h2>
+        <h2>Sign-in with Apple, Google or GitHub</h2>
         <p>
-          If you sign in that way, Canker Core receives your email address and
-          account identifier from that provider and nothing else. It never sees
-          your password for those accounts.
+          If you sign in that way, Canker Core receives your email address,
+          account identifier, and the name and profile picture that provider
+          shares, if any. With Sign in with Apple you can choose to hide your
+          email, and Apple then passes on a relay address instead. Canker Core
+          never sees your password for those accounts. It keeps the sign-in
+          tokens the provider issues so you stay signed in, and for Apple so
+          that deleting your account also ends the app&rsquo;s access to your
+          Apple ID.
+        </p>
+        <p>
+          Emails such as sign-in links and password resets are sent through the
+          site&rsquo;s mail provider, which handles your address and the
+          message to deliver it.
         </p>
       </section>
 
