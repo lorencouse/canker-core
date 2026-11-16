@@ -188,7 +188,16 @@ async function scheduleSlot(
   startTomorrow: boolean
 ) {
   const [hour, minute] = time.split(':').map(Number);
-  const base = { ...COPY[slot], extra: { path: PATH } };
+  // A daily nudge does not need to land to the second. Asking for an exact
+  // alarm (the plugin's default) makes Android 12 and later open the system
+  // "Alarms & reminders" screen whenever that access is missing, which it is
+  // by default from Android 14, and the app no longer declares it
+  // (SCHEDULE_EXACT_ALARM, which Play restricts, is stripped by cap:patch).
+  const base = {
+    ...COPY[slot],
+    extra: { path: PATH },
+    isExactNotification: false
+  };
   await plugin.schedule({
     notifications: startTomorrow
       ? deferredRun(time).map((at, i) => ({

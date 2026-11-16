@@ -579,3 +579,305 @@ export function patchAndroidStrings(text: string): PatchResult {
   const out = text.replace(anchor, (tail) => `\n    ${PRIVACY_STRING}${tail}`);
   return { text: out, changed: true };
 }
+
+/**
+ * The store version of the native apps. `native/version.json` holds the
+ * marketing version (CFBundleShortVersionString, Android versionName), which
+ * changes only on purpose: App Store Connect refuses a build for a version
+ * train it has already approved, so it moves on after each approval. The
+ * build number (CFBundleVersion, Android versionCode) is the commit count of
+ * main, as the site's "v1.N" is, so every build cut from a newer main gets a
+ * higher number with nothing to remember. Both stores insist the number only
+ * rises, so `minBuildNumber` is a floor: 1.0 (111) was already uploaded.
+ */
+export type NativeVersion = { marketing: string; build: string };
+
+export function parseNativeVersionFile(json: string): {
+  marketing: string;
+  minBuild: number;
+} {
+  const data = JSON.parse(json) as {
+    marketingVersion?: unknown;
+    minBuildNumber?: unknown;
+  };
+  const marketing = String(data.marketingVersion ?? '');
+  // Apple: one to three period-separated integers.
+  if (!/^\d+(\.\d+){0,2}$/.test(marketing)) {
+    throw new Error(
+      `native/version.json: marketingVersion "${marketing}" is not like 1.0 or 1.0.1`
+    );
+  }
+  const minBuild = Number(data.minBuildNumber);
+  if (!Number.isInteger(minBuild) || minBuild < 1) {
+    throw new Error(
+      'native/version.json: minBuildNumber must be a whole number'
+    );
+  }
+  return { marketing, minBuild };
+}
+
+/**
+ * The build number for this build. `override` (NATIVE_BUILD_NUMBER) wins, for
+ * a store build cut off main; otherwise main's commit count from git, which is
+ * undefined off origin/main or in a shallow clone. Undefined means a
+ * development build, numbered 1 so it can never pass for a store build. A
+ * store number at or below the floor is refused: the stores would refuse it
+ * later, after a long archive.
+ */
+export function nativeBuildNumber(
+  override: string | undefined,
+  gitCount: string | undefined,
+  minBuild: number
+): { build: string; store: boolean } {
+  const raw = override?.trim() || gitCount?.trim();
+  if (!raw) return { build: '1', store: false };
+  if (!/^[1-9]\d*$/.test(raw)) {
+    throw new Error(`build number "${raw}" is not a positive whole number`);
+  }
+  if (Number(raw) < minBuild) {
+    throw new Error(
+      `build number ${raw} is below minBuildNumber ${minBuild} in ` +
+        'native/version.json; the stores only take a number higher than the last upload'
+    );
+  }
+  return { build: raw, store: true };
+}
+
+/**
+ * Writes MARKETING_VERSION and CURRENT_PROJECT_VERSION into every
+ * configuration of the App target that sets them (Debug and Release), so
+ * Xcode, `xcodebuild archive` and the Info.plist's $(…) references all agree.
+ */
+export function patchPbxprojVersion(
+  text: string,
+  version: NativeVersion
+): PatchResult {
+  const settings: [RegExp, string][] = [
+    [/^([ \t]*MARKETING_VERSION = )[^;]*;$/gm, version.marketing],
+    [/^([ \t]*CURRENT_PROJECT_VERSION = )[^;]*;$/gm, version.build]
+  ];
+  let out = text;
+  for (const [pattern, value] of settings) {
+    if (!pattern.test(out)) {
+      throw new PatchAnchorError('project.pbxproj', pattern.source);
+    }
+    out = out.replace(pattern, (_all, head: string) => `${head}${value};`);
+  }
+  return { text: out, changed: out !== text };
+}
+
+/** The same two numbers as Android's versionName and versionCode. */
+export function patchAndroidVersion(
+  text: string,
+  version: NativeVersion
+): PatchResult {
+  const code = /^([ \t]*versionCode[ \t]+)\d+[ \t]*$/m;
+  const name = /^([ \t]*versionName[ \t]+)"[^"]*"[ \t]*$/m;
+  if (!code.test(text)) {
+    throw new PatchAnchorError('app/build.gradle', 'versionCode <n>');
+  }
+  if (!name.test(text)) {
+    throw new PatchAnchorError('app/build.gradle', 'versionName "<v>"');
+  }
+  const out = text
+    .replace(code, (_all, head: string) => `${head}${version.build}`)
+    .replace(name, (_all, head: string) => `${head}"${version.marketing}"`);
+  return { text: out, changed: out !== text };
+}
+
+/**
+ * The app's only cryptography is the system's HTTPS, which is exempt from
+ * US export rules. Saying so in Info.plist stops App Store Connect asking the
+ * export-compliance question on every build, which otherwise holds the build
+ * out of TestFlight and review until someone answers it by hand.
+ */
+const ENCRYPTION_KEY = '<key>ITSAppUsesNonExemptEncryption</key>';
+const ENCRYPTION_ENTRY = `\t${ENCRYPTION_KEY}\n\t<false/>\n`;
+
+export function patchInfoPlistEncryption(text: string): PatchResult {
+  if (text.includes(ENCRYPTION_KEY)) {
+    if (new RegExp(`${ENCRYPTION_KEY}\\s*<false/>`).test(text)) {
+      return { text, changed: false };
+    }
+    throw new Error(
+      'Info.plist declares ITSAppUsesNonExemptEncryption as true. The app ' +
+        'uses only system HTTPS; remove the key so scripts/patch-native.mjs can set it.'
+    );
+  }
+  const anchor = /\n<\/dict>\s*\n<\/plist>\s*$/;
+  if (!anchor.test(text)) {
+    throw new PatchAnchorError('Info.plist', 'closing </dict></plist>');
+  }
+  const out = text.replace(
+    anchor,
+    (tail) => `\n${ENCRYPTION_ENTRY}${tail.slice(1)}`
+  );
+  return { text: out, changed: true };
+}
+
+/**
+ * The app's privacy manifest, ios/App/App/PrivacyInfo.xcprivacy. Apple reads
+ * it into the privacy report for the App Privacy label, and refuses uploads
+ * whose code calls a "required reason" API without a declared reason.
+ * Capacitor's own frameworks carry manifests for their own calls; this one
+ * covers the app and the statically linked plugins: the filesystem plugin
+ * reads file timestamps of the sore photos it stores (C617.1, files inside
+ * the app's container), and the plugins' settings live in UserDefaults
+ * (CA92.1, the app's own defaults).
+ *
+ * The collected data must match the App Privacy answers in docs/store: what
+ * the server keeps for an account (email, name, user id), the sores and
+ * readings and daily logs (health), and free-text notes (other user
+ * content), plus where the account first arrived from (usage data, for
+ * first-party analytics). All of it is linked to the account and none of it
+ * is used for tracking; sore photos never leave the phone, so they are not
+ * collected.
+ */
+export const PRIVACY_MANIFEST_PATH = 'App/PrivacyInfo.xcprivacy';
+
+const collected = ([type, purpose]: [string, string]) =>
+  '\t\t<dict>\n' +
+  `\t\t\t<key>NSPrivacyCollectedDataType</key>\n\t\t\t<string>${type}</string>\n` +
+  '\t\t\t<key>NSPrivacyCollectedDataTypeLinked</key>\n\t\t\t<true/>\n' +
+  '\t\t\t<key>NSPrivacyCollectedDataTypeTracking</key>\n\t\t\t<false/>\n' +
+  '\t\t\t<key>NSPrivacyCollectedDataTypePurposes</key>\n\t\t\t<array>\n' +
+  `\t\t\t\t<string>NSPrivacyCollectedDataTypePurpose${purpose}</string>\n` +
+  '\t\t\t</array>\n' +
+  '\t\t</dict>\n';
+
+const accessed = (category: string, reason: string) =>
+  '\t\t<dict>\n' +
+  `\t\t\t<key>NSPrivacyAccessedAPIType</key>\n\t\t\t<string>${category}</string>\n` +
+  '\t\t\t<key>NSPrivacyAccessedAPITypeReasons</key>\n\t\t\t<array>\n' +
+  `\t\t\t\t<string>${reason}</string>\n` +
+  '\t\t\t</array>\n' +
+  '\t\t</dict>\n';
+
+export const COLLECTED_DATA_TYPES: [string, string][] = [
+  ['NSPrivacyCollectedDataTypeEmailAddress', 'AppFunctionality'],
+  ['NSPrivacyCollectedDataTypeName', 'AppFunctionality'],
+  ['NSPrivacyCollectedDataTypeUserID', 'AppFunctionality'],
+  ['NSPrivacyCollectedDataTypeHealth', 'AppFunctionality'],
+  ['NSPrivacyCollectedDataTypeOtherUserContent', 'AppFunctionality'],
+  // The first page visited and the referring site, kept with a new account
+  // to credit signups to articles (utils/first-touch.ts). First-party only.
+  ['NSPrivacyCollectedDataTypeOtherUsageData', 'Analytics']
+];
+
+export const PRIVACY_MANIFEST_XML =
+  '<?xml version="1.0" encoding="UTF-8"?>\n' +
+  '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n' +
+  '<!-- Written by scripts/patch-native.mjs (utils/native-patches.mts). -->\n' +
+  '<plist version="1.0">\n<dict>\n' +
+  '\t<key>NSPrivacyTracking</key>\n\t<false/>\n' +
+  '\t<key>NSPrivacyTrackingDomains</key>\n\t<array/>\n' +
+  '\t<key>NSPrivacyCollectedDataTypes</key>\n\t<array>\n' +
+  COLLECTED_DATA_TYPES.map(collected).join('') +
+  '\t</array>\n' +
+  '\t<key>NSPrivacyAccessedAPITypes</key>\n\t<array>\n' +
+  accessed('NSPrivacyAccessedAPICategoryFileTimestamp', 'C617.1') +
+  accessed('NSPrivacyAccessedAPICategoryUserDefaults', 'CA92.1') +
+  '\t</array>\n' +
+  '</dict>\n</plist>\n';
+
+// Fixed object ids, so the patch recognises its own entries on a rerun.
+const PRIVACY_FILE_REF = 'CC0A11E00000000000000001';
+const PRIVACY_BUILD_FILE = 'CC0A11E00000000000000002';
+const PRIVACY_LINES = {
+  buildFile: `\t\t${PRIVACY_BUILD_FILE} /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = ${PRIVACY_FILE_REF} /* PrivacyInfo.xcprivacy */; };\n`,
+  fileRef: `\t\t${PRIVACY_FILE_REF} /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };\n`,
+  groupChild: `\t\t\t\t${PRIVACY_FILE_REF} /* PrivacyInfo.xcprivacy */,\n`,
+  resource: `\t\t\t\t${PRIVACY_BUILD_FILE} /* PrivacyInfo.xcprivacy in Resources */,\n`
+};
+
+/**
+ * Adds PrivacyInfo.xcprivacy to the App group and the App target's Copy
+ * Bundle Resources, as Xcode does when the file is dragged in. Without that
+ * the file sits beside the sources and never reaches the app bundle.
+ */
+export function patchPbxprojPrivacyManifest(text: string): PatchResult {
+  const lines = Object.values(PRIVACY_LINES);
+  if (lines.every((line) => text.includes(line))) {
+    return { text, changed: false };
+  }
+  if (text.includes('PrivacyInfo.xcprivacy')) {
+    throw new Error(
+      'project.pbxproj lists a PrivacyInfo.xcprivacy that scripts/patch-native.mjs ' +
+        'did not add. Regenerate the iOS project (rm -rf ios && npm run cap:add:ios).'
+    );
+  }
+  const anchors: [RegExp, string, string][] = [
+    [
+      /(\/\* Begin PBXBuildFile section \*\/\n)/,
+      PRIVACY_LINES.buildFile,
+      'PBXBuildFile section'
+    ],
+    [
+      /(\/\* Begin PBXFileReference section \*\/\n)/,
+      PRIVACY_LINES.fileRef,
+      'PBXFileReference section'
+    ],
+    [
+      /(\/\* App \*\/ = \{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = \(\n)/,
+      PRIVACY_LINES.groupChild,
+      'App PBXGroup children'
+    ],
+    [
+      /(isa = PBXResourcesBuildPhase;\n\t\t\tbuildActionMask = \d+;\n\t\t\tfiles = \(\n)/,
+      PRIVACY_LINES.resource,
+      'PBXResourcesBuildPhase files'
+    ]
+  ];
+  let out = text;
+  for (const [anchor, line, name] of anchors) {
+    if ((out.match(new RegExp(anchor.source, 'g')) ?? []).length !== 1) {
+      throw new PatchAnchorError('project.pbxproj', name);
+    }
+    out = out.replace(anchor, (head) => head + line);
+  }
+  return { text: out, changed: true };
+}
+
+/**
+ * Permissions plugins merge in that the app does not want. The local
+ * notifications plugin declares SCHEDULE_EXACT_ALARM, which Google Play
+ * restricts to alarm and calendar apps and Android 14 denies by default; the
+ * daily reminders are scheduled inexact (utils/reminders.ts), so it goes.
+ */
+export const REMOVED_PERMISSIONS = ['android.permission.SCHEDULE_EXACT_ALARM'];
+const REMOVED_MARKER = '<!-- patch-native: removed permissions -->';
+const REMOVED_END = '<!-- /patch-native: removed permissions -->';
+
+export const removedPermissionsBlock = () =>
+  `    ${REMOVED_MARKER}\n` +
+  REMOVED_PERMISSIONS.map(
+    (name) =>
+      `    <uses-permission android:name="${name}" tools:node="remove" />\n`
+  ).join('') +
+  `    ${REMOVED_END}\n`;
+
+export function patchAndroidRemovedPermissions(text: string): PatchResult {
+  const block = removedPermissionsBlock();
+  let out = text;
+  const open = out.match(/<manifest\b[^>]*>/);
+  if (!open) throw new PatchAnchorError('AndroidManifest.xml', '<manifest …>');
+  if (!open[0].includes(TOOLS_NS)) {
+    out = out.replace(
+      open[0],
+      open[0].replace(/^<manifest\b/, `<manifest ${TOOLS_NS}`)
+    );
+  }
+  const existing = new RegExp(
+    `[ \\t]*${REMOVED_MARKER}\\n[\\s\\S]*?${REMOVED_END}\\n`
+  );
+  if (existing.test(out)) {
+    out = out.replace(existing, () => block);
+  } else {
+    const anchor = /\n<\/manifest>\s*$/;
+    if (!anchor.test(out)) {
+      throw new PatchAnchorError('AndroidManifest.xml', 'closing </manifest>');
+    }
+    out = out.replace(anchor, (tail) => `\n${block}${tail.slice(1)}`);
+  }
+  return { text: out, changed: out !== text };
+}

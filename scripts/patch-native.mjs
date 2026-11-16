@@ -14,7 +14,9 @@
  *     before it lets the sore photo control open either;
  *   - the HealthKit capability in App.entitlements and the Health read usage
  *     string (NSHealthShareUsageDescription, plus NSHealthUpdateUsageDescription for
- *     App Store Connect's purpose-string check) for the sleep import.
+ *     App Store Connect's purpose-string check) for the sleep import;
+ *   - the store version (below), ITSAppUsesNonExemptEncryption = false, and
+ *     the app's PrivacyInfo.xcprivacy, added to the bundle's resources.
  * Android:
  *   - an autoVerify App Link intent-filter on MainActivity for
  *     https://cankercore.com/native-auth/callback, so the system sign-in's
@@ -28,7 +30,14 @@
  *   - Health Connect for the sleep import: READ_SLEEP declared, every other
  *     health permission the @capgo/capacitor-health library merges in
  *     removed (read from its installed manifest), minSdkVersion raised to 26,
- *     and the privacy-policy URL its rationale screen shows.
+ *     and the privacy-policy URL its rationale screen shows;
+ *   - SCHEDULE_EXACT_ALARM, which the notifications plugin declares, removed;
+ *   - the store version (below) as versionName and versionCode.
+ *
+ * The store version: the marketing version from native/version.json, and
+ * the build number from NATIVE_BUILD_NUMBER, else main's commit count (as
+ * the site's "v1.N"), else 1 for a development build off main. Run this
+ * (through cap:sync) right before cutting a store build.
  *
  * Safe to run repeatedly. A platform whose folder is missing is skipped; a
  * file whose expected anchor is missing stops the run with an error.
@@ -44,9 +53,19 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gitBuildNumber } from '../utils/build-label.mjs';
 import {
   backupRuleFiles,
   ENTITLEMENTS_PATH,
+  nativeBuildNumber,
+  parseNativeVersionFile,
+  patchAndroidRemovedPermissions,
+  patchAndroidVersion,
+  patchInfoPlistEncryption,
+  patchPbxprojPrivacyManifest,
+  patchPbxprojVersion,
+  PRIVACY_MANIFEST_PATH,
+  PRIVACY_MANIFEST_XML,
   notificationIconCopies,
   assertCapacitor8Android,
   patchAndroidBackupRules,
@@ -65,6 +84,30 @@ import {
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const rel = (p) => path.relative(ROOT, p);
+
+/** The store version both platforms get (see the header). */
+const nativeVersion = () => {
+  const { marketing, minBuild } = parseNativeVersionFile(
+    readFileSync(path.join(ROOT, 'native/version.json'), 'utf8')
+  );
+  const git = (args) =>
+    execFileSync('git', args, {
+      cwd: ROOT,
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).toString();
+  const { build, store } = nativeBuildNumber(
+    process.env.NATIVE_BUILD_NUMBER,
+    gitBuildNumber(git),
+    minBuild
+  );
+  console.log(
+    store
+      ? `version  ${marketing} (${build})`
+      : `version  ${marketing} (1): a development build. HEAD is not on ` +
+          'origin/main; set NATIVE_BUILD_NUMBER for a store build'
+  );
+  return { marketing, build };
+};
 
 const has = (cmd) => spawnSync('sh', ['-c', `command -v ${cmd}`]).status === 0;
 
@@ -88,7 +131,7 @@ const patchFile = (file, patch) => {
   return changed;
 };
 
-const patchIos = () => {
+const patchIos = (version) => {
   const app = path.join(ROOT, 'ios/App');
   // Capacitor 8 defaults `cap add ios` to Swift Package Manager, which
   // leaves out native/plugins/web-auth (it ships only a podspec), so system
@@ -110,8 +153,26 @@ const patchIos = () => {
 
   patchFile(
     path.join(app, 'App.xcodeproj/project.pbxproj'),
-    patchPbxprojEntitlements
+    compose(
+      patchPbxprojEntitlements,
+      (text) => patchPbxprojVersion(text, version),
+      patchPbxprojPrivacyManifest
+    )
   );
+
+  const manifest = path.join(app, PRIVACY_MANIFEST_PATH);
+  if (
+    existsSync(manifest) &&
+    readFileSync(manifest, 'utf8') === PRIVACY_MANIFEST_XML
+  ) {
+    console.log(`already written  ${rel(manifest)}`);
+  } else {
+    writeFileSync(manifest, PRIVACY_MANIFEST_XML);
+    console.log(`wrote  ${rel(manifest)}`);
+    if (has('plutil')) {
+      execFileSync('plutil', ['-lint', manifest], { stdio: 'inherit' });
+    }
+  }
 
   // The template has no entitlements file, so a missing one is created.
   const entitlements = path.join(app, ENTITLEMENTS_PATH);
@@ -133,7 +194,11 @@ const patchIos = () => {
   if (
     patchFile(
       plist,
-      compose(patchInfoPlistPhotoUsage, patchInfoPlistHealthUsage)
+      compose(
+        patchInfoPlistPhotoUsage,
+        patchInfoPlistHealthUsage,
+        patchInfoPlistEncryption
+      )
     ) &&
     has('plutil')
   ) {
@@ -146,7 +211,7 @@ const HEALTH_LIBRARY_MANIFEST = path.join(
   'node_modules/@capgo/capacitor-health/android/src/main/AndroidManifest.xml'
 );
 
-const patchAndroid = () => {
+const patchAndroid = (version) => {
   const variables = path.join(ROOT, 'android/variables.gradle');
   if (!existsSync(variables)) throw new Error(`${rel(variables)} is missing`);
   assertCapacitor8Android(readFileSync(variables, 'utf8'));
@@ -160,11 +225,17 @@ const patchAndroid = () => {
   );
   patchFile(
     path.join(ROOT, 'android/app/src/main/AndroidManifest.xml'),
-    compose(patchAndroidManifest, patchAndroidBackupRules, (text) =>
-      patchAndroidHealthPermissions(text, remove)
+    compose(
+      patchAndroidManifest,
+      patchAndroidBackupRules,
+      (text) => patchAndroidHealthPermissions(text, remove),
+      patchAndroidRemovedPermissions
     )
   );
   patchFile(path.join(ROOT, 'android/variables.gradle'), patchAndroidMinSdk);
+  patchFile(path.join(ROOT, 'android/app/build.gradle'), (text) =>
+    patchAndroidVersion(text, version)
+  );
   patchFile(
     path.join(ROOT, 'android/app/src/main/res/values/strings.xml'),
     patchAndroidStrings
@@ -204,12 +275,13 @@ const platforms = [
   ['android', patchAndroid]
 ];
 try {
+  const version = nativeVersion();
   for (const [dir, run] of platforms) {
     if (!existsSync(path.join(ROOT, dir))) {
       console.log(`skipped  ${dir}/ (not generated)`);
       continue;
     }
-    run();
+    run(version);
   }
 } catch (error) {
   console.error(`patch-native failed: ${error.message}`);

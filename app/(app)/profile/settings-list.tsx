@@ -5,9 +5,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import {
   Bell,
+  FileText,
   KeyRound,
+  LifeBuoy,
   LogOut,
   Share,
+  ShieldCheck,
   SunMoon
 } from 'lucide-react';
 
@@ -25,7 +28,7 @@ import {
 } from '@/utils/auth-helpers/server';
 import { getRedirectMethod } from '@/utils/auth-helpers/settings';
 import { useMounted } from '@/utils/hooks/useMounted';
-import { notify, shareTextFile } from '@/utils/native';
+import { notify, openExternal, shareTextFile } from '@/utils/native';
 import { readReminder, remindersSupported } from '@/utils/reminders';
 import { deleteAllPhotos } from '@/utils/sore-photos';
 
@@ -57,7 +60,8 @@ export function SettingsList({ user }: { user: User }) {
     null
   );
 
-  const morning = mounted && remindersSupported() ? readReminder('morning') : null;
+  const morning =
+    mounted && remindersSupported() ? readReminder('morning') : null;
   const reminderValue = !mounted
     ? ''
     : !morning
@@ -73,8 +77,9 @@ export function SettingsList({ user }: { user: User }) {
       if (!res.ok) throw new Error(String(res.status));
       const text = await res.text();
       const name =
-        /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1] ??
-        'canker-core.csv';
+        /filename="([^"]+)"/.exec(
+          res.headers.get('content-disposition') ?? ''
+        )?.[1] ?? 'canker-core.csv';
       // The share sheet in the app; a download everywhere else, and in an
       // app built before the Share plugin was added.
       if (await shareTextFile(name, text, 'Canker Core data')) return;
@@ -135,6 +140,9 @@ export function SettingsList({ user }: { user: User }) {
     window.location.assign('/');
   };
 
+  const openPage = (path: string) =>
+    void openExternal(new URL(path, window.location.origin).href);
+
   return (
     <div className="grid gap-6">
       <Group label="Profile">
@@ -173,7 +181,7 @@ export function SettingsList({ user }: { user: User }) {
           href="/profile/appearance"
           lead={<Tile icon={SunMoon} color="indigo" />}
           label="Appearance"
-          value={mounted ? THEME_LABEL[theme ?? 'system'] ?? 'System' : ''}
+          value={mounted ? (THEME_LABEL[theme ?? 'system'] ?? 'System') : ''}
         />
       </Group>
 
@@ -191,6 +199,38 @@ export function SettingsList({ user }: { user: User }) {
           onClick={exportData}
           disabled={busy !== null}
         />
+        {/* Under Account, where the privacy page, the support page and the
+            store review notes all say it is. */}
+        <ButtonRow
+          label={busy === 'delete' ? 'Deleting…' : 'Delete account'}
+          tone="destructive"
+          onClick={remove}
+          disabled={busy !== null}
+        />
+      </Group>
+
+      {/* The site's own pages, in a sheet over the app (the in-app browser)
+          rather than in place: the marketing pages have no way back to the
+          app's tabs. */}
+      <Group label="About">
+        <ButtonRow
+          lead={<Tile icon={LifeBuoy} color="indigo" />}
+          label="Help"
+          chevron
+          onClick={() => openPage('/support')}
+        />
+        <ButtonRow
+          lead={<Tile icon={ShieldCheck} color="green" />}
+          label="Privacy"
+          chevron
+          onClick={() => openPage('/privacy')}
+        />
+        <ButtonRow
+          lead={<Tile icon={FileText} color="slate" />}
+          label="Terms"
+          chevron
+          onClick={() => openPage('/terms')}
+        />
       </Group>
 
       <Group label="Session">
@@ -200,15 +240,12 @@ export function SettingsList({ user }: { user: User }) {
           onClick={signOut}
           disabled={busy !== null}
         />
-        <ButtonRow
-          label={busy === 'delete' ? 'Deleting…' : 'Delete account'}
-          tone="destructive"
-          onClick={remove}
-          disabled={busy !== null}
-        />
       </Group>
 
-      <BuildLabel className="block text-center text-xs text-muted-foreground" />
+      <div className="grid gap-1 text-center text-xs text-muted-foreground">
+        <p>A log, not medical advice.</p>
+        <BuildLabel className="block" />
+      </div>
 
       <Sheet
         open={sheet === 'profile'}

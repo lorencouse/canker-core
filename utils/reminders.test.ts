@@ -52,7 +52,8 @@ const batches = () =>
 const EVENING_COPY = {
   title: 'Still time to check in',
   body: 'Log today in about a minute.',
-  extra: { path: '/today?checkin=1' }
+  extra: { path: '/today?checkin=1' },
+  isExactNotification: false
 };
 const DEFERRED_IDS = Array.from({ length: 14 }, (_, i) => 101 + i);
 const EVENING_IDS = [1, ...DEFERRED_IDS].map((id) => ({ id }));
@@ -94,6 +95,14 @@ describe('reminders', () => {
         extra: { path: '/today?checkin=1' }
       })
     ]);
+  });
+
+  it('never asks Android for an exact alarm', async () => {
+    await applyReminder('morning', { enabled: true, time: '08:00' });
+    await applyReminder('evening', { enabled: true, time: '20:00' });
+    for (const n of batches().flat()) {
+      expect(n.isExactNotification).toBe(false);
+    }
   });
 
   it('schedules the evening reminder as id 1 with its copy', async () => {

@@ -44,6 +44,11 @@ const InsightsLayout = ({
       ) : (
         <InsightsBody sores={sores} dayLogs={dayLogs} />
       )}
+
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        A log, not medical advice. A sore that is not shrinking after two weeks
+        is worth showing a doctor or dentist.
+      </p>
     </div>
   );
 };
