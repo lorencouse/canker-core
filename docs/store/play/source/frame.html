@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Nunito:wght@600;700&display=block"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --indigo: #4b4bf0;
+        --ink: #16163f;
+        --sun: #ffd23f;
+        --ground: #f4f5ff;
+      }
+      * {
+        margin: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: var(--w);
+        height: var(--h);
+        overflow: hidden;
+      }
+      body {
+        background: radial-gradient(
+          120% 70% at 50% 0%,
+          #6767ff 0%,
+          var(--indigo) 55%,
+          #3a3ad6 100%
+        );
+        font-family: 'Bricolage Grotesque', sans-serif;
+        position: relative;
+      }
+      h1 {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: var(--captop);
+        text-align: center;
+        color: #fff;
+        font-weight: 800;
+        font-size: var(--capsize);
+        line-height: 1.02;
+        letter-spacing: -0.02em;
+        padding: 0 64px;
+        text-wrap: balance;
+      }
+      h1 em {
+        font-style: normal;
+        color: var(--sun);
+      }
+      .screen {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        top: var(--top);
+        width: var(--sw);
+        border-radius: var(--r);
+        overflow: hidden;
+        box-shadow:
+          0 40px 90px rgba(10, 10, 60, 0.45),
+          0 0 0 calc(var(--r) * 0.22) rgba(255, 255, 255, 0.14);
+      }
+      .screen img {
+        display: block;
+        width: 100%;
+      }
+      .spark {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        background: var(--sun);
+        clip-path: polygon(
+          50% 0,
+          62% 38%,
+          100% 50%,
+          62% 62%,
+          50% 100%,
+          38% 62%,
+          0 50%,
+          38% 38%
+        );
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="cap"></h1>
+    <div class="spark" style="top: 7%; left: 9%"></div>
+    <div
+      class="spark"
+      style="top: 4%; right: 12%; width: 18px; height: 18px; opacity: 0.8"
+    ></div>
+    <div class="screen"><img id="img" /></div>
+    <script>
+      const q = new URLSearchParams(location.search);
+      const w = +q.get('w'),
+        h = +q.get('h');
+      const s = document.documentElement.style;
+      s.setProperty('--w', w + 'px');
+      s.setProperty('--h', h + 'px');
+      const tablet = w / h > 0.6;
+      s.setProperty('--capsize', (tablet ? 118 : 104) + 'px');
+      s.setProperty('--captop', (tablet ? 110 : 96) + 'px');
+      s.setProperty('--top', (tablet ? 420 : 400) + 'px');
+      s.setProperty('--sw', (tablet ? 1260 : 840) + 'px');
+      s.setProperty('--r', (tablet ? 48 : 56) + 'px');
+      document.getElementById('cap').innerHTML = q.get('cap');
+      document.getElementById('img').src = q.get('img');
+    </script>
+  </body>
+</html>

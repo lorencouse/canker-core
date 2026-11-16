@@ -133,7 +133,10 @@ on regeneration:
   the App ID. Also the `NSCameraUsageDescription` and
   `NSPhotoLibraryUsageDescription` strings in `Info.plist` for sore photos
   (below), and the HealthKit capability and `NSHealthShareUsageDescription`
-  for the sleep import (below). The template already targets iOS 15.0 (Capacitor's Podfile hook
+  for the sleep import (below). Also `ITSAppUsesNonExemptEncryption` false,
+  the app's `PrivacyInfo.xcprivacy` (added to the bundle's resources), and the
+  store version from `native/version.json` and main's commit count
+  (`docs/store/README.md`). The template already targets iOS 15.0 (Capacitor's Podfile hook
   lifts every pod to 15.0 too) and ships the `SceneDelegate` and scene
   manifest iOS 27 requires, so the script no longer patches those.
 - **Android:** the sign-in App Link intent-filter on `MainActivity` (see
@@ -142,6 +145,8 @@ on regeneration:
   `resources/notification/` into `res/drawable-*/ic_stat_kanko.png`, and the
   Health Connect setup for the sleep import (below): `READ_SLEEP`, the other
   health permissions removed, `minSdkVersion` 26 and the privacy-policy URL.
+  Also the notifications plugin's `SCHEDULE_EXACT_ALARM` removed (reminders
+  are inexact), and the same store version as versionName and versionCode.
 
 `cap:add:ios` asks for the CocoaPods template (`--packagemanager
 CocoaPods`). Capacitor 8 otherwise generates a Swift Package Manager
