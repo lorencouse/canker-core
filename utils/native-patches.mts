@@ -588,7 +588,8 @@ export function patchAndroidStrings(text: string): PatchResult {
  * build number (CFBundleVersion, Android versionCode) is the commit count of
  * main, as the site's "v1.N" is, so every build cut from a newer main gets a
  * higher number with nothing to remember. Both stores insist the number only
- * rises, so `minBuildNumber` is a floor: 1.0 (111) was already uploaded.
+ * rises, so `minBuildNumber` is a floor above the last upload: 1.0 (111)
+ * on iOS, 1.0 (113) on Play.
  */
 export type NativeVersion = { marketing: string; build: string };
 

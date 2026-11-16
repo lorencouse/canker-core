@@ -66,10 +66,9 @@ Canker Core is a log, not a diagnosis. It has no opinion about treatments and do
 | Phone screenshots                     | `play/phone-*.png`         | 1080x1920 (9:16)                               |
 | 7-inch and 10-inch tablet screenshots | `play/tablet-*.png`        | 1600x2560 (10:16)                              |
 
-The screens in them are the signed-in site rendered at phone and tablet size
-from a scratch backend with demo data (`play/source/README.md`), so they show
-the web tab bar; the Android app draws Material's own bar in its place.
-Recapture from the Android emulator if a reviewer objects.
+The screens are the Android app itself (debug build on the emulator, with
+its native Material navigation bar) signed in to a scratch backend with the
+review account's demo history (`play/source/README.md`).
 
 ## App content (Policy > App content)
 
