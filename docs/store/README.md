@@ -22,7 +22,7 @@ reach the generated projects through `npm run cap:patch` (run by
 - Off main, the build is numbered 1 so it can never pass for a store build.
   To cut a store build from somewhere else, set `NATIVE_BUILD_NUMBER`.
 - `minBuildNumber` refuses anything at or below what the stores already have
-  (1.0 (111) is in App Store Connect).
+  (1.0 (111) is in App Store Connect; 1.0 (113) was built for Play).
 - App Store Connect refuses a build for a version it has already approved,
   so bump `marketingVersion` after each approval. Play only needs the build
   number to rise.

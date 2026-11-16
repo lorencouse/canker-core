@@ -108,7 +108,28 @@
       s.setProperty('--sw', (tablet ? 1260 : 840) + 'px');
       s.setProperty('--r', (tablet ? 48 : 56) + 'px');
       document.getElementById('cap').innerHTML = q.get('cap');
-      document.getElementById('img').src = q.get('img');
+      const img = document.getElementById('img');
+      if (q.get('fit')) {
+        const top = tablet ? 400 : 330,
+          bottom = tablet ? 70 : 56;
+        s.setProperty('--top', top + 'px');
+        s.setProperty('--captop', (tablet ? 100 : 80) + 'px');
+        s.setProperty('--r', (tablet ? 40 : 44) + 'px');
+        img.onload = () => {
+          s.setProperty(
+            '--sw',
+            Math.round(
+              ((h - top - bottom) * img.naturalWidth) / img.naturalHeight
+            ) + 'px'
+          );
+          document.body.dataset.ready = 1;
+        };
+      } else {
+        img.onload = () => {
+          document.body.dataset.ready = 1;
+        };
+      }
+      img.src = q.get('img');
     </script>
   </body>
 </html>

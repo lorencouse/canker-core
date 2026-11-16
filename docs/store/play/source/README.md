@@ -1,12 +1,17 @@
 # How the Play graphics were made
 
 - `frame.html` frames one app screen under a short caption:
-  `frame.html?w=1080&h=1920&img=<screen png>&cap=Watch it <em>shrink</em>`,
+  `frame.html?fit=1&w=1080&h=1920&img=<screen png>&cap=Watch it <em>shrink</em>`,
   opened in Chrome with the viewport at exactly w x h (device scale 1) and
-  screenshotted. Tablets use w=1600, h=2560.
-- The screens are the signed-in app rendered from a scratch backend (a local
-  Postgres with the demo history in `scripts/seed-review-account.sql`), at
-  412x760 CSS px x2.625 for phones and 800x1280 x2 for tablets.
+  screenshotted. Tablets use w=1600, h=2560. `fit=1` sizes the screen to the
+  height, so a whole phone screen, navigation bar included, shows.
+- The screens are `adb exec-out screencap` from the Android emulator
+  (Medium*Phone_API_37.0, system demo mode for a clean status bar) running a
+  debug build whose `CAPACITOR_SERVER_URL` is a scratch backend: a local
+  Postgres seeded with `scripts/seed-review-account.sql`. Tablet screens are
+  the same emulator with `adb shell wm size 1600x2560` and `wm density 320`.
+  Sign-in and page changes were driven through the debug WebView's DevTools
+  socket (`adb forward tcp:9333 localabstract:webview_devtools_remote*<pid>`).
 - `feature-graphic.html` is the 1024x500 feature graphic; saved through JPEG
   so the PNG has no alpha.
 
