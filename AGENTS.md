@@ -12,6 +12,8 @@ is `dockerimage`, not a git source: it serves whatever tag
 deploy is a local arm64 build, an image shipped over SSH, a registry push,
 and an API tag switch — the four steps in `docs/DEPLOYMENT.md`.
 
+**A push is a deploy** (owner rule, 2026-10-12): after pushing to `main`, build and ship that sha and switch the tag without waiting to be asked.
+
 The VPS runs at its CPU limit, so images are **never** built on the server.
 
 - Coolify app uuid `se1yk2uuejhylof4isj4x5wq`, host alias `coolify`.
