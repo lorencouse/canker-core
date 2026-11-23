@@ -107,6 +107,7 @@
     /* Ink on a severity fill: dark for pale levels, white for deep ones. */
     --sev-ink-lo: 212 30% 16%;
     --sev-ink-hi: 0 0% 100%;
+    --sev-ink-peak: 0 0% 100%;
 
     /*
      * Mouth-map tissue: the soft-toy mouth. Mauve and violet that read as
@@ -207,9 +208,13 @@
     --sev-9: 0 82% 58%;
     --sev-10: 0 88% 62%;
 
-    /* Every dark-mode fill is deep enough to need white. */
+    /*
+     * White on every fill but the top two, where the ramp is bright enough
+     * that ink reads better (10: 4.8:1 in ink against 3.6:1 in white).
+     */
     --sev-ink-lo: 0 0% 100%;
     --sev-ink-hi: 0 0% 100%;
+    --sev-ink-peak: 240 48% 17%;
 
     /* Soft purples, held to the same CIEDE2000 rule as light mode. */
     --mm-ink: 280 30% 92% / 0.5;
@@ -534,16 +539,6 @@
     --press-out: 180ms;
     --push-ms: 340ms;
     --push-offset: 28%;
-
-    /*
-     * Settings' icon tiles, the system apps' coloured squares. Identity, not
-     * data, so none of them is the pain red; each carries a white glyph at
-     * 3:1 or better in both themes.
-     */
-    --tile-indigo: 240 85% 60%;
-    --tile-amber: 36 92% 46%;
-    --tile-green: 152 60% 32%;
-    --tile-slate: 240 18% 44%;
 
     /* Fixed chrome heights, so scroll containers can pad themselves. */
     --app-bar-h: 3.5rem;

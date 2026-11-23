@@ -1,6 +1,11 @@
 import InsightsLayout from './insights-layout';
 import { getDayLogs, getSores, getUser } from '@/lib/queries';
 import { redirect } from 'next/navigation';
+
+export const metadata = {
+  title: 'Insights'
+};
+
 export default async function InsightsPage() {
   const user = await getUser();
 

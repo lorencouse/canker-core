@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'What Canker Core records, how the pain scale works, and what it deliberately does not do.',
+    'What Canker Core records, how the daily check-in and the pain scale work, and what it deliberately does not do.',
   alternates: { canonical: '/about' }
 };
 
@@ -17,8 +17,8 @@ export default function AboutPage() {
   return (
     <>
       <Prose
-        title="How it works"
-        intro="Canker Core is a log, not a diagnosis. It records what you tell it about a sore so you can tell whether it is getting better."
+        title="How Canker Core works"
+        intro="Canker Core is a log, not a diagnosis. It records what you tell it about your sores and your days, so you can see whether a sore is getting better and what tends to come before the next one."
         mascot={
           <Kanko
             mood="neutral"
@@ -39,12 +39,32 @@ export default function AboutPage() {
         </section>
 
         <section>
-          <h2>Two readings, taken daily</h2>
+          <h2>A one-minute check-in, once a day</h2>
           <p>
-            Each sore carries a width in millimetres and a pain level from 1 to
-            10. Every time you update it, the new pair is appended rather than
-            overwriting the last one, so the whole course of a sore is kept.
-            That series is what the history chart draws.
+            Each day the check-in starts with every open sore: its width in
+            millimetres and its pain from 1 to 10, or the same as yesterday.
+            Each reading is added rather than written over the last one, so the
+            whole course of a sore is kept, and that series is what the history
+            chart draws.
+          </p>
+          <p>
+            Then it asks about the day: anything new in your mouth, how you
+            slept, what you ate, how you felt and what you tried. Each is a tap
+            or two from a short list.
+          </p>
+        </section>
+
+        <section>
+          <h2>Streaks and patterns</h2>
+          <p>
+            A day you check in with nothing on the trigger lists adds one to
+            your streak. Poor sleep, and a stress level of 4 or 5, count as
+            triggers too.
+          </p>
+          <p>
+            Insights lines up what came before each sore, such as coffee before
+            two of your last three. That is a pattern, not proof, and it is
+            worded that way in the app.
           </p>
         </section>
 

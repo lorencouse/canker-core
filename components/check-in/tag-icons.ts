@@ -6,6 +6,7 @@ import {
   Cookie,
   Droplet,
   Droplets,
+  FlaskConical,
   Flame,
   Nut,
   Pill,
@@ -30,14 +31,16 @@ type Option =
 
 /**
  * A line icon for each check-in chip whose meaning one clear glyph carries.
- * Null where none does (acidic food, a bitten cheek, a toothpaste): an icon
- * that has to be explained is worse than a word on its own. Every option is
+ * Null where none does (a bitten cheek, a toothpaste): an icon that has to
+ * be explained is worse than a word on its own. Acidic food takes the flask
+ * rather than the droplet the audit drew, since the droplet already means
+ * Period one screen later. Every option is
  * listed, so a new one gets the same decision rather than silently none.
  */
 export const TAG_ICONS: Record<Option, LucideIcon | null> = {
   'Sharp or hard food': Cookie,
   'Spicy food': Flame,
-  'Acidic food': null,
+  'Acidic food': FlaskConical,
   Citrus: Citrus,
   Nuts: Nut,
   Chocolate: Candy,

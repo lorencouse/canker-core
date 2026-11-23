@@ -33,7 +33,8 @@ export default function SupportPage() {
         <h2>Your account and data</h2>
         <p>
           To download everything you have logged, or to delete your account and
-          every reading attached to it, open Settings, then Account. See{' '}
+          every reading attached to it, open Settings: Export data and Delete
+          account are both there. See{' '}
           <Link href="/privacy" className={linkClass}>
             the privacy page
           </Link>{' '}

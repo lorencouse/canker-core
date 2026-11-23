@@ -126,21 +126,26 @@ function Flow({ user }: { user: User }) {
 
       <header className="mt-3 [@media(min-height:700px)]:mt-5">
         {step === 'place' && (
-          <div className="mb-2 flex flex-col items-center gap-1 text-center [@media(min-height:700px)]:mb-3 [@media(min-height:700px)]:gap-2">
-            {/*
-              120px by default: on a 320px or 667px-tall phone the full-size
-              Kanko plus this line pushed the map below the fold. Full size
-              only where there is room for both.
-            */}
+          /*
+            Kanko beside the hello rather than centred above it: a centred
+            block over a left-aligned heading broke the page's one line of
+            alignment, and the stacked version cost the map about 170px.
+          */
+          <div className="mb-4 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
             <Kanko
               mood="hello"
-              size={160}
+              size={88}
               priority
-              className="-my-2 size-[120px] [@media(min-width:360px)_and_(min-height:700px)]:my-0 [@media(min-width:360px)_and_(min-height:700px)]:size-40"
+              className="size-[88px] shrink-0"
             />
-            <p className="prose-measure text-foreground">
-              Hi, I’m Kanko. Let’s work out what sets your mouth sores off, one
-              day at a time.
+            <p className="min-w-0">
+              <span className="block font-display text-section font-extrabold text-foreground">
+                Hi, I’m Kanko.
+              </span>
+              <span className="mt-1 block text-muted-foreground">
+                Let’s work out what sets your mouth sores off, one day at a
+                time.
+              </span>
             </p>
           </div>
         )}
@@ -149,7 +154,9 @@ function Flow({ user }: { user: User }) {
       </header>
 
       <div className="mt-4 flex-1 [@media(min-height:700px)]:mt-6">
-        {step === 'place' && <MouthMap user={user} />}
+        {/* The header already says where to tap, so the map's own
+            "tap where the sore is" line would say it twice. */}
+        {step === 'place' && <MouthMap user={user} addHint={null} />}
 
         {step === 'measure' && sore && (
           <FirstReading sore={sore} onChange={updateSore} />
@@ -234,15 +241,15 @@ function Flow({ user }: { user: User }) {
 const COPY: Record<Step, { title: string; body: string }> = {
   place: {
     title: 'Where is it?',
-    body: 'Tap the spot in your mouth. Use the tabs to switch to your cheeks or lips — and tap again if you want to move the mark.'
+    body: 'Tap the spot on the map. Cheeks and lips are in the tabs, and a second tap moves the mark.'
   },
   measure: {
     title: 'How big, and how bad?',
     body: 'The circle is close to life size. Drag until it looks about right; the colour is the pain scale you will see everywhere else.'
   },
   ready: {
-    title: 'That’s the whole routine.',
-    body: 'Come back tomorrow and move the same two sliders. Two readings make a line, and a line is the only thing that answers whether it is shrinking.'
+    title: 'That’s day one.',
+    body: 'Tomorrow I’ll ask how it’s doing, plus what you ate and how you slept: one minute, once a day.'
   }
 };
 

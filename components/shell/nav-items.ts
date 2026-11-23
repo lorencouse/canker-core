@@ -7,31 +7,30 @@ import { CalendarCheck, LineChart, Map, Settings } from 'lucide-react';
  * starts, and most days nothing starts. A bottom bar stops being scannable
  * past five, and anything that is not somewhere you *go* — sign out, theme —
  * belongs in Settings rather than competing with them.
+ *
+ * The visible label is each tab's whole accessible name. A longer spoken
+ * name ("Patterns and readings over time") broke voice control: saying
+ * "Insights" matched nothing (WCAG 2.5.3, label in name).
  */
 export const APP_NAV = [
   {
     href: '/today',
     label: 'Today',
-    description: 'Today’s check-in',
     icon: CalendarCheck
   },
   {
     href: '/my-sores',
     label: 'Map',
-    // Spoken by a screen reader in place of the terse visual label.
-    description: 'Your mouth map',
     icon: Map
   },
   {
     href: '/insights',
     label: 'Insights',
-    description: 'Patterns and readings over time',
     icon: LineChart
   },
   {
     href: '/profile',
     label: 'Settings',
-    description: 'Account and preferences',
     icon: Settings
   }
 ] as const;

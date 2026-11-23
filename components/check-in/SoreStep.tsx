@@ -32,7 +32,7 @@ import { BusyIcon } from '@/components/ui/busy-icon';
 import CheckInMap from './CheckInMap';
 import PhotoControl from './PhotoControl';
 import StepHeading from './StepHeading';
-import { StepFooter, StepPinnedMap } from './StepLayout';
+import { StepBody, StepFooter, StepPinnedMap } from './StepLayout';
 import { useReportBusy } from './useReportBusy';
 
 /**
@@ -162,7 +162,7 @@ export default function SoreStep({
       : null;
 
   return (
-    <div className="grid gap-5">
+    <StepBody className="gap-5">
       <StepPinnedMap>
         <CheckInMap
           sores={allSores}
@@ -269,6 +269,6 @@ export default function SoreStep({
                 : 'Same, next'}
         </Button>
       </StepFooter>
-    </div>
+    </StepBody>
   );
 }

@@ -7,12 +7,12 @@ export default function AuthLinks({
   links: { href: string; label: string }[];
 }) {
   return (
-    <div className="mt-5 flex flex-col gap-2 text-sm">
+    <div className="mt-3 flex flex-col items-start text-sm">
       {links.map(({ href, label }) => (
         <Link
           key={href + label}
           href={href}
-          className="press rounded-md text-muted-foreground hover:text-foreground"
+          className="press inline-flex min-h-11 items-center rounded-md text-muted-foreground hover:text-foreground"
         >
           {label}
         </Link>

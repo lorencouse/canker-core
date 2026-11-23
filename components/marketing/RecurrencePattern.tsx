@@ -23,12 +23,12 @@ type Placement = 'same' | 'area' | 'anywhere';
 const PLACEMENTS: Array<{ value: Placement; label: string }> = [
   { value: 'same', label: 'The same spot, near enough every time' },
   { value: 'area', label: 'The same general area, not the same point' },
-  { value: 'anywhere', label: 'Anywhere — no pattern I can see' }
+  { value: 'anywhere', label: 'Anywhere, no pattern I can see' }
 ];
 
 const READS: Record<Placement, { title: string; body: string }> = {
   same: {
-    title: 'Local pattern — look at what touches that point',
+    title: 'Local pattern: look at what touches that point',
     body: 'Tissue rarely breaks down in one fixed place unless something keeps happening in that place. A sharp tooth edge, a rough filling margin, a bracket or wire, the rim of a night guard, a cheek you catch in your sleep. This is the branch with a one-appointment fix at the end of it, because a dentist can feel an edge you cannot see.'
   },
   area: {
@@ -36,7 +36,7 @@ const READS: Record<Placement, { title: string; body: string }> = {
     body: '"Left cheek" covers a lot of ground, and a mechanical cause and a whole-mouth one look identical at that resolution. Mark the exact point the next few times. If they land within a few millimetres of each other, this is the local pattern; if they are spread across the area, it is not.'
   },
   anywhere: {
-    title: 'Whole-mouth pattern — look at the days before, not the places',
+    title: 'Whole-mouth pattern: look at the days before, not the places',
     body: 'Sores that turn up anywhere are not reporting a location, so there is nothing at any one site to find. What varies is the state you were in beforehand: sleep, stress, being ill, the week of your cycle, a toothpaste change, something you ate two days earlier.'
   }
 };
@@ -116,16 +116,16 @@ export default function RecurrencePattern() {
 
         <p className="mt-3 text-muted-foreground">
           {count === 1
-            ? 'One in three months is not yet a pattern — it is one sore. Two more will tell you more than any amount of thinking about this one.'
+            ? 'One in three months is not yet a pattern. It is one sore. Two more will tell you more than any amount of thinking about this one.'
             : `That is about one every ${gap} days${count >= 12 ? ', which is close to never being without one' : ''}.`}
         </p>
 
         {worthAsking && (
           <p className="mt-4 rounded-md bg-muted/60 p-3 text-sm text-foreground">
             Several a month is the point where it is worth having a doctor or
-            dentist look rather than waiting out another one — not because it is
-            an emergency, but because frequent ulcers are the case where
-            something outside the mouth is worth ruling out.
+            dentist look rather than waiting out another one. It is not an
+            emergency, but frequent ulcers are the case where something outside
+            the mouth is worth ruling out.
           </p>
         )}
 

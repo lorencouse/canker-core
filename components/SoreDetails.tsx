@@ -14,6 +14,7 @@ import { useSoreContext } from '@/context/SoreContext';
 import Kanko from '@/components/kanko/Kanko';
 import { StarMark } from '@/components/graphics/Sparkles';
 import SoreActions, {
+  DeleteSore,
   EditingBar,
   useMapActions
 } from '@/components/mouth-map/SoreActionBar';
@@ -48,9 +49,10 @@ import { sevFill } from '@/utils/severity';
  * phone.
  *
  * It answers "how is this one doing" in the order a person asks it: the
- * verdict, the four figures behind it, the course drawn to scale, the sore
- * at actual size, then what to do. Last comes the map's own question, place
- * against time: has a sore been here before?
+ * verdict and the day's job (Log today), the four figures behind it, the
+ * course drawn to scale, the sore at actual size. Then the map's own
+ * question, place against time: has a sore been here before? Delete, for
+ * mistakes, comes last.
  */
 
 function Figure({
@@ -126,7 +128,7 @@ function SorePhotos({ sore, now }: { sore: Sore; now: Date }) {
                 alt={`The sore on ${shortDate(new Date(p.at), now)}`}
                 className="aspect-square w-full rounded-xl object-cover"
               />
-              <figcaption className="tabular mt-1 truncate text-sm text-muted-foreground">
+              <figcaption className="tabular mt-1 text-sm text-muted-foreground">
                 {shortDate(new Date(p.at), now)}
               </figcaption>
             </figure>
@@ -196,6 +198,7 @@ export function SoreDetail() {
 
   const verdict = verdictOf(sore, now);
   const today = hasReadingOn(sore, now);
+  const stale = !sore.healed_at && sore.readings.length > 0 && !today;
   const size = currentSize(sore);
   const pain = currentPain(sore);
   const days = courseOf(sore, now);
@@ -224,9 +227,25 @@ export function SoreDetail() {
           {metaLine(sore, now)}
         </p>
       </header>
-      <p className="mt-2 text-lg leading-snug">
-        <b className="font-semibold">{verdict.word}</b> {verdict.detail}
-      </p>
+      {/* Not logged today: the figures below already say the last reading,
+          so a sentence repeating them is only a status, and reads as one. */}
+      {stale ? (
+        <p className="mt-2">
+          <span className="inline-flex items-center whitespace-nowrap rounded-full bg-accent px-2.5 py-0.5 text-sm font-bold text-accent-foreground">
+            Not logged today
+          </span>
+        </p>
+      ) : (
+        <p className="mt-2 text-lg leading-snug">
+          <b className="font-semibold">{verdict.word}</b> {verdict.detail}
+        </p>
+      )}
+
+      {mode === 'view' && (
+        <div className="mt-4">
+          <SoreActions />
+        </div>
+      )}
 
       {mode !== 'view' && (
         <div className="mt-4 space-y-3">
@@ -293,10 +312,6 @@ export function SoreDetail() {
 
       <SorePhotos sore={sore} now={now} />
 
-      <div className="mt-4">
-        <SoreActions />
-      </div>
-
       {nearby.length > 0 && (
         <div className="mt-5">
           <h3 className="font-sans text-base font-semibold tracking-normal">
@@ -314,10 +329,15 @@ export function SoreDetail() {
               return (
                 <li
                   key={other.id}
-                  className="tabular grid min-h-12 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-t border-border text-base"
+                  className="tabular grid min-h-12 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-t border-border py-2 text-base"
                 >
-                  <span className="truncate">
-                    {other.zone}, {shortDate(new Date(other.created_at), now)}
+                  {/* Wraps rather than truncates: "Aug …" hid the one
+                      thing the row is for, when. */}
+                  <span className="min-w-0 break-words">
+                    {other.zone},{' '}
+                    <span className="whitespace-nowrap">
+                      {shortDate(new Date(other.created_at), now)}
+                    </span>
                   </span>
                   <span className="text-muted-foreground">
                     {course.length} days
@@ -333,6 +353,8 @@ export function SoreDetail() {
           </ul>
         </div>
       )}
+
+      <DeleteSore />
     </section>
   );
 }

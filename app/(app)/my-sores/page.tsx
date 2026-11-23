@@ -1,6 +1,11 @@
 import MySoresLayout from './my-sores-layout';
 import { getUser, getSores } from '@/lib/queries';
 import { redirect } from 'next/navigation';
+
+export const metadata = {
+  title: 'Map'
+};
+
 export default async function MySoresPage({
   searchParams
 }: {

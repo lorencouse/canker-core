@@ -8,9 +8,11 @@ import ModeToggle from '@/components/mode-toggle';
 /**
  * Sign-in stands alone: no navbar, no tab bar, nothing to navigate to.
  *
- * On a phone this is the app's first screen, and it is the one place where a
- * centred card on an empty ground is right — there is a single decision to
- * make and everything else would be a distraction from it.
+ * On a phone this is the app's first screen, with a single decision to
+ * make, so nothing else is on it. From sm up the card is centred on an
+ * empty ground; on a phone it starts just under the wordmark, because
+ * centring a short form in a tall window left about 180px of empty ground
+ * above it and pushed the buttons toward the keyboard.
  */
 export default function SignInLayout({ children }: PropsWithChildren) {
   return (
@@ -27,7 +29,7 @@ export default function SignInLayout({ children }: PropsWithChildren) {
 
       <main
         id="main"
-        className="flex flex-1 items-center justify-center px-4 py-3 sm:py-10"
+        className="flex flex-1 items-start justify-center px-4 py-2 sm:items-center sm:py-10"
       >
         {/*
           The keyboard covers the lower half of a phone, so the card is

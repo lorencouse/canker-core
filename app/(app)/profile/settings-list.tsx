@@ -173,13 +173,13 @@ export function SettingsList({ user }: { user: User }) {
       <Group label="Preferences">
         <LinkRow
           href="/profile/notifications"
-          lead={<Tile icon={Bell} color="amber" />}
+          lead={<Tile icon={Bell} />}
           label="Reminders"
           value={reminderValue}
         />
         <LinkRow
           href="/profile/appearance"
-          lead={<Tile icon={SunMoon} color="indigo" />}
+          lead={<Tile icon={SunMoon} />}
           label="Appearance"
           value={mounted ? (THEME_LABEL[theme ?? 'system'] ?? 'System') : ''}
         />
@@ -187,24 +187,16 @@ export function SettingsList({ user }: { user: User }) {
 
       <Group label="Account">
         <ButtonRow
-          lead={<Tile icon={KeyRound} color="slate" />}
+          lead={<Tile icon={KeyRound} />}
           label="Password"
           chevron
           onClick={() => setSheet('password')}
         />
         <ButtonRow
-          lead={<Tile icon={Share} color="green" />}
+          lead={<Tile icon={Share} />}
           label="Export data"
           value={busy === 'export' ? 'Preparing…' : 'CSV'}
           onClick={exportData}
-          disabled={busy !== null}
-        />
-        {/* Under Account, where the privacy page, the support page and the
-            store review notes all say it is. */}
-        <ButtonRow
-          label={busy === 'delete' ? 'Deleting…' : 'Delete account'}
-          tone="destructive"
-          onClick={remove}
           disabled={busy !== null}
         />
       </Group>
@@ -214,19 +206,19 @@ export function SettingsList({ user }: { user: User }) {
           app's tabs. */}
       <Group label="About">
         <ButtonRow
-          lead={<Tile icon={LifeBuoy} color="indigo" />}
+          lead={<Tile icon={LifeBuoy} />}
           label="Help"
           chevron
           onClick={() => openPage('/support')}
         />
         <ButtonRow
-          lead={<Tile icon={ShieldCheck} color="green" />}
+          lead={<Tile icon={ShieldCheck} />}
           label="Privacy"
           chevron
           onClick={() => openPage('/privacy')}
         />
         <ButtonRow
-          lead={<Tile icon={FileText} color="slate" />}
+          lead={<Tile icon={FileText} />}
           label="Terms"
           chevron
           onClick={() => openPage('/terms')}
@@ -235,9 +227,21 @@ export function SettingsList({ user }: { user: User }) {
 
       <Group label="Session">
         <ButtonRow
-          lead={<Tile icon={LogOut} color="slate" />}
+          lead={<Tile icon={LogOut} />}
           label="Sign out"
           onClick={signOut}
+          disabled={busy !== null}
+        />
+      </Group>
+
+      {/* Last and on its own, where a destructive row belongs: beside Export
+          a slip of the thumb could land on it. Privacy, Support and the store
+          notes send people here as "Settings, Delete account". */}
+      <Group label="Delete account">
+        <ButtonRow
+          label={busy === 'delete' ? 'Deleting…' : 'Delete account'}
+          tone="destructive"
+          onClick={remove}
           disabled={busy !== null}
         />
       </Group>

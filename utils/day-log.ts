@@ -98,6 +98,14 @@ export const pickKnown = <T extends string>(
 };
 
 /**
+ * Where the habit scales turn into triggers. Named so the check-in can say
+ * the rule in words without the copy drifting from what is counted.
+ */
+export const STRESS_TRIGGER_FROM = 4;
+export const POOR_SLEEP_QUALITY_UPTO = 2;
+export const SHORT_SLEEP_UNDER_HOURS = 6;
+
+/**
  * Stored triggers plus the ones derived from the habit fields: a stress of
  * 4 or 5 is `Stress`; a sleep quality of 2 or less, or under 6 hours, is
  * `Poor sleep`. De-duplicated and in `TRIGGERS` order, with unknown legacy
@@ -105,16 +113,19 @@ export const pickKnown = <T extends string>(
  */
 export const effectiveTriggers = (log: DayLog): string[] => {
   const set = new Set<string>(log.triggers);
-  if (log.stress !== null && log.stress >= 4) set.add('Stress');
+  if (log.stress !== null && log.stress >= STRESS_TRIGGER_FROM)
+    set.add('Stress');
   if (
-    (log.sleep_quality !== null && log.sleep_quality <= 2) ||
-    (log.sleep_hours !== null && log.sleep_hours < 6)
+    (log.sleep_quality !== null &&
+      log.sleep_quality <= POOR_SLEEP_QUALITY_UPTO) ||
+    (log.sleep_hours !== null && log.sleep_hours < SHORT_SLEEP_UNDER_HOURS)
   ) {
     set.add('Poor sleep');
   }
   const known = TRIGGERS.filter((t) => set.has(t));
   const unknown = log.triggers.filter(
-    (t, i, all) => !(TRIGGERS as readonly string[]).includes(t) && all.indexOf(t) === i
+    (t, i, all) =>
+      !(TRIGGERS as readonly string[]).includes(t) && all.indexOf(t) === i
   );
   return [...known, ...unknown];
 };

@@ -85,7 +85,7 @@ export default function AppPage() {
       <section className="fold-shell fold-split container grid items-center gap-10 py-10 sm:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:gap-16 lg:py-24">
         <div className="min-w-0">
           <div className="flex items-end gap-3 sm:gap-4">
-            <h1 className="min-w-0 max-w-[6em] text-display">
+            <h1 className="min-w-0 max-w-[7.2em] text-display">
               Your sore log, in your pocket.
             </h1>
             <Kanko
@@ -95,19 +95,21 @@ export default function AppPage() {
               className="size-24 shrink-0 sm:size-36"
             />
           </div>
-          <p className="prose-measure mt-6 text-lg text-muted-foreground">
-            Canker Core is free on Android. Mark where a sore is, log its size
-            and pain each day, and see whether it is actually shrinking, from
-            the phone that is already in your hand when it starts to sting.
-          </p>
-
-          <StoreBadges className="-ml-2 mt-8" />
+          {/* The badge is the page's one action, so it comes straight
+              after the headline: under the copy it fell below the first
+              screen on a phone. */}
+          <StoreBadges className="-ml-2 mt-5" />
           {!APP_STORE_URL && (
-            <p className="mt-3 text-sm text-muted-foreground">
+            <p className="mt-2 text-sm text-muted-foreground">
               On iPhone? The App Store version is on its way. Until then, the
               website works in Safari with the same account.
             </p>
           )}
+          <p className="prose-measure mt-5 text-lg text-muted-foreground">
+            Canker Core is free on Android. Mark where a sore is, log its size
+            and pain each day, and see whether it is actually shrinking, from
+            the phone that is already in your hand when it starts to sting.
+          </p>
         </div>
 
         <figure className="mx-auto w-full max-w-[18rem] lg:max-w-none">
@@ -128,17 +130,19 @@ export default function AppPage() {
         <p className="prose-measure mt-2 text-muted-foreground">
           The same log as the website, with the parts only a phone can do.
         </p>
-        <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* A plain list, icon beside the words: four identical icon-topped
+            cards read as a template, and the cards added nothing to hold. */}
+        <ul className="mt-8 grid grid-cols-1 gap-x-12 gap-y-7 lg:grid-cols-2">
           {NATIVE.map(({ icon: Icon, title, body }) => (
             <li
               key={title}
-              className="min-w-0 rounded-worksheet border border-border bg-card p-5"
+              className="grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)] items-start gap-x-3.5"
             >
-              <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+              <span className="row-span-2 flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
                 <Icon className="size-5" aria-hidden />
               </span>
-              <h3 className="mt-4 text-subhead">{title}</h3>
-              <p className="mt-1 text-muted-foreground">{body}</p>
+              <h3 className="mt-1 text-subhead">{title}</h3>
+              <p className="prose-measure mt-1 text-muted-foreground">{body}</p>
             </li>
           ))}
         </ul>
@@ -146,15 +150,21 @@ export default function AppPage() {
 
       <section className="container py-8 sm:py-12">
         <h2 className="text-title">Inside the app</h2>
-        <ul className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        {/* On a phone a 2x2 grid shrank each screen past reading, so it
+            becomes a strip that swipes, each screen at about two thirds of
+            the width; from sm up the grid has room again. */}
+        <ul className="-mx-5 mt-8 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
           {SCREENS.map(({ src, alt }) => (
-            <li key={src} className="min-w-0">
+            <li
+              key={src}
+              className="min-w-0 shrink-0 basis-[68%] snap-start sm:basis-auto"
+            >
               <Image
                 src={src}
                 alt={alt}
                 width={720}
                 height={1280}
-                sizes="(min-width: 1024px) 18rem, 50vw"
+                sizes="(min-width: 1024px) 18rem, (min-width: 640px) 50vw, 68vw"
                 className="h-auto w-full rounded-worksheet border border-border"
               />
             </li>

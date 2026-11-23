@@ -14,7 +14,7 @@ import { currentPain, currentSize, hasReadingOn } from '@/utils/readings';
 import { readReminder, remindersSupported } from '@/utils/reminders';
 import { sevFill } from '@/utils/severity';
 
-import { StepFooter } from './StepLayout';
+import { StepBody, StepFooter } from './StepLayout';
 import StepHeading from './StepHeading';
 
 /**
@@ -44,7 +44,7 @@ export default function FinishStep({
   const [reminder] = useState(nextReminderLabel);
 
   return (
-    <div className="flex flex-1 flex-col gap-5">
+    <StepBody className="gap-5">
       <div className="text-center">
         <StepHeading>{gentle ? 'Logged.' : 'All logged.'}</StepHeading>
       </div>
@@ -62,7 +62,6 @@ export default function FinishStep({
             ? `See you tomorrow. Your reminder is at ${reminder}.`
             : 'See you tomorrow.'}
       </p>
-      <div aria-hidden="true" className="flex-1" />
       <StepFooter>
         <Button
           type="button"
@@ -76,7 +75,7 @@ export default function FinishStep({
           Done
         </Button>
       </StepFooter>
-    </div>
+    </StepBody>
   );
 }
 

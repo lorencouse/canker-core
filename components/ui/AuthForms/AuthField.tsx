@@ -35,6 +35,7 @@ export default function AuthField({
         autoComplete={autoComplete}
         defaultValue={defaultValue}
         autoCapitalize="none"
+        className="coarse:h-12 coarse:rounded-xl"
         autoCorrect="off"
       />
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
