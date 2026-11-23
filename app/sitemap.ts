@@ -23,6 +23,7 @@ const PAGES: Array<{
   { path: 'mouth-map', priority: 0.9, changeFrequency: 'monthly' },
   { path: 'about', priority: 0.8, changeFrequency: 'monthly' },
   { path: 'blog', priority: 0.7, changeFrequency: 'weekly' },
+  { path: 'app', priority: 0.7, changeFrequency: 'monthly' },
   { path: 'privacy', priority: 0.3, changeFrequency: 'yearly' },
   { path: 'terms', priority: 0.3, changeFrequency: 'yearly' },
   { path: 'support', priority: 0.3, changeFrequency: 'yearly' }

@@ -13,7 +13,8 @@ const productLinks = [
   // same drawing; the label has to say which is which.
   { href: '/mouth-map', label: 'Mouth map' },
   { href: '/my-sores', label: 'Your sores' },
-  { href: '/insights', label: 'Insights' }
+  { href: '/insights', label: 'Insights' },
+  { href: '/app', label: 'Get the app' }
 ];
 
 const legalLinks = [
