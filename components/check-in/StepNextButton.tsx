@@ -3,7 +3,9 @@ import { Check } from 'lucide-react';
 import { BusyIcon } from '@/components/ui/busy-icon';
 import { Button } from '@/components/ui/button';
 
-/** A habit screen's way forward. */
+import { StepFooter } from './StepLayout';
+
+/** A habit screen's way forward, in the action bar every step shares. */
 export default function StepNextButton({
   busy,
   onClick,
@@ -15,17 +17,19 @@ export default function StepNextButton({
   label?: string;
 }) {
   return (
-    <Button
-      type="button"
-      size="touch"
-      className="w-full"
-      onClick={onClick}
-      disabled={busy}
-    >
-      <BusyIcon busy={busy}>
-        <Check aria-hidden="true" />
-      </BusyIcon>
-      {label}
-    </Button>
+    <StepFooter>
+      <Button
+        type="button"
+        size="touch"
+        className="min-w-0 flex-1"
+        onClick={onClick}
+        disabled={busy}
+      >
+        <BusyIcon busy={busy}>
+          <Check aria-hidden="true" />
+        </BusyIcon>
+        {label}
+      </Button>
+    </StepFooter>
   );
 }

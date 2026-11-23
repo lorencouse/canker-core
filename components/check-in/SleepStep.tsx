@@ -5,15 +5,20 @@ import { Minus, Plus } from 'lucide-react';
 
 import Measure from '@/components/sore/Measure';
 import { Stepper } from '@/components/sore/ReadingFields';
-import { Button } from '@/components/ui/button';
 import type { DayLog } from '@/types';
 import { resolveDay } from '@/utils/check-in/steps';
+import { cn } from '@/utils/cn';
+import {
+  POOR_SLEEP_QUALITY_UPTO,
+  SHORT_SLEEP_UNDER_HOURS
+} from '@/utils/day-log';
 import { tap } from '@/utils/native';
 
 import type { HabitStepProps } from './habit-step';
-import ScalePicker from './ScalePicker';
+import ScalePicker, { answerKeyClass } from './ScalePicker';
 import SleepImport from './SleepImport';
 import StepHeading from './StepHeading';
+import { StepBody } from './StepLayout';
 import StepNextButton from './StepNextButton';
 import { useReportBusy } from './useReportBusy';
 
@@ -21,8 +26,26 @@ type Source = NonNullable<DayLog['sleep_source']>;
 
 const MAX_HOURS = 14;
 const HOURS_STEP = 0.5;
-/** Where the first tap on an empty stepper lands: a typical night, so most people are a tap or two away. */
+/** Where the first + on an empty answer lands: a typical night. */
 const FIRST_HOURS = 7;
+
+/**
+ * Every common night as one tap. "9+" records 9 and stays picked for
+ * anything longer, so a nudge past it does not leave the row blank.
+ */
+const HOUR_PRESETS = [
+  { hours: 5, label: '5' },
+  { hours: 6, label: '6' },
+  { hours: 7, label: '7' },
+  { hours: 7.5, label: '7.5' },
+  { hours: 8, label: '8' },
+  { hours: 9, label: '9+' }
+] as const;
+const LAST_PRESET = HOUR_PRESETS[HOUR_PRESETS.length - 1].hours;
+
+const presetOn = (value: number | null, preset: number) =>
+  value !== null &&
+  (preset === LAST_PRESET ? value >= preset : value === preset);
 
 const clampHours = (h: number) => Math.min(MAX_HOURS, Math.max(0, h));
 
@@ -86,7 +109,7 @@ export default function SleepStep({
   };
 
   return (
-    <div className="grid gap-6">
+    <StepBody>
       <StepHeading>Last night</StepHeading>
 
       <div className="space-y-2">
@@ -102,36 +125,59 @@ export default function SleepStep({
             <Measure value={fields.hours ?? '–'} unit="h" />
           </output>
         </div>
-        {/* Clear sits between the steppers so a stray tap is one tap from
-            undone and the screen can still be left unanswered. */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* The usual answers in one tap. Tapping the picked one again
+            clears it, as on the scales, so the screen can still be left
+            unanswered. */}
+        <div
+          role="group"
+          aria-labelledby="check-in-sleep-hours"
+          className="grid grid-cols-6 gap-1.5"
+        >
+          {HOUR_PRESETS.map(({ hours, label }) => {
+            const on = presetOn(fields.hours, hours);
+            return (
+              <button
+                key={label}
+                type="button"
+                aria-pressed={on}
+                aria-label={`${label} hours`}
+                disabled={busy}
+                onClick={() => {
+                  tap();
+                  setFields((f) => ({
+                    ...f,
+                    hours: on ? null : hours,
+                    source: 'manual'
+                  }));
+                }}
+                className={cn(answerKeyClass(on), 'px-0 text-base')}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {/* Anything between the presets is a half-hour nudge away. */}
+        <div className="flex items-center gap-2 pt-1">
           <Stepper
             label="Half an hour less"
             onClick={() => stepHours(-HOURS_STEP)}
-            disabled={busy || fields.hours === 0}
+            disabled={busy || fields.hours === null || fields.hours === 0}
+            className="size-11 shrink-0 rounded-full"
           >
             <Minus aria-hidden="true" />
           </Stepper>
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-12 w-full text-muted-foreground"
-            aria-label="Clear the hours"
-            onClick={() => {
-              tap();
-              setFields((f) => ({ ...f, hours: null, source: 'manual' }));
-            }}
-            disabled={busy || fields.hours === null}
-          >
-            Clear
-          </Button>
           <Stepper
             label="Half an hour more"
             onClick={() => stepHours(HOURS_STEP)}
             disabled={busy || fields.hours === MAX_HOURS}
+            className="size-11 shrink-0 rounded-full"
           >
             <Plus aria-hidden="true" />
           </Stepper>
+          <span className="min-w-0 truncate text-sm text-muted-foreground">
+            Nudge by half an hour
+          </span>
         </div>
         <SleepImport
           day={day}
@@ -149,9 +195,10 @@ export default function SleepStep({
         value={fields.quality}
         onChange={(quality) => setFields((f) => ({ ...f, quality }))}
         disabled={busy}
+        note={`Under ${SHORT_SLEEP_UNDER_HOURS} hours, or a ${POOR_SLEEP_QUALITY_UPTO} or lower, counts as a trigger for your streak.`}
       />
 
       <StepNextButton busy={busy} onClick={next} />
-    </div>
+    </StepBody>
   );
 }

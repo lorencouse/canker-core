@@ -17,7 +17,7 @@ import { runWrite, showFailure } from '@/utils/write-feedback';
 import { BusyIcon } from '@/components/ui/busy-icon';
 
 import StepHeading from './StepHeading';
-import { StepFooter, StepPinnedMap } from './StepLayout';
+import { StepBody, StepFooter, StepPinnedMap } from './StepLayout';
 import { useReportBusy } from './useReportBusy';
 
 /*
@@ -106,12 +106,26 @@ function Placement({
   };
 
   return (
-    <div className="grid gap-4">
+    <StepBody className="gap-4">
+      {/* The question leads and the map answers it, as on every other step.
+          Once a sore is placed, the map leads instead: the sore is the
+          subject now, and its name heads the fields below. */}
+      {!placed && (
+        <div>
+          <StepHeading>{first ? 'Any new sores?' : 'Any more?'}</StepHeading>
+          <p className="mt-1 text-base text-muted-foreground">
+            {first
+              ? 'Tap the spot on the map. Or skip ahead if nothing new showed up.'
+              : 'Tap the spot on the map, or finish if that was all.'}
+          </p>
+        </div>
+      )}
+
       <StepPinnedMap>
         <MouthMap user={NO_USER} compact />
       </StepPinnedMap>
 
-      {placed ? (
+      {placed && (
         <>
           <div>
             <StepHeading>
@@ -132,13 +146,6 @@ function Placement({
             onChange={(pain) => setReading({ pain })}
           />
         </>
-      ) : (
-        <div>
-          <StepHeading>{first ? 'Any new sores?' : 'Any more?'}</StepHeading>
-          <p className="mt-1 text-base text-muted-foreground">
-            Tap the map where it is. Cheeks and Lips are in the tabs.
-          </p>
-        </div>
       )}
 
       <StepFooter>
@@ -163,7 +170,9 @@ function Placement({
               onClick={add}
               disabled={busy}
             >
-              <BusyIcon busy={busy}><Plus aria-hidden="true" /></BusyIcon>
+              <BusyIcon busy={busy}>
+                <Plus aria-hidden="true" />
+              </BusyIcon>
               Add sore
             </Button>
           </>
@@ -182,6 +191,6 @@ function Placement({
           </Button>
         )}
       </StepFooter>
-    </div>
+    </StepBody>
   );
 }
