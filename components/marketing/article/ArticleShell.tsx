@@ -17,7 +17,7 @@ const formatDate = (iso: string) =>
  * The top of an article: heading, the direct answer, the dates, and the
  * structured data.
  *
- * The answer sits in a bordered block directly under the H1 and before any
+ * The answer sits as a standfirst directly under the H1 and before any
  * preamble, because that is the part that gets extracted — by a featured
  * snippet, by an AI overview, and by whatever reads the page next. Burying it
  * under three paragraphs of throat-clearing is the most common way a page that
@@ -62,7 +62,9 @@ export function ArticleHeader({ slug }: { slug: string }) {
 
       <h1 className="text-title">{article.heading}</h1>
 
-      <p className="mt-6 border-l-2 border-primary pl-4 text-lg text-foreground">
+      {/* A standfirst: set a step larger than the body rather than fenced
+          off with a side stripe, so it reads as the opening, not a callout. */}
+      <p className="mt-6 text-xl leading-normal text-foreground">
         {article.answer}
       </p>
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 
 import Kanko from '@/components/kanko/Kanko';
 import RecurrenceSketch from '@/components/marketing/RecurrenceSketch';
@@ -93,12 +94,19 @@ export default function BlogIndexPage() {
                 className="animate-in fade-in-0 slide-in-from-bottom-4 fill-mode-both duration-500"
                 style={{ animationDelay: `${80 * (i + 1)}ms` }}
               >
+                {/* Touch has no hover, so a title that only underlined on
+                    hover never looked like a link there. A quiet indigo
+                    underline is always on, and an arrow says "open this". */}
                 <h3 className="text-section">
                   <Link
                     href={`/blog/${article.slug}`}
-                    className="underline-offset-4 hover:text-primary hover:underline"
+                    className="underline decoration-primary/35 decoration-2 underline-offset-[6px] transition-colors hover:text-primary hover:decoration-primary"
                   >
                     {article.heading}
+                    <ArrowRight
+                      aria-hidden
+                      className="ml-1.5 inline-block size-[0.85em] translate-y-[-0.05em] text-primary"
+                    />
                   </Link>
                 </h3>
                 <p className="prose-measure mt-2 lg:text-lg">

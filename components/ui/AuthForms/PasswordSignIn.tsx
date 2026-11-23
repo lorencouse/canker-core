@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import AuthField from './AuthField';
 import AuthLinks from './AuthLinks';
+import CreateAccount from './CreateAccount';
 import { signInWithPassword } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { BusyIcon } from '@/components/ui/busy-icon';
@@ -51,7 +52,7 @@ export default function PasswordSignIn({
           type="password"
           autoComplete="current-password"
         />
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" size="touch" disabled={isSubmitting}>
           <BusyIcon busy={isSubmitting} />
           {isSubmitting ? 'Signing in' : 'Sign in'}
         </Button>
@@ -66,10 +67,10 @@ export default function PasswordSignIn({
                   label: 'Email me a sign-in link'
                 }
               ]
-            : []),
-          { href: '/signin/signup', label: 'No account yet? Create one' }
+            : [])
         ]}
       />
+      <CreateAccount />
     </div>
   );
 }

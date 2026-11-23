@@ -21,14 +21,16 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         {children}
       </h3>
     ),
+    // Running text is full ink: an article is read, not scanned, and the
+    // secondary grey made every paragraph look like a caption.
     p: ({ children, ...props }) => (
-      <p className="mt-4 text-muted-foreground" {...props}>
+      <p className="mt-4 text-foreground" {...props}>
         {children}
       </p>
     ),
     ul: ({ children, ...props }) => (
       <ul
-        className="mt-4 list-disc space-y-2 pl-5 text-muted-foreground"
+        className="mt-4 list-disc space-y-2 pl-5 text-foreground"
         {...props}
       >
         {children}
@@ -36,7 +38,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     ol: ({ children, ...props }) => (
       <ol
-        className="mt-4 list-decimal space-y-2 pl-5 text-muted-foreground"
+        className="mt-4 list-decimal space-y-2 pl-5 text-foreground"
         {...props}
       >
         {children}

@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
 import Kanko from '@/components/kanko/Kanko';
 import type { KankoMood } from '@/components/kanko/moods';
 import MouthMapHero from '@/components/marketing/MouthMapHero';
 import SeverityScale from '@/components/marketing/SeverityScale';
 import StartButton from '@/components/marketing/StartButton';
+import StoreBadges from '@/components/marketing/StoreBadges';
+import TodayPhone from '@/components/marketing/TodayPhone';
 import { JsonLd, softwareApplicationSchema } from '@/components/seo/JsonLd';
-import { Button } from '@/components/ui/button';
+import { APP_STORE_URL } from '@/utils/app-stores';
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' }
@@ -30,15 +31,15 @@ const TIMELINE: {
     mood: 'point'
   },
   {
-    when: 'Day 2',
-    title: 'Update it',
-    body: 'Come back and move the two sliders. Every reading is kept, not overwritten.',
+    when: 'Every day',
+    title: 'Check in',
+    body: 'One minute: today’s size and pain, then what you ate, how you slept and what you tried.',
     mood: 'phone'
   },
   {
-    when: 'Day 7',
-    title: 'See it close',
-    body: 'The history chart shows the size falling. If it is not falling, you will see that too.',
+    when: 'Day 7 and on',
+    title: 'See the pattern',
+    body: 'Watch it shrink, and see what tends to come before a new one.',
     mood: 'magnify'
   }
 ];
@@ -47,61 +48,68 @@ export default function HomePage() {
   return (
     <>
       <JsonLd schema={softwareApplicationSchema} />
-      <section className="fold-shell fold-split container grid items-center gap-10 py-10 sm:py-16 lg:grid-cols-2 lg:gap-16 lg:py-24">
+      <section className="fold-shell fold-split container grid items-center gap-10 py-10 sm:py-16 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:gap-16 lg:py-24">
         <div>
           {/* Kanko waves beside the headline rather than above it, so the
               promise is still the first thing read. A wrapped heading's box
               stays as wide as the room it was given, which left Kanko far
-              from the words, so the box is capped at the widest line it
-              will set: "it's healing." (about 5em at this face and
-              tracking) where it runs to three lines, "Know whether" (about
-              6.7em) on a tablet, where it fits in two. The headline is the
-              page's largest paint; Kanko loads eagerly so it lands with it. */}
+              from the words, so the box is capped at its widest line, "Know
+              whether" (about 6.7em at this face and tracking), and Kanko is
+              small enough on a phone for that line to fit: two lines, not
+              three. The headline is the page's largest paint; Kanko loads
+              eagerly so it lands with it. */}
           <div className="flex items-end gap-3 sm:gap-4">
-            <h1 className="min-w-0 max-w-[5.2em] text-display sm:max-w-[6.8em] lg:max-w-[5.2em]">
+            <h1 className="min-w-0 max-w-[6.8em] text-display">
               Know whether it&rsquo;s healing.
             </h1>
             <Kanko
               mood="hello"
               size={144}
               priority
-              className="size-24 shrink-0 sm:size-36"
+              className="size-16 shrink-0 min-[400px]:size-24 sm:size-36"
             />
           </div>
+          {/* The promise stops at what Insights shows today: a pattern in
+              what came before a sore. It does not yet say whether a
+              treatment helped, so the page does not either. */}
           <p className="prose-measure mt-6 text-lg text-muted-foreground">
-            Canker sores all feel like they last forever. Mark where one is, log
-            its size and pain each day, and find out whether it is actually
-            shrinking &mdash; and whether anything you tried made a difference.
+            Canker sores all feel like they last forever. Mark where one is,
+            check in for a minute a day, and see whether it is shrinking and
+            what tends to come before the next one.
           </p>
-          {/* Stacked and full-width on a phone: these are the only two
-              things to do on this screen, and a thumb should not have to
-              aim at a pill floating in the middle of a line. */}
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <StartButton className="sm:h-11 sm:px-8" />
-            <Button
-              asChild
-              variant="ghost"
-              size="touch"
-              className="sm:h-11 sm:px-8"
-            >
-              <Link href="/about">How it works</Link>
-            </Button>
+          {/* Full-width on a phone, under the thumb. The app sits right
+              under it, in the first screen, rather than only in the footer. */}
+          <StartButton className="mt-8 w-full sm:h-11 sm:w-auto sm:px-8" />
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <StoreBadges className="-ml-2" />
+            {!APP_STORE_URL && (
+              <p className="text-sm text-muted-foreground">
+                iPhone app coming soon
+              </p>
+            )}
           </div>
         </div>
 
-        <MouthMapHero />
+        <TodayPhone />
       </section>
 
       <section className="fold-first container py-8 sm:py-12">
-        <div className="rounded-worksheet border border-border bg-card p-5 sm:p-8">
-          <h2 className="text-section">One scale, used everywhere</h2>
-          <p className="prose-measure mt-2 text-muted-foreground">
-            Pain is the only thing in Canker Core that gets a colour. The same
-            ramp appears on the map, in the history chart, and in every table,
-            so a glance tells you how bad a day was.
-          </p>
-          <div className="mt-6">
-            <SeverityScale />
+        {/* The map sits beside the scale it is coloured by, so the ramp is
+            read once in the abstract and once on a mouth. */}
+        <div className="grid items-center gap-8 rounded-worksheet border border-border bg-card p-5 sm:p-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <div className="min-w-0">
+            <h2 className="text-section">One scale, used everywhere</h2>
+            <p className="prose-measure mt-2 text-muted-foreground">
+              Pain is the only thing in Canker Core that gets a colour. The
+              same ramp appears on the map, in the history chart, and in every
+              table, so a glance tells you how bad a day was.
+            </p>
+            <div className="mt-6">
+              <SeverityScale />
+            </div>
+          </div>
+          <div className="mx-auto w-full max-w-sm">
+            <MouthMapHero />
           </div>
         </div>
       </section>

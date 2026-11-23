@@ -81,6 +81,7 @@ export default function MouthMap({
   user,
   initialView,
   placedHint = 'Tap again to move it, or set its reading below.',
+  addHint = 'Tap where the sore is, or name the place.',
   compact = false,
   showMirrorNote = true
 }: {
@@ -89,6 +90,8 @@ export default function MouthMap({
   initialView?: MouthView;
   /** The add-mode line once a sore is placed, for screens that take its reading elsewhere. */
   placedHint?: string;
+  /** The add-mode line before anything is placed; null where the screen already says it. */
+  addHint?: string | null;
   /** Short enough to pin above a form: a capped drawing and no hint or footer lines. */
   compact?: boolean;
   /** The "as in a mirror" line under the drawing; the Map tab moves it behind an "i". */
@@ -530,11 +533,11 @@ export default function MouthMap({
         />
       </div>
 
-      {mode === 'add' && !compact && (
+      {mode === 'add' && !compact && (placed || addHint) && (
         // Under the drawing, not on it: a floating hint covered the floor
         // of the mouth on a phone, which is exactly where people tap.
         <p className="text-base font-semibold">
-          {placed ? placedHint : 'Tap where the sore is, or name the place.'}
+          {placed ? placedHint : addHint}
         </p>
       )}
 
