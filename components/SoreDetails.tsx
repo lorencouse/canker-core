@@ -11,6 +11,7 @@ import {
 import { ChevronLeft } from 'lucide-react';
 
 import { useSoreContext } from '@/context/SoreContext';
+import Kanko from '@/components/kanko/Kanko';
 import { StarMark } from '@/components/graphics/Sparkles';
 import SoreActions, {
   DeleteSore,
@@ -389,7 +390,21 @@ export function OpenSoresList() {
       <h2 id="open-sores" className="text-section">
         Open sores
       </h2>
-      {open.length === 0 ? (
+      {sores.length === 0 ? (
+        // Nothing marked yet: the map above is the invitation, in Kanko's words.
+        <div className="mt-3 flex items-center gap-4">
+          <Kanko mood="curious" size={88} className="size-20 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-balance font-display text-subhead font-extrabold">
+              No sores logged yet
+            </p>
+            <p className="mt-1 text-pretty text-muted-foreground">
+              When one shows up, tap the spot on the map and I’ll keep track of
+              it.
+            </p>
+          </div>
+        </div>
+      ) : open.length === 0 ? (
         <p className="mt-2 text-muted-foreground">Nothing open.</p>
       ) : (
         <ul className="mt-2">

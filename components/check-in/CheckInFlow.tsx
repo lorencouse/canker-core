@@ -170,14 +170,18 @@ export default function CheckInFlow({
 
   const actions = useActionSheet();
   const leave = () => onClose(finished ? 'done' : 'left');
-  const { panelStyle, handleProps, attachBody, dismiss, leaving } = useSheetDrag({ onDismiss: leave });
+  const { panelStyle, handleProps, attachBody, dismiss, leaving } =
+    useSheetDrag({ onDismiss: leave });
 
   /** The close button: on the last screen it just closes. */
   const askToClose = async () => {
     if (finished) return dismiss();
     const pick = await actions.ask(
       'Close the check-in?',
-      [{ title: 'Finish later' }, { title: 'Skip for today', style: 'destructive' }],
+      [
+        { title: 'Finish later' },
+        { title: 'Skip for today', style: 'destructive' }
+      ],
       'Later picks up where you left off.'
     );
     if (pick === 0) dismiss();
@@ -190,11 +194,7 @@ export default function CheckInFlow({
         const sore = sores.find((s) => s.id === step.soreId);
         if (!sore) {
           return (
-            <Placeholder
-              title="This sore is gone"
-              onNext={go}
-              busy={busy}
-            />
+            <Placeholder title="This sore is gone" onNext={go} busy={busy} />
           );
         }
         return (
@@ -221,18 +221,12 @@ export default function CheckInFlow({
           />
         );
       case 'sleep':
-        return (
-          <SleepStep {...habit} />
-        );
+        return <SleepStep {...habit} />;
       case 'food':
       case 'health':
       case 'treatments':
         return (
-          <TagStep
-            {...habit}
-            kind={step.kind}
-            initialDay={defaultDay(now)}
-          />
+          <TagStep {...habit} kind={step.kind} initialDay={defaultDay(now)} />
         );
       case 'finish':
         return (
@@ -322,7 +316,9 @@ export default function CheckInFlow({
             variant="ghost"
             size="icon"
             className="rounded-full bg-muted"
-            aria-label={finished ? 'Close the check-in' : 'Close or skip the check-in'}
+            aria-label={
+              finished ? 'Close the check-in' : 'Close or skip the check-in'
+            }
             onClick={() => {
               tap();
               askToClose();
@@ -348,7 +344,8 @@ export default function CheckInFlow({
                 onEdit={() => {
                   tap();
                   const first =
-                    soreSteps[0] ?? steps.find((s) => s.kind === 'new-sore-ask');
+                    soreSteps[0] ??
+                    steps.find((s) => s.kind === 'new-sore-ask');
                   if (first) setCurrent(stepKey(first));
                 }}
                 disabled={locked}

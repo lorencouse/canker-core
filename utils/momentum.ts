@@ -1,12 +1,6 @@
 import type { DayLog, Sore } from '@/types';
 import { isAnsweredClean } from '@/utils/day-log';
-import {
-  dayKey,
-  dayKeyIn,
-  isTimeZone,
-  parseDay,
-  shiftDay
-} from '@/utils/days';
+import { dayKey, dayKeyIn, isTimeZone, parseDay, shiftDay } from '@/utils/days';
 
 /** A reading at or above this pain level makes today a gentle day. */
 export const BAD_DAY_PAIN = 6;
@@ -142,9 +136,81 @@ export const weekStats = (logs: DayLog[], today: string): WeekStats => {
   };
 };
 
-/** The words beside the streak figure on Today's card. */
-export const streakLabel = (n: number): string =>
-  n === 1 ? 'Day strong' : 'Days strong';
+/**
+ * Which of Kanko's lines the streak card says. A bad day (`gentle`) wins
+ * over everything; `first` is an account with no day logged yet, which the
+ * server can tell without a clock, so the card's frame never jumps.
+ */
+export type StreakVoice = 'gentle' | 'first' | 'strong' | 'fresh';
+
+/** Whether any day has both trigger questions answered. */
+export const hasLoggedDay = (logs: DayLog[]): boolean => logs.some(isAnswered);
+
+export const streakVoice = (
+  mood: Mood,
+  streak: number,
+  logs: DayLog[]
+): StreakVoice => {
+  if (mood === 'gentle') return 'gentle';
+  if (streak > 0) return 'strong';
+  return hasLoggedDay(logs) ? 'fresh' : 'first';
+};
+
+// Spelled out up to a week: "Four days strong" reads as speech, "4 days" as a stat.
+const COUNT_WORDS = [
+  '',
+  'One day',
+  'Two days',
+  'Three days',
+  'Four days',
+  'Five days',
+  'Six days',
+  'A week'
+];
+
+/**
+ * The streak card's headline and the line under it, in Kanko's voice (the
+ * Momentum spec's "Three days strong. Your mouth is thanking you." and
+ * "Rough one today. Logged. That's the hard part done."). The figure lives
+ * in the streak bar, so these stay sentences.
+ */
+export const streakHeadline = (
+  voice: StreakVoice,
+  streak: number
+): { headline: string; line: string } => {
+  switch (voice) {
+    case 'gentle':
+      return {
+        headline: 'Rough one today.',
+        line: 'Logged. That’s the hard part done.'
+      };
+    case 'first':
+      return {
+        headline: 'Day one starts here.',
+        line: 'Check in once a day and I’ll keep count.'
+      };
+    case 'fresh':
+      return {
+        headline: 'Fresh start today.',
+        line: 'A day with no triggers starts the count.'
+      };
+    case 'strong':
+      return {
+        headline: `${COUNT_WORDS[streak] ?? `${streak} days`} strong.`,
+        line: 'Your mouth is thanking you.'
+      };
+  }
+};
+
+/** The streak bar's second line: how far to the best run, or that this is it. */
+export const streakBarLine = (streak: number, best: number): string => {
+  if (streak === 0) return 'Log a clean day to start one';
+  if (best > streak) {
+    const more = best + 1 - streak;
+    return `${more} more to beat your best`;
+  }
+  return 'Your best yet';
+};
 
 /** The saved logs after a Save, with this day's log replacing any earlier copy. */
 export const withSavedLog = (logs: DayLog[], log: DayLog): DayLog[] => [

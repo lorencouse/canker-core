@@ -125,6 +125,10 @@ module.exports = {
         // Pressed, the control moves down and the edge goes (see button.tsx).
         press: '0 5px 0 hsl(var(--primary-edge))',
         'press-win': '0 5px 0 hsl(var(--win-edge))',
+        // A won day dot: the same ledge, scaled to a 32px key.
+        'press-win-sm': '0 3px 0 hsl(var(--win-edge))',
+        // The indigo streak bar on Today's card.
+        'press-streak': '0 5px 0 hsl(var(--streak-edge))',
         'press-line': '0 4px 0 hsl(var(--border))',
         // Only on what floats over the page: a sheet, a menu.
         sheet: '0 -8px 32px hsl(240 48% 17% / 0.16)',
