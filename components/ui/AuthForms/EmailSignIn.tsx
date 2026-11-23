@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import AuthField from './AuthField';
 import AuthLinks from './AuthLinks';
+import CreateAccount from './CreateAccount';
 import { signInWithEmail } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { BusyIcon } from '@/components/ui/busy-icon';
@@ -47,7 +48,11 @@ export default function EmailSignIn({
           autoComplete="email"
           hint="We'll send a link that signs you in. No password needed."
         />
-        <Button type="submit" disabled={disableButton || isSubmitting}>
+        <Button
+          type="submit"
+          size="touch"
+          disabled={disableButton || isSubmitting}
+        >
           <BusyIcon busy={isSubmitting} />
           {isSubmitting ? 'Sending' : 'Send sign-in link'}
         </Button>
@@ -61,10 +66,10 @@ export default function EmailSignIn({
                   label: 'Sign in with a password'
                 }
               ]
-            : []),
-          { href: '/signin/signup', label: 'No account yet? Create one' }
+            : [])
         ]}
       />
+      <CreateAccount />
     </div>
   );
 }

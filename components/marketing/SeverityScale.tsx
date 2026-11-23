@@ -28,11 +28,15 @@ export default function SeverityScale() {
               className="tabular text-xs font-semibold"
               style={{
                 // Flip the numeral once the fill is dark enough to swallow it.
-                // In dark mode both roles resolve to white.
+                // In dark mode the ramp climbs toward a bright red, so its top
+                // two steps take ink instead of white (white on 10 measured
+                // 3.6:1); --sev-ink-peak is white again in light mode.
                 color:
-                  level >= 7
-                    ? 'hsl(var(--sev-ink-hi))'
-                    : 'hsl(var(--sev-ink-lo))'
+                  level >= 9
+                    ? 'hsl(var(--sev-ink-peak))'
+                    : level >= 7
+                      ? 'hsl(var(--sev-ink-hi))'
+                      : 'hsl(var(--sev-ink-lo))'
               }}
             >
               {level}
