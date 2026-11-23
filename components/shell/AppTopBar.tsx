@@ -30,6 +30,8 @@ export default function AppTopBar() {
 
   const current = APP_NAV.find(({ href }) => isActiveTab(pathname, href));
   const onMap = isActiveTab(pathname, '/my-sores');
+  // Settings is about the account, not the mouth; a "+" there has no job.
+  const onSettings = isActiveTab(pathname, '/profile');
 
   return (
     <header
@@ -91,9 +93,9 @@ export default function AppTopBar() {
             reachable only by going to the map and finding a button there.
             It is an action, not a destination, so it lives in the chrome
             rather than taking a fifth tab — and it is hidden on the map
-            itself, where the action bar already owns it.
+            itself, where the action bar already owns it, and on Settings.
           */}
-          {!onMap && (
+          {!onMap && !onSettings && (
             <Button asChild variant="ghost" size="sm">
               <Link href="/my-sores?add" aria-label="Mark a new sore">
                 <Plus aria-hidden="true" />

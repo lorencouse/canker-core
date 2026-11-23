@@ -103,12 +103,6 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'
         },
-        tile: {
-          indigo: 'hsl(var(--tile-indigo))',
-          amber: 'hsl(var(--tile-amber))',
-          green: 'hsl(var(--tile-green))',
-          slate: 'hsl(var(--tile-slate))'
-        },
         // Pain level 1-10. Data only - never use these for chrome.
         severity: {
           1: 'hsl(var(--sev-1))',

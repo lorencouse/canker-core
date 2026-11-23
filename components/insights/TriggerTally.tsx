@@ -7,16 +7,27 @@ import Instrument from '@/components/insights/Instrument';
 import { triggerMeta } from '@/components/insights/triggers';
 import { Button } from '@/components/ui/button';
 import type { DayLog, Sore } from '@/types';
-import { treatmentDays, triggersBeforeSores, type Tally } from '@/utils/insights';
+import { logsSince, treatmentDays, triggersBeforeSores, type Tally } from '@/utils/insights';
 
 /**
  * What was logged in the three days before each sore appeared, and what has
  * been tried. Counts, not percentages: with five sores a percentage would
  * dress up a coincidence as a finding. The method lives behind the "i".
  */
-export default function TriggerTally({ sores, logs }: { sores: Sore[]; logs: DayLog[] }) {
+export default function TriggerTally({
+  sores,
+  logs,
+  since
+}: {
+  sores: Sore[];
+  logs: DayLog[];
+  /** The range's first day; null for all time. */
+  since: Date | null;
+}) {
   const { tally, soresWithLogs } = triggersBeforeSores(sores, logs);
-  const treatments = treatmentDays(logs);
+  // Days tried count inside the range, as everything else on the screen
+  // does: "32 days" under a 30-day switch read as a bug.
+  const treatments = treatmentDays(logsSince(logs, since));
 
   return (
     <Instrument
@@ -62,10 +73,8 @@ export default function TriggerTally({ sores, logs }: { sores: Sore[]; logs: Day
               >
                 <Pill aria-hidden="true" className="size-3.5 shrink-0 text-primary" />
                 <span className="min-w-0 truncate">{t.label}</span>
-                <span className="tabular text-muted-foreground">
-                  {t.count}
-                  <span aria-hidden="true">d</span>
-                  <span className="sr-only"> days</span>
+                <span className="tabular whitespace-nowrap text-muted-foreground">
+                  {t.count} {t.count === 1 ? 'day' : 'days'}
                 </span>
               </li>
             ))}

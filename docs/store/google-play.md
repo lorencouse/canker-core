@@ -86,7 +86,7 @@ review account's demo history (`play/source/README.md`).
 | Health Connect       | READ_SLEEP only, see below                                                                                             |
 | Data safety          | Below                                                                                                                  |
 | Advertising ID       | Not used (no AD_ID permission in the merged manifest)                                                                  |
-| Account deletion URL | https://cankercore.com/support (explains Settings > Account > Delete account; the same works signed in on the website) |
+| Account deletion URL | https://cankercore.com/support (explains Settings > Delete account; the same works signed in on the website) |
 | Exact alarms         | Not declared: `SCHEDULE_EXACT_ALARM` is stripped from the manifest and reminders are inexact                           |
 
 ### App access (review account)

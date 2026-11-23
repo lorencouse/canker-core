@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 import { SparkleField, type Sparkle } from '@/components/graphics/Sparkles';
-import { findingSentence } from '@/components/insights/triggers';
+import { findingSentence, triggerMeta } from '@/components/insights/triggers';
 import Kanko from '@/components/kanko/Kanko';
 import { Button } from '@/components/ui/button';
 import InfoButton from '@/components/ui/info-button';
@@ -19,7 +19,14 @@ import { cn } from '@/utils/cn';
  * drawn on (the page for pointing, the card for curious), or the art would
  * show its edge.
  */
-export default function FindingCard({ finding }: { finding: Finding }) {
+export default function FindingCard({
+  finding,
+  baseRate
+}: {
+  finding: Finding;
+  /** How often the found trigger was logged at all, over the range. */
+  baseRate?: { count: number; of: number } | null;
+}) {
   const found = finding.kind === 'pattern';
 
   return (
@@ -47,6 +54,14 @@ export default function FindingCard({ finding }: { finding: Finding }) {
               <h2 id="finding" className="text-subhead font-semibold">
                 {findingSentence(finding.trigger, finding.count, finding.of)}
               </h2>
+              {/* The base rate is what makes the count mean something: a
+                  trigger that is rare overall but came before most sores. */}
+              {baseRate && baseRate.of > 0 && (
+                <p className="tabular mt-1 font-semibold">
+                  {triggerMeta(finding.trigger).phrase} on {baseRate.count} of{' '}
+                  {baseRate.of} logged days.
+                </p>
+              )}
               <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
                 Pattern, not proof
                 <InfoButton title="Pattern, not proof" label="How this is found">

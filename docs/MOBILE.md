@@ -287,7 +287,7 @@ Connect permissions declaration for `READ_SLEEP`:
 
 Data safety form: Health and fitness > Health info collected, required for
 app functionality, not shared, user can request deletion (Settings >
-Account > Delete account).
+Delete account).
 
 Gradle 8.14 (the Capacitor 8 template's wrapper) needs JDK 21. If a newer
 JDK, such as the one Android Studio bundles, fails the settings script with

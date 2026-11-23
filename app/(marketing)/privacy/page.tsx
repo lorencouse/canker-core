@@ -111,9 +111,9 @@ export default function PrivacyPage() {
         <p>
           You can delete individual sores from the mouth map at any time. To
           delete your whole account and every reading attached to it, open
-          Settings, then Account, and choose Delete account. It is removed
-          immediately. The same page lets you download everything first as a CSV
-          file.
+          Settings and choose Delete account, the last row. It is removed
+          immediately. Export data, on the same screen, downloads everything
+          first as a CSV file.
         </p>
       </section>
 

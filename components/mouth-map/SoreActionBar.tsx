@@ -187,67 +187,74 @@ export function EditingBar({ place }: { place: 'map' | 'detail' }) {
 }
 
 /**
- * The selected sore's own actions. A grid, so it can never be wider than
- * its column: four labelled buttons in one row once pushed a phone page
- * out to 437px.
+ * The selected sore's day job, under its title: Log today is the filled
+ * button (it writes a reading), Healed beside it. Delete is not here; it
+ * sits at the foot of the detail (DeleteSore), away from the thumb's path.
+ * A grid, so it can never be wider than its column.
  */
 export default function SoreActions() {
-  const { busy, editing, selectedSore, begin, setHealed, remove } =
-    useMapActions();
+  const { busy, editing, selectedSore, begin, setHealed } = useMapActions();
+
+  if (!selectedSore || editing) return null;
+
+  if (selectedSore.healed_at)
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="touch"
+        className="w-full sm:w-auto"
+        onClick={() => setHealed(null)}
+        disabled={busy}
+      >
+        <RotateCcw aria-hidden="true" />
+        Reopen
+      </Button>
+    );
+
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-2 sm:max-w-md">
+      <Button type="button" size="touch" onClick={() => begin('edit')}>
+        Log today
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="touch"
+        onClick={() => setHealed(new Date().toISOString())}
+        disabled={busy}
+        aria-label="Healed: mark this sore healed"
+      >
+        Healed
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * Delete, for mistakes: the last thing in the detail, on its own, in words
+ * and asking first. Beside Healed a slip could cost a sore's whole history.
+ */
+export function DeleteSore() {
+  const { busy, editing, selectedSore, remove } = useMapActions();
   const actions = useActionSheet();
 
   if (!selectedSore || editing) return null;
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_auto] items-center gap-2">
-      {selectedSore.healed_at ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="touch"
-          className="col-span-2"
-          onClick={() => setHealed(null)}
-          disabled={busy}
-        >
-          <RotateCcw aria-hidden="true" />
-          Reopen
-        </Button>
-      ) : (
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            size="touch"
-            onClick={() => begin('edit')}
-          >
-            Log today
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="touch"
-            onClick={() => setHealed(new Date().toISOString())}
-            disabled={busy}
-            aria-label="Mark this sore healed"
-          >
-            Healed
-          </Button>
-        </>
-      )}
-      <Button
+    <div className="mt-5 flex justify-end border-t border-border pt-2">
+      <button
         type="button"
-        variant="link"
-        className="h-12 px-2 text-base text-muted-foreground underline hover:text-foreground"
+        className="focus-ring tap-target inline-flex h-11 items-center rounded-md px-1 text-[15px] font-bold text-destructive disabled:opacity-50"
         onClick={async () => {
           if ((await confirmDeleteSore(actions.ask)) && selectedSore)
             remove(selectedSore);
         }}
         disabled={busy}
       >
-        Delete
-      </Button>
+        Delete this sore
+      </button>
       {actions.sheet}
-
     </div>
   );
 }
