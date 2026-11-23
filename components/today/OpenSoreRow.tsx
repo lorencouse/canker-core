@@ -5,6 +5,7 @@ import { ChevronRight } from 'lucide-react';
 
 import SoreThumb from '@/components/sore/SoreThumb';
 import type { Sore } from '@/types';
+import { isSameLocalDay } from '@/utils/days';
 import { LONG_SORE_DAYS } from '@/utils/insights';
 import { currentPain, currentSize, dayNumberOf } from '@/utils/readings';
 import { sevFill } from '@/utils/severity';
@@ -19,13 +20,18 @@ const SPARK_READINGS = 7;
  */
 export default function OpenSoreRow({
   sore,
-  now
+  now,
+  newToday = false
 }: {
   sore: Sore;
   /** Null until the device clock is read; the day count waits for it. */
   now: Date | null;
+  /** Mark a sore that arrived today, so the row that changed the day is findable. */
+  newToday?: boolean;
 }) {
   const day = now ? dayNumberOf(sore, now) : null;
+  const isNew =
+    newToday && now !== null && isSameLocalDay(sore.created_at, now);
   const pain = currentPain(sore);
   return (
     <Link
@@ -34,7 +40,14 @@ export default function OpenSoreRow({
     >
       <SoreThumb sore={sore} />
       <span className="min-w-0">
-        <span className="block truncate font-semibold">{sore.zone}</span>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate font-semibold">{sore.zone}</span>
+          {isNew && (
+            <span className="shrink-0 whitespace-nowrap rounded-full bg-accent px-2 py-0.5 text-xs font-extrabold text-accent-foreground">
+              New today
+            </span>
+          )}
+        </span>
         <span className="tabular block truncate text-sm text-muted-foreground">
           {day !== null && `Day ${day} · `}
           {currentSize(sore)} mm

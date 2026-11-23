@@ -10,7 +10,7 @@ import {
 import { Capacitor } from '@capacitor/core';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { LineChart, Plus } from 'lucide-react';
 
 import CheckInFlow from '@/components/check-in/CheckInFlow';
 import CheckInHost from '@/components/check-in/CheckInHost';
@@ -33,9 +33,12 @@ import type { CheckIn, DayLog, Sore } from '@/types';
 import { cn } from '@/utils/cn';
 import { dayKey, isSameLocalDay } from '@/utils/days';
 import { isNative, tap } from '@/utils/native';
-import type { Mood } from '@/utils/momentum';
+import { type Mood, hasLoggedDay, todayMood } from '@/utils/momentum';
 
-/** Two marks on the Check in button once the day is done: a small win. */
+/**
+ * Two marks on the Check in button once the day is done: a small win, so
+ * not on a bad day, when the spec keeps the screen quiet.
+ */
 const DONE_SPARKLES: Sparkle[] = [
   { top: '-14%', left: '88%', size: 14, delay: 0 },
   { top: '64%', left: '4%', size: 10, tone: 'comfort', delay: 1.1 }
@@ -153,6 +156,9 @@ export default function TodayScreen({
   };
 
   const open = useMemo(() => sores.filter((s) => !s.healed_at), [sores]);
+  const gentle = now !== null && todayMood(sores, dayLogs, now) === 'gentle';
+  // No day logged yet: three zero tiles teach nothing, so say what a week buys.
+  const firstWeek = !hasLoggedDay(dayLogs);
 
   // Kanko takes the medal on a day a sore closed.
   const healedToday =
@@ -172,7 +178,8 @@ export default function TodayScreen({
       className={cn(
         // On a spanned Duo the status takes the first screen and the sores
         // the second (THE FOLD in styles/main.css).
-        'fold-shell fold-split mx-auto max-w-6xl px-4 py-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start lg:gap-x-8 lg:px-6 lg:py-8'
+        // Two columns from a tablet up: one stretched column at 820 was half empty.
+        'fold-shell fold-split mx-auto max-w-6xl px-4 py-4 md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-start md:gap-x-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-8 lg:px-6 lg:py-8'
       )}
     >
       <div className="min-w-0">
@@ -195,7 +202,9 @@ export default function TodayScreen({
             className="w-full"
             disabled={!now}
             onClick={startCheckIn}
-            aria-label={todayDone ? 'Checked in. Edit today’s check-in' : undefined}
+            aria-label={
+              todayDone ? 'Checked in. Edit today’s check-in' : undefined
+            }
           >
             {todayDone ? (
               <StarMark size={18} className="text-win" />
@@ -204,14 +213,14 @@ export default function TodayScreen({
             )}
             {todayDone ? 'Checked in' : 'Check in'}
           </Button>
-          {todayDone && <SparkleField sparkles={DONE_SPARKLES} />}
+          {todayDone && !gentle && <SparkleField sparkles={DONE_SPARKLES} />}
         </div>
 
         <ReminderOffer />
       </div>
 
       <div className="min-w-0">
-        <section aria-labelledby="open-sores" className="mt-6 lg:mt-0">
+        <section aria-labelledby="open-sores" className="mt-6 md:mt-0">
           <h2
             id="open-sores"
             className="tabular px-1 text-sm font-semibold text-muted-foreground"
@@ -224,7 +233,12 @@ export default function TodayScreen({
               <p className="min-w-0 flex-1 font-semibold">
                 {sores.length === 0 ? 'No sores yet' : 'Nothing open'}
               </p>
-              <Button asChild variant="outline" size="touch" className="shrink-0">
+              <Button
+                asChild
+                variant="outline"
+                size="touch"
+                className="shrink-0"
+              >
                 <Link href="/my-sores?add">
                   <Plus aria-hidden="true" />
                   Mark one
@@ -240,14 +254,16 @@ export default function TodayScreen({
                 >
                   <SwipeRow
                     className="rounded-cell"
-                    onHealed={() => heal.setHealed(sore, new Date().toISOString())}
+                    onHealed={() =>
+                      heal.setHealed(sore, new Date().toISOString())
+                    }
                     onLog={() =>
                       router.push(
                         `/my-sores?sore=${encodeURIComponent(sore.id)}&log`
                       )
                     }
                   >
-                    <OpenSoreRow sore={sore} now={now} />
+                    <OpenSoreRow sore={sore} now={now} newToday />
                   </SwipeRow>
                 </li>
               ))}
@@ -263,7 +279,26 @@ export default function TodayScreen({
             This week
           </h2>
           <div className="mt-2">
-            <WeekTiles logs={dayLogs} today={today} />
+            {firstWeek ? (
+              <p className="surface-worksheet flex items-center gap-3 p-4 text-pretty text-muted-foreground">
+                <LineChart
+                  aria-hidden="true"
+                  className="size-6 shrink-0 text-primary"
+                />
+                <span className="min-w-0">
+                  After a week of check-ins,{' '}
+                  <Link
+                    href="/insights"
+                    className="font-semibold text-foreground underline-offset-4 hover:underline"
+                  >
+                    Insights
+                  </Link>{' '}
+                  starts showing what tends to come before a sore.
+                </span>
+              </p>
+            ) : (
+              <WeekTiles logs={dayLogs} today={today} />
+            )}
           </div>
         </section>
       </div>
@@ -289,4 +324,3 @@ const readDeviceNow = () => (deviceNow ??= new Date());
 const readServerNow = () => null;
 const useDeviceNow = () =>
   useSyncExternalStore(subscribeToNow, readDeviceNow, readServerNow);
-

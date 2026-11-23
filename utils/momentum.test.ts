@@ -7,7 +7,10 @@ import {
   expectedMood,
   isBadDay,
   bestTriggerFreeStreak,
-  streakLabel,
+  hasLoggedDay,
+  streakBarLine,
+  streakHeadline,
+  streakVoice,
   todayMood,
   triggerFreeStreak,
   weekDots,
@@ -215,11 +218,47 @@ describe('weekDots', () => {
   });
 });
 
-describe('streakLabel', () => {
-  it('is singular for a one-day streak', () => {
-    expect(streakLabel(1)).toBe('Day strong');
-    expect(streakLabel(0)).toBe('Days strong');
-    expect(streakLabel(14)).toBe('Days strong');
+describe('streakVoice', () => {
+  it('goes quiet on a bad day whatever the streak', () => {
+    expect(streakVoice('gentle', 4, [log(today)])).toBe('gentle');
+  });
+  it('is strong on a streak, fresh after a break, first with nothing logged', () => {
+    expect(streakVoice('proud', 2, [log(today)])).toBe('strong');
+    expect(streakVoice('neutral', 0, [log(today, ['Coffee'])])).toBe('fresh');
+    expect(streakVoice('neutral', 0, [])).toBe('first');
+  });
+  it('does not count a half-answered day as logged', () => {
+    const half = { ...emptyDayLog(today), food_answered: true };
+    expect(hasLoggedDay([half])).toBe(false);
+    expect(streakVoice('neutral', 0, [half])).toBe('first');
+  });
+});
+
+describe('streakHeadline', () => {
+  it('spells the count out up to a week', () => {
+    expect(streakHeadline('strong', 1).headline).toBe('One day strong.');
+    expect(streakHeadline('strong', 4).headline).toBe('Four days strong.');
+    expect(streakHeadline('strong', 7).headline).toBe('A week strong.');
+    expect(streakHeadline('strong', 12).headline).toBe('12 days strong.');
+  });
+  it('uses the spec lines and no em-dashes', () => {
+    expect(streakHeadline('strong', 3)).toEqual({
+      headline: 'Three days strong.',
+      line: 'Your mouth is thanking you.'
+    });
+    expect(streakHeadline('gentle', 0).headline).toBe('Rough one today.');
+    for (const voice of ['gentle', 'first', 'fresh', 'strong'] as const) {
+      const { headline, line } = streakHeadline(voice, 2);
+      expect(headline + line).not.toMatch(/[—!]/);
+    }
+  });
+});
+
+describe('streakBarLine', () => {
+  it('counts what it takes to beat the best run', () => {
+    expect(streakBarLine(4, 8)).toBe('5 more to beat your best');
+    expect(streakBarLine(8, 8)).toBe('Your best yet');
+    expect(streakBarLine(0, 3)).toBe('Log a clean day to start one');
   });
 });
 

@@ -1,4 +1,8 @@
-import { SparkleField, StarMark, type Sparkle } from '@/components/graphics/Sparkles';
+import {
+  SparkleField,
+  StarMark,
+  type Sparkle
+} from '@/components/graphics/Sparkles';
 import Kanko from '@/components/kanko/Kanko';
 import type { KankoMood } from '@/components/kanko/moods';
 import InfoButton from '@/components/ui/info-button';
@@ -8,14 +12,14 @@ import { dayKey, parseDay } from '@/utils/days';
 import {
   type Mood,
   bestTriggerFreeStreak,
-  streakLabel,
+  hasLoggedDay,
+  streakBarLine,
+  streakHeadline,
+  streakVoice,
   todayMood,
   triggerFreeStreak,
   weekDots
 } from '@/utils/momentum';
-
-/** A week is the ring's lap: it fills over seven trigger-free days. */
-const LAP = 7;
 
 /*
  * Where the marks sit around Kanko. Fixed, not random, so the server and
@@ -25,7 +29,14 @@ const WIN_SPARKLES: Sparkle[] = [
   { top: '2%', left: '4%', size: 14, delay: 0 },
   { top: '8%', left: '80%', size: 10, tone: 'comfort', delay: 0.9 },
   { top: '78%', left: '2%', size: 9, shape: 'star', delay: 1.6 },
-  { top: '70%', left: '86%', size: 12, shape: 'star', tone: 'comfort', delay: 0.4 }
+  {
+    top: '70%',
+    left: '86%',
+    size: 12,
+    shape: 'star',
+    tone: 'comfort',
+    delay: 0.4
+  }
 ];
 const CALM_SPARKLES: Sparkle[] = [
   { top: '6%', left: '6%', size: 11, tone: 'comfort', delay: 0 },
@@ -33,14 +44,18 @@ const CALM_SPARKLES: Sparkle[] = [
 ];
 
 /**
- * Kanko and the streak in one card: the figure once, in a ring that fills
- * over a week, and the last seven days as dots. A logged day is a star
- * (sunflower when trigger-free, lavender when it had a trigger) and today
- * wears an outline, so the dots mean something without a sentence. The
- * legend is behind the "i".
+ * Kanko and the streak in one card, as the Momentum spec drew it: Kanko
+ * beside one line in his voice, the indigo streak bar with the figure in
+ * sunflower, and the last seven days as dots. A logged day is a star
+ * (sunflower when trigger-free, pressing like a key; lavender when it had a
+ * trigger) and today wears an outline.
+ *
+ * On a bad day the card goes quiet, as the spec asks: gentle Kanko, "Rough
+ * one today", no figure and no sparkles, so a sore never meets a zero. A new
+ * account gets a first-day line instead of a zero too.
  *
  * `now` is null until the device clock is read: the card then draws its
- * frame at full size with `expectedMood`'s Kanko and no figures, so nothing
+ * frame at full size with `expectedMood`'s Kanko and no words, so nothing
  * moves when the real day arrives. `celebrate` swaps Kanko's pose for a
  * moment (the medal on a day a sore healed) at the same size.
  */
@@ -64,17 +79,15 @@ export default function StreakCard({
   const streak = today ? triggerFreeStreak(logs, today) : 0;
   const best = today ? bestTriggerFreeStreak(logs, today) : 0;
   const dots = today ? weekDots(logs, today) : null;
-
-  const winning = Boolean(today) && streak > 0 && mood !== 'gentle';
-  const label = streak > 0 ? streakLabel(streak) : 'No streak yet';
-  const sub =
-    mood === 'gentle'
-      ? 'Rough one today'
-      : best > streak
-        ? `Best ${best}`
-        : streak > 0
-          ? 'Your best yet'
-          : 'Log a day to start';
+  const voice = streakVoice(mood, streak, logs);
+  const words = streakHeadline(voice, streak);
+  // Before the clock, the frame follows the server's guess, which is
+  // 'proud' only when it expects a streak.
+  const showBar = today
+    ? voice === 'strong'
+    : expectedMood === 'proud' && hasLoggedDay(logs);
+  const gentle = mood === 'gentle' && !celebrate;
+  const winning = Boolean(today) && voice === 'strong';
 
   return (
     <section
@@ -92,8 +105,8 @@ export default function StreakCard({
         label="About your streak"
       >
         <p>
-          A streak counts days logged with no triggers. The ring fills over a
-          week.
+          A streak counts days logged with no triggers. Poor sleep and a stress
+          of 4 or 5 count as triggers too.
         </p>
         <p>
           A sunflower star is a trigger-free day. A lavender star is a day
@@ -102,39 +115,51 @@ export default function StreakCard({
       </InfoButton>
 
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 pr-8">
-        <div className="relative size-24">
+        <div className="relative size-20 min-[360px]:size-24">
           <Kanko
-            mood={celebrate ?? mood}
+            mood={celebrate ?? (gentle ? 'gentle' : mood)}
             size={96}
             priority
-            className="size-24"
+            className="size-20 min-[360px]:size-24"
           />
-          {today && (
+          {today && !gentle && (
             <SparkleField
               sparkles={winning || celebrate ? WIN_SPARKLES : CALM_SPARKLES}
             />
           )}
         </div>
 
-        {/* Under 360px the words go under the ring, so they never cut off. */}
-        <div className="flex min-w-0 flex-col items-start gap-1.5 min-[360px]:flex-row min-[360px]:items-center min-[360px]:gap-3">
-          <StreakRing streak={today ? streak : null} />
-          {/* Two lines each before an ellipsis: in the check-in's finish
-              sheet "No streak yet" has about 110px beside the ring. */}
-          <div className={cn('min-w-0', !today && 'invisible')}>
-            <p className="line-clamp-2 text-balance font-display text-subhead font-bold leading-tight">
-              {label}
-            </p>
-            <p className="tabular line-clamp-2 text-balance text-sm text-muted-foreground">
-              {sub}
-            </p>
-          </div>
+        <div className={cn('min-w-0', !today && 'invisible')}>
+          <p className="text-balance font-display text-section font-extrabold">
+            {words.headline}
+          </p>
+          <p className="mt-1 text-pretty text-muted-foreground">{words.line}</p>
         </div>
       </div>
 
+      {showBar && (
+        <p className="mt-4 flex items-center gap-3.5 rounded-worksheet bg-streak px-4 py-3 text-streak-foreground shadow-press-streak">
+          {/* Not through cn: tailwind-merge reads text-display as a colour
+              and would drop it in favour of text-win. */}
+          <span
+            className={`tabular min-w-[1.4ch] text-center font-display text-display font-extrabold leading-none text-win${today ? '' : ' invisible'}`}
+          >
+            {today ? streak : 0}
+          </span>
+          <span className={cn('flex min-w-0 flex-col', !today && 'invisible')}>
+            <span className="font-extrabold leading-tight">
+              trigger-free {streak === 1 ? 'day' : 'days'}
+            </span>
+            <span className="text-sm opacity-90">
+              {streakBarLine(streak, best)}
+            </span>
+          </span>
+        </p>
+      )}
+
       <ol
         aria-label="Last seven days"
-        className="mt-3 grid grid-cols-7 gap-1"
+        className={cn('grid grid-cols-7 gap-1', showBar ? 'mt-5' : 'mt-4')}
       >
         {(dots ?? PLACEHOLDER_DOTS).map((dot) => (
           <li key={dot.day} className="flex flex-col items-center gap-1">
@@ -143,7 +168,7 @@ export default function StreakCard({
               className={cn(
                 'grid size-8 place-items-center rounded-full',
                 dot.won
-                  ? 'bg-win text-win-foreground'
+                  ? 'bg-win text-win-foreground shadow-press-win-sm'
                   : dot.logged
                     ? 'bg-comfort text-win-foreground'
                     : 'bg-secondary',
@@ -162,7 +187,7 @@ export default function StreakCard({
                   : 'text-muted-foreground'
               )}
             >
-              {dot.initial || ' '}
+              {dot.initial || ' '}
             </span>
             {dots && (
               <span className="sr-only">
@@ -179,58 +204,6 @@ export default function StreakCard({
         ))}
       </ol>
     </section>
-  );
-}
-
-/**
- * The streak figure inside a ring that fills over a week, with a sunflower
- * star badge once there is a streak. Null draws the empty ring only.
- */
-function StreakRing({ streak }: { streak: number | null }) {
-  const r = 26;
-  const circumference = 2 * Math.PI * r;
-  const lap = streak ? Math.min(streak, LAP) / LAP : 0;
-  return (
-    <span className="relative grid size-16 shrink-0 place-items-center">
-      <svg
-        viewBox="0 0 64 64"
-        className="absolute inset-0 size-16 -rotate-90"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <circle
-          cx="32"
-          cy="32"
-          r={r}
-          fill="none"
-          stroke="hsl(var(--border))"
-          strokeWidth="6"
-        />
-        {lap > 0 && (
-          <circle
-            cx="32"
-            cy="32"
-            r={r}
-            fill="none"
-            stroke="hsl(var(--win))"
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeDasharray={`${lap * circumference} ${circumference}`}
-          />
-        )}
-      </svg>
-      <span className="tabular relative font-display text-figure font-extrabold">
-        {streak ?? ' '}
-      </span>
-      {Boolean(streak) && (
-        <span
-          aria-hidden="true"
-          className="absolute -right-1 -top-1 grid size-6 place-items-center rounded-full bg-win text-win-foreground ring-2 ring-card dark:ring-background"
-        >
-          <StarMark size={14} />
-        </span>
-      )}
-    </span>
   );
 }
 
