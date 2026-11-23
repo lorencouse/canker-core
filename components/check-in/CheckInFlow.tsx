@@ -29,13 +29,14 @@ import { dayKey } from '@/utils/days';
 import { deferEveningReminder } from '@/utils/reminders';
 import { sevFill } from '@/utils/severity';
 import { runWrite, showFailure } from '@/utils/write-feedback';
-import { BusyIcon } from '@/components/ui/busy-icon';
 
 import FinishStep from './FinishStep';
 import NewSoreAsk from './NewSoreAsk';
 import SleepStep from './SleepStep';
 import SoreStep from './SoreStep';
 import StepHeading from './StepHeading';
+import { StepBody } from './StepLayout';
+import StepNextButton from './StepNextButton';
 import TagStep from './TagStep';
 
 const STATUS_FAILED = 'Could not save your check-in. Try again.';
@@ -339,7 +340,7 @@ export default function CheckInFlow({
           {/* Keyed so each step starts fresh and its heading takes focus. */}
           <div
             key={current}
-            className="w-full px-4 pb-[calc(var(--safe-bottom)+1rem)] pt-1"
+            className="flex min-h-full w-full flex-col px-4 pb-[calc(var(--safe-bottom)+1rem)] pt-1"
           >
             {isHabitStep(step) && soreSteps.length + loggedToday.length > 0 && (
               <SoresStrip
@@ -418,21 +419,15 @@ function Placeholder({
   busy: boolean;
 }) {
   return (
-    <div className="grid gap-6">
+    <StepBody>
       <StepHeading>{title}</StepHeading>
-      <Button
-        type="button"
-        size="touch"
-        className="w-full"
-        disabled={busy}
+      <StepNextButton
+        busy={busy}
         onClick={() => {
           tap();
           onNext();
         }}
-      >
-        <BusyIcon busy={busy} />
-        Next
-      </Button>
-    </div>
+      />
+    </StepBody>
   );
 }

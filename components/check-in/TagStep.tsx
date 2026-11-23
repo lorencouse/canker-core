@@ -6,13 +6,19 @@ import { Chip } from '@/components/ui/chip';
 import type { DayLog } from '@/types';
 import type { DayPatch } from '@/utils/check-in/patch';
 import { resolveDay } from '@/utils/check-in/steps';
-import { FOOD_TRIGGERS, HEALTH_TRIGGERS, TREATMENTS } from '@/utils/day-log';
+import {
+  FOOD_TRIGGERS,
+  HEALTH_TRIGGERS,
+  STRESS_TRIGGER_FROM,
+  TREATMENTS
+} from '@/utils/day-log';
 import { tap } from '@/utils/native';
 
 import DayToggle, { type DayChoice } from './DayToggle';
 import type { HabitStepProps } from './habit-step';
 import ScalePicker from './ScalePicker';
 import StepHeading from './StepHeading';
+import { StepBody } from './StepLayout';
 import { tagIcon } from './tag-icons';
 import StepNextButton from './StepNextButton';
 import { useReportBusy } from './useReportBusy';
@@ -45,31 +51,28 @@ function fromLog(kind: TagKind, log: DayLog | undefined) {
   const { options } = SCREENS[kind];
   const stored = kind === 'treatments' ? log?.treatments : log?.triggers;
   const selected = (stored ?? []).filter((t) => options.includes(t));
-  const answered =
-    kind === 'food'
-      ? log?.food_answered
-      : kind === 'health'
-        ? log?.health_answered
-        : false;
   return {
     selected,
-    // "None today" is how a clean answer was given, so an answered day with
-    // nothing ticked shows it picked. Treatments keep no answered flag.
-    none: Boolean(answered) && selected.length === 0,
+    // Only treatments show "None today", and they keep no answered flag, so
+    // the chip always opens unpicked.
+    none: false,
     stress: log?.stress ?? null
   };
 }
 
 /**
  * A chip screen over one fixed list: food triggers, health triggers (with
- * the stress scale) or treatments. On health, "None today" is the explicit
- * clean answer and excludes the other chips, and Next with nothing picked
- * moves on and writes nothing, so a skipped screen never makes that day
- * look clean.
+ * the stress scale) or treatments.
  *
- * Food is the exception, by owner decision (2026-11-12 app-feel review):
- * Next never waits on a choice there, and nothing picked is the answer
- * "none", written as such. It has no "None today" chip to tap.
+ * On food and health Next never waits on a choice, and nothing picked is
+ * the answer "none", written as such; the button says so ("None, next").
+ * Food was decided on 2026-11-12 (app-feel review) and health followed on
+ * 2026-11-22 (design audit, owner call C1): a bare Next that wrote nothing
+ * left the day unanswered, so the streak stalled without saying why.
+ *
+ * Treatments keep an explicit "None today" chip that excludes the others,
+ * and Next with nothing picked writes nothing there: trying nothing is not
+ * a finding the streak depends on.
  */
 export default function TagStep({
   kind,
@@ -122,9 +125,8 @@ export default function TagStep({
         // Nothing picked means nothing eaten that might have set one off.
         return { food: fields.selected };
       case 'health':
-        return answered || fields.stress !== null
-          ? { health: { triggers: fields.selected, stress: fields.stress } }
-          : null;
+        // Nothing picked means nothing else going on, as on food.
+        return { health: { triggers: fields.selected, stress: fields.stress } };
       case 'treatments':
         // No answered flag here, so unpicking the day's treatments has to
         // clear them; otherwise an empty screen writes nothing.
@@ -145,8 +147,15 @@ export default function TagStep({
     }
   };
 
+  // "None, next" only when that is the whole answer: a stress of 4 or 5 is
+  // itself a trigger, so the label would be untrue with one picked.
+  const saysNone =
+    kind !== 'treatments' &&
+    fields.selected.length === 0 &&
+    (kind === 'food' || fields.stress === null);
+
   return (
-    <div className="grid gap-6">
+    <StepBody>
       <StepHeading>{title}</StepHeading>
       <DayToggle value={choice} onChange={pickDay} disabled={busy} />
 
@@ -163,7 +172,7 @@ export default function TagStep({
               {option}
             </Chip>
           ))}
-          {kind !== 'food' && (
+          {kind === 'treatments' && (
             <Chip on={fields.none} onClick={toggleNone}>
               None today
             </Chip>
@@ -179,16 +188,15 @@ export default function TagStep({
           value={fields.stress}
           onChange={(stress) => setFields((f) => ({ ...f, stress }))}
           disabled={busy}
+          note={`A ${STRESS_TRIGGER_FROM} or 5 counts as a trigger for your streak.`}
         />
       )}
 
       <StepNextButton
         busy={busy}
         onClick={next}
-        label={
-          kind === 'food' && fields.selected.length === 0 ? 'None, next' : 'Next'
-        }
+        label={saysNone ? 'None, next' : 'Next'}
       />
-    </div>
+    </StepBody>
   );
 }
