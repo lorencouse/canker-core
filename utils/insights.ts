@@ -126,6 +126,38 @@ export function strongestPattern(sores: Sore[], logs: DayLog[], window = 3): Fin
   return { kind: 'pattern', trigger: top.label, count: top.count, of: soresWithLogs };
 }
 
+/**
+ * The finding's base rate: on how many logged days `trigger` was logged at
+ * all, on or after `since` (everything when null). "Coffee came before 2 of
+ * 3 sores" means little if coffee is every day, and a lot if it is 4 days in
+ * 28. A logged day is one that answers the trigger questions, or carries a
+ * trigger anyway (a stressed check-in, a short night from Health).
+ */
+export function triggerBaseRate(
+  trigger: string,
+  logs: DayLog[],
+  since: Date | null
+): { count: number; of: number } {
+  const from = since ? dayKey(since) : null;
+  let count = 0;
+  let of = 0;
+  for (const l of logs) {
+    if (from && l.day < from) continue;
+    const triggers = effectiveTriggers(l);
+    if (!isAnswered(l) && triggers.length === 0) continue;
+    of++;
+    if (triggers.includes(trigger)) count++;
+  }
+  return { count, of };
+}
+
+/** Logs on or after `since`; all of them when null. */
+export const logsSince = (logs: DayLog[], since: Date | null): DayLog[] => {
+  if (!since) return logs;
+  const from = dayKey(since);
+  return logs.filter((l) => l.day >= from);
+};
+
 /** Sores that were open at any point on or after `since`. */
 export const soresActiveSince = (sores: Sore[], since: Date) =>
   sores.filter((s) => !s.healed_at || new Date(s.healed_at) >= since);

@@ -535,16 +535,6 @@
     --push-ms: 340ms;
     --push-offset: 28%;
 
-    /*
-     * Settings' icon tiles, the system apps' coloured squares. Identity, not
-     * data, so none of them is the pain red; each carries a white glyph at
-     * 3:1 or better in both themes.
-     */
-    --tile-indigo: 240 85% 60%;
-    --tile-amber: 36 92% 46%;
-    --tile-green: 152 60% 32%;
-    --tile-slate: 240 18% 44%;
-
     /* Fixed chrome heights, so scroll containers can pad themselves. */
     --app-bar-h: 3.5rem;
     --tab-bar-h: 3.75rem;

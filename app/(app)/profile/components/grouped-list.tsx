@@ -12,7 +12,7 @@ import { tap } from '@/utils/native';
 
 /**
  * Settings as the system Settings app draws it: inset groups of rows, each
- * with a coloured icon tile, its name, its current value and a chevron
+ * with an icon tile, its name, its current value and a chevron
  * where it opens something. The rule between rows starts after the tile,
  * as on iOS. Rows press in on touch (scale and tint), never hover only.
  */
@@ -35,29 +35,20 @@ export function Group({
   );
 }
 
-export type TileColor = 'indigo' | 'amber' | 'green' | 'slate';
-
-const TILE: Record<TileColor, string> = {
-  indigo: 'bg-tile-indigo',
-  amber: 'bg-tile-amber',
-  green: 'bg-tile-green',
-  slate: 'bg-tile-slate'
-};
-
+/**
+ * Every tile is the same quiet indigo tint. Amber and green squares read
+ * as a status, and sunflower is kept for wins, so the glyph alone tells
+ * the rows apart.
+ */
 export function Tile({
-  icon: Icon,
-  color
+  icon: Icon
 }: {
   icon: ComponentType<{ className?: string }>;
-  color: TileColor;
 }) {
   return (
     <span
       aria-hidden="true"
-      className={cn(
-        'grid size-8 shrink-0 place-items-center rounded-[0.5rem] text-white',
-        TILE[color]
-      )}
+      className="grid size-8 shrink-0 place-items-center rounded-[0.5rem] bg-accent text-accent-foreground"
     >
       <Icon className="size-[1.125rem]" />
     </span>

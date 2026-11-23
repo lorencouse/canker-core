@@ -4,11 +4,13 @@ import type { DayLog, Sore } from '@/types';
 import { emptyDayLog } from '@/utils/day-log';
 import {
   isLongRunning,
+  logsSince,
   medianDaysToHeal,
   mostCommonZone,
   soreDays,
   strongestPattern,
   treatmentDays,
+  triggerBaseRate,
   triggersBeforeSores,
   worstPainSince
 } from './insights';
@@ -211,5 +213,41 @@ describe('soreDays', () => {
     ]);
     expect(days[1].sores.map((s) => s.id)).toEqual(['a', 'b']);
     expect(soreDays([a, b], new Date('2026-09-02T00:00:00')).map((d) => d.day)).toEqual(['2026-09-02']);
+  });
+});
+
+describe('triggerBaseRate', () => {
+  const answered = (day: string, triggers: string[] = []): DayLog => ({
+    ...log(day, triggers),
+    food_answered: true,
+    health_answered: true
+  });
+
+  it('counts logged days with the trigger over all logged days', () => {
+    const logs = [
+      answered('2026-09-01', ['Coffee']),
+      answered('2026-09-02'),
+      answered('2026-09-03', ['Coffee', 'Stress']),
+      answered('2026-09-04')
+    ];
+    expect(triggerBaseRate('Coffee', logs, null)).toEqual({ count: 2, of: 4 });
+  });
+
+  it('skips unanswered days with no trigger, and days before the range', () => {
+    const logs = [
+      answered('2026-08-20', ['Coffee']),
+      log('2026-09-02', [], ['Numbing gel']),
+      log('2026-09-03', ['Coffee']),
+      answered('2026-09-04')
+    ];
+    expect(triggerBaseRate('Coffee', logs, new Date(2026, 8, 1))).toEqual({ count: 1, of: 2 });
+  });
+});
+
+describe('logsSince', () => {
+  it('keeps logs on or after the day, all of them without one', () => {
+    const logs = [log('2026-08-31'), log('2026-09-01'), log('2026-09-02')];
+    expect(logsSince(logs, new Date(2026, 8, 1)).map((l) => l.day)).toEqual(['2026-09-01', '2026-09-02']);
+    expect(logsSince(logs, null)).toHaveLength(3);
   });
 });

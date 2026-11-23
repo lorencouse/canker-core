@@ -52,7 +52,7 @@ export default function TabBar() {
   return (
     <nav aria-label="Main" className="tab-bar keyboard-hides navtop:hidden">
       <ul className="flex h-full items-stretch p-1 rail:h-auto rail:flex-col">
-        {APP_NAV.map(({ href, label, description, icon: Icon }) => {
+        {APP_NAV.map(({ href, label, icon: Icon }) => {
           const active = isActiveTab(pathname, href);
           return (
             <li key={href} className="min-w-0 flex-1 rail:flex-none">
@@ -60,7 +60,6 @@ export default function TabBar() {
                 href={href}
                 onClick={() => tap()}
                 aria-current={active ? 'page' : undefined}
-                aria-label={description}
                 className={cn(
                   'flex h-full flex-col items-center justify-center gap-1 rounded-full',
                   'rail:min-h-14 rail:px-1',
@@ -80,7 +79,7 @@ export default function TabBar() {
                   strokeWidth={active ? 2.25 : 1.75}
                   aria-hidden="true"
                 />
-                <span aria-hidden="true" className="max-w-full truncate">
+                <span className="max-w-full truncate">
                   {label}
                 </span>
               </Link>

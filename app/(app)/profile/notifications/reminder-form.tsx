@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
-import InfoButton from '@/components/ui/info-button';
+import StoreBadges from '@/components/marketing/StoreBadges';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -16,6 +17,7 @@ import {
   type ReminderPref,
   type ReminderSlot
 } from '@/utils/reminders';
+import { APP_STORE_URL } from '@/utils/app-stores';
 
 const SLOTS: Array<{
   slot: ReminderSlot;
@@ -63,16 +65,33 @@ export function ReminderForm() {
   if (!mounted) return null;
 
   if (!supported) {
+    // The web build, where "need the phone app" alone was a dead end: say
+    // why, then hand over the way to get it.
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <p>Reminders need the phone app.</p>
-        <InfoButton title="Reminders" label="Why reminders need the app">
-          <p>
-            The iPhone and Android apps can nudge you at a set time each day.
-            A browser has no way to schedule that.
-          </p>
-        </InfoButton>
-      </div>
+      <section
+        aria-labelledby="reminders-app"
+        className="surface-worksheet grid gap-3 p-4 sm:p-5"
+      >
+        <h2 id="reminders-app" className="text-section">
+          Reminders live in the phone app
+        </h2>
+        <p className="prose-measure text-muted-foreground">
+          A browser can’t nudge you at a set time. The app can: a morning
+          check-in and an evening nudge, at the times you pick. Same account,
+          same log.
+        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <StoreBadges className="-ml-2" />
+          {!APP_STORE_URL && (
+            <Link
+              href="/app"
+              className="focus-ring inline-flex min-h-11 items-center rounded-md font-semibold text-primary underline-offset-4 hover:underline"
+            >
+              iPhone app
+            </Link>
+          )}
+        </div>
+      </section>
     );
   }
 

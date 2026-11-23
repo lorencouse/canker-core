@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 
 import SoresTable from '@/components/charts/SoresTable';
 import FindingCard from '@/components/insights/FindingCard';
@@ -12,7 +12,12 @@ import { Button } from '@/components/ui/button';
 import type { DayLog, Sore } from '@/types';
 import { cn } from '@/utils/cn';
 import { addDays } from '@/utils/days';
-import { soreDays, soresActiveSince, strongestPattern } from '@/utils/insights';
+import {
+  soreDays,
+  soresActiveSince,
+  strongestPattern,
+  triggerBaseRate
+} from '@/utils/insights';
 
 type Range = '30d' | 'all';
 
@@ -23,9 +28,18 @@ const LIST_PREVIEW = 5;
  * Everything under the Insights title, for a user with at least one sore:
  * the finding, the figures, the chart, the triggers and every sore, all
  * read over one range. The range is a client switch over data the page
- * already has, so changing it costs no request.
+ * already has, so changing it costs no request. It sits beside the title
+ * (passed in as `title`), since it scopes the whole screen.
  */
-export default function InsightsBody({ sores, dayLogs }: { sores: Sore[]; dayLogs: DayLog[] }) {
+export default function InsightsBody({
+  sores,
+  dayLogs,
+  title
+}: {
+  sores: Sore[];
+  dayLogs: DayLog[];
+  title: ReactNode;
+}) {
   const since30 = useMemo(() => addDays(new Date(), -29), []);
   // The switch only earns its place when there is history older than 30 days.
   const hasOlder = sores.some((s) => new Date(s.created_at) < since30);
@@ -37,6 +51,8 @@ export default function InsightsBody({ sores, dayLogs }: { sores: Sore[]; dayLog
   // Triggers are read for sores that started in the range.
   const started = since ? sores.filter((s) => new Date(s.created_at) >= since) : sores;
   const finding = strongestPattern(started, dayLogs);
+  const baseRate =
+    finding.kind === 'pattern' ? triggerBaseRate(finding.trigger, dayLogs, since) : null;
   const days = useMemo(() => soreDays(sores, since), [sores, since]);
 
   const [showAll, setShowAll] = useState(false);
@@ -44,22 +60,23 @@ export default function InsightsBody({ sores, dayLogs }: { sores: Sore[]; dayLog
 
   return (
     <div className="space-y-4">
-      {hasOlder && (
-        <div className="flex justify-end">
-          <RangeSwitch value={range} onChange={setRange} />
-        </div>
-      )}
+      {/* The title never gives way to the switch: on the narrowest phones
+          the switch drops under it rather than cutting "Insights" short. */}
+      <div className="flex flex-wrap items-end justify-between gap-3 fold:max-w-[var(--fold-col)] lg:pb-2">
+        <div className="min-w-0 max-w-full flex-[1_0_auto]">{title}</div>
+        {hasOlder && <RangeSwitch value={range} onChange={setRange} />}
+      </div>
       {/*
         On a spanned Duo: the finding, the figures and the list on the first
         screen, the chart and the triggers down the second (THE FOLD in
         styles/main.css).
       */}
       <div className="fold-split space-y-4 fold:grid-rows-[auto_auto_1fr] fold:items-start fold:gap-y-4 fold:space-y-0 xl:space-y-6">
-        <FindingCard finding={finding} />
+        <FindingCard finding={finding} baseRate={baseRate} />
         <StatTiles sores={sores} since={since} />
         <div className="fold-end grid grid-cols-1 gap-4 fold:row-span-3 fold:row-start-1 xl:grid-cols-2 xl:gap-6">
           <SizeChart sores={sores} days={days} />
-          <TriggerTally sores={started} logs={dayLogs} />
+          <TriggerTally sores={started} logs={dayLogs} since={since} />
         </div>
         <Instrument title="Every sore">
           <SoresTable sores={listed} />
@@ -81,8 +98,10 @@ export default function InsightsBody({ sores, dayLogs }: { sores: Sore[]; dayLog
 
 /** A compact two-way switch, iOS style: the chosen side is a raised thumb. */
 function RangeSwitch({ value, onChange }: { value: Range; onChange: (r: Range) => void }) {
+  // Spoken names start with the visible label, so "30 days" or "All" said
+  // aloud finds the button (label in name).
   const options: { id: Range; label: string; name: string }[] = [
-    { id: '30d', label: '30d', name: 'Last 30 days' },
+    { id: '30d', label: '30 days', name: '30 days' },
     { id: 'all', label: 'All', name: 'All time' }
   ];
   return (

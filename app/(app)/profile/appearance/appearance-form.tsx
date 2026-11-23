@@ -7,17 +7,16 @@ import { cn } from '@/utils/cn';
 import { useMounted } from '@/utils/hooks/useMounted';
 import { tap } from '@/utils/native';
 
-import { Tile, type TileColor } from '../components/grouped-list';
+import { Tile } from '../components/grouped-list';
 
 const OPTIONS = [
-  { value: 'light', label: 'Light', icon: Sun, color: 'amber' },
-  { value: 'dark', label: 'Dark', icon: Moon, color: 'indigo' },
-  { value: 'system', label: 'System', icon: Monitor, color: 'slate' }
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: Monitor }
 ] as const satisfies ReadonlyArray<{
   value: string;
   label: string;
   icon: typeof Sun;
-  color: TileColor;
 }>;
 
 /**
@@ -36,7 +35,7 @@ export function AppearanceForm() {
         aria-label="Theme"
         className="overflow-hidden rounded-worksheet bg-card"
       >
-        {OPTIONS.map(({ value, label, icon, color }, i) => {
+        {OPTIONS.map(({ value, label, icon }, i) => {
           const selected = mounted && theme === value;
           return (
             <button
@@ -50,7 +49,7 @@ export function AppearanceForm() {
               }}
               className="focus-ring flex w-full items-center gap-3 pl-4 text-left press [--press-scale:0.98] hover:bg-muted/60 active:bg-muted"
             >
-              <Tile icon={icon} color={color} />
+              <Tile icon={icon} />
               <span
                 className={cn(
                   'flex min-h-14 min-w-0 flex-1 items-center gap-3 pr-4',
