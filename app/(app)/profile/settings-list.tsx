@@ -11,6 +11,7 @@ import {
   LogOut,
   Share,
   ShieldCheck,
+  Star,
   SunMoon
 } from 'lucide-react';
 
@@ -30,6 +31,7 @@ import { getRedirectMethod } from '@/utils/auth-helpers/settings';
 import { useMounted } from '@/utils/hooks/useMounted';
 import { notify, openExternal, shareTextFile } from '@/utils/native';
 import { readReminder, remindersSupported } from '@/utils/reminders';
+import { writeReviewUrl } from '@/utils/review-prompt';
 import { deleteAllPhotos } from '@/utils/sore-photos';
 
 import { ButtonRow, Group, LinkRow, Tile } from './components/grouped-list';
@@ -140,6 +142,9 @@ export function SettingsList({ user }: { user: User }) {
     window.location.assign('/');
   };
 
+  // Only in the store apps; the web has no listing to rate.
+  const reviewUrl = mounted ? writeReviewUrl() : null;
+
   const openPage = (path: string) =>
     void openExternal(new URL(path, window.location.origin).href);
 
@@ -223,6 +228,19 @@ export function SettingsList({ user }: { user: User }) {
           chevron
           onClick={() => openPage('/terms')}
         />
+        {reviewUrl && (
+          <ButtonRow
+            lead={<Tile icon={Star} />}
+            label="Rate Canker Core"
+            chevron
+            onClick={() => {
+              // A plain navigation, not the in-app browser: the shell hands
+              // a store link to the system, which opens the store app on its
+              // review page. Works in every app build, old ones included.
+              window.location.href = reviewUrl;
+            }}
+          />
+        )}
       </Group>
 
       <Group label="Session">

@@ -9,6 +9,7 @@ import { DEFAULT_AFTER_SIGN_IN } from '@/utils/auth-helpers/settings';
 import { isNative } from '@/utils/native';
 import { nativeAppCookie } from '@/utils/native-launch';
 import { syncReminders } from '@/utils/reminders';
+import { noteAppUsed } from '@/utils/review-prompt';
 
 /**
  * Wires the web app to the native shell.
@@ -103,6 +104,8 @@ export default function NativeBridge() {
     if (launched.current) return;
     launched.current = true;
     if (!isNative()) return;
+    // A day of use toward the rating prompt's minimum (utils/review-prompt).
+    noteAppUsed();
     document.cookie = nativeAppCookie(window.location.protocol === 'https:');
     if (window.location.pathname === '/') {
       launchReplacing.current = true;
