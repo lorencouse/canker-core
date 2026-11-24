@@ -26,6 +26,7 @@
     "@canker-core/fold": "file:native/plugins/fold",
     "@canker-core/tab-bar": "file:native/plugins/tab-bar",
     "@canker-core/web-auth": "file:native/plugins/web-auth",
+    "@capacitor-community/in-app-review": "^8.0.0",
     "@capacitor/action-sheet": "^8.1.1",
     "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",

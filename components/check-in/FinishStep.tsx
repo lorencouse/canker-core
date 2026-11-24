@@ -12,6 +12,7 @@ import { isAnswered, todayMood } from '@/utils/momentum';
 import { tap } from '@/utils/native';
 import { currentPain, currentSize, hasReadingOn } from '@/utils/readings';
 import { readReminder, remindersSupported } from '@/utils/reminders';
+import { maybeAskForReview } from '@/utils/review-prompt';
 import { sevFill } from '@/utils/severity';
 
 import { StepBody, StepFooter } from './StepLayout';
@@ -25,7 +26,8 @@ import StepHeading from './StepHeading';
  * Its mood follows the day, as the Momentum spec asks. On a good day Kanko
  * celebrates; on a bad one (a new sore, or pain of 6 or more) there is no
  * confetti and no figure, only gentle Kanko and a quiet line, because
- * logging a rough day was the hard part.
+ * logging a rough day was the hard part. A good day's Done is also the one
+ * place the store's rating prompt may be asked for (utils/review-prompt.ts).
  */
 export default function FinishStep({
   sores,
@@ -70,6 +72,10 @@ export default function FinishStep({
           onClick={() => {
             tap();
             onDone();
+            // The rating prompt's one moment: a good day, logged and saved,
+            // the task over. Never after a rough day, and after the sheet
+            // has closed so the system prompt lands on Today, not over it.
+            if (!gentle) window.setTimeout(() => void maybeAskForReview(), 600);
           }}
         >
           Done

@@ -330,6 +330,18 @@ web icons under `public/icons/` and the `app/icon.png` favicon are committed.
 Run it before any build you intend to ship: without it both apps carry
 Capacitor's default logo.
 
+### Rating prompt (`@capacitor-community/in-app-review`)
+
+The store's own rating sheet (StoreKit on iOS, Play In-App Review on
+Android), never a dialog of ours. `utils/review-prompt.ts` holds the rules
+in `REVIEW_PROMPT_RULES`, per device in localStorage: opened on at least 3
+separate days, at most once every 120 days, never twice in one app version.
+It is asked for only when a check-in on a good day (not the gentle mood)
+ends with Done. The plugin is native code, so the prompt arrives only with
+a new binary; older builds and the website skip it. Settings, About, has a
+**Rate Canker Core** row in the apps only, a plain navigation to the store's
+review page that the shell hands to the system, so it works in every build.
+
 ## The layout
 
 Four shells, one per route group, all under the root layout:
