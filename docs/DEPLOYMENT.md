@@ -1,12 +1,14 @@
 # Deployment
 
-Canker Core runs on the **Coolify VPS at `46.224.227.119`** — the same box and the
-same pattern as `maleq-headless`: the app is built from the GitHub repo and served
-behind Coolify's bundled Traefik proxy, which issues TLS via Let's Encrypt.
+Canker Core runs on the **Oracle server `firstmate-1` (public `161.153.65.18`,
+Tailscale `100.124.64.106`)**, a second server in the Coolify instance on the
+Hetzner VPS (`46.224.227.119`). The app is served behind Coolify's bundled
+Traefik proxy on the Oracle server, which issues TLS via Let's Encrypt. Coolify
+itself (dashboard and API) still runs on the Hetzner VPS.
 
 The difference from maleq is the database. maleq talks to a separate
 WordPress/MySQL host; Canker Core owns its data, so it gets a **Coolify-managed
-Postgres service on the same VPS**. No extra machine, no managed-database bill.
+Postgres service on the same server**. No extra machine, no managed-database bill.
 
 ---
 
@@ -34,14 +36,14 @@ to run, monitor, or pay for.
 
 ## Deployed resources
 
-Created on the Coolify VPS (`46.224.227.119`), project **Canker Core**:
+Running on the Oracle server (`161.153.65.18`), project **Canker Core**:
 
 | Resource | UUID / value |
 |---|---|
 | Project | `0y1yh6n2gespythamcoewcod` |
 | Environment | `production` |
-| Postgres 16 | `zp1hiabzhkgj4kwo2r9qa0qi` (internal host, port 5432, db/user `canker`) |
-| Application | `se1yk2uuejhylof4isj4x5wq` |
+| Postgres 16 | `pm3dc7rqkojfdozptjx0vb41` (internal host, port 5432, db/user `canker`) |
+| Application | `o1h0i2psbar7l5y4as4ra9di` |
 | Image | `localhost:5000/canker-core:<git-sha>` |
 | Staging URL | `https://canker.46.224.227.119.sslip.io` |
 
@@ -85,10 +87,10 @@ docker build --platform linux/arm64 \
 #    Note: pushing to localhost:5000 through an SSH tunnel does NOT work when
 #    Docker runs in a VM (colima) — the daemon's "localhost" is the VM's, not
 #    your Mac's. Streaming over SSH sidesteps that entirely.
-docker save canker-core:$SHA | gzip -1 | ssh coolify "gunzip | docker load"
+docker save canker-core:$SHA | gzip -1 | ssh deploy@100.124.64.106 "gunzip | docker load"
 
-# 3. Push into the on-box registry from the VPS
-ssh coolify "docker tag canker-core:$SHA localhost:5000/canker-core:$SHA \
+# 3. Push into the on-box registry on the Oracle server
+ssh deploy@100.124.64.106 "docker tag canker-core:$SHA localhost:5000/canker-core:$SHA \
   && docker push -q localhost:5000/canker-core:$SHA"
 
 # 4. Point the app at the new tag and redeploy (Coolify UI, or the API)
@@ -111,7 +113,7 @@ during `next build` from `NEXT_PUBLIC_SITE_URL`. **A domain change therefore
 needs a rebuild**, not just a restart — otherwise the new domain serves a
 sitemap advertising the old one.
 
-1. Point DNS for `cankercore.com` at `46.224.227.119` (currently it resolves to
+1. Point DNS for `cankercore.com` at `161.153.65.18` (currently it resolves to
    Vercel at `76.76.21.21`).
 2. In Coolify, set the application's domain to `https://cankercore.com`, and
    update `SITE_URL` and `BETTER_AUTH_URL` to match.
@@ -147,7 +149,9 @@ terminal for the Postgres service, or over an SSH tunnel:
 
 ```bash
 # Tunnel Postgres to localhost:5433
-ssh -L 5433:localhost:5432 deploy@46.224.227.119
+# (the Postgres port is not published on the host; use the container's IP from
+#  docker inspect pm3dc7rqkojfdozptjx0vb41 on the server)
+ssh -L 5433:<db container ip>:5432 deploy@100.124.64.106
 
 # In another shell
 psql "postgresql://<user>:<password>@127.0.0.1:5433/<db>" -v ON_ERROR_STOP=1 -f schema.sql
@@ -165,7 +169,7 @@ DATABASE_URL="postgresql://..." npm run db:schema
 Coolify detects the `Dockerfile` and builds with it.
 
 Set the domain (e.g. `cankercore.com`); Traefik requests the certificate
-automatically once DNS points at `46.224.227.119`.
+automatically once DNS points at `161.153.65.18`.
 
 ### 4. Environment variables
 
@@ -210,8 +214,8 @@ Coolify can schedule Postgres backups per service — enable them. For an ad-hoc
 dump, following the same SSH-streamed pattern maleq uses:
 
 ```bash
-ssh deploy@46.224.227.119 \
-  "docker exec <postgres-container> pg_dump -U <user> <db> --no-owner" \
+ssh deploy@100.124.64.106 \
+  "docker exec pm3dc7rqkojfdozptjx0vb41 pg_dump -U <user> <db> --no-owner" \
   | gzip -1 > backups/canker-$(date +%Y%m%d_%H%M%S).sql.gz
 ```
 
@@ -234,7 +238,7 @@ A deploy is the four steps under [Building and shipping an
 image](#building-and-shipping-an-image), ending with the tag switch:
 
 ```bash
-UUID=se1yk2uuejhylof4isj4x5wq
+UUID=o1h0i2psbar7l5y4as4ra9di
 SHA=$(git rev-parse --short HEAD)
 
 # Token lives in the sibling house-finder repo; the API is only reachable

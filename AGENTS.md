@@ -16,8 +16,10 @@ and an API tag switch — the four steps in `docs/DEPLOYMENT.md`.
 
 The VPS runs at its CPU limit, so images are **never** built on the server.
 
-- Coolify app uuid `se1yk2uuejhylof4isj4x5wq`, host alias `coolify`.
-- Postgres container `zp1hiabzhkgj4kwo2r9qa0qi`, user and db both `canker`.
+- Coolify app uuid `o1h0i2psbar7l5y4as4ra9di`; it runs on the Oracle server
+  (`deploy@100.124.64.106`, where the image is loaded and pushed), while the
+  Coolify API stays on host alias `coolify`.
+- Postgres container `pm3dc7rqkojfdozptjx0vb41`, user and db both `canker`.
 - Coolify API is reachable only from the server, `http://localhost:8000`.
   Its token is the whole contents of `~/coolify-token` on the VPS (not
   `house-finder/.env`, which has no such key). Read it into a shell variable
